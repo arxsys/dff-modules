@@ -1,0 +1,231 @@
+/*
+ * DFF -- An Open Source Digital Forensics Framework
+ * Copyright (C) 2009-2011 ArxSys
+ * This program is free software, distributed under the terms of
+ * the GNU General Public License Version 2. See the LICENSE file
+ * at the top of the source tree.
+ *  
+ * See http: *www.digital-forensic.org for more information about this
+ * project. Please do not directly contact any of the maintainers of
+ * DFF for assistance; the project provides a web site, mailing lists
+ * and IRC channels for your use.
+ * 
+ * Author(s):
+ *  Solal Jacob <sja@digital-forensic.org>
+ */
+
+#include "mftentrynode.hpp"
+#include "bootsector.hpp"
+#include "ntfs.hpp"
+#include "mftattribute.hpp"
+#include "mftattributecontent.hpp"
+
+//MFTRecord :: public MFTEntryNode
+// MFTRecord(NTFS* ntfs, uint64_t record Number, ...
+// 
+// IndexNode :: public MFTEntryNode
+// penser qu il n'y a pas que les attributs qui sont specialiser mais aussi les 'data'
+
+
+
+MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* fsNode, uint64_t offset, std::string name, Node* parent = NULL) : Node(name, ntfs->bootSectorNode()->MFTRecordSize(), parent, ntfs) //ajouter le parent
+{
+  VFile*	vfile = NULL;
+
+  //this->__ntfs->setStateInfo("Parsing MFT "); //+ this->name() ? 
+
+  this->__fsNode = fsNode;
+  this->__ntfs = ntfs;
+  this->__offset = offset;
+  this->__MFTEntry = new MFTEntry; 
+
+//cache mfso ...
+//READ sur self possible uniquement car la struct est plus petite que l endroit du premier fixup
+//vfile = this->open(); //XXX ossible car si non fixup value sera la n imp
+  vfile = this->fsNode()->open();
+
+  if (vfile->seek(this->offset()) != this->offset())
+  {
+    vfile->close();
+    throw std::string("Can't seek to MFT entry structure");
+  }
+  if  (vfile->read((void *) (this->__MFTEntry), sizeof(MFTEntry)) != sizeof(MFTEntry))
+  {
+    vfile->close();
+    throw std::string("Can't read MFT Entry structure");
+  }
+  vfile->close();
+
+  this->MFTAttributes();
+}
+
+MFTEntryNode::~MFTEntryNode()
+{
+  if (this->__MFTEntry != NULL)
+  {
+     delete this->__MFTEntry;
+     this->__MFTEntry = NULL;
+  }
+//  if (this->attributeBuff
+}
+
+std::vector<MFTAttribute*>	MFTEntryNode::MFTAttributes(void)
+{
+  std::vector<MFTAttribute*>	mftAttributes; //delete std::vector delete bien les pointeurs ?
+  uint16_t offset = this->firstAttributeOffset();
+
+  try 
+  {
+    while (offset < this->usedSize()) //don't check delete attribute or use allocatedSize and do diff /take car unusedsiz could be invalid
+    {
+       MFTAttribute* mftAttr = this->__MFTAttribute(offset);
+       mftAttributes.push_back(mftAttr); 
+       //std::cout << "New attribute found ID " << mftAttr->ID() << " type ID " << mftAttr->typeID() << " lenght" << mftAttr->length() << " name length " << mftAttr->nameLength() << " is resident " << mftAttr->isResident() <<std::endl;
+       if (mftAttr->length() == 0)
+	 break;
+       offset += mftAttr->length(); //take care could be invalid
+    }
+  }
+  catch(std::string error)
+  {
+  }
+  return (mftAttributes);
+}
+
+std::vector<MFTAttribute*>	MFTEntryNode::MFTAttributesType(uint32_t typeID)
+{
+  std::vector<MFTAttribute* >		mftAttributes; //delete std::vector delete bien les pointeurs ?
+  std::vector<MFTAttribute* >		mftAttributesType; //delete std::vector delete bien les pointeurs ?
+  std::vector<MFTAttribute* >::iterator	mftAttribute;
+
+  mftAttributes = this->MFTAttributes();
+  mftAttribute = mftAttributes.begin();
+  for (; mftAttribute != mftAttributes.end(); mftAttribute++)
+     if ((*mftAttribute)->typeID() == typeID)
+       mftAttributesType.push_back(*mftAttribute);
+
+  return (mftAttributesType);
+}
+
+MFTAttribute*			MFTEntryNode::__MFTAttribute(uint16_t offset) // VFile ? 
+{
+  MFTAttribute*	mftAttribute = NULL;  
+
+  mftAttribute = new MFTAttribute(this, offset);
+
+  return (mftAttribute);
+}
+void		MFTEntryNode::fileMapping(FileMapping *fm)
+{
+  uint64_t offset = 0;
+  uint16_t sectorSize = this->__ntfs->bootSectorNode()->bytesPerSector();
+
+  while (offset < this->size())
+  {
+    if (this->size() - offset >= sectorSize)
+    {
+      fm->push(offset, sectorSize - sizeof(uint16_t), this->fsNode(), this->offset() + offset);
+      offset += sectorSize - sizeof(uint16_t);
+      fm->push(offset, sizeof(uint16_t), this->__ntfs->fsNode(), this->offset() + this->fixupArrayOffset() + sizeof(uint16_t) + (sizeof(uint16_t) * (offset / sectorSize)));
+      offset += sizeof(uint16_t); 
+    }
+    else
+    {
+      fm->push(offset, this->size() - offset, this->fsNode(), this->offset() + offset);
+      offset += this->size() - offset;
+    }
+  }
+}
+
+Attributes		MFTEntryNode::_attributes(void)
+{
+  Attributes	attrs;
+
+  //MAP_ATTR("Sector number", this->sectorNumber())
+//MAP_ATTR("Entry number") 0 read sur une autre node ..
+  MAP_ATTR("Offset", this->offset())
+  MAP_ATTR("Signature", this->signature())
+  MAP_ATTR("Used size", this->usedSize())
+  MAP_ATTR("Allocated size", this->allocatedSize())
+  MAP_ATTR("First attribute offset", this->firstAttributeOffset())
+
+  std::vector<MFTAttribute*>		mftAttributes = this->MFTAttributes();
+  std::vector<MFTAttribute*>::iterator  mftAttribute = mftAttributes.begin();
+  for (; mftAttribute != mftAttributes.end(); mftAttribute++)
+  {
+    try 
+    {
+      MAP_ATTR((*mftAttribute)->content()->typeName(), (*mftAttribute)->content()->_attributes());
+    }
+    catch (vfsError e)
+    {
+	cout << e.error << endl;
+    }
+  }
+  return (attrs);
+}
+
+void		MFTEntryNode::validate(void)
+{
+  if ((this->signature() != MFT_SIGNATURE_FILE) && (this->signature() != MFT_SIGNATURE_BAAD))
+    throw vfsError(std::string("MFT signature is invalid")); 
+    //if baad ? setbad ca se fait pas la 
+// read & check fixup value ? 
+}
+
+NTFS*		MFTEntryNode::ntfs(void)
+{
+  return (this->__ntfs);
+}
+
+Node*		MFTEntryNode::fsNode(void)
+{
+  return (this->__fsNode);
+}
+/*
+uint64_t	MFTEntryNode::sectorNumber(void)
+{
+  return (this->__sectorNumber);
+}
+
+uint64_t	MFTEntryNode::offset(void)
+{
+  return (this->sectorNumber() * this->__ntfs->bootSectorNode()->clusterSize());
+}
+*/
+
+uint64_t	MFTEntryNode::offset(void)
+{
+  return (this->__offset);
+}
+
+uint32_t	MFTEntryNode::signature(void)
+{
+  return (this->__MFTEntry->signature);
+}
+
+uint32_t	MFTEntryNode::usedSize(void)
+{
+  return (this->__MFTEntry->usedSize);
+}
+
+uint32_t	MFTEntryNode::allocatedSize(void)
+{
+  return (this->__MFTEntry->allocatedSize);
+}
+
+uint16_t	MFTEntryNode::firstAttributeOffset(void)
+{
+  return (this->__MFTEntry->firstAttributeOffset);
+}
+
+uint16_t	MFTEntryNode::fixupArrayOffset(void)
+{
+  return (this->__MFTEntry->fixupArrayOffset);
+}
+
+/* -1 because we skip signature */
+uint16_t	MFTEntryNode::fixupArrayEntryCount(void)
+{
+  return (this->__MFTEntry->fixupArrayEntryCount - 1);
+}
