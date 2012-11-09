@@ -16,7 +16,7 @@
 from PyQt4.QtCore import QString, Qt, SIGNAL, QLineF
 from PyQt4.QtGui import QWidget, QHBoxLayout, QVBoxLayout, QGroupBox, QLabel, QGridLayout, QComboBox, QLineEdit, QPushButton, QCheckBox
 
-from dff.modules.viewer.hexedit.messagebox import *
+from dff.modules.hexedit.messagebox import *
 
 class goto(QWidget):
     def __init__(self, parent):

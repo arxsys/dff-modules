@@ -23,10 +23,10 @@ from dff.api.module.manager import ModuleProcessusHandler
 from dff.api.types.libtypes import Variant, VMap, VList, Argument, typeId, vtime, TIME_MS_64
 from dff.api.vfs.libvfs import AttributesHandler, VFS, VLink
 
-from dff.modules.metadata.structparser import Struct, Header, FlagsList, ResolveAttributesMap, AttributesVMap 
+from dff.modules.structparser import Struct, Header, FlagsList, ResolveAttributesMap, AttributesVMap 
 
-from lnkheader import FileAttributesFlags, LinkFlags, ShowCommandFlagsMap, HotKeysLowFlagsMap, HotKeysHighFlagsMap, LinkInfoFlags, DriveTypeMaps, NetworkProviderType, CommonNetworkRelativeLinkFlags, ExtraDataBlockMaps, FillAttributesFlags, FontFamily, PropertyType, PropertyTypeConverter, SerializedPropertyHeader, DataBlockHeader, ShellLinkHeader, LPWSTR, LnkAttributesMap
-from lnkitem import ItemType, ItemTypeConverter, UnicodeBuff, UUID
+from dff.modules.lnk.lnkheader import FileAttributesFlags, LinkFlags, ShowCommandFlagsMap, HotKeysLowFlagsMap, HotKeysHighFlagsMap, LinkInfoFlags, DriveTypeMaps, NetworkProviderType, CommonNetworkRelativeLinkFlags, ExtraDataBlockMaps, FillAttributesFlags, FontFamily, PropertyType, PropertyTypeConverter, SerializedPropertyHeader, DataBlockHeader, ShellLinkHeader, LPWSTR, LnkAttributesMap
+from dff.modules.lnk.lnkitem import ItemType, ItemTypeConverter, UnicodeBuff, UUID
 
 import sys, os, traceback
 

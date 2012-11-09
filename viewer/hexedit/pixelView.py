@@ -23,7 +23,7 @@ from PyQt4.QtGui import *
 
 from dff.api.exceptions.libexceptions import *
 
-from dff.modules.viewer.hexedit.scrollbar import byteScrollBar
+from dff.modules.hexedit.scrollbar import byteScrollBar
 
 class wPixel(QWidget):
     def __init__(self, parent):

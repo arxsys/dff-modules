@@ -19,10 +19,10 @@ from struct import unpack
 from dff.api.vfs.libvfs import Node
 from dff.api.types.libtypes import Variant, VMap, VList, Argument, typeId, vtime, TIME_MS_64
 
-from dff.modules.metadata.structparser import Struct, Header, ResolveAttributesMap, AttributesVMap
+from dff.modules.structparser import Struct, Header, ResolveAttributesMap, AttributesVMap
 
-from msdocheader import MSDocHeader
-from msodraw import OfficeArtInlineSpContainer, OfficeArtDggContainer, PictureNode 
+from dff.modules.compoundfile.msdocheader import MSDocHeader
+from dff.modules.compoundfile.msodraw import OfficeArtInlineSpContainer, OfficeArtDggContainer, PictureNode 
 
 class WordDocument(Struct):
   cbRgFcLcbSizeFibVersion  = { 

@@ -16,10 +16,10 @@
 from PyQt4.QtCore import Qt, QLineF
 from PyQt4.QtGui import QGraphicsView, QKeySequence, QHBoxLayout, QWidget, QFont, QGraphicsScene, QGraphicsLineItem, QGraphicsTextItem
 
-from dff.modules.viewer.hexedit.hexItem import *
-from dff.modules.viewer.hexedit.offsetItem import *
-from dff.modules.viewer.hexedit.asciiItem import *
-from dff.modules.viewer.hexedit.scrollbar import hexScrollBar
+from dff.modules.hexedit.hexItem import *
+from dff.modules.hexedit.offsetItem import *
+from dff.modules.hexedit.asciiItem import *
+from dff.modules.hexedit.scrollbar import hexScrollBar
 
 class wHex(QWidget):
     def __init__(self, parent):

@@ -15,7 +15,7 @@
 from PyQt4.QtCore import QString, Qt, SIGNAL
 from PyQt4.QtGui import QWidget, QFont, QColor, QTabWidget
 
-from dff.modules.viewer.bindiff.goto import *
+from dff.modules.bindiff.goto import *
 
 class righTab(QTabWidget):
     def __init__(self, parent):

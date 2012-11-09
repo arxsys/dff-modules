@@ -24,8 +24,8 @@ from dff.api.vfs import *
 from dff.api.vfs.libvfs import *
 from dff.api.exceptions.libexceptions import *
 
-from dff.modules.viewer.bindiff.hexView import *
-from dff.modules.viewer.bindiff.lfscrollbar import *
+from dff.modules.bindiff.hexView import *
+from dff.modules.bindiff.lfscrollbar import *
 
 class BDiff(QWidget):
     def __init__(self, parent):

@@ -25,7 +25,7 @@ from dff.api.module.script import *
 from dff.api.module.module import *
 from dff.api.types.libtypes import Argument, typeId, Variant
 
-from dff.modules.statistics.chart import PieView
+from dff.modules.fileschart.chart import PieView #XXX add sub rep pour les modulse
 
 class STATCHART(QWidget):
   def __init__(self):

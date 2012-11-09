@@ -24,9 +24,9 @@ from dff.api.module.module import Module
 from dff.api.module.script import Script
 from dff.api.types.libtypes import Variant, VList, VMap, Argument, Parameter, typeId
 
-from dff.modules.viewer.regedit.model.regtree import RegTreeModel
-from dff.modules.viewer.regedit.view.regtreeview import RegTreeView
-from dff.modules.viewer.regedit.view.valueview import TableValue
+from dff.modules.regedit.model.regtree import RegTreeModel
+from dff.modules.regedit.view.regtreeview import RegTreeView
+from dff.modules.regedit.view.valueview import TableValue
 
 class REGEDIT(QWidget, Script):
   def __init__(self):

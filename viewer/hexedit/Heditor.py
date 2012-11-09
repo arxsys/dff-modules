@@ -23,14 +23,14 @@ from dff.api.vfs import *
 from dff.api.vfs.libvfs import *
 from dff.api.exceptions.libexceptions import *
 
-from dff.modules.viewer.hexedit.hexView import *
-from dff.modules.viewer.hexedit.pageView import *
-from dff.modules.viewer.hexedit.pixelView import *
-from dff.modules.viewer.hexedit.string import stringView
-from dff.modules.viewer.hexedit.bookmark import *
-from dff.modules.viewer.hexedit.informations import *
-from dff.modules.viewer.hexedit.right import *
-from dff.modules.viewer.hexedit.selection import *
+from dff.modules.hexedit.hexView import *
+from dff.modules.hexedit.pageView import *
+from dff.modules.hexedit.pixelView import *
+from dff.modules.hexedit.string import stringView
+from dff.modules.hexedit.bookmark import *
+from dff.modules.hexedit.informations import *
+from dff.modules.hexedit.right import *
+from dff.modules.hexedit.selection import *
 
 class Heditor(QWidget):
     def __init__(self, parent):

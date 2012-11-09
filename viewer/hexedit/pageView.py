@@ -17,8 +17,8 @@
 from PyQt4.QtCore import QString, Qt, SIGNAL, QLineF
 from PyQt4.QtGui import QWidget, QFont, QBrush, QPen, QColor, QGraphicsView, QGraphicsScene, QResizeEvent, QGraphicsRectItem, QHBoxLayout, QGraphicsTextItem, QGraphicsLineItem, QGraphicsSimpleTextItem, QKeySequence
 
-from dff.modules.viewer.hexedit.scrollbar import pageScrollBar
-from dff.modules.viewer.hexedit.selection import pageSelection
+from dff.modules.hexedit.scrollbar import pageScrollBar
+from dff.modules.hexedit.selection import pageSelection
 
 class wPage(QWidget):
     def __init__(self, parent):

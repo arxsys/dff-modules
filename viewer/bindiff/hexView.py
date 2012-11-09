@@ -16,9 +16,9 @@
 from PyQt4.QtCore import Qt, QLineF
 from PyQt4.QtGui import QGraphicsView, QKeySequence, QHBoxLayout, QWidget, QFont, QGraphicsScene, QGraphicsLineItem, QGraphicsTextItem
 
-from dff.modules.viewer.bindiff.hexItem import *
-from dff.modules.viewer.bindiff.asciiItem import *
-from dff.modules.viewer.bindiff.offsetItem import *
+from dff.modules.bindiff.hexItem import *
+from dff.modules.bindiff.asciiItem import *
+from dff.modules.bindiff.offsetItem import *
 
 class wHex(QWidget):
     def __init__(self, parent):

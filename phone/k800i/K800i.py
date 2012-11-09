@@ -22,7 +22,7 @@ from dff.api.module.module import *
 from dff.api.types.libtypes import Variant, VMap, Argument, typeId, Parameter
 from dff.api.vfs.libvfs import *
 
-from dff.modules.fs.spare import SpareNode
+from dff.modules.spare import SpareNode
 
 class SEPartition():
   def __init__(self, buff):

@@ -19,7 +19,7 @@ from dff.api.module import *
 from dff.api.exceptions.libexceptions import *
 from dff.api.types.libtypes import Argument, typeId, Variant
 
-from dff.modules.utils.shm.touch import *
+from dff.modules.shm.touch import *
 
 class UNXOR(Script):
   def __init__(self):

@@ -20,7 +20,7 @@ from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-from dff.modules.search.carver.utils import QFFSpinBox
+from dff.modules.carver.utils import QFFSpinBox
 
 class RootCheckBox(QCheckBox):
     def __init__(self):

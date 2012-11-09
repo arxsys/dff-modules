@@ -24,8 +24,8 @@ from dff.api.events.libevents import EventHandler, event
 from dff.api.types.libtypes import typeId, Argument, Parameter, VList, VMap, Variant
 from dff.api.taskmanager.taskmanager import TaskManager
 
-from dff.modules.search.carver.utils import QFFSpinBox
-from dff.modules.search.carver.CARVER import Carver
+from dff.modules.carver.utils import QFFSpinBox
+from dff.modules.carver.CARVER import Carver
 
 class CarvingProcess(QWidget, EventHandler):
     def __init__(self, selector, vnode):

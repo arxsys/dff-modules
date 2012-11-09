@@ -13,10 +13,10 @@
 # Author(s):
 #  Solal Jacob <sja@digital-forensic.org>
 
-from dff.modules.metadata.structparser import Struct, Header, ResolveAttributesMap, AttributesVMap
-from dff.modules.metadata.lnk.lnkitem import UUID
+from dff.modules.structparser import Struct, Header, ResolveAttributesMap, AttributesVMap
+from dff.modules.lnk.lnkitem import UUID
 
-from msoshared import MSVariant
+from dff.modules.compoundfile.msoshared import MSVariant
 
 PropertySetStreamHeader = ({ "info" : { "os":"None", "arch":"None", "name":"PropertySetStream"},
 		"descr" : {

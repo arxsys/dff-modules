@@ -12,10 +12,11 @@
 # Author(s):
 #  Frederic Baguelin <fba@digital-forensic.org>
 
-add_subdirectory(fileschart)
-
-set(statistics_srcs
+set(filechart_srcs
   __init__.py
+  fileschart.py
+  chart.py
+  chart_rc.py
 )
 
-install_file(statistics ${statistics_srcs})
+install_file(filechart ${filechart_srcs})

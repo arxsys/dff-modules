@@ -24,7 +24,7 @@ from dff.api.vfs.libvfs import *
 from dff.api.types.libtypes import Variant, VMap, Parameter, Argument, typeId
 from dff.api.vfs.libvfs import AttributesHandler
 
-from dff.modules.fs.spare import SpareNode
+from dff.modules.spare import SpareNode
 
 class CutNode(Node):
    def __init__(self, mfso, parent, name, startOff, size):

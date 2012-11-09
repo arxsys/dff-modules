@@ -15,14 +15,12 @@
 from PyQt4.QtCore import QString, Qt, SIGNAL
 from PyQt4.QtGui import QWidget, QFont, QColor, QTabWidget
 
-from dff.modules.viewer.hexedit.search import *
+from dff.modules.hexedit.search import *
+from dff.modules.hexedit.decodeValues import *
+from dff.modules.hexedit.navigation import *
 
-from decodeValues import *
-from navigation import *
-
-from options import *
-from goto import *
-
+from dff.modules.hexedit.options import *
+from dff.modules.hexedit.goto import *
 
 class righTab(QTabWidget):
     def __init__(self, parent):

@@ -16,7 +16,7 @@ from struct import unpack
 
 from dff.api.types.libtypes import vtime, TIME_MS_64
 
-from dff.modules.metadata.structparser import FlagsList
+from dff.modules.structparser import FlagsList
 
 from lnkheader import FileAttributesFlags
 

@@ -18,8 +18,8 @@ from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import SIGNAL, QString, Qt, QByteArray
 from PyQt4.QtGui import QTableWidget, QHeaderView, QTableWidgetItem, QAbstractItemView, QMenu, QAction
 
-from dff.modules.databases.winreg.regtype import regtype
-from dff.modules.databases.winreg.decoders import DateDecoder, Rot13decoder, UserAssistDecoder
+from dff.modules.winreg.regtype import regtype
+from dff.modules.winreg.decoders import DateDecoder, Rot13decoder, UserAssistDecoder
 
 DECODER = {0: "Date",
            1: "Rot13",

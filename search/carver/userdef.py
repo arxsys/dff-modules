@@ -17,7 +17,7 @@ import time
 from PyQt4.QtGui import QWidget, QGroupBox, QGridLayout, QLabel, QComboBox, QLineEdit, QPushButton, QTableWidget, QTableWidgetItem, QIcon, QMessageBox, QHBoxLayout, QCheckBox
 from PyQt4.Qt import SIGNAL
 
-from dff.modules.search.carver.utils import QSpinBox
+from dff.modules.carver.utils import QSpinBox
 
 from process import CarvingProcess
 

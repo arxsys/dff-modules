@@ -21,8 +21,8 @@ from dff.api.vfs import *
 from dff.api.vfs.libvfs import *
 from dff.api.exceptions.libexceptions import *
 
-from dff.modules.databases.winreg.pathmanager import *
-from dff.modules.databases.winreg.regtype import regtype
+from dff.modules.winreg.pathmanager import *
+from dff.modules.winreg.regtype import regtype
 
 class regviewer(QVBoxLayout):
     def __init__(self, mainw, mountpoints):

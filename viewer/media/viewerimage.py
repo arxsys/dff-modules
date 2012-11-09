@@ -25,7 +25,7 @@ from dff.api.module.module import Module
 from dff.api.module.script import Script
 from dff.api.types.libtypes import Argument, typeId
 
-from dff.modules.metadata.metaexif import EXIF
+from dff.modules.metaexif import EXIF
 
 class LoadedImage(QLabel):
   def __init__(self, parent):

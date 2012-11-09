@@ -20,8 +20,8 @@ from PyQt4.QtGui import QWidget, QVBoxLayout, QCheckBox, QGridLayout, QLabel, QL
 
 from dff.api.events.libevents import EventHandler
 
-from dff.modules.viewer.hexedit.utils import *
-from dff.modules.viewer.hexedit.messagebox import *
+from dff.modules.hexedit.utils import *
+from dff.modules.hexedit.messagebox import *
 
 class search(QWidget):
     def __init__(self, parent):

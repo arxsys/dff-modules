@@ -14,7 +14,7 @@
 # 
 import pyregfi
 
-from dff.modules.databases.winreg.nodes import ValueNode, KeyNode 
+from dff.modules.winreg.nodes import ValueNode, KeyNode 
 
 class RHive():
     def __init__(self, node, mfso, verbose=False):

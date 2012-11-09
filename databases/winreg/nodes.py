@@ -19,8 +19,8 @@ from ctypes import pointer, byref, create_string_buffer, c_uint32, c_bool
 from dff.api.vfs.libvfs import Node
 from dff.api.types.libtypes import Variant, VList, VMap, vtime, TIME_MS_64
 
-from dff.modules.databases.winreg.pathmanager import pathManager
-from dff.modules.databases.winreg.regtype import regtype
+from dff.modules.winreg.pathmanager import pathManager
+from dff.modules.winreg.regtype import regtype
 
 class ValueNode(Node):
   REGFI_BIG_DATA_MIN_LENGTH = 0xC

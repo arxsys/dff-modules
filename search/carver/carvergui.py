@@ -22,8 +22,8 @@ from dff.api.module.module import Module
 from dff.api.module.script import Script
 from dff.api.types.libtypes import typeId, Argument, Parameter
 
-from dff.modules.search.carver.predef import PredefinedPatterns
-from dff.modules.search.carver.userdef import UserPatterns
+from dff.modules.carver.predef import PredefinedPatterns
+from dff.modules.carver.userdef import UserPatterns
 
 class CarverGui(QWidget, Script):
     def __init__(self):

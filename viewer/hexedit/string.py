@@ -17,7 +17,8 @@ from PyQt4.QtCore import QString, Qt, SIGNAL
 from PyQt4.QtGui import QWidget, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QApplication, QHBoxLayout, QToolButton, QIcon, QToolBar, QAction, QDialog, QLineEdit, QLabel, QGridLayout, QDialogButtonBox, QLineEdit, QPixmap, QTextEdit
 
 from dff.api.exceptions.libexceptions import *
-from dff.modules.viewer.hexedit.lfscrollbar import *
+
+from dff.modules.hexedit.lfscrollbar import *
 
 class stringView(QWidget):
     def __init__(self, parent):
