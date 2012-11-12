@@ -13,6 +13,7 @@
 #  Solal Jacob <sja@digital-forensic.org>
 
 set(metaole_srcs
+  __init__.py
   metacompound.py
   mscfb.py 
   msdoc.py 

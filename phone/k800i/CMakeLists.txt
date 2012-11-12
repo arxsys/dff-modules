@@ -15,6 +15,7 @@
 set(k800i_srcs
   K800i.py
   K800iRecover.py
+  __init__.py
 )
 
 install_file(k800i ${k800i_srcs})
