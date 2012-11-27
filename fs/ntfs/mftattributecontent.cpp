@@ -43,6 +43,7 @@ void		MFTAttributeContent::fileMapping(FileMapping* fm)
   }
   else
   {
+   return ;
 // ds une fonction a part ??
 // compressed size of run
 //XXX spaaaarse offset = 0 ?

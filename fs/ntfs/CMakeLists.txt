@@ -19,7 +19,7 @@ INCLUDE(${SWIG_USE_FILE})
 include_directories(${PYTHON_INCLUDE_PATH})
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${CMAKE_HOME_DIRECTORY}/api/include)
+include_directories(${CMAKE_HOME_DIRECTORY}/dff/api/include)
 include_directories(${ICU_INCLUDE_DIRS})
 
 

@@ -43,8 +43,8 @@
 
 %pythoncode
 %{
-from api.module.module import * 
-from api.types.libtypes import * 
+from dff.api.module.module import Module
+from dff.api.types.libtypes import Argument, typeId
 
 class ntfs(Module):
   def __init__(self):
