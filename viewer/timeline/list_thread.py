@@ -112,11 +112,14 @@ class DataThread(QThread):
                       break
                     except TypeError:
                       break
-                    if a.type() == typeId.VTime:
+                    if a.type() == typeId.VTime and a.value() != None:
                       d = a.value().get_time()
                       if d.year == 0 and d.month == 0 and d.day == 0:
                         continue
-                      time[1][5][1], time[1][6][1] = self.insert(a.value(), oneNode, time[1][5][1], time[1][6][1])
+                      try:
+                          time[1][5][1], time[1][6][1] = self.insert(a.value(), oneNode, time[1][5][1], time[1][6][1])
+                      except ValueError:
+                          continue
                       countMe = True
                       v = a.value()
                       break

@@ -155,9 +155,9 @@ class Timeline(QWidget, Script):
           if time[1][5][1]:
               dateMin = time[1][6][1][0]
               dateMax = time[1][6][1][1]
-              if dateMin < self.baseDateMin:
+              if dateMin != None and dateMin > 0 and dateMin < 18446744073709551615 and dateMin < self.baseDateMin:
                   self.baseDateMin = dateMin
-              if dateMax > self.baseDateMax:
+              if dateMax != None and dateMax > 0 and dateMax < 18446744073709551615 and dateMax > self.baseDateMax:
                   self.baseDateMax = dateMax
       self.options.newInformations()
       self.workerThread.render()
@@ -351,6 +351,8 @@ class Timeline(QWidget, Script):
     if not tMin or not tMax:
       return 0
     nodesCount = 0
+    if root['dates'] == None:
+      return 0
     iMin, iMax = 0, len(root['dates']) - 1
     iCurrent = iMax / 2
     # Sync cursor in dates list on tMin ; should be improved
