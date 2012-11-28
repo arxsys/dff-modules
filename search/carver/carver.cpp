@@ -82,7 +82,6 @@ void		Carver::start(std::map<std::string, Variant_p > args)
   this->root->setDir();
   this->ifile->seek(args["start-offset"]->value<uint64_t>(), 0);
   this->mapper();
-  this->registerTree(this->inode, this->root);
   e1 = new event;
   e1->type = Carver::EndOfProcessing;
   e1->value = NULL;
@@ -396,6 +395,8 @@ int		Carver::createTree()
   unsigned int	i;
 
   clen = this->ctx.size();
+  if (clen > 0)
+    this->registerTree(this->inode, this->root);
   for (i = 0; i != clen; i++)
     {
       ctx = this->ctx[i];
