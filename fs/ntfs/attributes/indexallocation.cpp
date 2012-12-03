@@ -322,6 +322,9 @@ uint32_t		AttributeIndexAllocation::readNextIndex()
   }
 
   indexEntry = (DirectoryIndexEntry *)(_contentBuffer + _entryOffset);
+  if (indexEntry->entryLength == 0) {
+    return 0;
+  }
 #if __WORDSIZE == 64
   mftEntry = indexEntry->fileNameMFTFileReference & 0xffffffUL;
 #else

@@ -76,6 +76,7 @@ uint32_t	AttributeIndexRoot::_saveEntries()
   
   if (!entriesCount) {
     _indexEntries = NULL;
+    _currentIndexEntry = 0;
     return 0;
   }
   _indexEntries = new IndexEntry *[entriesCount];
@@ -109,6 +110,7 @@ bool			AttributeIndexRoot::hasNext()
   DirectoryIndexEntry	*indexEntry;
 
   if (_currentIndexEntry >= _entriesAmount || !_entriesAmount) {
+    _currentMftEntry = 0;
     return false;
   }
 
@@ -120,6 +122,7 @@ bool			AttributeIndexRoot::hasNext()
 
   indexEntry = (DirectoryIndexEntry *)_indexEntries[_currentIndexEntry];
   if (!indexEntry->fileNameMFTFileReference) {
+    _currentMftEntry = 0;
     return false;
   }
 

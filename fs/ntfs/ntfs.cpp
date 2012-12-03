@@ -359,7 +359,11 @@ uint32_t			Ntfs::_searchIndexesInEntry(uint64_t mftEntryDirOffset,
       uint16_t		savedBufferOffset;
       uint16_t		savedAttributeOffset;
 
+#if __WORDSIZE == 64
+      DEBUG(CRITICAL, "Parsing for 0x%lx\n", mftEntryDirOffset);
+#else
       DEBUG(CRITICAL, "Parsing for 0x%llx\n", mftEntryDirOffset);
+#endif
       attributeList = new AttributeAttributeList(_vfile, *attribute);
       attributeList->setMftEntry(_mftMainFile->data()->idFromOffset(mftEntryDirOffset));
       externalIndexRoot = attributeList->getExternalAttributeIndexRoot();
@@ -665,7 +669,11 @@ void				Ntfs::_createRegularNode(Node *currentDir,
       // Fetch every offsets of external $DATA attributes
       if (extAttrData) {
 	dataOffsets.push_back(_mftMainFile->data()->offsetFromID(extAttrData));
- 	DEBUG(INFO, "External attrdata: 0x%x @ size: 0x%x latest addr pushed: 0x%llx\n", extAttrData, dataOffsets.size(), dataOffsets.back());
+#if __WORDSIZE == 64
+ 	DEBUG(INFO, "External attrdata: 0x%x @ size: 0x%x latest addr pushed: 0x%lx\n", extAttrData, (uint32_t)dataOffsets.size(), dataOffsets.back());
+#else
+ 	DEBUG(INFO, "External attrdata: 0x%x @ size: 0x%x latest addr pushed: 0x%llx\n", extAttrData, (uint32_t)dataOffsets.size(), dataOffsets.back());
+#endif
       }
     }
 
