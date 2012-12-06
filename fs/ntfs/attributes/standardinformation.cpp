@@ -27,6 +27,11 @@ AttributeStandardInformation::AttributeStandardInformation(Attribute &parent)
   _readBuffer = parent.readBuffer();
   _attributeOffset = parent.attributeOffset();
   _bufferOffset = parent.bufferOffset();
+  _mftEntrySize = parent.mftEntrySize();
+  _indexRecordSize = parent.indexRecordSize();
+  _sectorSize = parent.sectorSize();
+  _clusterSize = parent.clusterSize();
+
   _offsetInRun = 0;
   _offsetRunIndex = 0;
 

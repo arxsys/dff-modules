@@ -44,7 +44,9 @@ NtfsNode::NtfsNode(std::string Name, uint64_t size, Node *parent,
   _mftEntry = 0;
   _physOffset = 0;
   _mft = mft;
+  _data = NULL;
   setSize(size);
+  _bootBlock = NULL;
 }
 
 NtfsNode::NtfsNode(std::string Name, uint64_t size, Node *parent,
@@ -75,7 +77,26 @@ NtfsNode::NtfsNode(std::string Name, uint64_t size, Node *parent,
   _mftEntry = mftEntry;
   _physOffset = offset;
   _mft = mft;
+  _data = NULL;
+  _bootBlock = NULL;
 }
+
+NtfsNode::NtfsNode(std::string Name, uint64_t size, Node *parent,
+		   Ntfs *fsobj, BootBlock *bootBlock):
+  Node(Name, size, parent, fsobj)
+{
+  _isFile = false;
+  _metaFileName = NULL;
+  _SI = NULL;
+  _mft = NULL;
+  _mftEntry = 0;
+  _physOffset = 0;
+  _data = NULL;
+  this->setDir();
+  setSize(0);
+  _bootBlock = bootBlock;
+}
+
 
 NtfsNode::~NtfsNode()
 {
@@ -116,7 +137,6 @@ std::map<std::string, Variant_p >	NtfsNode::_headerToAttribute(Attribute *attr)
       headerMap["Content size"] = Variant_p(new Variant(attr->residentDataHeader()->contentSize));
       headerMap["Content offset"] = Variant_p(new Variant(attr->residentDataHeader()->contentOffset));
     }
-
   return headerMap;
 }
 
@@ -126,33 +146,45 @@ Attributes				NtfsNode::_attributes()
   Attributes	attr;
 
   DEBUG(INFO, "in extended attributes\n");
-  //if (ntfsNode->_isFile)
-    //attr["size"] = new Variant(ntfsNode->size());
 
   dff::ScopedMutex	locker(dynamic_cast< Ntfs* >(this->fsobj())->_mutex);
+  if (this->_bootBlock) {
+    uint16_t	clusterSize = this->_bootBlock->bytePerSector * this->_bootBlock->sectorPerCluster;
+    // We are in a root NTFS node, populates it with NTFS parameters
+    attr["Byte per sector"] = Variant_p(new Variant(this->_bootBlock->bytePerSector));
+    attr["Sector per cluster"] = Variant_p(new Variant(this->_bootBlock->sectorPerCluster));
+    attr["Cluster byte size"] = Variant_p(new Variant(clusterSize));
+    attr["Number of sector"] = Variant_p(new Variant(this->_bootBlock->numberOfSector));
+    attr["Number of byte"] = Variant_p(new Variant(this->_bootBlock->numberOfSector * clusterSize));
+    attr["MFT start cluster"] = Variant_p(new Variant(this->_bootBlock->startMft));
+    attr["MFT start address"] = Variant_p(new Variant(this->_bootBlock->startMft * clusterSize));
+    attr["MFTMirr start cluster"] = Variant_p(new Variant(this->_bootBlock->startMftMirr));
+    attr["MFTMirr start address"] = Variant_p(new Variant(this->_bootBlock->startMftMirr * clusterSize));
+    attr["MFT record cluster size"] = Variant_p(new Variant(this->_bootBlock->clusterMftRecord));
+    attr["MFT record byte size"] = Variant_p(new Variant(this->_bootBlock->clusterMftRecord * clusterSize));
+    attr["Index record cluster size"] = Variant_p(new Variant(this->_bootBlock->clusterIndexRecord));
+    attr["Index record byte size"] = Variant_p(new Variant(this->_bootBlock->clusterIndexRecord * clusterSize));
+    attr["Volume serial number"] = Variant_p(new Variant(this->_bootBlock->volumeSerialNumber));
+  }
+
   if (!(this->_SI)) {
     return attr;
   }
 
   attr["MFT entry number"] = Variant_p(new Variant(this->_mftEntry));
   attr["MFT physical offset"] = Variant_p(new Variant(this->_physOffset));
+  attr["MFT cluster number"] = Variant_p(new Variant(this->_physOffset / this->_SI->clusterSize()));
 
   Attribute	*attribute;
 
   attr["altered"] = Variant_p(new Variant(new vtime(this->_SI->data()->fileAlteredTime, TIME_MS_64)));
   attr["accessed"] = Variant_p(new Variant(new vtime(this->_SI->data()->fileAccessedTime, TIME_MS_64)));
   attr["creation"] = Variant_p(new Variant(new vtime(this->_SI->data()->creationTime, TIME_MS_64)));
-  /*
-  mftData->clusterSize(4096);
-  mftData->indexRecordSize(4096);
-  mftData->sectorSize(512);
-  mftData->mftEntrySize(1024);
-  */
+
   if (!(this->_mft->decode(this->_physOffset))) {
     return attr;
   }
 
-  //  _mft->readHeader();
   while ((attribute = (this->_mft->getNextAttribute()))) {
     std::map<std::string, Variant_p >	attributeMap;
     std::string				attributeFullName;
@@ -167,6 +199,11 @@ Attributes				NtfsNode::_attributes()
     }
     else if (attribute->getType() == ATTRIBUTE_FILE_NAME) {
       this->_fileName(&attributeMap, new AttributeFileName(*attribute));
+    }
+    else if (attribute->getType() == ATTRIBUTE_DATA) {
+      // Creates a 'Runs list' vmap made of every data chunk addresses.
+      // FIXME does it impact performances ? Toggle it with a module argument.
+      this->_dataAttribute(&attributeMap, new AttributeData(*attribute));
     }
     DEBUG(INFO, "got name: %s\n", attributeFullName.c_str());
     attributeMap.insert(std::pair<std::string, Variant_p >("Header", Variant_p(new Variant(attributeHeaderMap))));
@@ -217,14 +254,29 @@ void	NtfsNode::_standardInformation(std::map<std::string, Variant_p > *vmap, Att
 
 void	NtfsNode::_fileName(std::map<std::string, Variant_p > *vmap, AttributeFileName *nAttr)
 {
-  std::map<std::string, Variant_p >	flagsMap;
-
   (*vmap)["Creation time"] = Variant_p(new Variant(new vtime(nAttr->data()->fileCreationTime, TIME_MS_64)));
   (*vmap)["File altered time"] = Variant_p(new Variant(new vtime(nAttr->data()->fileModificationTime, TIME_MS_64)));
   (*vmap)["MFT altered time"] = Variant_p(new Variant(new vtime(nAttr->data()->mftModificationTime, TIME_MS_64)));
   (*vmap)["File accessed time"] = Variant_p(new Variant(new vtime(nAttr->data()->fileAccessTime, TIME_MS_64)));
   
   delete nAttr;
+}
+
+void					NtfsNode::_dataAttribute(std::map<std::string, Variant_p > *vmap, AttributeData *data)
+{
+  std::map<std::string, Variant_p >	runMap;
+  OffsetRun				*run;
+
+  if (!data->attributeHeader()->nonResidentFlag || !data->getOffsetListSize())
+    return;
+
+  run = data->getOffsetRun(0);
+  runMap["length"] = Variant_p(new Variant(run->runLength));
+  runMap["cluster"] = Variant_p(new Variant(run->runOffset));
+  (*vmap)["First chunk"] = Variant_p(new Variant(runMap));
+  (*vmap)["Number of chunk"] = Variant_p(new Variant(data->getOffsetListSize()));
+
+  delete data;
 }
 
 void	NtfsNode::fileMapping(FileMapping *fm)

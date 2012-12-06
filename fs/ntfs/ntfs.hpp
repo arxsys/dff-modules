@@ -67,6 +67,7 @@ private:
   uint64_t	_mftDecode;
   uint64_t	_indexDecode;
   class NtfsNode	*_root;
+  class NtfsNode	*_unallocRootNode;
   NtfsNode	*_orphan;
   VFile		*_vfile;
   Boot		*_boot;
@@ -113,6 +114,7 @@ private:
   void		_createLinkedNode(Node *, uint32_t, uint32_t);
   void		_parseDirTree(Node *, uint32_t, uint64_t);
   void		_checkOrphanEntries();
+  void		_readBitmap();
 };
 
 #endif

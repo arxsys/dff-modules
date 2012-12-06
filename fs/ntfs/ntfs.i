@@ -42,7 +42,7 @@
 %pythoncode
 %{
 
-__dff_module_NTFS_version__ = "0.5.0"
+__dff_module_NTFS_version__ = "0.5.1"
 
 from dff.api.module.module import *
 from dff.api.types.libtypes import Argument, typeId
@@ -61,6 +61,9 @@ class NTFS(Module):
                            "input": Argument.Optional|Argument.Single|typeId.UInt64})
     self.conf.addArgument({"name": "no-orphan",
                            "description": "Don't check for orphaned or deleted files",
+                           "input": Argument.Empty})
+    self.conf.addArgument({"name": "no-bitmap-parse",
+                           "description": "Don't parse the top-level $Bitmap NTFS metafile to create a node filled with unallocated space",
                            "input": Argument.Empty})
     self.conf.addConstant({"name": "mime-type", 
                            "type": typeId.String,

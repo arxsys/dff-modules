@@ -31,6 +31,7 @@ set(ntfs_srcs
   mftfile.cpp
   attribute.cpp
   ntfsnode.cpp
+  bitmapnode.cpp
   attributes/data.cpp
   attributes/bitmap.cpp
   attributes/filename.cpp

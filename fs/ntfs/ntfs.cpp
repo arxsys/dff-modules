@@ -24,7 +24,7 @@
 #include "ntfs.hpp"
 #include "attributes/filename.hpp"
 #include "attributes/attributelist.hpp"
-
+#include "bitmapnode.hpp"
 
 Ntfs::Ntfs() : mfso("ntfs")
 {
@@ -33,6 +33,7 @@ Ntfs::Ntfs() : mfso("ntfs")
   _root = NULL;
   _mftDecode = -1;
   _indexDecode = -1;
+  _unallocRootNode = NULL;
   try
     {
       DEBUG(INFO, "Constructor OK\n");
@@ -1185,6 +1186,104 @@ void					Ntfs::_checkOrphanEntries()
   //_mftMainFile->dumpDiscoveredEntries();
 }
 
+/**
+ * Read the $Bitmap FS top-level metafile create nodes made of unallocated
+ * space if "bitmap-parse" argument is true.
+ *  - Searches for $Bitmap file with MFT entry number 6.
+ *  - Reads $Bitmap content.
+ *  - Fills the unallocated top-level node directory with one node file for
+ *  each unallocated cluster chunk.
+ */
+void		Ntfs::_readBitmap()
+{
+  std::string			nodeName = std::string("$Bitmap");
+  uint32_t			childCount = _root->childCount();
+  uint32_t			i = 0;
+  std::vector<class Node *>	children = _root->children();
+  NtfsNode			*bitmap = NULL;
+  VFile				*vfile;
+  uint8_t			*data;
+  Node				*unallocatedByAddresses = NULL;
+  uint8_t			bit;
+  uint64_t			clusterIndex = 0;
+  uint64_t			unallocChunkStart = 0;
+  bool				inUnalloc = false;
+
+  // Gets the $Bitmap metafile
+  if (!nodeName.size()) {
+    return ;
+  }
+  DEBUG(CRITICAL, "childCount: %u\n", childCount);
+  DEBUG(CRITICAL, "parent is %s\n", _root->name().c_str());
+  while (i != childCount && bitmap == NULL) {
+    DEBUG(VERBOSE, "checking for %s\n", children[i]->name().c_str());
+    if (children[i]->name() == nodeName) {
+      bitmap = (NtfsNode *)children[i];
+      if (bitmap->getMftEntry() != 6) { // $Bitmap metafile is always entry #6
+	bitmap = NULL;
+      }
+    }
+    ++i;
+  }
+  if (bitmap == NULL) {
+    DEBUG(CRITICAL, "Can't find a valid $Bitmap metafile\n");
+    return ;
+  }
+
+#if __WORDSIZE == 64
+  DEBUG(CRITICAL, "Opening $Bitmap file, %lu bytes.\n", bitmap->size());
+#else
+  DEBUG(CRITICAL, "Opening $Bitmap file, %llu bytes.\n", bitmap->size());
+#endif
+
+  // Reads $Bitmap content
+  data = new uint8_t[bitmap->size()];
+  vfile = bitmap->open();
+  vfile->read(data, bitmap->size());
+  vfile->close();
+
+  i = 0;
+  while (i != bitmap->size()) {
+
+    DEBUG(CRITICAL, "0x%x bytes is 0x%x\n", i, data[i]);
+    for (bit = 0x1; ; bit <<= 1 ) {	// Iterates inside each bit
+      DEBUG(CRITICAL, " %c %lu %lu\n", ((data[i] & bit) ? '1' : '0'), clusterIndex, unallocChunkStart);
+
+      if (!((data[i] & bit) || inUnalloc)) {
+	unallocChunkStart = clusterIndex;
+	/* Must use a boolean in case of $Bitmap file starting with unallocated
+	   area unallocChunkStart remains 0 */
+	inUnalloc = true;
+      }
+      if ((data[i] & bit) && inUnalloc) {
+	std::ostringstream	unallocChunkName;
+	unallocChunkName << unallocChunkStart << "--" << clusterIndex;
+	// Creates a 'by addresses' node
+	new BitmapNode(unallocChunkName.str(), (clusterIndex - unallocChunkStart) * _boot->clusterSize(), _unallocRootNode, _node, this, unallocChunkStart, _boot->clusterSize());
+
+	unallocChunkStart = 0;
+	inUnalloc = false;
+      }
+
+      ++clusterIndex;
+      if (bit == 0x80)
+	/* 0x80 = b10000000 = MSB mask
+	   Don't loop ; uint8_t overflow */
+	break;
+    }
+
+    ++i;
+  }
+
+  if (inUnalloc) { // End of $Bitmap file reached ending with unallocated area
+    std::ostringstream	unallocChunkName;
+    unallocChunkName << unallocChunkStart << "--" << clusterIndex;
+    new Node(unallocChunkName.str(), (clusterIndex - unallocChunkStart) * _boot->clusterSize(), unallocatedByAddresses, NULL);
+  }
+
+  delete data;
+}
+
 void	Ntfs::_setStateInfo(std::string currentState)
 {
   stateinfo = currentState;
@@ -1206,6 +1305,7 @@ void		Ntfs::start(std::map<std::string, Variant_p > args)
   uint16_t	mftEntryNumber;
   std::map<std::string, Variant_p >::iterator	it;
   bool          noorphan = false;
+  bool          unalloc = true;
 
   if ((it = args.find("mftdecode")) != args.end())
     this->_mftDecode = it->second->value<uint64_t>();
@@ -1225,8 +1325,13 @@ void		Ntfs::start(std::map<std::string, Variant_p > args)
 #else
       DEBUG(INFO, "Only have to decode index entries at offset 0x%llx\n", _indexDecode);
 #endif
-  if ((it =args.find("no-orphan")) != args.end())
+  if ((it = args.find("no-orphan")) != args.end())
      noorphan = true;
+
+  if ((it = args.find("no-bitmap-parse")) != args.end()) {
+    DEBUG(CRITICAL, "Will create unallocated space as $Bitmap children\n");
+    unalloc = false;
+  }
 
   /* Assume NTFS Boot sector is present */
   if ((it = args.find("file")) != args.end())
@@ -1358,7 +1463,7 @@ void		Ntfs::start(std::map<std::string, Variant_p > args)
 	// Mft is valid
 
 	DEBUG(INFO, "\tValid MFTEntry found\n");
-	_root = new NtfsNode("NTFS", 0, NULL, this, false, NULL, NULL, NULL);
+	_root = new NtfsNode("NTFS", 0, NULL, this, _boot->getBootBlock());
 
 	mftEntryNumber = 0;
 	_mftMainFile = new MftFile(_vfile, _boot->mftEntrySize(),
@@ -1371,10 +1476,18 @@ void		Ntfs::start(std::map<std::string, Variant_p > args)
 	
 	_setStateInfo("Searching for regular files and directories");
 	_walkMftMainFile();
-	_setStateInfo("Searching for deleted and orphans files and directories");
-	DEBUG(INFO, "Searching for deleted and orphans files\n");
-        if (noorphan == false)
+        if (noorphan == false) {
+	  _setStateInfo("Searching for deleted and orphans files and directories");
+	  DEBUG(INFO, "Searching for deleted and orphans files\n");
 	  _checkOrphanEntries();
+	}
+	if (unalloc == true) {
+	  _setStateInfo("Read $Bitmap to create unallocated space nodes");
+	  DEBUG(INFO, "Read $Bitmap to create unallocated space nodes\n");
+	  _unallocRootNode = new NtfsNode("NTFS unallocated", 0, NULL, this, false, NULL, NULL, NULL);
+	  _readBitmap();
+	}
+
 	_setStateInfo("Done");
       }
       else {
@@ -1385,6 +1498,9 @@ void		Ntfs::start(std::map<std::string, Variant_p > args)
 
       if (_node && _root) {
 	registerTree(_node, _root);
+      }
+      if (_node && _unallocRootNode) {
+	registerTree(_node, _unallocRootNode);
       }
     }
   catch (vfsError & e)

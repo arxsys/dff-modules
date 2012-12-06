@@ -16,8 +16,8 @@
  *
  */
 
-#ifndef __NTFSNONE_HPP__
-#define __NTFSNONE_HPP__
+#ifndef __NTFSNODE_HPP__
+#define __NTFSNODE_HPP__
 
 #include "ntfs.hpp"
 #include "node.hpp"
@@ -25,6 +25,7 @@
 #include "mftentry.hpp"
 #include "attributes/data.hpp"
 #include "attributes/filename.hpp"
+#include "boot.hpp"
 
 class NtfsNode : public Node
 {
@@ -34,6 +35,8 @@ public:
 	   AttributeStandardInformation *, MftEntry *);
   NtfsNode(std::string, uint64_t, Node *, Ntfs *, bool, AttributeFileName *,
 	   AttributeStandardInformation *, MftEntry *, uint32_t, uint64_t);
+  NtfsNode(std::string Name, uint64_t size, Node *parent, Ntfs *fsobj,
+	   BootBlock *bootBlock);
   ~NtfsNode();
   virtual void			fileMapping(FileMapping *);
   void				node(Node *node) { _node = node; };
@@ -42,15 +45,19 @@ public:
   uint32_t			getMftEntry() { return _mftEntry; };
   void				dataOffsets(std::list<uint64_t> d) { _dataOffsets = d; };
   Attributes			_attributes(void);
+
 private:
   bool						_isFile;
   AttributeStandardInformation			*_SI;
   uint32_t					_mftEntry;
   uint64_t					_physOffset;
   MftEntry					*_mft;
-  std::map<std::string, Variant_p >	_headerToAttribute(Attribute *);
+  BootBlock					*_bootBlock;
+
+  std::map<std::string, Variant_p >		_headerToAttribute(Attribute *);
   void						_standardInformation(std::map<std::string, Variant_p > *, AttributeStandardInformation *);
   void						_fileName(std::map<std::string, Variant_p > *, AttributeFileName *);
+  void						_dataAttribute(std::map<std::string, Variant_p > *, AttributeData *);
   void						_setNextAttrData(FileMapping *fm, uint64_t totalOffset);
 
   FileMapping		*_fm;
