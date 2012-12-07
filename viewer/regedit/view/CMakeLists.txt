@@ -17,5 +17,6 @@ set(regedit_view_srcs
   __init__.py
   regtreeview.py
   valueview.py
+  keyinfoview.py
 )
 install_file(regedit_view ${regedit_view_srcs})

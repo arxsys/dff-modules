@@ -176,6 +176,7 @@ class RegTreeModel(QStandardItemModel):
           key = hive.root
       else:
           key = hive.subtree(path[1:]).current_key()
+      self.emit(SIGNAL("keyItemSelected"), item)
       self.emit(SIGNAL("keySelected"), rhive, key)
       
   def RegType(self, node):
