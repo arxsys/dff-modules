@@ -162,12 +162,13 @@ class AttributeHash(AttributesHandler):
        except KeyError:
          return None
 
-    def setHash(self, node, algo, h):
+    def setHash(self, node, algo, h): ##XXX atributehandler->updateState()
 	try:
 	  hashInfo = self.calculatedHash[long(node.this)]
 	except KeyError:
 	    hashInfo = HashInfo()
             self.calculatedHash[long(node.this)] = hashInfo
+        node.attributesHandlers().updateState() #XXX aileurs surrement bien verifier
         hashInfo.hashes[algo] = h
 
     def setKnown(self, node, setId):
@@ -178,6 +179,7 @@ class AttributeHash(AttributesHandler):
 	   self.calculatedHash[long(node.this)] = hashInfo
 	hashInfo.hsets.add(setId)
 
+#XXX if new attribute node->attributeHandlers->updateState()
     def attributes(self, node):
        m = VMap() 
        hinfos = self.calculatedHash[long(node.this)]
