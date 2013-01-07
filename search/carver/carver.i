@@ -97,7 +97,6 @@ class CARVER(Module):
         self.conf.addArgument({"name": "file",
 	                       "description": "file used by carver",
                                "input": Argument.Required|Argument.Single|typeId.Node})
-
         needle = Argument("needle", Argument.Required|Argument.Single|typeId.String, "represents the needle to search in the haystack")
         needle.thisown = False
 
@@ -112,6 +111,15 @@ class CARVER(Module):
         header.addSubArgument(wildcard)
         header.addSubArgument(size)
 	header.thisown = False
+
+        needle = Argument("needle", Argument.Required|Argument.Single|typeId.String, "represents the needle to search in the haystack")
+        needle.thisown = False
+
+        wildcard = Argument("wildcard", Argument.Required|Argument.Single|typeId.Char, "represents wildcard character used to match anything")
+        wildcard.thisown = False
+
+        size = Argument("size", Argument.Required|Argument.Single|typeId.UInt32, "size of the needle. Needed in order to take into account \0")
+        size.thisown = False
 
         footer = Argument("footer", Argument.Optional|Argument.Single|typeId.Argument, "represents the footer, generally corresponding to the ending magic value")
         footer.addSubArgument(needle)
