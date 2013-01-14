@@ -12,13 +12,11 @@
 # Author(s):
 #  Frederic Baguelin <fba@digital-forensic.org>
 
-set(viewer_srcs
+install_file(
   __init__.py
   cat.py
   hist.py
 )
-
-install_file(viewer ${viewer_srcs})
 
 add_subdirectory(hexedit)
 add_subdirectory(regedit)

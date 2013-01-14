@@ -12,7 +12,7 @@
 # Author(s):
 #  Jeremy MOUNIER <jmo@digital-forensic.org>
 
-set(winreg_srcs
+install_file(
   __init__.py
   winreg.py
   hive.py
@@ -22,5 +22,3 @@ set(winreg_srcs
   registrymanager.py
   decoders.py
 )
-
-install_file(winreg ${winreg_srcs})

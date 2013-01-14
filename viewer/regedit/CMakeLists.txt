@@ -13,12 +13,10 @@
 # Author(s):
 #  Jeremy Mounier <jmo@digital-forensic.org>
 
-set(regedit_srcs
+install_file(
   __init__.py
   regedit.py
-#  regviewer.py
 )
-install_file(regedit ${regedit_srcs})
 
 add_subdirectory(model)
 add_subdirectory(view)

@@ -14,8 +14,6 @@
 
 #add_subdirectory (zip)
 
-set(archives_srcs
+install_file(
   __init__.py
 )
-
-install_file(archives ${archives_srcs})

@@ -12,11 +12,9 @@
 # Author(s):
 #  Solal Jacob <sja@digital-forensic.org>
 
-set(connector_files
-   __init__.py
-)
-
-install_file(connector ${connector_files})
+install_file(
+  __init__.py
+  )
 
 add_subdirectory(devices)
 

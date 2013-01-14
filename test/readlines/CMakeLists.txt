@@ -14,35 +14,9 @@
 #  Solal Jacob <sja@digital-forensic.org>
 
 
-FIND_PACKAGE(SWIG REQUIRED)
-INCLUDE(${SWIG_USE_FILE})
-
-include_directories(${PYTHON_INCLUDE_PATH})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${CMAKE_HOME_DIRECTORY}/dff/api/include)
-
-
-set(readlines_srcs
-   readlines.cpp
-)
-
-SET_SOURCE_FILES_PROPERTIES(readlines.i PROPERTIES CPLUSPLUS ON)
-SWIG_ADD_MODULE(READLINES python readlines.i ${readlines_srcs})
-SWIG_LINK_LIBRARIES(READLINES ${PYTHON_LIBRARIES} exceptions types vfs)
-
-if ( CMAKE_GENERATOR MATCHES "Visual Studio")
-set_target_properties (${SWIG_MODULE_READLINES_REAL_NAME} PROPERTIES
-  SUFFIX ".pyd"
-  RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_BINARY_DIR}"
-  RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_CURRENT_BINARY_DIR}"
-  RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_CURRENT_BINARY_DIR}"
-)
-endif ( CMAKE_GENERATOR MATCHES "Visual Studio")
-
-set(readlines_files
-  __init__.py
-  READLINES.py
-)
-
-install_lib(${SWIG_MODULE_READLINES_REAL_NAME})
-install_file(readlines ${readlines_files})
+dff_cpp_module(READLINES
+  CPP_FILES readlines.cpp
+  SWIG_FILE readlines.i
+  LINK_LIBRARIES exceptions types vfs
+  EXTRA_FILES __init__.py
+  )

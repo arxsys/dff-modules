@@ -12,7 +12,7 @@
 # Author(s):
 #  Solal Jacob <sja@digital-forensic.org>
 
-set(metaole_srcs
+install_file(
   __init__.py
   metacompound.py
   mscfb.py 
@@ -23,5 +23,3 @@ set(metaole_srcs
   msoshared.py
   msppt.py
 )
-
-install_file(metaole ${metaole_srcs})

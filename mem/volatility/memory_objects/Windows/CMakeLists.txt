@@ -12,8 +12,6 @@
 # Author(s):
 #  Frederic Baguelin <fba@digital-forensic.org>
 
-set(volatility_memobj_win_files
+install_file(
   xp_sp2.py
 )
-
-install_file(volatility_memobj_win ${volatility_memobj_win_files})

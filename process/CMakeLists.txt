@@ -13,10 +13,8 @@
 #  Solal Jacob <sja@digital-forensic.org>
 
 
-set(process_srcs
+install_file(
   evalexp.py
   post_process.py
   pipe_exec.py
 )
-
-install_file(process ${process_srcs})

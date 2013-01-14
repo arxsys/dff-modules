@@ -12,11 +12,9 @@
 # Author(s):
 #  Romain BERTHOLON <rbe@digital-forensic.org>
 
-set(raid_srcs
+install_file(
   __init__.py
   decoder.py
   header.py
   raid.py
 )
-
-install_file(raid ${raid_srcs})

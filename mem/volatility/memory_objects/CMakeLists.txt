@@ -14,9 +14,6 @@
 
 add_subdirectory(Windows)
 
-set(volatility_mem_object
+install_file(
   __init__.py
 )
-
-install_file(_volmemobject ${volatility_mem_object})
-

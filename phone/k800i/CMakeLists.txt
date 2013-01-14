@@ -12,10 +12,8 @@
 # Author(s):
 #  Solal Jacob <sja@digital-forensic.org>
 
-set(k800i_srcs
+install_file(
   K800i.py
   K800iRecover.py
   __init__.py
 )
-
-install_file(k800i ${k800i_srcs})

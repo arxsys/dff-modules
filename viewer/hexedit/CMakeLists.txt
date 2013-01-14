@@ -13,7 +13,7 @@
 # Author(s):
 #  Jeremy Mounier <jmo@digital-forensic.org>
 
-set(hexedit_srcs
+install_file(
   Heditor.py
   __init__.py
   asciiItem.py
@@ -42,6 +42,4 @@ set(hexedit_srcs
   lfscrollbar.py
   string.py
 )
-
-install_file(hexedit ${hexedit_srcs})
 

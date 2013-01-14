@@ -11,10 +11,8 @@
 # Author(s):
 #  Frederic Baguelin <fba@digital-forensic.org>
 
-set(volatility_memplugins_files
+install_file(
   example1.py
   example2.py
   example3.py
 )
-
-install_file(volatility_memplugins ${volatility_memplugins_files})

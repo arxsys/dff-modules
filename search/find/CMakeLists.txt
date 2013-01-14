@@ -12,9 +12,7 @@
 # Author(s):
 #  Frederic Baguelin <fba@digital-forensic.org>
 
-set(find_srcs
+install_file(
   __init__.py
   find.py
 )
-
-install_file(find ${find_srcs})

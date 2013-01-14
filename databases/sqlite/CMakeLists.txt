@@ -12,10 +12,8 @@
 # Author(s):
 #  Jeremy MOUNIER <jmo@digital-forensic.org>
 
-set(sqlite_srcs
+install_file(
   __init__.py
   sqlitedb.py
   sqlitemanager.py
 )
-
-install_file(sqlite ${sqlite_srcs})

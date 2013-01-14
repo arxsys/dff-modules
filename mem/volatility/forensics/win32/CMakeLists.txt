@@ -12,7 +12,7 @@
 # Author(s):
 #  Frederic Baguelin <fba@digital-forensic.org>
 
-set(volatility_forensics_win32_files
+install_file(
   crash_addrspace.py
   datetime.py 
   handles.py
@@ -31,5 +31,3 @@ set(volatility_forensics_win32_files
   scan.py
   vad.py
 )
-
-install_file(volatility_forensics_win32 ${volatility_forensics_win32_files})

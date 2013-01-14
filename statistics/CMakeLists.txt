@@ -12,10 +12,8 @@
 # Author(s):
 #  Frederic Baguelin <fba@digital-forensic.org>
 
-set(statistics_srcs
+install_file(
   __init__.py
 )
-
-install_file(statistics ${statistics_srcs})
 
 add_subdirectory(fileschart)

@@ -12,10 +12,8 @@
 # Author(s):
 #  jeremy MOUNIER <jmo@digital-forensic.org>
 
-set(exif_srcs
+install_file(
   __init__.py
   metaexif.py
   EXIF.py
 )
-
-install_file(exif ${exif_srcs})

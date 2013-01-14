@@ -11,7 +11,7 @@
 # Author(s):
 #  Frederic Baguelin <fba@digital-forensic.org>
 
-set(volatility_files
+install_file(
   dfwrapper.py
   setup.py
   vmodules.py
@@ -20,8 +20,6 @@ set(volatility_files
   vtypes.py
   vutils.py
 )
-
-install_file(_volatility ${volatility_files})
 
 add_subdirectory(memory_objects)
 add_subdirectory(memory_plugins)

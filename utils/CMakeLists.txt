@@ -12,13 +12,10 @@
 # Author(s):
 #  Frederic Baguelin <fba@digital-forensic.org>
 
-set(utils_srcs
+install_file(
   __init__.py
-  #integrity.py
   fileinfo.py
   man.py
 )
-
-install_file(utils ${utils_srcs})
 
 add_subdirectory (shm)

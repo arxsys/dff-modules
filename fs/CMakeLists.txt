@@ -18,9 +18,8 @@ add_subdirectory (extfs)
 add_subdirectory (fat)
 add_subdirectory (ntfs)
 
-set(fs_srcs
+install_file(
   __init__.py
   spare.py
 )
 
-install_file(fs ${fs_srcs})

@@ -13,7 +13,7 @@
 # Author(s):
 #  Jeremy Mounier <jmo@digital-forensic.org>
 
-set(bindiff_srcs
+install_file(
   __init__.py
   binarydiff.py
   lfscrollbar.py
@@ -23,6 +23,3 @@ set(bindiff_srcs
   hexView.py
   offsetItem.py
 )
-
-install_file(bindiff ${bindiff_srcs})
-

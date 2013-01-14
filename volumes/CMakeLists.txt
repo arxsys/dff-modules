@@ -16,8 +16,6 @@ add_subdirectory(partition)
 add_subdirectory(vmware)
 #add_subdirectory(raid)
 
-set(volumes_srcs
+install_file(
   __init__.py
 )
-
-install_file(volumes ${volumes_srcs})

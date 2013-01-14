@@ -12,7 +12,7 @@
 # Author(s):
 #  Christophe Malinge <cma@digital-forensic.org>
 
-set(timeline_srcs
+install_file(
   __init__.py
   compute_thread.py
   drawer.py
@@ -22,4 +22,3 @@ set(timeline_srcs
   timeline.py
 )
 
-install_file(timeline ${timeline_srcs})

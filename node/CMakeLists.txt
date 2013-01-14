@@ -13,10 +13,8 @@
 #  Solal Jacob <sja@digital-forensic.org>
 
 
-set(node_srcs
+install_file(
   cut.py
   merge.py
   split.py
 )
-
-install_file(node ${node_srcs})

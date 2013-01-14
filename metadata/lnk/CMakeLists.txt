@@ -12,11 +12,9 @@
 # Author(s):
 #  Solal Jacob <sja@digital-forensic.org>
 
-set(lnk_srcs
+install_file(
   __init__.py
   lnk.py
   lnkheader.py
   lnkitem.py
 )
-
-install_file(lnk ${lnk_srcs})

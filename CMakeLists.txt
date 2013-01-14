@@ -13,11 +13,7 @@
 #  Frederic Baguelin <fba@digital-forensic.org>
 #  Solal Jacob <sja@digital-forensic.org>
 
-set(module_srcs
-  __init__.py
-)
-
-install_file(module2 ${module_srcs})
+install_file(__init__.py)
 
 add_subdirectory (volumes)
 add_subdirectory (fs)

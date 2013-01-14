@@ -12,9 +12,7 @@
 # Author(s):
 #  Frederic Baguelin <fba@digital-forensic.org>
 
-set(crypto_srcs
+install_file(
   __init__.py
   unxor.py
 )
-
-install_file(crypto ${crypto_srcs})

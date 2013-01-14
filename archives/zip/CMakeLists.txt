@@ -12,10 +12,8 @@
 # Author(s):
 #  Frederic Baguelin <fba@digital-forensic.org>
 
-set(zip_srcs
+install_file(
   __init__.py
   unzip.py
   mzipfile.py
 )
-
-install_file(zip ${zip_srcs})

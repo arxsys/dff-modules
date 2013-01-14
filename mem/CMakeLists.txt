@@ -12,10 +12,8 @@
 # Author(s):
 #  Frederic Baguelin <fba@digital-forensic.org>
 
-set(mem_srcs
+install_file(
   __init__.py
 )
-
-install_file(mem ${mem_srcs})
 
 add_subdirectory (volatility)

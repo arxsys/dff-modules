@@ -12,10 +12,7 @@
 # Author(s):
 #  Solal Jacob <sja@digital-forensic.org>
 
-
-#add_subdirectory (cls)
-
-set(builtins_srcs
+install_file(
   cd.py
   batch.py
   fg.py
@@ -30,5 +27,3 @@ set(builtins_srcs
   show_db.py
   __init__.py
 )
-
-install_file(builtins ${builtins_srcs})

@@ -12,36 +12,8 @@
 # Author(s):
 #  Frederic Baguelin <fba@digital-forensic.org>
 
-
-FIND_PACKAGE(SWIG REQUIRED)
-INCLUDE(${SWIG_USE_FILE})
-
-include_directories(${PYTHON_INCLUDE_PATH})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${CMAKE_HOME_DIRECTORY}/dff/api/include)
-
-set(partition_srcs
-  partition.cpp
-  dos.cpp
+dff_cpp_module(PARTITION
+  CPP_FILES partition.cpp dos.cpp
+  SWIG_FILE partition.i
+  LINK_LIBRARIES exceptions types vfs tree  
 )
-
-add_definitions(-D__STDC_LIMIT_MACROS)
-SET_SOURCE_FILES_PROPERTIES(partition.i PROPERTIES CPLUSPLUS ON)
-SWIG_ADD_MODULE(PARTITION python partition.i ${partition_srcs})
-SWIG_LINK_LIBRARIES(PARTITION ${PYTHON_LIBRARIES} exceptions types vfs)
-
-if ( CMAKE_GENERATOR MATCHES "Visual Studio")
-set_target_properties (${SWIG_MODULE_PARTITION_REAL_NAME} PROPERTIES
-  SUFFIX ".pyd"
-  RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_BINARY_DIR}"
-  RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_CURRENT_BINARY_DIR}"
-  RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_CURRENT_BINARY_DIR}"
-)
-endif ( CMAKE_GENERATOR MATCHES "Visual Studio")
-
-set(partition_files
-  PARTITION.py
-)
-
-install_lib(${SWIG_MODULE_PARTITION_REAL_NAME})
-install_file(partition ${partition_files})

@@ -12,7 +12,7 @@
 # Author(s):
 #  Frederic Baguelin <fba@digital-forensic.org>
 
-set(volatility_forensics_files
+install_file(
   addrspace.py
   commands.py
   __init__.py  
@@ -22,8 +22,6 @@ set(volatility_forensics_files
   symbols.py
   x86.py
 )
-
-install_file(volatility_forensics ${volatility_forensics_files})
 
 add_subdirectory(win32)
 

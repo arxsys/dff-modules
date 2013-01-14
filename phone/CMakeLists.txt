@@ -12,10 +12,8 @@
 # Author(s):
 #  Solal Jacob <sja@digital-forensic.org>
 
-set(phone_srcs
+install_file(
   smsdecode.py
 )
-
-install_file(phone ${phone_srcs})
 
 add_subdirectory (k800i)

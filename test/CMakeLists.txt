@@ -13,11 +13,9 @@
 #  Solal Jacob <sja@digital-forensic.org>
 
 
-set(testmod_srcs
+install_file(
   huge_node.py
   gen_nodes.py
 )
-
-install_file(testmod ${testmod_srcs})
 
 add_subdirectory(readlines)

@@ -11,9 +11,7 @@
 # Author(s):
 #  Frederic Baguelin <fba@digital-forensic.org>
 
-set(volatility_thirdparty_files
+install_file(
   __init__.py 
   progressbar.py
 )
-
-install_file(volatility_thirdparty ${volatility_thirdparty_files})
