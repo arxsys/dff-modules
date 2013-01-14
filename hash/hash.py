@@ -169,6 +169,7 @@ class AttributeHash(AttributesHandler):
 	    hashInfo = HashInfo()
             self.calculatedHash[long(node.this)] = hashInfo
         hashInfo.hashes[algo] = h
+        node.attributesHandlers().updateState()
 
     def setKnown(self, node, setId):
 	try:
@@ -177,6 +178,7 @@ class AttributeHash(AttributesHandler):
 	   hashInfo = HashInfo() 
 	   self.calculatedHash[long(node.this)] = hashInfo
 	hashInfo.hsets.add(setId)
+        node.attributesHandlers().updateState()
 
     def attributes(self, node):
        m = VMap() 
