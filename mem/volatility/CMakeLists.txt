@@ -11,11 +11,6 @@
 # Author(s):
 #  Frederic Baguelin <fba@digital-forensic.org>
 
-add_subdirectory(memory_objects)
-add_subdirectory(memory_plugins)
-add_subdirectory(forensics)
-add_subdirectory(thirdparty)
-
 set(volatility_files
   dfwrapper.py
   setup.py
@@ -27,3 +22,8 @@ set(volatility_files
 )
 
 install_file(_volatility ${volatility_files})
+
+add_subdirectory(memory_objects)
+add_subdirectory(memory_plugins)
+add_subdirectory(forensics)
+add_subdirectory(thirdparty)

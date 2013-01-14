@@ -12,14 +12,14 @@
 # Author(s):
 #  Frederic Baguelin <fba@digital-forensic.org>
 
-add_subdirectory (metaexif)
-add_subdirectory (prefetch)
-add_subdirectory (lnk)
-add_subdirectory (compoundfile)
-
 set(metadata_srcs
   __init__.py
   structparser.py
 )
 
 install_file(metadata ${metadata_srcs})
+
+add_subdirectory (metaexif)
+add_subdirectory (prefetch)
+add_subdirectory (lnk)
+add_subdirectory (compoundfile)

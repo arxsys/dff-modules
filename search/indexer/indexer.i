@@ -16,6 +16,8 @@
  *
  */
 
+#include "pyrun.swg"
+
 %module  INDEXER
 #ifndef WIN32
 %include "stdint.i"

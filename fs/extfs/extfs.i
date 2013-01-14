@@ -16,6 +16,8 @@
  *
  */
 
+#include "pyrun.swg"
+
 %module  EXTFS
 
 %include "std_string.i"

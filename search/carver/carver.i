@@ -14,6 +14,8 @@
  *  Frederic B. <fba@digital-forensic.org>
  */
 
+#include "pyrun.swg"
+
 %module CARVER
 
 %include "std_string.i"

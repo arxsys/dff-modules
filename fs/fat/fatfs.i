@@ -14,6 +14,8 @@
  *  Frederic Baguelin <fba@digital-forensic.org>
  */
 
+#include "pyrun.swg"
+
 %module  FATFS
 
 %include "std_string.i"

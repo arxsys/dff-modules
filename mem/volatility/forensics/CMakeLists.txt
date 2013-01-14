@@ -12,8 +12,6 @@
 # Author(s):
 #  Frederic Baguelin <fba@digital-forensic.org>
 
-add_subdirectory(win32)
-
 set(volatility_forensics_files
   addrspace.py
   commands.py
@@ -26,3 +24,6 @@ set(volatility_forensics_files
 )
 
 install_file(volatility_forensics ${volatility_forensics_files})
+
+add_subdirectory(win32)
+

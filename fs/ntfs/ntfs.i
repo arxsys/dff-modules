@@ -16,6 +16,8 @@
  *
  */
 
+#include "pyrun.swg"
+
 %module  NTFS 
 %include "std_string.i"
 %include "std_list.i"

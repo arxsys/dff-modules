@@ -14,6 +14,8 @@
  *  Frederic Baguelin <fba@digital-forensic.org>
  */
 
+#include "pyrun.swg"
+
 %module PARTITION
 %include "std_list.i"
 %include "std_map.i"

@@ -240,7 +240,7 @@ void		Carver::mapper()
 	      seek = offset;
 	      while (offset != -1)
 		{
-		  this->ctx[i]->footers.push_back(this->tell() - bytes_read + seek);
+		  this->ctx[i]->footers.push_back(this->tell() - bytes_read + seek + this->ctx[i]->descr->footer->size);
 		  seek += ctx[i]->descr->footer->size;
 		  offpos = this->tell();
 		  if (seek + ctx[i]->descr->footer->size >= (uint64_t)bytes_read)
@@ -339,7 +339,7 @@ unsigned int		Carver::createWithFooter(Node *parent, std::vector<uint64_t> *head
 	{
 	  if (((*headers)[i] % 512) == 0)
 	    {
-	      if (found)
+	      if (found && ((*footers)[j] > (*headers)[i]))
 		this->createNode(parent, (*headers)[i], (*footers)[j]);
 	      else
 		this->createNode(parent, (*headers)[i], (*headers)[i] + (uint64_t)max);
@@ -348,7 +348,7 @@ unsigned int		Carver::createWithFooter(Node *parent, std::vector<uint64_t> *head
 	}
       else
 	{
-	  if (found)
+	  if (found && ((*footers)[j] > (*headers)[i]))
 	    this->createNode(parent, (*headers)[i], (*footers)[j]);
 	  else
 	    this->createNode(parent, (*headers)[i], (*headers)[i] + (uint64_t)max);

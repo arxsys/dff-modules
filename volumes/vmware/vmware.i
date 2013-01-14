@@ -16,6 +16,8 @@
  *
  */
 
+#include "pyrun.swg"
+
 %module  VMWARE
 
 %include "std_list.i"

@@ -13,3 +13,10 @@
 #  Frederic Baguelin <fba@digital-forensic.org>
 
 add_subdirectory(Windows)
+
+set(volatility_mem_object
+  __init__.py
+)
+
+install_file(_volmemobject ${volatility_mem_object})
+

@@ -12,8 +12,6 @@
 # Author(s):
 #  Frederic Baguelin <fba@digital-forensic.org>
 
-add_subdirectory (shm)
-
 set(utils_srcs
   __init__.py
   #integrity.py
@@ -22,3 +20,5 @@ set(utils_srcs
 )
 
 install_file(utils ${utils_srcs})
+
+add_subdirectory (shm)

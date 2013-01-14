@@ -12,11 +12,11 @@
 # Author(s):
 #  jeremy MOUNIER <jmo@digital-forensic.org>
 
-add_subdirectory(winreg)
-add_subdirectory(sqlite)
-
 set(databases_srcs
   __init__.py
 )
 
 install_file(databases ${databases_srcs})
+
+add_subdirectory(winreg)
+add_subdirectory(sqlite)
