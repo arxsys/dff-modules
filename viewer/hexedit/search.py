@@ -197,9 +197,9 @@ class search(QWidget):
                 opt_fromcursor = self.fromcursor.isChecked()
                 spinstart = self.start.value()
                 wild = self.wildcard.text()
-
+                # XXX 
                 if opt_fromcursor:
-                    start = self.heditor.currentSelection
+                    start = self.heditor.selection.offset
                 elif spinstart > 0:
                     start = spinstart
                 else:
