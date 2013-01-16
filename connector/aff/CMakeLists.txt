@@ -17,10 +17,7 @@ IF (${AFF_VERSION} VERSION_GREATER "3.6.6")
 ENDIF(${AFF_VERSION} VERSION_GREATER "3.6.6")
 
 if(WIN32)
-  set(aff_files
-    afflib.dll
-    zlib.dll
-  )
+  set(aff_files ${AFF_DYN_LIBRARIES})
 endif(WIN32)
 
 dff_cpp_module(AFF

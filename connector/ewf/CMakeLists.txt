@@ -13,10 +13,7 @@
 #  Solal Jacob <sja@digital-forensic.org>
 
 if(WIN32)
-  set(ewf_files
-    libewf.dll
-    zlib.dll
-    )
+  set(ewf_files ${EWF_DYN_LIBRARIES})
   set(definitions -D_LIBEWF_TYPES_H_INTEGERS)
 endif(WIN32)
 

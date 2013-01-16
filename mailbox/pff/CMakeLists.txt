@@ -15,10 +15,7 @@
 
 if(WIN32)
   set(definitions -DLIBPFF_HAVE_BFIO -D_LIBPFF_TYPES_H_INTEGERS -D_LIBBFIO_TYPES_H_INTEGERS)
-  set(pff_files
-    libpff.dll
-    libbfio.dll
-    )
+  set(pff_files ${PFF_DYN_LIBRARIES} ${BFIO_DYN_LIBRARIES})
 endif()
 
 dff_cpp_module(PFF
