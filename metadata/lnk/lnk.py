@@ -198,7 +198,8 @@ class LNKParser():
 
   def getDataBlock(self):
      dataBlockHeader = Header(DataBlockHeader)
-     while self.vfile.tell() < self.vfile.node().size() - 4:
+     pos = None 
+     while (self.vfile.tell() < self.vfile.node().size() - 4) and (pos != self.vfile.tell()):
 	pos = self.vfile.tell()
 	data = self.vfile.read(dataBlockHeader.DataBlockStandard.ssize)
 	standard = Struct(dataBlockHeader, self.vfile, dataBlockHeader.DataBlockStandard, data)
