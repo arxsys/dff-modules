@@ -14,6 +14,8 @@
  *  Solal J. <sja@digital-forensic.org>
  */
 
+#include "pyrun.swg"
+
 %module  FUSE 
 %include "std_string.i"
 %include "std_list.i"

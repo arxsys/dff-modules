@@ -15,7 +15,8 @@
  *  Solal Jacob <sja@digital-forensic.org>
  */
 
-%module ntfs 
+%module ntfs
+ 
 %include "std_string.i"
 %include "std_list.i"
 %include "std_set.i"
@@ -35,6 +36,7 @@
 #include "vfile.hpp"
 #include "mfso.hpp"
 #include "ntfs.hpp"
+#include "rootnode.hpp"
 %}
 
 %import "../../../api/vfs/libvfs.i"
@@ -43,8 +45,8 @@
 
 %pythoncode
 %{
-from dff.api.module.module import Module
-from dff.api.types.libtypes import Argument, typeId
+from dff.api.module.module import * 
+from dff.api.types.libtypes import * 
 
 class ntfs(Module):
   def __init__(self):

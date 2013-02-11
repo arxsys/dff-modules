@@ -16,7 +16,7 @@
 __dff_module_regedit_version__ = "1.0.0"
 
 from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import Qt
+from PyQt4.QtCore import Qt, SIGNAL
 from PyQt4.QtGui import QWidget, QVBoxLayout, QTreeView, QSplitter
 
 from dff.api.vfs.vfs import vfs
@@ -27,6 +27,8 @@ from dff.api.types.libtypes import Variant, VList, VMap, Argument, Parameter, ty
 from dff.modules.regedit.model.regtree import RegTreeModel
 from dff.modules.regedit.view.regtreeview import RegTreeView
 from dff.modules.regedit.view.valueview import TableValue
+from dff.modules.regedit.view.keyinfoview import KeyInfoView
+
 
 class REGEDIT(QWidget, Script):
   def __init__(self):
@@ -49,11 +51,13 @@ class REGEDIT(QWidget, Script):
     splitter = QSplitter(Qt.Horizontal)
     treemodel = RegTreeModel(self)
     treeview = RegTreeView(self)
+    keyinfo = KeyInfoView(self, treemodel)
     tablevalue = TableValue(treemodel, self)
     treeview.setModel(treemodel)
     splitter.addWidget(treeview)
     splitter.addWidget(tablevalue)
     vlayout.addWidget(splitter)
+    vlayout.addWidget(keyinfo)
     self.setLayout(vlayout)
 #    self.regv = regviewer(self, self.mountpoints)
 
@@ -61,7 +65,7 @@ class REGEDIT(QWidget, Script):
 	pass
 
 class regedit(Module):
-  """Windows registry vTEST"""
+  """Windows registry viewer"""
   def __init__(self):
     Module.__init__(self, "Registry viewer", REGEDIT)
     self.conf.addArgument({"input": Argument.Optional|Argument.List|typeId.Node,

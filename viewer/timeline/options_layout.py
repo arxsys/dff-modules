@@ -121,7 +121,7 @@ class OptionsLayout(QTabWidget):
       self.totalNodes.setText(sTimes + '\n' + sNodes)
       
       if self.timeline.baseDateMin != self.timeline.dateMin:
-        self.startTime.setText('From ' + str(self.timeline.fromUSec(self.timeline.baseDateMin).strftime('%d.%m.%Y %H:%M:%S')))
+          self.startTime.setText('From ' + str(self.timeline.fromUSec(self.timeline.baseDateMin).strftime('%d.%m.%Y %H:%M:%S')))
       if self.timeline.selDateMin:
         self.selStartTime.setText('From ' + str(self.timeline.fromUSec(self.timeline.selDateMin).strftime('%d.%m.%Y %H:%M:%S')))
       else:

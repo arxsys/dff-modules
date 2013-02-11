@@ -82,7 +82,6 @@ void		Carver::start(std::map<std::string, Variant_p > args)
   this->root->setDir();
   this->ifile->seek(args["start-offset"]->value<uint64_t>(), 0);
   this->mapper();
-  this->registerTree(this->inode, this->root);
   e1 = new event;
   e1->type = Carver::EndOfProcessing;
   e1->value = NULL;
@@ -241,7 +240,7 @@ void		Carver::mapper()
 	      seek = offset;
 	      while (offset != -1)
 		{
-		  this->ctx[i]->footers.push_back(this->tell() - bytes_read + seek);
+		  this->ctx[i]->footers.push_back(this->tell() - bytes_read + seek + this->ctx[i]->descr->footer->size);
 		  seek += ctx[i]->descr->footer->size;
 		  offpos = this->tell();
 		  if (seek + ctx[i]->descr->footer->size >= (uint64_t)bytes_read)
@@ -340,7 +339,7 @@ unsigned int		Carver::createWithFooter(Node *parent, std::vector<uint64_t> *head
 	{
 	  if (((*headers)[i] % 512) == 0)
 	    {
-	      if (found)
+	      if (found && ((*footers)[j] > (*headers)[i]))
 		this->createNode(parent, (*headers)[i], (*footers)[j]);
 	      else
 		this->createNode(parent, (*headers)[i], (*headers)[i] + (uint64_t)max);
@@ -349,7 +348,7 @@ unsigned int		Carver::createWithFooter(Node *parent, std::vector<uint64_t> *head
 	}
       else
 	{
-	  if (found)
+	  if (found && ((*footers)[j] > (*headers)[i]))
 	    this->createNode(parent, (*headers)[i], (*footers)[j]);
 	  else
 	    this->createNode(parent, (*headers)[i], (*headers)[i] + (uint64_t)max);
@@ -396,6 +395,8 @@ int		Carver::createTree()
   unsigned int	i;
 
   clen = this->ctx.size();
+  if (clen > 0)
+    this->registerTree(this->inode, this->root);
   for (i = 0; i != clen; i++)
     {
       ctx = this->ctx[i];

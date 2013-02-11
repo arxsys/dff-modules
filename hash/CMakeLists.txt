@@ -12,9 +12,7 @@
 # Author(s):
 #  Jeremy MOUNIER <jmo@digital-forensic.org>
 
-set(hash_srcs
+install_file(
   hash.py
   __init__.py
 )
-
-install_file(hash ${hash_srcs})

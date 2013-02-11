@@ -27,14 +27,19 @@ MFTAttribute::MFTAttribute(MFTEntryNode* mftEntryNode, uint64_t offset)
   this->__mftEntryNode = mftEntryNode;
   this->__nonResidentAttribute = NULL;
   this->__residentAttribute = NULL;
+  //std::cout << "MFTAttribute::MFTAttribute new MFTAttribute_s" << std::endl;
   this->__mftAttribute = new MFTAttribute_s(); 
 
+  //std::cout << "MFTAttribute::MFTAttribute mftEntryNode->open()" << std::endl;
   VFile*  vfile = mftEntryNode->open();
+
+  //std::cout << "MFTAttribute::MFTAttribute mftEntryNode->vfile->seek()" << std::endl;
   if (vfile->seek(offset) != offset)
   {
     vfile->close();
     throw std::string("MFT Attribute can't seek to attribute offset");
   }
+  //std::cout << "MFTAttribute::MFTAttribute mftEntryNode->vfile->read()" << std::endl;
   if (vfile->read((void*) this->__mftAttribute, sizeof(MFTAttribute_s)) != sizeof(MFTAttribute_s))
   {
     vfile->close();
@@ -45,8 +50,10 @@ MFTAttribute::MFTAttribute(MFTEntryNode* mftEntryNode, uint64_t offset)
     vfile->close();
     throw std::string("End of attribute");
   }
+
   if (this->isResident())
   {
+	  //std::cout << "MFTAttribute::MFTAttribute new MFTResidentAttriubte" << std::endl;
     this->__residentAttribute = new MFTResidentAttribute;
     if (vfile->read((void*) this->__residentAttribute, sizeof(MFTResidentAttribute)) != sizeof(MFTResidentAttribute))
     {
@@ -56,6 +63,7 @@ MFTAttribute::MFTAttribute(MFTEntryNode* mftEntryNode, uint64_t offset)
   }
   else
   {
+	  //std::cout << "MFTAttribute::MFTAttribute new MFTNonResidentAttribute" << std::endl;
     this->__nonResidentAttribute = new MFTNonResidentAttribute;
     if (vfile->read((void*) this->__nonResidentAttribute, sizeof(MFTNonResidentAttribute)) != sizeof(MFTNonResidentAttribute))
       {
@@ -90,11 +98,15 @@ MFTEntryNode*		MFTAttribute::mftEntryNode(void)
   return (this->__mftEntryNode);
 }
 
+
+//caller must delete AttributeCOntent !
+// factory ...
 MFTAttributeContent*	MFTAttribute::content(void)
 {
   for (uint8_t	i = 0; ContentTypes[i].object != NULL; i++)
      if (ContentTypes[i].ID == this->typeID())
 	return ContentTypes[i].object(this);
+  //cout << "MFTAttribute::mftEntryNode new MFTAttributeContent" << std::endl;
   return new MFTAttributeContent(this);
 }
 

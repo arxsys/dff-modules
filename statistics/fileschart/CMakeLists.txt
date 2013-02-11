@@ -12,11 +12,9 @@
 # Author(s):
 #  Frederic Baguelin <fba@digital-forensic.org>
 
-set(filechart_srcs
+install_file(
   __init__.py
   fileschart.py
   chart.py
   chart_rc.py
 )
-
-install_file(filechart ${filechart_srcs})

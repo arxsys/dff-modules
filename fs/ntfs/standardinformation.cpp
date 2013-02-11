@@ -40,7 +40,7 @@
 StandardInformation::StandardInformation(MFTAttribute* mftAttribute) : MFTAttributeContent(mftAttribute)
 {
   VFile*	vfile = NULL;
-
+  
   vfile = this->open();
  
   if (vfile->read((void*)&(this->__standardInformation), sizeof(StandardInformation_s)) != sizeof(StandardInformation_s))
@@ -53,12 +53,13 @@ StandardInformation::StandardInformation(MFTAttribute* mftAttribute) : MFTAttrib
 
 MFTAttributeContent*	StandardInformation::create(MFTAttribute* mftAttribute)
 {
+	//std::cout << "StandardInformation::create new StandardInformation/MFTAttributeContent " << std::endl;
   return (new StandardInformation(mftAttribute));
 }
 
 StandardInformation::~StandardInformation()
 {
-
+//delete __StandardInformation ?? pourquoi c pas un pointeur ?
 }
 
 std::string	StandardInformation::typeName(void)

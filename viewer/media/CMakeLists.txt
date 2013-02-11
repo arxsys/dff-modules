@@ -12,10 +12,9 @@
 # Author(s):
 #  Jeremy MOUNIER <fba@digital-forensic.org>
 
-set(mediaviewer_srcs
+install_file(
   player.py
   videothumbnailviewer.py
-  viewerimage.py  
+  imageviewer.py  
+  textviewer.py
 )
-
-install_file(mediaviewer ${mediaviewer_srcs})

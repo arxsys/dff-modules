@@ -169,6 +169,7 @@ class AttributeHash(AttributesHandler):
 	    hashInfo = HashInfo()
             self.calculatedHash[long(node.this)] = hashInfo
         hashInfo.hashes[algo] = h
+        node.attributesHandlers().updateState()
 
     def setKnown(self, node, setId):
 	try:
@@ -177,6 +178,7 @@ class AttributeHash(AttributesHandler):
 	   hashInfo = HashInfo() 
 	   self.calculatedHash[long(node.this)] = hashInfo
 	hashInfo.hsets.add(setId)
+        node.attributesHandlers().updateState()
 
     def attributes(self, node):
        m = VMap() 
@@ -364,7 +366,7 @@ class HASH(Script):
     
 class hash(Module):
     """Hash a file and add the results in the file attribute.
-    ex: hash /myfile"""
+ex: hash /myfile"""
     def __init__(self):
         Module.__init__(self, "hash", HASH)
         self.conf.addArgument({"input": Argument.Required|Argument.Single|typeId.Node,

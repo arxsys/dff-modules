@@ -16,6 +16,8 @@
  *
  */
 
+#include "pyrun.swg"
+
 %module  VMWARE
 
 %include "std_list.i"
@@ -45,7 +47,7 @@ from dff.api.module.module import *
 from dff.api.types.libtypes import Argument, typeId
 
 class VMWARE(Module):
-  """Create vmware volume"""
+  """Reconstruct vmware volume"""
   def __init__(self):
     Module.__init__(self, 'vmware', VMware)
     self.conf.addArgument({"name": "vmdkroot",

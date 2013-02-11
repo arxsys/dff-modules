@@ -369,6 +369,8 @@ class DirectoryEntry(Node, Struct):
 	 streamSize = realSize
        else:
 	 streamSize = self.streamSize 
+       if self.objectName[0] <= "\x05":
+         self.objectName = self.objectName[1:]
        Node.__init__(self, self.objectName, streamSize, None, mfsobj)
        self.__disown__()
      if self.objectType == "RootStorageObject":

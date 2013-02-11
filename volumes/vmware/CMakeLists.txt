@@ -12,39 +12,8 @@
 # Author(s):
 #  Jeremy MOUNIER <jmo@digital-forensic.org>
 
-
-FIND_PACKAGE(SWIG REQUIRED)
-INCLUDE(${SWIG_USE_FILE})
-
-include_directories(${PYTHON_INCLUDE_PATH})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${CMAKE_HOME_DIRECTORY}/dff/api/include)
-
-
-set(vmware_srcs
-  vmware.cpp
-  diskDescriptor.cpp
-  extent.cpp
-  link.cpp
-  vmnode.cpp
+dff_cpp_module(VMWARE
+  CPP_FILES vmware.cpp diskDescriptor.cpp extent.cpp link.cpp vmnode.cpp
+  SWIG_FILE vmware.i
+  LINK_LIBRARIES exceptions types vfs tree
 )
-
-SET_SOURCE_FILES_PROPERTIES(vmware.i PROPERTIES CPLUSPLUS ON)
-SWIG_ADD_MODULE(VMWARE python vmware.i ${vmware_srcs})
-SWIG_LINK_LIBRARIES(VMWARE ${PYTHON_LIBRARIES} exceptions types vfs)
-
-if ( CMAKE_GENERATOR MATCHES "Visual Studio")
-set_target_properties (${SWIG_MODULE_VMWARE_REAL_NAME} PROPERTIES
-  SUFFIX ".pyd"
-  RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_BINARY_DIR}"
-  RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_CURRENT_BINARY_DIR}"
-  RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_CURRENT_BINARY_DIR}"
-)
-endif ( CMAKE_GENERATOR MATCHES "Visual Studio")
-
-set(vmware_files
-  VMWARE.py
-)
-
-install_lib(${SWIG_MODULE_VMWARE_REAL_NAME})
-install_file(vmware ${vmware_files})

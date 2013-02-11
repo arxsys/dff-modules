@@ -67,7 +67,7 @@ class CarverGui(QWidget, Script):
 
 class carvergui(Module):
   """Search for header and footer of a selected mime-type in a node and create the corresponding file.
-     You can use this modules for finding deleted data or data in slack space or in an unknown file system."""
+You can use this modules for finding deleted data or data in slack space or in an unknown file system."""
   def __init__(self):
     Module.__init__(self, 'carvergui', CarverGui)
     self.conf.addArgument({"name": "file",

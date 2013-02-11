@@ -24,7 +24,7 @@
 MFTAttributeContent::MFTAttributeContent(MFTAttribute* mftAttribute) : Node("Unknown", (uint64_t)mftAttribute->contentSize(), NULL,  mftAttribute->ntfs())
 {
   this->__mftAttribute = mftAttribute;
-  this->__name = this->name();
+  //this->__name = this->name(); pourquoi ca ? 
 }
 
 MFTAttributeContent::~MFTAttributeContent()
@@ -43,7 +43,6 @@ void		MFTAttributeContent::fileMapping(FileMapping* fm)
   }
   else
   {
-   return ;
 // ds une fonction a part ??
 // compressed size of run
 //XXX spaaaarse offset = 0 ?
@@ -86,7 +85,9 @@ void		MFTAttributeContent::fileMapping(FileMapping* fm)
       // XXX test	
       
       runPreviousOffset += runOffset;
-//XXX attention au dernier block a bien push pas la size d un cluster mais ce qu il faut pour pas push la slaaaaack a part si mfso le gere mais c mieux si c fait ici pour eviter les erreur 
+//XXX attention au dernier block a bien push pas la size d un cluster mais ce qu il faut pour pas push la slaaaaack a part si mfso le gere mais c mieux si c fait ici pour eviter les erreur
+      //cout MFTATTRIBUTEcoNTENT Push 
+ 
       fm->push(totalSize, runLength * clusterSize, fsNode, runPreviousOffset * clusterSize);
       totalSize += runLength * clusterSize;  
     }

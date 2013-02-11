@@ -13,9 +13,7 @@
 # Author(s):
 #  Jeremy Mounier <jmo@digital-forensic.org>
 
-set(regedit_model_srcs
+install_file(
   __init__.py
   regtree.py
-#  regviewer.py
 )
-install_file(regedit_model ${regedit_model_srcs})

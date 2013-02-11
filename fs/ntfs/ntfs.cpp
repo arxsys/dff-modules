@@ -20,6 +20,8 @@
 #include "mftentrynode.hpp"
 #include "mftnode.hpp"
 
+#include <iostream>
+
 NTFS::NTFS() : mfso("NTFS")
 {
   this->__bootSectorNode = NULL;
@@ -42,9 +44,10 @@ void 		NTFS::start(Attributes args)
   //boot sector node will not be created if invalid, all process will stop 
   if (this->__opt->validateBootSector())
     this->__bootSectorNode->validate();
- 
+
+  this->setStateInfo("Reading main MFT");
+  printf("size of MFTNode %d\n", sizeof(MFTNode)); 
   MFTNode* mftNode = new MFTNode(this, this->fsNode(), this->rootDirectoryNode(),  this->__bootSectorNode->MFTLogicalClusterNumber() * this->__bootSectorNode->clusterSize());
- 
 
 //bourin mode en faite on va lire les 7 premier car ils sont fix et apres utiliser l index pour reconstruire le tree correctemnt
 //si non on read toute les mft comme un porcas et on fout l index ds un vector<>
@@ -55,10 +58,21 @@ void 		NTFS::start(Attributes args)
 //
 
   uint64_t i = 0;
+  uint64_t nMFT = mftNode->size() / 1024;
+
+  std::ostringstream nMFTStream;
+  nMFTStream  << std::string("Found ") << nMFT <<  std::string(" MFT entry") << endl;
+  this->setStateInfo(nMFTStream.str());
+
+  printf("sizeof MFTEntryNode %d\n", sizeof(MFTEntryNode));
   while (i * 1024 < mftNode->size())
   {
-     new MFTNode(this, mftNode, this->rootDirectoryNode(), i * 1024);
-     i+=1;
+     std::ostringstream cMFTStream;
+     cMFTStream << "Parsing " << i << "/" << nMFT << endl;
+     std::cout << cMFTStream.str() << std::endl;
+     this->setStateInfo(cMFTStream.str());
+     MFTNode* currentMFTNode = new MFTNode(this, mftNode, this->rootDirectoryNode(), i * 1024);
+     i += 1;
   }
 //  MFTEntryNode* MFTEntryMirrorNode
 // if MFTEntryNode != MFTEntryMirrorNode

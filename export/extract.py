@@ -26,7 +26,7 @@ from dff.api.vfs.extract import Extract
 from dff.api.module.script import *
 from dff.api.events.libevents import EventHandler
 from dff.api.exceptions.libexceptions import *
-from dff.api.types.libtypes import Argument, typeId, Variant
+from dff.api.types.libtypes import Argument, typeId, Variant, VList, VMap
 from dff.api.module.module import *
 
 # Extract algorithm
@@ -89,8 +89,9 @@ class EXTRACT(Script, EventHandler):
     self.folders_errors = 0
     self.ommited_files = 0
     self.ommited_folders = 0
-    self.log = {"files": {"ok": "", "nok": ""},
-                "folders": {"ok": "", "nok": ""}}
+    self.__failed_files = []
+    self.__failed_folders = []
+    self.__renamed = {}
     try:
       self.nodes = args['files'].value()
       self.syspath = args['syspath'].value().path
@@ -110,6 +111,7 @@ class EXTRACT(Script, EventHandler):
       else:
         self.overwrite = False
       self.__extract()
+      self.__createReport()
     except KeyError:
       pass
 
@@ -130,11 +132,23 @@ class EXTRACT(Script, EventHandler):
       self.stateinfo = str(e.value)
     if e.type == Extract.FileFailed:
       vl = e.value.value()
+      self.__failed_files.append(vl[0].value())
       print "extracting file failed", vl[0].value(), "\n", vl[1]
     if e.type == Extract.FolderFailed:
       vl = e.value.value()
+      self.__failed_folders.append(vl[0].value())
       print "extracting folder failed", vl[0].value(), "\n", vl[1]
-
+    if e.type == Extract.PreserveFailed:
+      vl = e.value.value()
+      self.__preserved_failed = vl[0].value()
+      print "preserving tree failed", vl[0].value(), "\n", vl[1]
+    if e.type == Extract.RenameOccured:
+      vl = e.value.value()
+      if not self.__renamed.has_key(vl[0].value()):
+        self.__renamed[str(vl[0])] = []
+      self.__renamed[str(vl[0])].append(str(vl[1]))
+      print "rename: ", vl[0], " --> ", vl[1]
+    del e
 
   def __extract(self):
     for vnode in self.nodes:
@@ -148,37 +162,25 @@ class EXTRACT(Script, EventHandler):
           self.extractor.extractFile(node, self.syspath, self.preserve, self.overwrite)
 
 
-  def createReport(self):
-    stats = ""
-    if self.total_files > 0:
-      percent = (float(self.extracted_files) * 100) / self.total_files
-      stats += "extracted file(s):   " + str(self.extracted_files) + "/" + str(self.total_files) + " (" + str(round(percent, 2)) + "%)\n"
-
-    if self.total_folders > 0:
-      percent = (float(self.extracted_folders) * 100) / self.total_folders
-      stats += "extracted folder(s): " + str(self.extracted_folders) + "/" + str(self.total_folders) + " (" + str(round(percent, 2)) + "%)\n" 
-
-    if self.ommited_files > 0:
-      percent = (float(self.ommited_files) * 100) / self.total_files
-      stats += "ommited file(s):     " + str(self.ommited_files) + "/" + str(self.total_files) + " (" + str(round(percent, 2)) + "%)\n"
-
-    if self.ommited_folders > 0:
-      percent = (float(self.ommited_folders) * 100) / self.total_folders
-      stats += "ommited folder(s):   " + str(self.ommited_folders) + "/" + str(self.total_folders) + " (" + str(round(percent, 2)) + "%)\n"
-
-    if self.files_errors > 0:
-      percent = (float(self.files_errors) * 100) / self.total_files
-      stats += "file(s) error:       " + str(self.files_errors) + "/" + str(self.total_files) + " (" + str(round(percent, 2)) + "%)\n"
-      self.res["file(s) errors"] = Variant(self.log["files"]["nok"])
-
-
-    if self.folders_errors > 0:
-      percent = (float(self.folders_errors) * 100) / self.total_folders
-      stats += "folder(s) error:     " + str(self.folders_errors) + "/" + str(self.total_folders) + " (" + str(round(percent, 2)) + "%)\n"
-      self.res["folder(s) errors"] = Variant(self.log["folders"]["nok"])
-
-    if len(stats):
-      self.res["statistics"] = Variant(stats)
+  def __createReport(self):
+    if len(self.__failed_files):
+      vl = VList()
+      for ffile in self.__failed_files:
+        vl.append(Variant(ffile))
+      self.res["failed extraction for files"] = vl
+    if len(self.__failed_folders):
+      vl = VList()
+      for ffolder in self.__failed_folders:
+        vl.append(Variant(ffolder))
+      self.res["failed extraction for folders"] = vl
+    if len(self.__renamed):
+      vmap = VMap()
+      for key in self.__renamed:
+        vl = VList()
+        for val in self.__renamed[key]:
+          vl.append(Variant(val))
+        vmap[key] = vl
+      self.res["renamed"] = vmap
 
 
 class extract(Module):

@@ -12,43 +12,9 @@
 # Author(s):
 #  Frederic Baguelin <fba@digital-forensic.org>
 
-
-FIND_PACKAGE(SWIG REQUIRED)
-INCLUDE(${SWIG_USE_FILE})
-
-include_directories(${PYTHON_INCLUDE_PATH})
-
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${CMAKE_HOME_DIRECTORY}/dff/api/include)
-include_directories(${CMAKE_HOME_DIRECTORY}/dff/api/tree)
-include_directories(${ICU_INCLUDE_DIRS})
-
-set(fat_srcs
-  fatfs.cpp
-  bootsector.cpp
-  fat.cpp
-  fattree.cpp
-  fatnodes.cpp
-  entries.cpp
+dff_cpp_module(FATFS
+  CPP_FILES fatfs.cpp bootsector.cpp fat.cpp fattree.cpp fatnodes.cpp entries.cpp
+  SWIG_FILE fatfs.i
+  LINK_LIBRARIES ${ICU_LIBRARIES} exceptions types vfs tree
+  INCLUDE_DIRS ${ICU_INCLUDE_DIRS} ${CMAKE_HOME_DIRECTORY}/dff/api/tree
 )
-
-
-SET_SOURCE_FILES_PROPERTIES(fatfs.i PROPERTIES CPLUSPLUS ON)
-SWIG_ADD_MODULE(FATFS python fatfs.i ${fat_srcs})
-SWIG_LINK_LIBRARIES(FATFS ${PYTHON_LIBRARIES} ${ICU_LIBRARIES} exceptions types vfs tree)
-
-if ( CMAKE_GENERATOR MATCHES "Visual Studio")
-set_target_properties (${SWIG_MODULE_FATFS_REAL_NAME} PROPERTIES
-  SUFFIX ".pyd"
-  RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_BINARY_DIR}"
-  RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_CURRENT_BINARY_DIR}"
-  RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_CURRENT_BINARY_DIR}"
-)
-endif ( CMAKE_GENERATOR MATCHES "Visual Studio")
-
-set(fat_files
-  FATFS.py
-)
-
-install_lib(${SWIG_MODULE_FATFS_REAL_NAME})
-install_file(fat ${fat_files})

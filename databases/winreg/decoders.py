@@ -15,18 +15,31 @@
 import string
 from struct import unpack
 
-from dff.api.types.libtypes import Argument, typeId, TIME_UNIX, vtime
+from dff.api.types.libtypes import Argument, typeId, TIME_UNIX, TIME_MS_64, vtime
 
-class DateDecoder():
-    def __init__(self, data, keyname):
-        self.data = None
+#class DateDecoder():
+#    def __init__(self, data, keyname):
+#        self.data = None
 #        if str(keyname) == 'InstallDate':
-        self.data = str(vtime(data, TIME_UNIX).get_time())
+#        self.data = str(vtime(data, TIME_UNIX).get_time())
 #        else:
 #         self.data = data
 
+#    def decode(self):
+#        return self.data
+
+class DateDecoder():
+    def __init__(self, data):
+        self.data = data
+        if type(data) == bytearray:
+            self.data = str(vtime(unpack('Q', str(data))[0], TIME_MS_64).get_time())
+        else:
+            self.data = str(vtime(data, TIME_UNIX).get_time())
+
     def decode(self):
         return self.data
+
+
 
 class Rot13decoder():
     def __init__(self, data):
@@ -42,6 +55,24 @@ class Rot13decoder():
             else:
                 buff += c
         return buff.encode('UTF-8').decode('UTF-8')
+
+
+class UTF16LEDecoder():
+    def __init__(self, data):
+        self.data = data
+
+    def decode(self):
+        buff = unicode()
+        return self.data.decode('UTF-16LE').encode("UTF8")
+
+
+class UTF16BEDecoder():
+    def __init__(self, data):
+        self.data = data
+
+    def decode(self):
+        buff = unicode()
+        return self.data.decode('UTF-16BE').encode("UTF8")
 
 
 class UserAssistDecoder():

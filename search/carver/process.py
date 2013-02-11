@@ -15,7 +15,7 @@ import string
 import time
 from typeSelection import filetypes
 
-from PyQt4.QtGui import QWidget, QVBoxLayout, QGridLayout, QLabel, QProgressBar, QHBoxLayout, QCheckBox, QPushButton, QTabWidget, QSplitter
+from PyQt4.QtGui import QWidget, QVBoxLayout, QGridLayout, QLabel, QProgressBar, QHBoxLayout, QCheckBox, QPushButton, QTabWidget, QSplitter, QMessageBox
 from PyQt4.Qt import SIGNAL
 
 from dff.api.module.module import Module
@@ -117,25 +117,43 @@ class CarvingProcess(QWidget, EventHandler):
 
     def startCarving(self):
         selected = self.selector.selectedItems()
-        patterns = self.createContext(selected)
-        args = VMap()
-        args["patterns"] = Variant(patterns)
-        args["file"] = Variant(self.vnode)
-        args["start-offset"] = Variant(self.offsetSpinBox.value(), typeId.UInt64)
-        factor = round(float(self.filesize) / 2147483647)
-        self.startButton.setEnabled(False)
-        self.stopButton.setEnabled(True)
-        self.stopButton.setDown(False)
-        if factor == 0:
-            factor = 1
-        proc = self.tm.add("carver", args, ["gui", "thread"])
-        if proc:
-            self.doJob(self.filesize, factor, self.offsetSpinBox.value())
-            self.stateLayout.setEnabled(True)
-            self.connection(proc.inst)
-            proc.inst.connection(self)
-            #self.connect(self, SIGNAL("stateInfo(QString)"), self.setStateInfo)
-
+        if len(selected):
+            try:
+                f = self.vnode.open()
+                f.close()
+            except:
+                mbox = QMessageBox(QMessageBox.Warning, 
+                                   self.tr("Carver bad input"),
+                                   self.tr("The provided input file seems to be a directory. Please, apply the module on a file"),
+                                   QMessageBox.Ok, self)
+                mbox.exec_()
+                return
+            patterns = self.createContext(selected)
+            args = VMap()
+            args["patterns"] = Variant(patterns)
+            args["file"] = Variant(self.vnode)
+            args["start-offset"] = Variant(self.offsetSpinBox.value(), typeId.UInt64)
+            factor = round(float(self.filesize) / 2147483647)
+            self.startButton.setEnabled(False)
+            self.stopButton.setEnabled(True)
+            self.stopButton.setDown(False)
+            if factor == 0:
+                factor = 1
+            proc = self.tm.add("carver", args, ["gui", "thread"])
+            if proc:
+                self.doJob(self.filesize, factor, self.offsetSpinBox.value())
+                self.stateLayout.setEnabled(True)
+                self.connection(proc.inst)
+                proc.inst.connection(self)
+                #self.connect(self, SIGNAL("stateInfo(QString)"), self.setStateInfo)
+        else:
+            mbox = QMessageBox(QMessageBox.Warning, 
+                               self.tr("Carver no items selected"),
+                               self.tr("No items have been provided to know what to look for. Please chose types you want to search."),
+                               QMessageBox.Ok, self)
+            mbox.exec_()
+            return
+            
 
 
     def carvingEnded(self, res):

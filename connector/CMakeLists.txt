@@ -12,6 +12,10 @@
 # Author(s):
 #  Solal Jacob <sja@digital-forensic.org>
 
+install_file(
+  __init__.py
+  )
+
 add_subdirectory(devices)
 
 add_subdirectory (local)
@@ -24,9 +28,3 @@ if (AFF_FOUND)
 else (AFF_FOUND)
     message(STATUS "AFF library not found. Connector module will not be built.")
 endif(AFF_FOUND)
-
-set(connector_files
-   __init__.py
-)
-
-install_file(connector ${connector_files})

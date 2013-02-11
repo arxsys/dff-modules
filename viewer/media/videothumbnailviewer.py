@@ -77,7 +77,7 @@ class ThumbnailVideoView(QWidget, Script):
      pass
 
 class videothumbnailviewer(Module):
-  """Display content of graphic file"""
+  """Create thumbnail from video files."""
   def __init__(self):
     Module.__init__(self, "thumbnailvideo", ThumbnailVideoView)
     self.conf.addArgument({"name": "file",

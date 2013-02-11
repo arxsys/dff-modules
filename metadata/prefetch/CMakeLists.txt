@@ -12,8 +12,6 @@
 # Author(s):
 #  Solal Jacob <sja@digital-forensic.org>
 
-set(prefetch_srcs
+install_file(
   prefetch.py
 )
-
-install_file(prefetch ${prefetch_srcs})

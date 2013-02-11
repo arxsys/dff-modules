@@ -12,9 +12,7 @@
 # Author(s):
 #  Jeremy MOUNIER <fba@digital-forensic.org>
 
-set(web_srcs
+install_file(
   __init__.py
   web.py
 )
-
-install_file(web ${web_srcs})

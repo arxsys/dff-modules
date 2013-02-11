@@ -12,34 +12,9 @@
 # Author(s):
 #  Solal Jacob <sja@digital-forensic.org>
 
-
-FIND_PACKAGE(SWIG REQUIRED)
-INCLUDE(${SWIG_USE_FILE})
-
-include_directories(${PYTHON_INCLUDE_PATH})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${CMAKE_HOME_DIRECTORY}/dff/api/include)
-include_directories(/usr/include/fuse)
-
-set(fuse_srcs
-  fuse.cpp
+dff_cpp_module(FUSE
+  CPP_FILES fuse.cpp
+  SWIG_FILE fuse.i
+  LINK_LIBRARIES exceptions types vfs fuse
+  INCLUDE_DIRS /usr/include/fuse
 )
-
-SET_SOURCE_FILES_PROPERTIES(fuse.i PROPERTIES CPLUSPLUS ON)
-SWIG_ADD_MODULE(FUSE python fuse.i ${fuse_srcs})
-SWIG_LINK_LIBRARIES(FUSE ${PYTHON_LIBRARIES} exceptions types vfs fuse)
-
-#if (CMAKE_GENERATOR MATCHES "Visual Studio")
-#set_target_properties (${SWIG_MODULE_FUSE_REAL_NAME} PROPERTIES
-  #PREFIX "../"
-  #SUFFIX ".pyd"
-#)
-#endif ( CMAKE_GENERATOR MATCHES "Visual Studio")
-
-set(fuse_files
-  FUSE.py
-)
-
-install_lib(${SWIG_MODULE_FUSE_REAL_NAME})
-install_file(fuse ${fuse_files})
-

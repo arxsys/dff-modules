@@ -23,20 +23,24 @@ BootSectorNode::BootSectorNode(NTFS* ntfs) : Node(std::string("$Boot"), 512, ntf
 //  this->__ntfs->setStateInfo(std::string("Parsing NTFS boot sector"));
   this->__ntfs = ntfs;
   this->__bootSector = new BootSector; //XNEW 
+  this->__state = 0;
 
 //1) This trigger MFSO CACHE !!! and set the size to 512 ! 
   VFile* vfile = this->open();
+  vfile->seek(0);
   uint64_t readed = vfile->read((void*) (this->__bootSector), sizeof(BootSector));
   vfile->close();
 
   if (readed != sizeof(BootSector))
     throw vfsError(std::string("Can't read start of boot sector"));
 
+  this->__state = 1;
 //2) MFSO CACHE ALREADY TRIGER SO FUCKED !!! MUST PATCH MFSO PATCH -> to check size or reput in cache
   if (ntfs->fsNode()->size() > this->bytesPerSector() * 16)
     this->setSize(this->bytesPerSector() * 16);
   else 
     throw vfsError(std::string("Can't read full boot sector"));
+  printf("bootsesctotsiz%d\n", this->size());
 } 
 
 void	BootSectorNode::validate()
@@ -56,6 +60,7 @@ void	BootSectorNode::validate()
     throw vfsError(std::string("Boot sector as an invalid cluster per MFT record value"));
   if (this->clustersPerIndexBuffer() == 0)
     throw vfsError(std::string("Boot sector as an invalid cluster per index buffer value"));
+  this->__ntfs->setStateInfo("NTFS boot sector is valid");
 }
 
 BootSectorNode::~BootSectorNode()
@@ -64,9 +69,22 @@ BootSectorNode::~BootSectorNode()
   this->__bootSector = NULL;
 }
 
+uint64_t	BootSectorNode::fileMappingState(void)
+{
+	//printf("bootsector filemapping update %d\n", this->__state);
+  return (this->__state);
+}
+
 void 		BootSectorNode::fileMapping(FileMapping *fm)
 {
+	//printf("BootSectoreNode::FileMapping %llu\n", this->size());
   fm->push(0, this->size(), this->__ntfs->fsNode(), 0);
+}
+
+uint64_t	BootSectorNode::_attributesState(void)
+{
+	//printf("bootsector attributes update %d\n", this->__state);
+  return (this->__state);
 }
 
 Attributes      BootSectorNode::_attributes(void)
@@ -147,7 +165,17 @@ int8_t		BootSectorNode::clustersPerMFTRecord(void)
 
 uint32_t	BootSectorNode::MFTRecordSize(void)
 {
-  return (this->__bootSector->bpb.clustersPerMFTRecord * this->__bootSector->bpb.sectorsPerCluster * this->__bootSector->bpb.bytesPerSector);
+//XXX DS VALIDATE CHECK IF -1
+
+//printf("BootSectorNode::MFTRecordSize cluperstersPerMFTRecord %d\n", this->__bootSector->bpb.clustersPerMFTRecord);
+//printf("sectoers per cluster %u\n", this->__bootSector->bpb.sectorsPerCluster);
+//printf("bytes per sector %u\n", this->__bootSector->bpb.bytesPerSector);
+
+  uint32_t mftrecordSize = this->__bootSector->bpb.clustersPerMFTRecord * this->__bootSector->bpb.sectorsPerCluster * this->__bootSector->bpb.bytesPerSector;
+
+  //printf("mftrecordsize ret %u\n", mftrecordSize);
+  return  mftrecordSize;
+  //return (this->__bootSector->bpb.clustersPerMFTRecord * this->__bootSector->bpb.sectorsPerCluster * this->__bootSector->bpb.bytesPerSector);
 };
 
 int8_t		BootSectorNode::clustersPerIndexBuffer(void)

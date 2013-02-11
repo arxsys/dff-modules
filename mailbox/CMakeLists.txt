@@ -13,8 +13,7 @@
 #  Solal Jacob <sja@digital-forensic.org>
 
 if(PFF_FOUND AND BFIO_FOUND)
-  add_subdirectory (pff)
+  add_subdirectory (exchange)
 else(PFF_FOUND AND BFIO_FOUND)
-  message(STATUS "PFF or BFIO library not found. Mailbox module will not be built.")
+  message(STATUS "PFF or BFIO library not found. Exchange module will not be built.")
 endif(PFF_FOUND AND BFIO_FOUND)
-

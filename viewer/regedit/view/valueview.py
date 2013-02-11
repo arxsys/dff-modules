@@ -19,12 +19,14 @@ from PyQt4.QtCore import SIGNAL, QString, Qt, QByteArray
 from PyQt4.QtGui import QTableWidget, QHeaderView, QTableWidgetItem, QAbstractItemView, QMenu, QAction
 
 from dff.modules.winreg.regtype import regtype
-from dff.modules.winreg.decoders import DateDecoder, Rot13decoder, UserAssistDecoder
+from dff.modules.winreg.decoders import DateDecoder, Rot13decoder, UserAssistDecoder, UTF16LEDecoder, UTF16BEDecoder
 
 DECODER = {0: "Date",
            1: "Rot13",
            2: "UserAssist",
-           3: "Default"
+           3: "Default",
+           4: "UTF16-LE",
+           5: "UTF16-BE"
            }
 
 class TableValue(QTableWidget):
@@ -162,10 +164,14 @@ class valueItem(QTableWidgetItem):
     if decodername == "Default":
       self.setText(self.dataToQString(self.data))
     elif decodername == "Date":
-      self.setText(QString(DateDecoder(self.data, self.keyname).decode()))
+      self.setText(QString(DateDecoder(self.data).decode()))
     elif decodername == "Rot13":
       self.setText(QString(Rot13decoder(self.data).decode()))
     elif decodername == "UserAssist":
       self.setText(QString(UserAssistDecoder(self.data, self.keyname).decode()))
+    elif decodername == "UTF16-LE":
+      self.setText(QString(UTF16LEDecoder(self.data).decode()))
+    elif decodername == "UTF16-BE":
+      self.setText(QString(UTF16BEDecoder(self.data).decode()))
     else:
-      self.setText(self.dataToQString(self.data))
+      self.setText(self.dataToQString(self.data.encode("UTF8")))

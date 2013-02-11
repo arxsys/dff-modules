@@ -51,17 +51,21 @@ FileName::FileName(MFTAttribute* mftAttribute) : MFTAttributeContent(mftAttribut
     vfile->close();
     throw vfsError("Can't read attribute $FILE_NAME");
   }
+  //std::cout << "FileName::FileName new uint16_t * " << this->nameLength() << std::endl;
+  //printf("FileName::FileName new uint16_t * %d\n", this->nameLength());
   this->__name = new uint16_t[this->nameLength()];
   if (vfile->read((void*)this->__name, this->nameLength() * sizeof(uint16_t)) != (int32_t)(this->nameLength() *sizeof(uint16_t)))
   {
+    printf("name legnth %d\n", this->nameLength());
     vfile->close();
-    throw vfsError("Can't readd attribute $FILE_NAME name");
+    throw vfsError("Can't read attribute $FILE_NAME.name of length ");
   }
   vfile->close();
 }
 
 MFTAttributeContent*	FileName::create(MFTAttribute*	mftAttribute)
 {
+	//std::cout << "FileName::create new FileName/MFTAttributeContent" << std::endl;
   return (new FileName(mftAttribute));
 }
 

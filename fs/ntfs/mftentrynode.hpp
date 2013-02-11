@@ -50,13 +50,16 @@ private:
   MFTEntry*		__MFTEntry;
   //uint32_t		__sectorNumber;
   uint64_t		__offset;
+  uint64_t		__state;
   class MFTAttribute*	__MFTAttribute(uint16_t offset);
 public:
 			MFTEntryNode(NTFS* ntfs, Node* fsNode, uint64_t offset, std::string name, Node* parent);
 			~MFTEntryNode();
   NTFS*			ntfs(void);
   Node*			fsNode(void);
+  virtual uint64_t	fileMappingState(void);
   virtual void		fileMapping(FileMapping* fm);
+  virtual uint64_t	_attributesState(void);
   virtual Attributes 	_attributes(void);
   uint64_t		offset(void);
   //uint64_t		sectorNumber(void);

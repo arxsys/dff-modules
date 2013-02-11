@@ -33,7 +33,9 @@ PACK_S BPB
   uint64_t	totalSectors;
   uint64_t	MFTLogicalClusterNumber;
   uint64_t	MFTMirrorLogicalClusterNumber;
-  int8_t	clustersPerMFTRecord;
+//  int8_t	clustersPerMFTRecord;
+  uint8_t	clustersPerMFTRecord;//XXX ca plante partition 2 si non !!!
+
   uint8_t	reserved3[3];
   int8_t	clustersPerIndexBuffer;  
   uint8_t	reserved4[3];
@@ -60,11 +62,14 @@ class BootSectorNode : public Node
 {
 private:
   NTFS*		 	__ntfs;
-  BootSector*		__bootSector; 
+  BootSector*		__bootSector;
+  uint64_t		__state; 
 public:
                 	BootSectorNode(NTFS* ntfs);
                 	~BootSectorNode();
-  virtual void  	fileMapping(FileMapping *fm);	
+  virtual void  	fileMapping(FileMapping *fm);
+  virtual uint64_t	fileMappingState(void);	
+  virtual uint64_t	_attributesState(void);
   virtual Attributes 	_attributes(void);
   virtual Attributes 	dataType(void);
   uint64_t		OEMDID(void);

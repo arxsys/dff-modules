@@ -16,6 +16,8 @@
  *
  */
 
+#include "pyrun.swg"
+
 %module  EXTFS
 
 %include "std_string.i"
@@ -54,7 +56,7 @@ from dff.api.module.module import *
 from dff.api.types.libtypes import Argument, typeId, Parameter
 
 class EXTFS(Module):
-  """ This module parses extented file system (EXT 2/3/4) and tries to recover deleted data."""
+  """This module parses extented file system (EXT 2/3/4) and tries to recover deleted data."""
   def __init__(self):
 
     Module.__init__(self, 'extfs', Extfs)

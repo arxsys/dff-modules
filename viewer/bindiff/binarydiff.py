@@ -66,6 +66,7 @@ class binDiff(QWidget, Script):
         pass 
 
 class binarydiff(Module):
+  """Display hexadecimal differences of two binary files."""
   def __init__(self):
     Module.__init__(self, "diff", binDiff)
     self.conf.addArgument({"name": "file1",

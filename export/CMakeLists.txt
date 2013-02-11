@@ -16,8 +16,6 @@ if(HAVE_FUSE)
   add_subdirectory (fuse)
 endif(HAVE_FUSE)
 
-set(export_srcs
+install_file(
   extract.py
 )
-
-install_file(export ${export_srcs})
