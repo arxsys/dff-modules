@@ -16,7 +16,7 @@
 
 #include "pff.hpp"
 
-PffNodeContact::PffNodeContact(std::string name, Node* parent, fso* fsobj, libpff_item_t* contact, libpff_error_t** error, libpff_file_t** file, bool clone) : PffNodeEmailMessageText(name, parent, fsobj, contact, error, file, clone)
+PffNodeContact::PffNodeContact(std::string name, Node* parent, fso* fsobj, libpff_item_t* contact, libpff_file_t** file, bool clone) : PffNodeEmailMessageText(name, parent, fsobj, contact, file, clone)
 {
 }
 
@@ -29,14 +29,18 @@ Attributes	PffNodeContact::_attributes(void)
 {
   Attributes		attr;
   libpff_item_t*	item = NULL;
-
-  if (this->pff_item == NULL)
-  {
-    if (libpff_file_get_item_by_identifier(*(this->pff_file), this->identifier, &item, this->pff_error) != 1)
+  libpff_error_t*       pff_error = NULL;
+  //if (this->pff_item == NULL)
+  //{
+    if (libpff_file_get_item_by_identifier(*(this->pff_file), this->identifier, &item, &pff_error) != 1)
+    {
+      check_error(pff_error) 
+      std::cout << "PffNodeContact::_attributes can't get item by id" << std::endl; 
       return attr;
-  }
-  else 
-    item = *(this->pff_item);
+    }
+    //}
+    //else 
+    //item = *(this->pff_item);
  
   attr = this->allAttributes(item); 
 
@@ -45,13 +49,15 @@ Attributes	PffNodeContact::_attributes(void)
   attr[std::string("Contact")] = new Variant(contact);
 
   if (this->pff_item == NULL)
-    libpff_item_free(&item, this->pff_error);
+    if (libpff_item_free(&item, &pff_error) != 1)
+      check_error(pff_error) 
 
   return (attr);
 }
 
 void		PffNodeContact::attributesContact(Attributes* attr, libpff_item_t* item)
 {
+  libpff_error_t* pff_error                     = NULL;
   char*		entry_value_string		= 0;
   size_t	entry_value_string_size 	= 0;
   size_t	maximum_entry_value_string_size	= 1;

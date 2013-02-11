@@ -17,28 +17,31 @@
 #include "pff.hpp"
 
 //Appointment as attachment can't be cloned ! So we copy the item and didn't free it
-PffNodeAppointment::PffNodeAppointment(std::string name, Node* parent, fso* fsobj, libpff_item_t* appointment, libpff_error_t** error, libpff_file_t** file, bool clone) : PffNodeEMail(name, parent, fsobj, error)
+PffNodeAppointment::PffNodeAppointment(std::string name, Node* parent, fso* fsobj, libpff_item_t* appointment, libpff_file_t** file, bool clone) : PffNodeEMail(name, parent, fsobj)
 {
-  int result;
-
+  int                   result;
+  libpff_error_t*       pff_error = NULL;
+  this->pff_file = file;
   this->pff_item = NULL;
-  if (clone == 0)
-  {
-    result = libpff_item_get_identifier(appointment, &(this->identifier), error);
+  this->setFile();
+
+  //if (clone == 0)
+  //{
+    result = libpff_item_get_identifier(appointment, &(this->identifier), &pff_error);
     if (result == 0 || result == -1)
     {
-      this->pff_item = new libpff_item_t*;
-      *(this->pff_item) = appointment;
+       check_error(pff_error) 
+       this->pff_item = new libpff_item_t*;
+       *(this->pff_item) = appointment;
+       std::cout << "PffNodeAppointment() can t get identifier " << std::endl; 
+               //return ;
     }
-  }
-  else
-  {
-    this->pff_item = new libpff_item_t*;
-    *(this->pff_item) = appointment;
-  }
-  this->setFile();
-  this->pff_file = file;
-  this->pff_error = error;
+    //}
+    //else
+    //{
+    //this->pff_item = new libpff_item_t*;
+    //*(this->pff_item) = appointment;
+    //}
 }
 
 std::string PffNodeAppointment::icon(void)
@@ -48,7 +51,7 @@ std::string PffNodeAppointment::icon(void)
 
 void  PffNodeAppointment::attributesAppointment(Attributes* attr, libpff_item_t* item)
 {
-
+  libpff_error_t* pff_error                     = NULL;
   char*		entry_value_string 		= NULL;
   size_t	entry_value_string_size         = 0;
   size_t	maximum_entry_value_string_size	= 1;
@@ -83,11 +86,15 @@ Attributes PffNodeAppointment::_attributes()
 {
   Attributes		attr;
   libpff_item_t*	item = NULL;
+  libpff_error_t*       pff_error = NULL;
 
   if (this->pff_item == NULL)
   {
-    if (libpff_file_get_item_by_identifier(*(this->pff_file), this->identifier, &item, this->pff_error) != 1)
+    if (libpff_file_get_item_by_identifier(*(this->pff_file), this->identifier, &item, &pff_error) != 1)
+    {
+      check_error(pff_error) 
       return attr;
+    }
   }
   else 
     item = *(this->pff_item);
@@ -99,7 +106,8 @@ Attributes PffNodeAppointment::_attributes()
   attr[std::string("Appointment")] = new Variant(appointment);
 
   if (this->pff_item == NULL)
-    libpff_item_free(&item, this->pff_error);
+    if (libpff_item_free(&item, &pff_error) != 1)
+      check_error(pff_error) 
 
   return attr;
 }

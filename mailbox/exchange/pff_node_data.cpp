@@ -16,39 +16,40 @@
 
 #include "pff.hpp"
 
-PffNodeData::PffNodeData(std::string name, Node* parent, fso* fsobj, libpff_error_t** error) : Node(name, 0, parent, fsobj)
-  
+PffNodeData::PffNodeData(std::string name, Node* parent, fso* fsobj) : Node(name, 0, parent, fsobj)
 {
   this->setFile();
-  this->pff_error = error;
 }
 
 
-PffNodeData::PffNodeData(std::string name, Node* parent, fso* fsobj, libpff_item_t *item_data, libpff_error_t** error, libpff_file_t** file, bool clone) : Node(name, 0, parent, fsobj)
+PffNodeData::PffNodeData(std::string name, Node* parent, fso* fsobj, libpff_item_t *item_data, libpff_file_t** file, bool clone) : Node(name, 0, parent, fsobj)
   
 {
   int result;
 
   this->pff_item = NULL;
-  if (clone == 0)
-  {
-    result = libpff_item_get_identifier(item_data, &(this->identifier), error);
+  libpff_error_t* pff_error = NULL;
+  //if (clone == false) //XXX ???
+  //{
+    result = libpff_item_get_identifier(item_data, &(this->identifier), &pff_error);
     if (result == 0 || result == -1)
     {
+      check_error(pff_error) 
+      std::cout << "PffNodeData() can't get item by id, clonning" << std::endl;
       this->pff_item = new libpff_item_t*;
       *(this->pff_item) = NULL;
-      libpff_item_clone(this->pff_item, item_data, error);
+      if (libpff_item_clone(this->pff_item, item_data, &pff_error) != 1)
+        check_error(pff_error) 
     }
-  }
-  else
-  {
-    this->pff_item = new libpff_item_t*;
-    *(this->pff_item) = NULL;
-    libpff_item_clone(this->pff_item, item_data, error);
-  }
+    //}
+    //else
+    //{
+    //this->pff_item = new libpff_item_t*;
+    //*(this->pff_item) = NULL;
+    //libpff_item_clone(this->pff_item, item_data, error);
+    //}
   this->setFile();
   this->pff_file = file;
-  this->pff_error = error;
 }
 
 fdinfo* PffNodeData::vopen(void)

@@ -61,21 +61,33 @@ void pff::info()
 
 void pff::info_file()
 {
+  libpff_error_t* pff_error       = NULL;
   size64_t	file_size	  = 0;
   uint8_t 	file_content_type = 0;
   uint8_t 	file_type         = 0;
   uint8_t 	encryption_type   = 0;
+  
 
-
-  if (libpff_file_get_size(this->pff_file, &file_size, &(this->pff_error)) != 1)
+  if (libpff_file_get_size(this->pff_file, &file_size, &(pff_error)) != 1)
+  {
+    check_error(pff_error);
     return ;
-  if (libpff_file_get_content_type(this->pff_file, &file_content_type, &(this->pff_error)) != 1)
+  }
+  if (libpff_file_get_content_type(this->pff_file, &file_content_type, &(pff_error)) != 1)
+  {
+    check_error(pff_error);
     return ;
-  if (libpff_file_get_type(this->pff_file, &file_type, &(this->pff_error)) != 1)
+  }
+  if (libpff_file_get_type(this->pff_file, &file_type, &(pff_error)) != 1)
+  {
+    check_error(pff_error);
     return ;
-  if (libpff_file_get_encryption_type(this->pff_file, &encryption_type, &(this->pff_error)) != 1)
+  }
+  if (libpff_file_get_encryption_type(this->pff_file, &encryption_type, &(pff_error)) != 1)
+  {
+    check_error(pff_error);
     return ;
- 
+  } 
   std::string message = ""; 
   for (uint8_t n = 0;  n <  3; n++)
   {
@@ -121,12 +133,15 @@ void pff::info_file()
 
 void pff::info_message_store()
 {
-  libpff_item_t *message_store = NULL;
-  uint32_t 	password_checksum   = 0;
+  libpff_error_t* pff_error           = NULL;
+  libpff_item_t*  message_store       = NULL;
+  uint32_t        password_checksum   = 0;
 
-  if (libpff_file_get_message_store(this->pff_file, &message_store, &(this->pff_error)) == -1)
+  if (libpff_file_get_message_store(this->pff_file, &message_store, &(pff_error)) == -1)
+  {
+    check_error(pff_error)
     return ;
-
+  }
   if (libpff_message_store_get_password_checksum(message_store, &password_checksum, NULL) == 1)
   {
      if (password_checksum == 0)
@@ -134,6 +149,9 @@ void pff::info_message_store()
      else
        this->res["Password checksum"] = new Variant(password_checksum);
   }
-  if (libpff_item_free(&message_store, &(this->pff_error)) != 1)
+  if (libpff_item_free(&message_store, &(pff_error)) != 1)
+  {
+    check_error(pff_error)
     return ;
+  }
 }

@@ -16,8 +16,9 @@
 
 #include "pff.hpp"
 
-PffNodeUnallocatedBlocks::PffNodeUnallocatedBlocks(std::string name, Node *parent, mfso* fsobj, Node* root, int block_type, libpff_error_t** error, libpff_file_t** file) : Node(name, 0, parent, fsobj)
+PffNodeUnallocatedBlocks::PffNodeUnallocatedBlocks(std::string name, Node *parent, mfso* fsobj, Node* root, int block_type, libpff_file_t** file) : Node(name, 0, parent, fsobj)
 {
+  libpff_error_t* pff_error        = NULL;
   off64_t offset                   = 0;
   size64_t size                    = 0;
   int number_of_unallocated_blocks = 0;
@@ -27,10 +28,12 @@ PffNodeUnallocatedBlocks::PffNodeUnallocatedBlocks(std::string name, Node *paren
   this->root = root;
   this->block_type = block_type;
   this->pff_file = file;
-  this->pff_error = error;
 
-  if (libpff_file_get_number_of_unallocated_blocks(*(this->pff_file), this->block_type, &number_of_unallocated_blocks, this->pff_error) != 1)
-    return ;
+  if (libpff_file_get_number_of_unallocated_blocks(*(this->pff_file), this->block_type, &number_of_unallocated_blocks, &pff_error) != 1)
+  {
+     check_error(pff_error)
+     return ;
+  }
   if (block_type == LIBPFF_UNALLOCATED_BLOCK_TYPE_PAGE)
     fsobj->res["Number of unallocated page blocks"] = new Variant(number_of_unallocated_blocks);
   else
@@ -41,10 +44,12 @@ PffNodeUnallocatedBlocks::PffNodeUnallocatedBlocks(std::string name, Node *paren
   {
      for (block_iterator = 0; block_iterator < number_of_unallocated_blocks; block_iterator++)
      {
-	if (libpff_file_get_unallocated_block(*(this->pff_file), this->block_type, block_iterator, &offset, &size, this->pff_error) == 1)
+	if (libpff_file_get_unallocated_block(*(this->pff_file), this->block_type, block_iterator, &offset, &size, &pff_error) == 1)
 	{
 	  node_size += size;	
 	}
+        else
+          check_error(pff_error)
      }
   } 
   this->setSize(node_size);
@@ -52,25 +57,30 @@ PffNodeUnallocatedBlocks::PffNodeUnallocatedBlocks(std::string name, Node *paren
 
 void	PffNodeUnallocatedBlocks::fileMapping(FileMapping* fm)
 {
-
+  libpff_error_t* pff_error        = NULL;
   off64_t offset                   = 0;
   size64_t size                    = 0;
   int number_of_unallocated_blocks = 0;
   int block_iterator               = 0;
   uint64_t voffset		   = 0;
 
-  if (libpff_file_get_number_of_unallocated_blocks(*(this->pff_file), this->block_type, &number_of_unallocated_blocks, this->pff_error) != 1)
-    return ;
+  if (libpff_file_get_number_of_unallocated_blocks(*(this->pff_file), this->block_type, &number_of_unallocated_blocks, &pff_error) != 1)
+  {
+     check_error(pff_error)
+     return ;
+  }
 
   if (number_of_unallocated_blocks > 0)
   {
      for (block_iterator = 0; block_iterator < number_of_unallocated_blocks; block_iterator++)
      {
-	if (libpff_file_get_unallocated_block(*(this->pff_file), this->block_type, block_iterator, &offset, &size, this->pff_error) == 1)
+	if (libpff_file_get_unallocated_block(*(this->pff_file), this->block_type, block_iterator, &offset, &size, &pff_error) == 1)
 	{
 	  fm->push(voffset, size, this->root, offset);
 	  voffset += size;	
 	}
+        else
+          check_error(pff_error)
      }
   }
   return ;

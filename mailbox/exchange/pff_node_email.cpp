@@ -16,11 +16,11 @@
 
 #include "pff.hpp"
 
-PffNodeEMail::PffNodeEMail(std::string name, Node* parent, fso* fsobj, libpff_error_t** error) :PffNodeData(name, parent, fsobj, error)
+PffNodeEMail::PffNodeEMail(std::string name, Node* parent, fso* fsobj) :PffNodeData(name, parent, fsobj)
 {
 }
 
-PffNodeEMail::PffNodeEMail(std::string name, Node* parent, fso* fsobj, libpff_item_t *item, libpff_error_t** error, libpff_file_t** file, bool clone) : PffNodeData(name, parent, fsobj, item, error, file, clone)
+PffNodeEMail::PffNodeEMail(std::string name, Node* parent, fso* fsobj, libpff_item_t *item, libpff_file_t** file, bool clone) : PffNodeData(name, parent, fsobj, item, file, clone)
 {
 }
 

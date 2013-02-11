@@ -30,13 +30,12 @@ public:
 class PffNodeData : public Node
 {
 public:
-  EXPORT 		        PffNodeData(std::string name, Node* parent, fso* fsobj, libpff_error_t**);
-  EXPORT 		        PffNodeData(std::string name, Node* parent, fso* fsobj, libpff_item_t *dataItem, libpff_error_t**, libpff_file_t**, bool clone);
+  EXPORT 		        PffNodeData(std::string name, Node* parent, fso* fsobj);
+  EXPORT 		        PffNodeData(std::string name, Node* parent, fso* fsobj, libpff_item_t *dataItem, libpff_file_t**, bool clone);
   virtual fdinfo*       	vopen();
   virtual int32_t 	        vread(fdinfo* fi, void *buff, unsigned int size);
   virtual int32_t 	        vclose(fdinfo* fi);
   virtual uint64_t      	vseek(fdinfo* fi, uint64_t offset, int whence);
-  libpff_error_t**	        pff_error;
   libpff_file_t**		pff_file;
   uint32_t			identifier;
   libpff_item_t**       	pff_item;
@@ -52,8 +51,8 @@ private:
   void 			        splitTextToAttributes(std::string text, Attributes* attr);
 public:
   Attributes			allAttributes(libpff_item_t* item);	
-  EXPORT 		        PffNodeEMail(std::string name, Node* parent, fso* fsobj, libpff_error_t** );
-  EXPORT 		        PffNodeEMail(std::string name, Node* parent, fso* fsobj, libpff_item_t *mail, libpff_error_t**, libpff_file_t**, bool clone);
+  EXPORT 		        PffNodeEMail(std::string name, Node* parent, fso* fsobj);
+  EXPORT 		        PffNodeEMail(std::string name, Node* parent, fso* fsobj, libpff_item_t *mail, libpff_file_t**, bool clone);
   EXPORT virtual Attributes     _attributes(void);
   fdinfo*       		vopen(void);
   int32_t 	       	 	vread(fdinfo* fi, void *buff, unsigned int size);
@@ -66,28 +65,28 @@ public:
 class PffNodeEmailTransportHeaders : public PffNodeEMail
 {
 public:
-  EXPORT		        PffNodeEmailTransportHeaders(std::string, Node*, fso*, libpff_item_t*, libpff_error_t**, libpff_file_t**, bool clone);
+  EXPORT		        PffNodeEmailTransportHeaders(std::string, Node*, fso*, libpff_item_t*, libpff_file_t**, bool clone);
   EXPORT uint8_t *	        dataBuffer(void);
 };
 
 class PffNodeEmailMessageText : public PffNodeEMail
 {
 public:
-  EXPORT			PffNodeEmailMessageText(std::string , Node*, fso*, libpff_item_t*, libpff_error_t**, libpff_file_t**, bool clone);
+  EXPORT			PffNodeEmailMessageText(std::string , Node*, fso*, libpff_item_t*, libpff_file_t**, bool clone);
   EXPORT uint8_t*		dataBuffer(void);
 };
 
 class PffNodeEmailMessageHTML : public PffNodeEMail
 {
 public:
-  EXPORT			PffNodeEmailMessageHTML(std::string , Node*, fso*, libpff_item_t*, libpff_error_t**, libpff_file_t**, bool clone);
+  EXPORT			PffNodeEmailMessageHTML(std::string , Node*, fso*, libpff_item_t*, libpff_file_t**, bool clone);
   EXPORT uint8_t*		dataBuffer(void);
 };
 
 class PffNodeEmailMessageRTF : public PffNodeEMail
 {
 public:
-  EXPORT			PffNodeEmailMessageRTF(std::string , Node*, fso*, libpff_item_t*, libpff_error_t**, libpff_file_t**, bool clone);
+  EXPORT			PffNodeEmailMessageRTF(std::string , Node*, fso*, libpff_item_t*, libpff_file_t**, bool clone);
   EXPORT uint8_t*		dataBuffer(void);
 };
 
@@ -95,7 +94,7 @@ class PffNodeAttachment : public PffNodeEMail
 {
   int				attachment_iterator;
 public:
-  EXPORT 		        PffNodeAttachment(std::string name, Node* parent, fso* fsobj, libpff_item_t *mail, libpff_error_t**, size64_t, libpff_file_t**, int attachment_iterator, bool clone);
+  EXPORT 		        PffNodeAttachment(std::string name, Node* parent, fso* fsobj, libpff_item_t *mail, size64_t, libpff_file_t**, int attachment_iterator, bool clone);
   EXPORT uint8_t*		dataBuffer(void);
   EXPORT std::string		icon(void);
 };
@@ -103,7 +102,7 @@ public:
 class PffNodeAppointment : public PffNodeEMail
 {
 public:
-  EXPORT	PffNodeAppointment(std::string name, Node *parent, fso* fsobj, libpff_item_t* appointment, libpff_error_t**, libpff_file_t**, bool clone);
+  EXPORT	PffNodeAppointment(std::string name, Node *parent, fso* fsobj, libpff_item_t* appointment, libpff_file_t**, bool clone);
   EXPORT virtual Attributes     _attributes(void);
   EXPORT void  	                attributesAppointment(Attributes* attr, libpff_item_t*);
   EXPORT std::string		icon(void);
@@ -113,7 +112,7 @@ public:
 class PffNodeContact : public PffNodeEmailMessageText
 {
 public:
-  EXPORT PffNodeContact(std::string name, Node* parent, fso* fsobj, libpff_item_t* contact, libpff_error_t**, libpff_file_t**, bool clone);
+  EXPORT PffNodeContact(std::string name, Node* parent, fso* fsobj, libpff_item_t* contact, libpff_file_t**, bool clone);
   EXPORT virtual Attributes 	_attributes(void);
   EXPORT void			attributesContact(Attributes* attr, libpff_item_t*);
   EXPORT std::string		icon(void);
@@ -122,7 +121,7 @@ public:
 class PffNodeTask : public PffNodeEmailMessageText
 {
 public:
-  EXPORT PffNodeTask(std::string name, Node* parent, fso* fsobj, libpff_item_t* task, libpff_error_t**, libpff_file_t** file, bool clone);
+  EXPORT PffNodeTask(std::string name, Node* parent, fso* fsobj, libpff_item_t* task, libpff_file_t** file, bool clone);
   EXPORT virtual Attributes   	_attributes(void);
   EXPORT void		      	attributesTask(Attributes* attr, libpff_item_t*); 
   EXPORT std::string		icon(void);
@@ -131,14 +130,14 @@ public:
 class PffNodeMeeting : public PffNodeEmailMessageText
 {
 public:
-  EXPORT PffNodeMeeting(std::string name, Node* parent, fso* fsobj, libpff_item_t* task, libpff_error_t**, libpff_file_t** file, bool clone);
+  EXPORT PffNodeMeeting(std::string name, Node* parent, fso* fsobj, libpff_item_t* task, libpff_file_t** file, bool clone);
   EXPORT  std::string		icon(void); 
 };
 
 class PffNodeNote : public PffNodeEmailMessageText
 {
 public:
-  EXPORT PffNodeNote(std::string name, Node* parent, fso* fsobj, libpff_item_t* task, libpff_error_t**, libpff_file_t** file, bool clone);
+  EXPORT PffNodeNote(std::string name, Node* parent, fso* fsobj, libpff_item_t* task, libpff_file_t** file, bool clone);
   EXPORT std::string	icon(void);
 };
 
@@ -147,11 +146,10 @@ class PffNodeUnallocatedBlocks : public Node
 private:
  Node*			root;
  int			block_type;
- libpff_error_t**	pff_error;
  libpff_file_t**	pff_file;
  uint32_t		identifier;
 public:
- EXPORT			PffNodeUnallocatedBlocks(std::string name, Node* parent, mfso* fsobj, Node* root,int block_type, libpff_error_t**, libpff_file_t**);
+ EXPORT			PffNodeUnallocatedBlocks(std::string name, Node* parent, mfso* fsobj, Node* root,int block_type, libpff_file_t**);
  virtual void		fileMapping(FileMapping* fm);
 };
 
