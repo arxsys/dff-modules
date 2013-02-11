@@ -11,12 +11,18 @@
 # and IRC channels for your use.
 #
 # Author(s):
-#  Christophe Malinge <cma@digital-forensic.org>
+#  Solal Jacob <sja@digital-forensic.org>
 
+FIND_PACKAGE(SWIG REQUIRED)
+INCLUDE(${SWIG_USE_FILE})
+
+include_directories(${PYTHON_INCLUDE_PATH})
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_HOME_DIRECTORY}/dff/api/include)
 include_directories(${ICU_INCLUDE_DIRS})
 
 
-<<<<<<< HEAD
 set(ntfs_srcs
   ntfs.cpp
   ntfsopt.cpp
@@ -48,26 +54,3 @@ set(ntfs_files
 
 install_lib(${SWIG_MODULE_ntfs_REAL_NAME})
 install_file(ntfs ${ntfs_files})
-=======
-dff_cpp_module(NTFS
-  CPP_FILES ntfs.cpp
-  boot.cpp
-  mftentry.cpp
-  mftfile.cpp
-  attribute.cpp
-  ntfsnode.cpp
-  bitmapnode.cpp
-  attributes/data.cpp
-  attributes/bitmap.cpp
-  attributes/filename.cpp
-  attributes/standardinformation.cpp
-  attributes/attributelist.cpp
-  attributes/indexroot.cpp
-  attributes/reparsepoint.cpp
-  attributes/indexallocation.cpp
-  attributes/securitydescriptor.cpp
-  SWIG_FILE ntfs.i
-  INCLUDE_DIRS ${ICU_INCLUDE_DIRS}
-  LINK_LIBRARIES ${ICU_LIBRARIES} exceptions types vfs
-  )
->>>>>>> 3da5705c7b43571565deac3d53566cea3e955fd8
