@@ -35,7 +35,6 @@ MFTNode::MFTNode(NTFS* ntfs, Node* parent, MFTEntryNode* mftEntryNode) : Node("U
 
 MFTNode::~MFTNode(void)
 {
-//XXX depend du constrcteur doit pas etre delte si passer par le 2eme constructeur ?
   if (this->__mftEntryNode != NULL)
   {
      delete this->__mftEntryNode;
@@ -45,16 +44,11 @@ MFTNode::~MFTNode(void)
 
 void	MFTNode::init(void)
 {
-//SET NAME !!!!
-//There could be multiple filename we choose the lowest id file name who fit better
-
-//une seul loop c plus optimiser 
-
   uint8_t fileNameID = FILENAME_NAMESPACE_DOS_WIN32;
  
   if (this->__mftEntryNode != NULL)
   {
-    try  //mis pour test arrive a lire un nom sur un fs mais peut raise et juste catch audessus de la node et pas la creee du tout
+    try 
     {
       std::vector<MFTAttribute* > fileNames = this->__mftEntryNode->MFTAttributesType($FILE_NAME);
       std::vector<MFTAttribute* >::iterator currentFileName = fileNames.begin();
@@ -76,11 +70,11 @@ void	MFTNode::init(void)
        std::cout << e.error << std::endl;
     }
     //this->setSize(__mftEntryNode->dataCotentn()->size()
-    //SET SIZE !!! XXX attention au ADS et au non-data 
+    //SET SIZE !!! XXX warning ADS & non-data 
     std::vector<MFTAttribute* > datas = this->__mftEntryNode->MFTAttributesType($DATA);
     std::vector<MFTAttribute* >::iterator mftAttribute = datas.begin();
 
-    if (datas.size() > 0) //XXX choisir le bon ds le init() ads tous ca tous ca
+    if (datas.size() > 0) //XXX choose the right in init() because of ads ...
     {
       this->setSize(datas[0]->contentSize());
     }
@@ -103,21 +97,17 @@ void		MFTNode::fileMapping(FileMapping* fm)
   {
     std::vector<MFTAttribute* > datas = this->__mftEntryNode->MFTAttributesType($DATA);
     std::vector<MFTAttribute* >::iterator mftAttribute;
-    if (datas.size() > 0) //XXX choisir le bon ds le init() ads tous ca tous ca
+    if (datas.size() > 0) //XXX choose the right in init because of ads ... 
     {
       MFTAttributeContent* mftAttributeContent = datas[0]->content();
-//call sanas cache mais nous on est cache ?
+
       mftAttributeContent->fileMapping(fm);
       delete mftAttributeContent;
       for (mftAttribute = datas.begin(); mftAttribute != datas.end(); mftAttribute++)
 	delete (*mftAttribute);
     }
     else
-    //get the first data multi data for ads alternate data stream // create a new node here ! 
-    //ca peut etre ca ca auto-creer les ads ... la classe :) enfin plutot ds le 'init' si non ca va les creer au moment de demandede filemapping ...
     {
-//call sans cache mais nous on est dsle cache ?
-      std::cout << "NORMALLLL PUSH " << std::endl;
       this->__mftEntryNode->fileMapping(fm);
     }
   }  

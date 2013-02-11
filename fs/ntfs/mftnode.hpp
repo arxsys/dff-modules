@@ -18,13 +18,10 @@
 #define __NTFS_MFT_HH__
 
 #include "ntfs_common.hpp"
-#include "mftentrynode.hpp" //cause heritage
+#include "mftentrynode.hpp"
 
 class NTFS;
 class MFTEntryNode;
-
-//possibilite d'heriter de MFTEntryNode mais le cache marche pu ! est il faut redefinir size ds
-// mftentnrynode car si non elle revenra la size du content ! et peut etre d autre truc 
 
 class MFTNode : public Node
 {

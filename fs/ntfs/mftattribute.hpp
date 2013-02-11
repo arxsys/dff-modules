@@ -31,7 +31,7 @@ PACK_S	MFTResidentAttribute
 
 PACK_S	MFTNonResidentAttribute
 {
-  uint64_t	VNCStart; // if present address de la prochaie mft avec la suite de l attribut
+  uint64_t	VNCStart;
   uint64_t	VNCEnd;
   uint16_t	runListOffset;
   uint16_t	compressionUnitSize;
@@ -57,11 +57,11 @@ class MFTAttribute
 private:
   uint64_t			__offset;
   MFTEntryNode*			__mftEntryNode;
-  MFTAttribute_s*		__mftAttribute; //pas en pointeur /read buff +- 1024
+  MFTAttribute_s*		__mftAttribute;
   MFTNonResidentAttribute*	__nonResidentAttribute; // cast buff offset
   MFTResidentAttribute*		__residentAttribute;//  cast buff offset
 public:
-		        MFTAttribute(MFTEntryNode* ntfsNode, uint64_t offset);//vfile pour pas reopen ?
+		        MFTAttribute(MFTEntryNode* ntfsNode, uint64_t offset);
 		        ~MFTAttribute(void);
   MFTEntryNode*		mftEntryNode(void);
   uint64_t		offset(void);
@@ -69,10 +69,10 @@ public:
   uint32_t		length(void);
   bool			isResident(void);
   uint8_t		nonResidentFlag(void);
- //std::string		name(void); //mis ds content pour les special case comme filename qui existe plusieurs fois et doit avoir un nom ds attribute (au moins) different
+ //std::string		name(void); 
   uint8_t		nameLength(void);
   uint16_t		nameOffset(void);
-  uint16_t		flags(void); //compressed encrypter sparse ! spare a verifier pour le read du content ? 
+  uint16_t		flags(void); 
   uint16_t		ID(void);
   NTFS*			ntfs();
   MFTAttributeContent*  content(void);

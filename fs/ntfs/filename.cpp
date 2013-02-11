@@ -163,7 +163,7 @@ std::string	FileName::nameSpace(void)
   if (this->__fileName.nameSpace == FILENAME_NAMESPACE_POSIX)
     return std::string("Posix");
   else if (this->__fileName.nameSpace == FILENAME_NAMESPACE_WIN32)
-    return std::string("Win32"); //sans espace si on utilise ca pour le multi-filename
+    return std::string("Win32");
   else if (this->__fileName.nameSpace == FILENAME_NAMESPACE_DOS)
     return std::string("DOS");
   else if (this->__fileName.nameSpace == FILENAME_NAMESPACE_DOS_WIN32)
@@ -196,7 +196,3 @@ std::list<Variant_p>	FileName::flags(void)
 
   return (flagsList);
 }
-//XXX il peut y a voir plusieurs filename si c le cas 
-// un seul aparaitra en attribut car ils auront le meme nom ...
-// pour les identifier : $FILE_NAME_0 $FILENAME + attributeID // $FILE_NAME + nameSpace ...
-//std::string typeName ()  this->typeId { } ...

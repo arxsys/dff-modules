@@ -34,7 +34,7 @@ PACK_S BPB
   uint64_t	MFTLogicalClusterNumber;
   uint64_t	MFTMirrorLogicalClusterNumber;
 //  int8_t	clustersPerMFTRecord;
-  uint8_t	clustersPerMFTRecord;//XXX ca plante partition 2 si non !!!
+  uint8_t	clustersPerMFTRecord;//XXX seem to work better like that or get neg value 
 
   uint8_t	reserved3[3];
   int8_t	clustersPerIndexBuffer;  

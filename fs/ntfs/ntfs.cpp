@@ -41,21 +41,12 @@ void 		NTFS::start(Attributes args)
   this->__opt = new NTFSOpt(args);
   this->__bootSectorNode = new BootSectorNode(this);
 
-  //boot sector node will not be created if invalid, all process will stop 
   if (this->__opt->validateBootSector())
     this->__bootSectorNode->validate();
 
   this->setStateInfo("Reading main MFT");
   printf("size of MFTNode %d\n", sizeof(MFTNode)); 
   MFTNode* mftNode = new MFTNode(this, this->fsNode(), this->rootDirectoryNode(),  this->__bootSectorNode->MFTLogicalClusterNumber() * this->__bootSectorNode->clusterSize());
-
-//bourin mode en faite on va lire les 7 premier car ils sont fix et apres utiliser l index pour reconstruire le tree correctemnt
-//si non on read toute les mft comme un porcas et on fout l index ds un vector<>
-//ca permetra d y acceder directement mais ca sera lour car on va les avir tous en ram
-// on pourais  y acceder plus facilement en faisant mftNode->record(numero de l entry)
-//le prob c que pour l instant on les lis relative a un offset number ce ki a rien a voir :) 
-//donc faut voir le mieux mais apparement ca ce lis tjrs avec un numerod index ds la mft
-//
 
   uint64_t i = 0;
   uint64_t nMFT = mftNode->size() / 1024;
@@ -74,8 +65,6 @@ void 		NTFS::start(Attributes args)
      MFTNode* currentMFTNode = new MFTNode(this, mftNode, this->rootDirectoryNode(), i * 1024);
      i += 1;
   }
-//  MFTEntryNode* MFTEntryMirrorNode
-// if MFTEntryNode != MFTEntryMirrorNode
   this->registerTree(this->opt()->fsNode(), this->rootDirectoryNode());
 
   this->setStateInfo("finished successfully");

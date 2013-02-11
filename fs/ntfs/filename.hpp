@@ -41,7 +41,6 @@ PACK_S FileName_s
 ;
  } PACK;
 
-//il peut y a voir plusieurs filename avec un namespace different prendre le meilleur ds ce cas le + eleve ? 
 class FileName : public MFTAttributeContent
 {
 private:

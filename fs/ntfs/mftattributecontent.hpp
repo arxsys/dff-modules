@@ -39,7 +39,7 @@ class MFTAttributeContent : public Node
 private:
   MFTAttribute*	__mftAttribute;
 public:
-  			MFTAttributeContent(MFTAttribute* mftAttribute);//copy ou offset only pour etre independant et puvoir etre garder en ram car plus petite structure ? // full dynmaic  ? full ram ? 
+  			MFTAttributeContent(MFTAttribute* mftAttribute);
 	 		~MFTAttributeContent();
   Attributes		_attributes();
   void			fileMapping(FileMapping* fm);

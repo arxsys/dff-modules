@@ -35,7 +35,7 @@ BootSectorNode::BootSectorNode(NTFS* ntfs) : Node(std::string("$Boot"), 512, ntf
     throw vfsError(std::string("Can't read start of boot sector"));
 
   this->__state = 1;
-//2) MFSO CACHE ALREADY TRIGER SO FUCKED !!! MUST PATCH MFSO PATCH -> to check size or reput in cache
+//2) Change state of mfso cache because we change size
   if (ntfs->fsNode()->size() > this->bytesPerSector() * 16)
     this->setSize(this->bytesPerSector() * 16);
   else 

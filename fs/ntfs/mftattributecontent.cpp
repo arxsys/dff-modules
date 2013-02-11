@@ -24,7 +24,6 @@
 MFTAttributeContent::MFTAttributeContent(MFTAttribute* mftAttribute) : Node("Unknown", (uint64_t)mftAttribute->contentSize(), NULL,  mftAttribute->ntfs())
 {
   this->__mftAttribute = mftAttribute;
-  //this->__name = this->name(); pourquoi ca ? 
 }
 
 MFTAttributeContent::~MFTAttributeContent()
@@ -34,22 +33,15 @@ MFTAttributeContent::~MFTAttributeContent()
 
 void		MFTAttributeContent::fileMapping(FileMapping* fm)
 {
-//XXX Sparse ..
-//XXX Compressed & Cypher ds MFTNode ou ici ?? 
-//XXX pas ici Attribute ds plusieurs MFT ... et la c la merde ?
   if (this->__mftAttribute->isResident())
   {
      fm->push(0, this->__mftAttribute->contentSize(), this->__mftAttribute->mftEntryNode(), this->__mftAttribute->contentOffset());
   }
   else
   {
-// ds une fonction a part ??
-// compressed size of run
-//XXX spaaaarse offset = 0 ?
-//XXX very fragment == run list trop long donc 2 attribut donc lire la xeme mft 
     uint64_t	runPreviousOffset = 0;
     int64_t	runOffset;
-    uint64_t	runLength; //* ntfs->bootsectornode->clusterSize
+    uint64_t	runLength;
     uint64_t	totalSize = 0;
     uint32_t	clusterSize = this->__mftAttribute->ntfs()->bootSectorNode()->clusterSize();
     Node*	fsNode = this->__mftAttribute->ntfs()->fsNode();
@@ -82,19 +74,13 @@ void		MFTAttributeContent::fileMapping(FileMapping* fm)
    
       if (runLength == 0)
 	break;
-      // XXX test	
       
       runPreviousOffset += runOffset;
-//XXX attention au dernier block a bien push pas la size d un cluster mais ce qu il faut pour pas push la slaaaaack a part si mfso le gere mais c mieux si c fait ici pour eviter les erreur
-      //cout MFTATTRIBUTEcoNTENT Push 
  
       fm->push(totalSize, runLength * clusterSize, fsNode, runPreviousOffset * clusterSize);
       totalSize += runLength * clusterSize;  
     }
     runList->close();
-//PARSE OTHER MFT YES IT'S MFT not datablock donc on se construit ds nous meme ? ca va marcher.. ? pleaseeeeeeeeeeeeeeeeeeeeeeeeeeeee 
- //   push firstVNC
-  //  untill push last VNX
   }
 }
 

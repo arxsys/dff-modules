@@ -98,7 +98,6 @@ MFTEntryNode*		MFTAttribute::mftEntryNode(void)
   return (this->__mftEntryNode);
 }
 
-
 //caller must delete AttributeCOntent !
 // factory ...
 MFTAttributeContent*	MFTAttribute::content(void)
@@ -122,7 +121,6 @@ uint64_t		MFTAttribute::contentOffset(void)
   if (this->isResident())
     return (this->__offset + this->__residentAttribute->contentOffset);
   return (0);
-//throw ? eturn une sorte de fillemaping ?
 }
 
 uint16_t		MFTAttribute::runListOffset(void)
@@ -132,9 +130,6 @@ uint16_t		MFTAttribute::runListOffset(void)
   throw std::string("Try to access non resident attribute on a resident attribute");
 }
 /*
-move ds attribute content a cause de FIleName qui peut exister plusieurs fois
-donc plusieurs nom car on peut push qu une fois ds les attribute un trucc ave le meme nom
-si non ca l overwrite
 std::string 		MFTAttribute::name()
 {
   if (this->nameLength())

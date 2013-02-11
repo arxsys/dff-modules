@@ -59,7 +59,7 @@ MFTAttributeContent*	StandardInformation::create(MFTAttribute* mftAttribute)
 
 StandardInformation::~StandardInformation()
 {
-//delete __StandardInformation ?? pourquoi c pas un pointeur ?
+//delete __StandardInformation ?
 }
 
 std::string	StandardInformation::typeName(void)

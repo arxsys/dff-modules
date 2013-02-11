@@ -35,7 +35,7 @@ PACK_S	MFTEntry
   uint16_t	sequenceValue;
   uint16_t	linkCount;
   uint16_t	firstAttributeOffset;
-  uint16_t	flags;  //in use & directory  ! in use a check pour savoir si c delete ? 
+  uint16_t	flags;  //in use & directory  
   uint32_t	usedSize;
   uint32_t	allocatedSize;
   uint64_t	fileReferenceToBaseRecord;
@@ -70,8 +70,8 @@ public:
   uint16_t		firstAttributeOffset(void);
   uint16_t		fixupArrayOffset(void);
   uint16_t		fixupArrayEntryCount(void);
-//  uint16_t		fixupArraySignature(void); //sert a rien en mode push
-//  uint16_t*		fixupArrayBuffer(void);  // sert a rien en mode push
+//  uint16_t		fixupArraySignature(void); 
+//  uint16_t*		fixupArrayBuffer(void);  
   std::vector<MFTAttribute* >	MFTAttributes();
   std::vector<MFTAttribute* >	MFTAttributesType(uint32_t typeID);
 };
