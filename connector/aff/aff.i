@@ -49,7 +49,7 @@ from dff.api.module.module import *
 from dff.api.types.libtypes import *
 from dff.api.vfs import vfs
 class AFF(Module):
-  """Add file from your operating system to the VFS"""
+  """Load AFF v3 files"""
   def __init__(self):
     Module.__init__(self, 'aff', aff)
     self.conf.addArgument({"input": Argument.Required|Argument.Single|typeId.Node, 

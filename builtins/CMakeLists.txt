@@ -16,12 +16,15 @@ install_file(
   cd.py
   batch.py
   fg.py
+  fileinfo.py
+  find.py
   history.py
   info.py
   jobs.py
   link.py
   load.py
   ls.py
+  man.py
   open.py
   show_cwd.py
   show_db.py

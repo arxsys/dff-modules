@@ -65,7 +65,7 @@ class REGEDIT(QWidget, Script):
 	pass
 
 class regedit(Module):
-  """Windows registry vTEST"""
+  """Windows registry viewer"""
   def __init__(self):
     Module.__init__(self, "Registry viewer", REGEDIT)
     self.conf.addArgument({"input": Argument.Optional|Argument.List|typeId.Node,

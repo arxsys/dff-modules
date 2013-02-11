@@ -14,7 +14,7 @@
 
 install_file(
   __init__.py
-  metacompound.py
+  compound.py
   mscfb.py 
   msdoc.py 
   msdocheader.py 

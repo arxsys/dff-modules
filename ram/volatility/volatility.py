@@ -83,7 +83,7 @@ class Volatility(mfso):
 class volatility(Module):
   """Analyse a windows-xp ram dump"""
   def __init__(self):
-   Module.__init__(self, "volatility", Volatility)
+   Module.__init__(self, "windows-XP", Volatility)
    self.conf.addArgument({"name": "file",
                           "description": "Dump to analyse", 
                           "input": Argument.Required|Argument.Single|typeId.Node})
@@ -103,5 +103,5 @@ class volatility(Module):
 			  "type" : typeId.String,
 			  "description" : "Compatible extension",
 			  "values" : ["vmem"]})
-   self.tags = "Volatile memory"
+   self.tags = "RAM"
    self.icon = ":dev_ram.png"

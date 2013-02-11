@@ -182,8 +182,8 @@ class PLAYER(QWidget, Script):
 
 
 class player(Module):
+  """Video and Audio player"""
   def __init__(self):
-   """Video and Audio player"""
    Module.__init__(self, "player", PLAYER)
    self.conf.addArgument({"name": "file",
                           "description": "multimedia file to play",

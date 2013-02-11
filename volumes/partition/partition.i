@@ -46,7 +46,7 @@ from dff.api.module.module import *
 from dff.api.types.libtypes import Argument, typeId, Parameter
 
 class PARTITION(Module):
-  """Create partition table found in the underlaying file"""
+  """Reconstruct partitions found in a volume"""
   def __init__(self):
     Module.__init__(self, 'partition', Partition)
     self.conf.addArgument({"name": "file",

@@ -35,7 +35,7 @@ class SqliteDB(Script):
 
 
 class sqlitedb(Module):
-    """SQLITE """
+    """Allows to query sqlite database trough the VFS"""
     def __init__(self):
         Module.__init__(self, "sqlitedb", SqliteDB) 
         self.conf.addArgument({"input": Argument.Optional|Argument.Single|typeId.Node,

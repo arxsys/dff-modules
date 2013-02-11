@@ -17,9 +17,4 @@ install_file(
   __init__.py
 )
 
-add_subdirectory (carver)
-if (ENABLE_INDEXER)
-   add_subdirectory (indexer)
-endif (ENABLE_INDEXER)
-
-add_subdirectory(find)
+add_subdirectory(carver)

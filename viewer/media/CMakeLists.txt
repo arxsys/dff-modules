@@ -15,5 +15,6 @@
 install_file(
   player.py
   videothumbnailviewer.py
-  viewerimage.py  
+  imageviewer.py  
+  textviewer.py
 )

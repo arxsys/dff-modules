@@ -16,7 +16,7 @@
 
 #include "pyrun.swg"
 
-%module  PFF 
+%module PFF 
 %include "std_string.i"
 %include "std_list.i"
 %include "std_set.i"
@@ -46,7 +46,7 @@ from dff.api.types.libtypes import *
 class PFF(Module):
   """Extract PST/PAB/OST mailbox content."""
   def __init__(self):
-    Module.__init__(self, 'pff', pff)
+    Module.__init__(self, 'exchange', pff)
     self.conf.addArgument({"input":Argument.Required|Argument.Single|typeId.Node,
                            "name": "file",
                            "description": "Path to mailbox file"})

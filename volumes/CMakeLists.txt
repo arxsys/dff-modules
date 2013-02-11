@@ -14,7 +14,6 @@
 
 add_subdirectory(partition)
 add_subdirectory(vmware)
-#add_subdirectory(raid)
 
 install_file(
   __init__.py

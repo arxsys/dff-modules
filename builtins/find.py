@@ -105,4 +105,4 @@ class find(Module):
         self.conf.addArgument({"name": "verbose",
                                "description": "outputs matching node on console during processing",
                                "input": Argument.Empty})
-        self.tags = "Search"
+        self.tags = "builtins"

@@ -196,11 +196,11 @@ class CAT(QSplitter, Script):
     if len(self.buff): 
      return self.buff
 
-class cat(Module):
+class textviewer(Module):
   """Show text file content
 ex:cat /myfile.txt"""
   def __init__(self):
-    Module.__init__(self, "text", CAT)
+    Module.__init__(self, "textviewer", CAT)
     self.conf.addArgument({"name": "file",
                            "description": "Text file to display",
                            "input": Argument.Required|Argument.Single|typeId.Node})

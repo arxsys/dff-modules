@@ -47,7 +47,7 @@ from dff.api.module.module import *
 from dff.api.types.libtypes import *
 from dff.api.vfs import vfs
 class DEVICES(Module):
-  """Add windows devices to the VFS"""
+  """Access devices connected to your computer."""
   def __init__(self):
     Module.__init__(self, 'devices', devices)
     self.tags = "Connectors"  

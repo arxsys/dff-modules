@@ -14,8 +14,6 @@
 
 install_file(
   __init__.py
-  cat.py
-  hist.py
 )
 
 add_subdirectory(hexedit)

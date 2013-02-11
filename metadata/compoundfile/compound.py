@@ -155,10 +155,10 @@ class MetaCompound(mfso):
     except (KeyError, Exception):
       self.stateinfo = "Error"
 
-class metacompound(Module): 
-  """This modules generate metadata for office files"""
+class compound(Module): 
+  """This modules extract metadata and content of compound files (doc,xls,msi, ....).;"""
   def __init__(self):
-    Module.__init__(self, "metacompound", MetaCompound)
+    Module.__init__(self, "compound", MetaCompound)
     self.conf.addArgument({"name": "file",
                            "description": "file to extract metadata",
                            "input": Argument.Required|Argument.Single|typeId.Node})

@@ -358,7 +358,7 @@ class ImageView(QWidget, Script):
     self.loadedImage.adjust()
 
 
-class viewerimage(Module):
+class imageviewer(Module):
   """Display content of graphic file"""
   def __init__(self):
     Module.__init__(self, "pictures", ImageView)
