@@ -27,8 +27,6 @@ from dff.api.taskmanager.taskmanager import TaskManager
 from dff.modules.carver.utils import QFFSpinBox
 from dff.modules.carver.CARVER import Carver
 
-import traceback
-
 class CarvingProcess(QWidget, EventHandler):
     def __init__(self, selector, vnode):
         QWidget.__init__(self)
@@ -124,7 +122,6 @@ class CarvingProcess(QWidget, EventHandler):
                 f = self.vnode.open()
                 f.close()
             except:
-                traceback.print_exc()
                 mbox = QMessageBox(QMessageBox.Warning, 
                                    self.tr("Carver bad input"),
                                    self.tr("The provided input file seems to be a directory. Please, apply the module on a file"),
