@@ -68,22 +68,22 @@ void pff::info_file()
   uint8_t 	encryption_type   = 0;
   
 
-  if (libpff_file_get_size(this->pff_file, &file_size, &(pff_error)) != 1)
+  if (libpff_file_get_size(this->__pff_file, &file_size, &(pff_error)) != 1)
   {
     check_error(pff_error);
     return ;
   }
-  if (libpff_file_get_content_type(this->pff_file, &file_content_type, &(pff_error)) != 1)
+  if (libpff_file_get_content_type(this->__pff_file, &file_content_type, &(pff_error)) != 1)
   {
     check_error(pff_error);
     return ;
   }
-  if (libpff_file_get_type(this->pff_file, &file_type, &(pff_error)) != 1)
+  if (libpff_file_get_type(this->__pff_file, &file_type, &(pff_error)) != 1)
   {
     check_error(pff_error);
     return ;
   }
-  if (libpff_file_get_encryption_type(this->pff_file, &encryption_type, &(pff_error)) != 1)
+  if (libpff_file_get_encryption_type(this->__pff_file, &encryption_type, &(pff_error)) != 1)
   {
     check_error(pff_error);
     return ;
@@ -137,7 +137,7 @@ void pff::info_message_store()
   libpff_item_t*  message_store       = NULL;
   uint32_t        password_checksum   = 0;
 
-  if (libpff_file_get_message_store(this->pff_file, &message_store, &(pff_error)) == -1)
+  if (libpff_file_get_message_store(this->__pff_file, &message_store, &(pff_error)) == -1)
   {
     check_error(pff_error)
     return ;

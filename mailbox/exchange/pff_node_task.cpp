@@ -16,7 +16,7 @@
 
 #include "pff.hpp"
 
-PffNodeTask::PffNodeTask(std::string name, Node* parent, fso* fsobj, libpff_item_t* task, libpff_file_t** file, bool clone) : PffNodeEmailMessageText(name, parent, fsobj, task, file, clone)
+PffNodeTask::PffNodeTask(std::string name, Node* parent, pff* fsobj, ItemInfo* itemInfo) : PffNodeEmailMessageText(name, parent, fsobj, itemInfo)
 {
 }
 
@@ -31,26 +31,17 @@ Attributes	PffNodeTask::_attributes(void)
   libpff_item_t*	item = NULL;
   libpff_error_t*       pff_error = NULL;
   
-  //if (this->pff_item == NULL)
-  //{
-    if (libpff_file_get_item_by_identifier(*(this->pff_file), this->identifier, &item, &pff_error) != 1)
-    {
-      check_error(pff_error)
-      std::cout << "pff node task can't get attribute " << std::endl;
-      return attr;
-    }
-    //}
-    //else 
-    //item = *(this->pff_item);
+  item = this->__itemInfo->item(this->__pff()->pff_file());
+  if (item == NULL)
+    return attr;
 
   attr = this->allAttributes(item);
   Attributes	task;
   this->attributesTask(&task, item);
   attr[std::string("Task")] = new Variant(task);
 
-  if (this->pff_item == NULL)
-    if (libpff_item_free(&item, &pff_error) != 1)
-      check_error(pff_error)
+  if (libpff_item_free(&item, &pff_error) != 1)
+    check_error(pff_error)
 
   return attr;
 }

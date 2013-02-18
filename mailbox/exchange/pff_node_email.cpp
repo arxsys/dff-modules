@@ -16,11 +16,11 @@
 
 #include "pff.hpp"
 
-PffNodeEMail::PffNodeEMail(std::string name, Node* parent, fso* fsobj) :PffNodeData(name, parent, fsobj)
+PffNodeEMail::PffNodeEMail(std::string name, Node* parent, pff* fsobj) : PffNodeData(name, parent, fsobj)
 {
 }
 
-PffNodeEMail::PffNodeEMail(std::string name, Node* parent, fso* fsobj, libpff_item_t *item, libpff_file_t** file, bool clone) : PffNodeData(name, parent, fsobj, item, file, clone)
+PffNodeEMail::PffNodeEMail(std::string name, Node* parent, pff* fsobj, ItemInfo* itemInfo) : PffNodeData(name, parent, fsobj, itemInfo)
 {
 }
 
@@ -65,7 +65,7 @@ int32_t  PffNodeEMail::vread(fdinfo* fi, void *buff, unsigned int size)
   if ((fi)->offset + size > this->size())
     size = this->size() - fi->offset;
   memcpy(buff, rbuff + (uint32_t)fi->offset, size);
-  fi->offset += size; 
+  fi->offset += size;
  
   return (size);
 }

@@ -16,32 +16,20 @@
 
 #include "pff.hpp"
 
-//Appointment as attachment can't be cloned ! So we copy the item and didn't free it
-PffNodeAppointment::PffNodeAppointment(std::string name, Node* parent, fso* fsobj, libpff_item_t* appointment, libpff_file_t** file, bool clone) : PffNodeEMail(name, parent, fsobj)
+PffNodeAppointment::PffNodeAppointment(std::string name, Node* parent, pff* fsobj, ItemInfo* itemInfo) : PffNodeEMail(name, parent, fsobj, itemInfo)
 {
   int                   result;
   libpff_error_t*       pff_error = NULL;
-  this->pff_file = file;
-  this->pff_item = NULL;
+  libpff_item_t*        item = NULL;
   this->setFile();
 
-  //if (clone == 0)
-  //{
-    result = libpff_item_get_identifier(appointment, &(this->identifier), &pff_error);
-    if (result == 0 || result == -1)
-    {
-       check_error(pff_error) 
-       this->pff_item = new libpff_item_t*;
-       *(this->pff_item) = appointment;
-       std::cout << "PffNodeAppointment() can t get identifier " << std::endl; 
-               //return ;
-    }
-    //}
-    //else
-    //{
-    //this->pff_item = new libpff_item_t*;
-    //*(this->pff_item) = appointment;
-    //}
+//useless for test only 
+  result = libpff_file_get_item_by_identifier(this->__pff()->pff_file(), itemInfo->identifier(), &item, &pff_error);
+  if (result == 0 || result == -1)
+    check_error(pff_error) 
+//
+  if (libpff_item_free(&item, &pff_error) != 1)
+    check_error(pff_error) 
 }
 
 std::string PffNodeAppointment::icon(void)
@@ -88,26 +76,18 @@ Attributes PffNodeAppointment::_attributes()
   libpff_item_t*	item = NULL;
   libpff_error_t*       pff_error = NULL;
 
-  if (this->pff_item == NULL)
-  {
-    if (libpff_file_get_item_by_identifier(*(this->pff_file), this->identifier, &item, &pff_error) != 1)
-    {
-      check_error(pff_error) 
-      return attr;
-    }
-  }
-  else 
-    item = *(this->pff_item);
+  item = this->__itemInfo->item(this->__pff()->pff_file());
+  if (item == NULL)
+     return attr;
 
   attr = this->allAttributes(item);
-  Attributes	appointment;
 
+  Attributes	appointment;
   this->attributesAppointment(&appointment, item); 
   attr[std::string("Appointment")] = new Variant(appointment);
 
-  if (this->pff_item == NULL)
-    if (libpff_item_free(&item, &pff_error) != 1)
-      check_error(pff_error) 
+  if (libpff_item_free(&item, &pff_error) != 1)
+    check_error(pff_error) 
 
   return attr;
 }

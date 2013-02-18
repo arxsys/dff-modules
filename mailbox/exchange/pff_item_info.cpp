@@ -1,0 +1,140 @@
+/*
+ * DFF -- An Open Source Digital Forensics Framework
+ * Copyright (C) 2009-2011 ArxSys
+ * This program is free software, distributed under the terms of
+ * the GNU General Public License Version 2. See the LICENSE file
+ * at the top of the source tree.
+ *  
+ * See http: *www.digital-forensic.org for more information about this
+ * project. Please do not directly contact any of the maintainers of
+ * DFF for assistance; the project provides a web site, mailing lists
+ * and IRC channels for your use.
+ * 
+ * Author(s):
+ *  Solal Jacob <sja@digital-forensic.org>
+ */
+
+#include "pff_item_info.hpp"
+
+ItemInfo::ItemInfo(libpff_item_t* item, int index, ItemStatusType statusType, ItemInfo* attachedInfo)
+{
+  libpff_error_t* pff_error;
+
+  this->__item = item;
+  this->__index = index;
+  this->__identifier = 0;
+  this->__statusType = statusType;
+  this->__attachedInfo = attachedInfo;
+
+  if (this->__statusType != Recovered) // || attached, orphan ?
+    if (libpff_item_get_identifier(this->__item, &(this->__identifier), &pff_error) != 1)
+      check_error(pff_error);
+}
+
+ItemInfo::ItemInfo(ItemInfo* itemInfo)
+{
+  this->__item = NULL;
+  this->__index = itemInfo->index();
+  this->__identifier = itemInfo->identifier();
+  this->__statusType = itemInfo->statusType();
+  if (itemInfo->attachedInfo() != NULL)
+    this->__attachedInfo = new ItemInfo(itemInfo->attachedInfo());
+}
+
+ItemInfo::~ItemInfo()
+{
+  //libpff_error_t* pff_error = NULL;
+
+  //if (this->__item != NULL)
+  //{
+  //libpff_item_free(&(this->__item), &pff_error);
+  //check_error(pff_error);
+  //this->__item = NULL;
+  //}
+}
+
+libpff_item_t*  ItemInfo::item()
+{
+  if (this->__item != NULL)
+    return (this->__item);
+  return (NULL);
+}
+
+libpff_item_t*  ItemInfo::item(libpff_file_t* const pff_file)
+{
+  libpff_item_t*  pff_item = NULL;
+  libpff_error_t* pff_error = NULL;
+
+  if (this->__item != NULL)
+    return (this->__item);
+  if (this->__statusType == Recovered)
+  {
+     if (libpff_file_get_recovered_item(pff_file, this->__index, &pff_item, &pff_error) == 1)
+       return (pff_item);
+     else
+       check_error(pff_error);
+  }
+  else if (this->__statusType == Orphan)
+  {
+    if (libpff_file_get_orphan_item(pff_file, this->__index, &pff_item, &pff_error) == 1)
+      return (pff_item);
+    else
+      check_error(pff_error);
+  }
+  else if (this->__statusType == AttachmentItem)
+  {
+    libpff_item_t* attacher = this->__attachedInfo->item(pff_file);
+    if (attacher != NULL)
+    {
+      libpff_item_t* attachment = NULL;
+      if (libpff_message_get_attachment(attacher, this->__index, &attachment, &pff_error) == 1)
+      {
+        if (libpff_attachment_get_item(attachment, &pff_item, &pff_error) == 1)
+          return (pff_item);
+        else
+          check_error(pff_error)
+      }
+    }
+  }
+  else 
+  {
+    if (libpff_file_get_item_by_identifier(pff_file, this->__identifier, &pff_item, &pff_error) == 1)
+      return (pff_item);
+    else
+      check_error(pff_error);
+  }
+
+  return (NULL);
+}
+
+ItemInfo* ItemInfo::attachedInfo(void)
+{
+  return (this->__attachedInfo);
+}
+
+ItemInfo::ItemStatusType  ItemInfo::statusType(void)
+{
+  return (this->__statusType);
+}
+
+uint32_t        ItemInfo::identifier(void)
+{
+  return (this->__identifier);
+}
+
+uint8_t         ItemInfo::type(void)
+{
+  uint8_t         item_type;
+  libpff_error_t* pff_error = NULL;
+
+  if (libpff_item_get_type(this->item(), &item_type, &pff_error) == 1)
+    return (item_type);
+
+  check_error(pff_error)  
+  throw std::string("Can't get item type");
+}
+
+int             ItemInfo::index(void)
+{
+  return (this->__index);
+}

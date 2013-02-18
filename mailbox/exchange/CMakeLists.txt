@@ -22,6 +22,7 @@ dff_cpp_module(PFF
   CPP_FILES pff.cpp
   pff_info.cpp
   pff_export.cpp
+  pff_item_info.cpp
   pff_node_data.cpp
   pff_node_task.cpp
   pff_node_folder.cpp

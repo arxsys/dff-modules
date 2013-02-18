@@ -17,7 +17,7 @@
 #include "pff.hpp"
 
 
-PffNodeFolder::PffNodeFolder(std::string name, Node* parent, fso* nfsobj) : Node(name, 0, parent, nfsobj)
+PffNodeFolder::PffNodeFolder(std::string name, Node* parent, pff* nfsobj) : Node(name, 0, parent, nfsobj)
 {
   this->setDir();
 }

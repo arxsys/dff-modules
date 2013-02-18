@@ -89,22 +89,14 @@ Attributes PffNodeEMail::_attributes()
   libpff_item_t*	item = NULL;
   libpff_error_t*       pff_error = NULL;
 
-  if (this->pff_item == NULL)
-  {
-    if (libpff_file_get_item_by_identifier(*(this->pff_file), this->identifier, &item, &pff_error) != 1)
-    {    
-       check_error(pff_error)
-       return attr;
-    }
-  }
-  else 
-    item = *(this->pff_item);
+  item = this->__itemInfo->item(this->__pff()->pff_file());
+  if (item == NULL)
+     return attr;
 
   attr = this->allAttributes(item);
 
-  if (this->pff_item == NULL)
-    if (libpff_item_free(&item, &pff_error) != 1)
-      check_error(pff_error)
+  if (libpff_item_free(&item, &pff_error) != 1)
+    check_error(pff_error)
 
   return attr;
 }
@@ -115,15 +107,17 @@ void PffNodeEMail::splitTextToAttributes(std::string text, Attributes* attr)
  size_t		next_splitter = 0;
  size_t 	eol = 0;
  size_t 	next_eol = 0;
+ size_t         line = 0;
  size_t 	buff_size = text.length();
  std::string	key;
  std::string 	value;
 
- while (splitter < buff_size || next_eol + 3 < buff_size)
+ while (splitter < buff_size && next_eol + 3 < buff_size && line != std::string::npos)
  {
    splitter = text.find(": ", splitter);
    if (splitter == std::string::npos)
      return ;
+
    eol = text.rfind("\n", splitter); 
    if (eol == std::string::npos)
    {
@@ -140,7 +134,7 @@ void PffNodeEMail::splitTextToAttributes(std::string text, Attributes* attr)
    if (next_eol == buff_size - 1)
      next_eol -= 2;
 
-   size_t line = text.find("\n", splitter + 1);
+   line = text.find("\n", splitter + 1);
    if (next_splitter < line)
    {
      next_splitter = text.find(": ", line);
@@ -149,7 +143,9 @@ void PffNodeEMail::splitTextToAttributes(std::string text, Attributes* attr)
  
      next_eol = text.rfind("\n", next_splitter);
      if (next_eol == std::string::npos)
+     {
        next_eol = buff_size;
+     }
    }
    value = text.substr(splitter + 2,  next_eol - splitter - 3); 
 

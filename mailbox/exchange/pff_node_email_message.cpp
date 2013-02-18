@@ -17,18 +17,26 @@
 #include "pff.hpp"
 
 
-PffNodeEmailMessageText::PffNodeEmailMessageText(std::string name, Node* parent, fso* fsobj, libpff_item_t *mail, libpff_file_t** file, bool clone) : PffNodeEMail(name, parent, fsobj, mail, file, clone)
+PffNodeEmailMessageText::PffNodeEmailMessageText(std::string name, Node* parent, pff* fsobj, ItemInfo* itemInfo) : PffNodeEMail(name, parent, fsobj, itemInfo)
 {
-  size_t 	headers_size  = 0; 
-  libpff_error_t* pff_error   = NULL;
- 
-  if (libpff_message_get_plain_text_body_size(mail, &headers_size, &pff_error) == 1)
+  size_t 	  headers_size  = 0; 
+  libpff_item_t*  item          = NULL;
+  libpff_error_t* pff_error     = NULL;
+
+  item = this->__itemInfo->item(this->__pff()->pff_file());
+  if (item == NULL)
+    return ;
+
+  if (libpff_message_get_plain_text_body_size(item, &headers_size, &pff_error) == 1)
   {
     if (headers_size > 0)
        this->setSize(headers_size); 
   }
   else
    check_error(pff_error) 
+
+  if (libpff_item_free(&item, &pff_error) != 1)
+    check_error(pff_error) 
 }
 
 uint8_t*	PffNodeEmailMessageText::dataBuffer(void)
@@ -39,47 +47,48 @@ uint8_t*	PffNodeEmailMessageText::dataBuffer(void)
   
   if (this->size() <= 0)
     return (NULL);
- 
-  if (this->pff_item == NULL)
-  { 
-    if (libpff_file_get_item_by_identifier(*(this->pff_file), this->identifier, &item, &pff_error) != 1)
-    { 
-       check_error(pff_error) 
-       return (NULL);
-    }
-  }
-  else 
-    item = *(this->pff_item);	
+
+  item = this->__itemInfo->item(this->__pff()->pff_file());
+  if (item == NULL)
+    return (NULL);
+
   entry_string =  new uint8_t [this->size()];
   if (libpff_message_get_plain_text_body(item, entry_string, this->size(), &pff_error ) != 1)
   {
     check_error(pff_error)
-    if (this->pff_item == NULL)
-       if (libpff_item_free(&item, &pff_error) != 1)
-         check_error(pff_error)
+    if (libpff_item_free(&item, &pff_error) != 1)
+      check_error(pff_error)
     delete entry_string;
     return (NULL);
   }
 
-  if (this->pff_item == NULL)
-    if (libpff_item_free(&item, &pff_error) != 1)
-      check_error(pff_error)
+  if (libpff_item_free(&item, &pff_error) != 1)
+    check_error(pff_error)
   return (entry_string);
 }
 
 
-PffNodeEmailMessageHTML::PffNodeEmailMessageHTML(std::string name, Node* parent, fso* fsobj, libpff_item_t *mail, libpff_file_t** file, bool clone) : PffNodeEMail(name, parent, fsobj, mail, file, clone)
+PffNodeEmailMessageHTML::PffNodeEmailMessageHTML(std::string name, Node* parent, pff* fsobj, ItemInfo* itemInfo) : PffNodeEMail(name, parent, fsobj, itemInfo)
 {
   size_t 	headers_size  = 0; 
+  libpff_item_t*  item        = NULL;
   libpff_error_t* pff_error   = NULL;
 
-  if (libpff_message_get_html_body_size(mail, &headers_size, &pff_error) == 1)
+  item = this->__itemInfo->item(this->__pff()->pff_file());
+  if (item == NULL)
+    return ;
+
+
+  if (libpff_message_get_html_body_size(item, &headers_size, &pff_error) == 1)
   {
     if (headers_size > 0)
        this->setSize(headers_size); 
   }
   else
     check_error(pff_error)
+
+  if (libpff_item_free(&item, &pff_error) != 1)
+    check_error(pff_error) 
 }
 
 uint8_t*	PffNodeEmailMessageHTML::dataBuffer(void)
@@ -91,45 +100,45 @@ uint8_t*	PffNodeEmailMessageHTML::dataBuffer(void)
   if (this->size() <= 0)
     return (NULL);
 
-  if (this->pff_item == NULL)
-  {	
-    if (libpff_file_get_item_by_identifier(*(this->pff_file), this->identifier, &item, &pff_error) != 1)
-    {
-       check_error(pff_error)
-       return (NULL);
-    }
-  }
-  else
-    item = *(this->pff_item);	
+  item = this->__itemInfo->item(this->__pff()->pff_file());
+  if (item == NULL)
+    return (NULL);
+
   entry_string =  new uint8_t [this->size()];
   if (libpff_message_get_html_body(item, entry_string, this->size(), &pff_error ) != 1)
   {
     check_error(pff_error)
-    if (this->pff_item == NULL)
-      if (libpff_item_free(&item, &pff_error) != 1)
-         check_error(pff_error)
+    if (libpff_item_free(&item, &pff_error) != 1)
+      check_error(pff_error)
     delete entry_string;
     return (NULL);
   }
 
-  if (this->pff_item == NULL)
-    if (libpff_item_free(&item, &pff_error) != 1)
-       check_error(pff_error)
+  if (libpff_item_free(&item, &pff_error) != 1)
+    check_error(pff_error)
   return (entry_string);
 }
 
-PffNodeEmailMessageRTF::PffNodeEmailMessageRTF(std::string name, Node* parent, fso* fsobj, libpff_item_t *mail, libpff_file_t** file, bool clone) : PffNodeEMail(name, parent, fsobj, mail, file, clone)
+PffNodeEmailMessageRTF::PffNodeEmailMessageRTF(std::string name, Node* parent, pff* fsobj, ItemInfo* itemInfo) : PffNodeEMail(name, parent, fsobj, itemInfo)
 {
-  size_t 	headers_size  = 0; 
-  libpff_error_t* pff_error   = NULL;
+  size_t 	  headers_size  = 0; 
+  libpff_item_t*  item          = NULL;
+  libpff_error_t* pff_error     = NULL;
 
-  if (libpff_message_get_rtf_body_size(mail, &headers_size, &pff_error) == 1)
+  item = this->__itemInfo->item(this->__pff()->pff_file());
+  if (item == NULL)
+    return ; 
+
+  if (libpff_message_get_rtf_body_size(item, &headers_size, &pff_error) == 1)
   {
     if (headers_size > 0)
        this->setSize(headers_size); 
   }
   else
     check_error(pff_error)
+
+  if (libpff_item_free(&item, &pff_error) != 1)
+    check_error(pff_error) 
 }
 
 uint8_t*	PffNodeEmailMessageRTF::dataBuffer(void)
@@ -141,35 +150,27 @@ uint8_t*	PffNodeEmailMessageRTF::dataBuffer(void)
   if (this->size() <= 0)
     return (NULL);
 
-  if (this->pff_item == NULL)
-  {	
-    if (libpff_file_get_item_by_identifier(*(this->pff_file), this->identifier, &item, &pff_error) != 1)
-    {
-      check_error(pff_error)
-      return (NULL);
-    }
-  }
-  else
-    item = *(this->pff_item);
+  item = this->__itemInfo->item(this->__pff()->pff_file());
+  if (item == NULL)
+    return (NULL); 
 
   entry_string =  new uint8_t [this->size()];
   if (libpff_message_get_rtf_body(item, entry_string, this->size(), &pff_error) != 1 )
   {
     check_error(pff_error) 
-    if (this->pff_item == NULL)
-      if (libpff_item_free(&item, &pff_error) != 1)
-         check_error(pff_error)
+    if (libpff_item_free(&item, &pff_error) != 1)
+      check_error(pff_error)
     delete entry_string;
     return (NULL);
   }
 
-  if (this->pff_item == NULL)
-    if (libpff_item_free(&item, &pff_error) != 1)
-       check_error(pff_error)
+  if (libpff_item_free(&item, &pff_error) != 1)
+    check_error(pff_error)
+
   return (entry_string);
 }
 
-PffNodeNote::PffNodeNote(std::string name, Node* parent, fso* fsobj, libpff_item_t* item, libpff_file_t** file, bool clone) : PffNodeEmailMessageText(name, parent, fsobj, item, file, clone)
+PffNodeNote::PffNodeNote(std::string name, Node* parent, pff* fsobj, ItemInfo* itemInfo) : PffNodeEmailMessageText(name, parent, fsobj, itemInfo)
 {
 }
 
@@ -178,7 +179,7 @@ std::string PffNodeNote::icon()
   return (":notes");
 }
 
-PffNodeMeeting::PffNodeMeeting(std::string name, Node* parent, fso* fsobj, libpff_item_t* item, libpff_file_t** file, bool clone) : PffNodeEmailMessageText(name, parent, fsobj, item, file, clone)
+PffNodeMeeting::PffNodeMeeting(std::string name, Node* parent, pff* fsobj, ItemInfo* itemInfo) : PffNodeEmailMessageText(name, parent, fsobj, itemInfo)
 {
 }
 
