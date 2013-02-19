@@ -31,8 +31,8 @@ class CarvingProcess(QWidget, EventHandler):
     def __init__(self, selector, vnode):
         QWidget.__init__(self)
         EventHandler.__init__(self)
-        self.vnode = vnode
-        self.filesize = vnode.value().size()
+        self.vnode = vnode.value()
+        self.filesize = self.vnode.size()
         self.tm = TaskManager()
         self.selector = selector
         self.setLayout(QVBoxLayout())
