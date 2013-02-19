@@ -28,22 +28,20 @@ std::string	PffNodeTask::icon(void)
 Attributes	PffNodeTask::_attributes(void)
 {
   Attributes		attr;
-  libpff_item_t*	item = NULL;
-  libpff_error_t*       pff_error = NULL;
+  Item*                 item = NULL;
   
-  item = this->__itemInfo->item(this->__pff()->pff_file());
-  if (item == NULL)
-    return attr;
+  if ((item = this->__itemInfo->item(this->__pff()->pff_file())) == NULL)
+    return (attr);
 
-  attr = this->allAttributes(item);
+  attr = this->allAttributes(item->pff_item());
+
   Attributes	task;
-  this->attributesTask(&task, item);
+  this->attributesTask(&task, item->pff_item());
   attr[std::string("Task")] = new Variant(task);
+  
+  delete item;
 
-  if (libpff_item_free(&item, &pff_error) != 1)
-    check_error(pff_error)
-
-  return attr;
+  return (attr);
 }
 
 void	PffNodeTask::attributesTask(Attributes*	attr, libpff_item_t* item)

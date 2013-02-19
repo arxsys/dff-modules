@@ -86,17 +86,13 @@ Attributes PffNodeEMail::allAttributes(libpff_item_t*	item)
 Attributes PffNodeEMail::_attributes()
 {
   Attributes		attr;
-  libpff_item_t*	item = NULL;
-  libpff_error_t*       pff_error = NULL;
+  Item*	                item = NULL;
 
-  item = this->__itemInfo->item(this->__pff()->pff_file());
-  if (item == NULL)
-     return attr;
+  if ((item = this->__itemInfo->item(this->__pff()->pff_file())) == NULL)
+    return attr;
 
-  attr = this->allAttributes(item);
-
-  if (libpff_item_free(&item, &pff_error) != 1)
-    check_error(pff_error)
+  attr = this->allAttributes(item->pff_item());
+  delete item;
 
   return attr;
 }
@@ -205,6 +201,8 @@ int PffNodeEMail::attributesRecipients(Attributes* attr, libpff_item_t* item)
      if (libpff_item_get_number_of_sets(recipients, (uint32_t*) &number_of_recipients, &pff_error) != 1)
      {
         check_error(pff_error)
+        if (libpff_item_free(&recipients, &pff_error) != 1)
+           check_error(pff_error)
         return (0); 
      }
      if (number_of_recipients > 0)
@@ -292,13 +290,20 @@ int PffNodeEMail::attributesRecipients(Attributes* attr, libpff_item_t* item)
 	}	
      }
      else
+     {
+       if (libpff_item_free(&recipients, &pff_error) != 1)
+         check_error(pff_error)
        return (0);
+     }
   }
   else 
   {
     check_error(pff_error)
     return (0);
   }
+
+  if (libpff_item_free(&recipients, &pff_error) != 1)
+    check_error(pff_error)
   return (1);   
 }
 

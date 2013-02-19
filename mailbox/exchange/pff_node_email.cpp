@@ -41,8 +41,7 @@ fdinfo* PffNodeEMail::vopen(void)
    uint8_t*	buff;
 
    fi = new fdinfo;
-   buff = this->dataBuffer();
-   if (buff == NULL)
+   if ((buff = this->dataBuffer()) == NULL)
      return (NULL);
 
    fi->id = new Variant((void*)buff);

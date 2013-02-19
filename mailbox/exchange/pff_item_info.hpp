@@ -20,6 +20,19 @@
 #include "pff_common.hpp"
 #include "pff_macro.hpp"
 
+class Item
+{
+private:
+  Item*                 __attacher;
+  libpff_item_t*        __item;
+  libpff_item_t*        __attachment;
+public:
+  Item(libpff_item_t* item);
+  Item(libpff_item_t* item, Item* attacher, libpff_item_t* attachment);
+  ~Item();
+  libpff_item_t*       pff_item();
+};
+
 class ItemInfo
 {
 public:
@@ -35,8 +48,8 @@ public:
   ItemInfo(libpff_item_t* item, int index, ItemStatusType statusType, ItemInfo* attachedInfo = NULL);
   ItemInfo(ItemInfo* item);
   ~ItemInfo();
-  libpff_item_t*        item(void);
-  libpff_item_t*        item(libpff_file_t* const pff_file);
+  libpff_item_t*        pff_item(void);
+  Item*                 item(libpff_file_t* const pff_file);
   ItemInfo*             attachedInfo(void);
   ItemStatusType        statusType(void);
   uint32_t              identifier(void);

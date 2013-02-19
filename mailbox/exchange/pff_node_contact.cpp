@@ -28,21 +28,18 @@ std::string PffNodeContact::icon(void)
 Attributes	PffNodeContact::_attributes(void)
 {
   Attributes		attr;
-  libpff_item_t*	item = NULL;
-  libpff_error_t*       pff_error = NULL;
+  Item*	                item = NULL;
 
-  item = this->__itemInfo->item(this->__pff()->pff_file());
-  if (item == NULL)
+  if ((item = this->__itemInfo->item(this->__pff()->pff_file())) == NULL)
     return attr;
  
-  attr = this->allAttributes(item); 
+  attr = this->allAttributes(item->pff_item()); 
 
   Attributes	contact;
-  this->attributesContact(&contact, item);
+  this->attributesContact(&contact, item->pff_item());
   attr[std::string("Contact")] = new Variant(contact);
 
-  if (libpff_item_free(&item, &pff_error) != 1)
-    check_error(pff_error) 
+  delete item;
 
   return (attr);
 }

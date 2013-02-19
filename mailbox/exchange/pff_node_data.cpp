@@ -36,7 +36,7 @@ PffNodeData::~PffNodeData()
 
 pff*    PffNodeData::__pff(void)
 {
-  return static_cast<pff* >(this->fsobj());
+  return (static_cast<pff* >(this->fsobj()));
 }
 
 fdinfo* PffNodeData::vopen(void)

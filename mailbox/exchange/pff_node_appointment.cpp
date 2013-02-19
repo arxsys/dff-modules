@@ -18,18 +18,7 @@
 
 PffNodeAppointment::PffNodeAppointment(std::string name, Node* parent, pff* fsobj, ItemInfo* itemInfo) : PffNodeEMail(name, parent, fsobj, itemInfo)
 {
-  int                   result;
-  libpff_error_t*       pff_error = NULL;
-  libpff_item_t*        item = NULL;
   this->setFile();
-
-//useless for test only 
-  result = libpff_file_get_item_by_identifier(this->__pff()->pff_file(), itemInfo->identifier(), &item, &pff_error);
-  if (result == 0 || result == -1)
-    check_error(pff_error) 
-//
-  if (libpff_item_free(&item, &pff_error) != 1)
-    check_error(pff_error) 
 }
 
 std::string PffNodeAppointment::icon(void)
@@ -66,28 +55,24 @@ void  PffNodeAppointment::attributesAppointment(Attributes* attr, libpff_item_t*
   value_uint32_to_attribute(libpff_appointment_get_busy_status, "Busy status")
 
   free(entry_value_string);
-
 }
 
 
 Attributes PffNodeAppointment::_attributes()
 {
   Attributes		attr;
-  libpff_item_t*	item = NULL;
-  libpff_error_t*       pff_error = NULL;
+  Item*	                item = NULL;
 
-  item = this->__itemInfo->item(this->__pff()->pff_file());
-  if (item == NULL)
-     return attr;
+  if ((item = this->__itemInfo->item(this->__pff()->pff_file())) == NULL)
+    return attr;
 
-  attr = this->allAttributes(item);
+  attr = this->allAttributes(item->pff_item());
 
   Attributes	appointment;
-  this->attributesAppointment(&appointment, item); 
+  this->attributesAppointment(&appointment, item->pff_item()); 
   attr[std::string("Appointment")] = new Variant(appointment);
 
-  if (libpff_item_free(&item, &pff_error) != 1)
-    check_error(pff_error) 
+  delete item;
 
   return attr;
 }

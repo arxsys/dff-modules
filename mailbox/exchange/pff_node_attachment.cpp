@@ -30,23 +30,22 @@ std::string	PffNodeAttachment::icon(void)
 
 uint8_t*	PffNodeAttachment::dataBuffer(void)
 {
-  int			result = 0;
   uint8_t*		buff = NULL;
-  libpff_item_t*	item = NULL;
+  Item*	                item = NULL;
   libpff_item_t* 	attachment = NULL;
   libpff_error_t*       pff_error = NULL;
 
   if (this->size() <= 0)
     return (NULL);
  
-  item = this->__itemInfo->item(this->__pff()->pff_file());
-  if (item == NULL)
+  if ((item = this->__itemInfo->item(this->__pff()->pff_file())) == NULL) 
      return (NULL);
 
-  result = libpff_message_get_attachment(item, attachment_iterator, &attachment, &pff_error);
-  if (result == 0 || result == -1)
+  if (libpff_message_get_attachment(item->pff_item(), attachment_iterator, &attachment, &pff_error) != 1)
   {
-    check_error(pff_error) 
+    check_error(pff_error)
+    delete item; 
+
     return (NULL);
   }
 
@@ -59,8 +58,7 @@ uint8_t*	PffNodeAttachment::dataBuffer(void)
     check_error(pff_error) 
     if (libpff_item_free(&attachment, &pff_error) != 1)
       check_error(pff_error) 
-    if (libpff_item_free(&item, &pff_error) != 1)
-      check_error(pff_error) 
+    delete item;
 
     return (NULL);
   }
@@ -70,8 +68,7 @@ uint8_t*	PffNodeAttachment::dataBuffer(void)
     check_error(pff_error) 
   if (libpff_item_free(&attachment, &pff_error) != 1)
     check_error(pff_error) 
-  if (libpff_item_free(&item, &pff_error) != 1)
-    check_error(pff_error) 
+  delete item;
 
   return (buff);
 }
