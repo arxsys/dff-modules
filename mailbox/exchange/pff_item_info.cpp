@@ -64,12 +64,12 @@ ItemInfo::ItemInfo(libpff_item_t* item, int index, ItemStatusType statusType, It
 
   this->__item = item;
   this->__index = index;
-  this->__identifier = 0;
+  this->__id = 0;
   this->__statusType = statusType;
   this->__attachedInfo = attachedInfo;
 
   if (this->__statusType != Recovered && this->__statusType != Orphan && this->__statusType != AttachmentItem)
-    if (libpff_item_get_identifier(this->__item, &(this->__identifier), &pff_error) != 1)
+    if (libpff_item_get_identifier(this->__item, &(this->__id), &pff_error) != 1)
       check_error(pff_error);
 }
 
@@ -77,7 +77,7 @@ ItemInfo::ItemInfo(ItemInfo* itemInfo)
 {
   this->__item = NULL;
   this->__index = itemInfo->index();
-  this->__identifier = itemInfo->identifier();
+  this->__id = itemInfo->identifier();
   this->__statusType = itemInfo->statusType();
   if (itemInfo->attachedInfo() != NULL)
     this->__attachedInfo = new ItemInfo(itemInfo->attachedInfo());
@@ -135,7 +135,7 @@ Item*  ItemInfo::item(libpff_file_t* const pff_file)
   }
   else 
   {
-    if (libpff_file_get_item_by_identifier(pff_file, this->__identifier, &pff_item, &pff_error) == 1)
+    if (libpff_file_get_item_by_identifier(pff_file, this->__id, &pff_item, &pff_error) == 1)
       return (new Item(pff_item));
     else
       check_error(pff_error);
@@ -156,7 +156,7 @@ ItemInfo::ItemStatusType  ItemInfo::statusType(void)
 
 uint32_t        ItemInfo::identifier(void)
 {
-  return (this->__identifier);
+  return (this->__id);
 }
 
 uint8_t         ItemInfo::type(void)

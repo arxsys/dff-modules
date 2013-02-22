@@ -57,7 +57,7 @@ public:
   int                   index(void);
 private:
   int                   __index;
-  uint32_t              __identifier;
+  uint32_t              __id;
   ItemStatusType        __statusType;
   ItemInfo*             __attachedInfo;
   libpff_item_t*        __item;
