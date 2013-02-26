@@ -468,7 +468,7 @@ std::vector<uint32_t>	FileAllocationTable::listBadClusters(uint8_t which)
 
 uint32_t					FileAllocationTable::badClustersCount(uint8_t which)
 {
-  uint32_t					badclust;
+  uint32_t					badclust = 0;
   uint32_t					cidx;
   std::map<uint32_t, uint32_t>::iterator	it;
 

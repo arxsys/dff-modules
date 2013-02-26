@@ -87,7 +87,7 @@ int dff_libbfio_file_io_handle_free(intptr_t **io_handle, libbfio_error_t** erro
   if (*io_handle == NULL)
     return (-1);
   dff_libbfio_file_io_handle_t* file_io_handle = (dff_libbfio_file_io_handle_t*)(*io_handle);
-  if (file_io_handle->file != NULL);
+  if (file_io_handle->file != NULL)
   {
      file_io_handle->file->close();
      delete file_io_handle->file;
