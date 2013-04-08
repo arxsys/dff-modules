@@ -102,6 +102,7 @@ Attributes	GptPartition::result()
     res["Regular"] = new Variant(allocres);
   if (unallocres.size())
     res["Unallocated"] = new Variant(unallocres);
+  res["Disk guid"] = new Variant(this->__header.diskGuid());
   return res;
 }
 
