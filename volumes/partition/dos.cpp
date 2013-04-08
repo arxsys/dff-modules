@@ -15,7 +15,7 @@
  */
 
 #include "dos.hpp"
-#include "parttypes.hpp"
+#include "dostypes.hpp"
 #include <iostream>
 #include <iomanip>
 #include <string>
@@ -380,12 +380,12 @@ void	DosPartition::__makeUnallocated()
     }  
 }
 
-uint8_t		DosPartition::__readMbr() throw (vfsError)
+void		DosPartition::__readMbr() throw (vfsError)
 {
   dos_partition_record	record;
   uint8_t		i;
   dos_pte*		pte;
-  uint32_t		disk_sig;
+  //uint32_t		disk_sig;
   Attributes		mbrattr;
   metadatum*		meta;
 

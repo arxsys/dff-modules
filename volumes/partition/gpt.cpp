@@ -15,7 +15,7 @@
  */
 
 #include "gpt.hpp"
-
+#include "gpttypes.hpp"
 
 GptPartition::GptPartition()
 {
@@ -127,7 +127,10 @@ Attributes	GptPartition::entryAttributes(uint64_t entry, uint8_t type)
       vmap["entries meta offset"] = new Variant(alloc->second->eoffset);
       vmap["position in entries table"] = new Variant(alloc->second->epos);
       vmap["name"] = new Variant(alloc->second->entry->name());
-    }  
+      vmap["type guid"] = new Variant(alloc->second->entry->typeGuid());
+      vmap["partition type"] = new Variant(this->__guidMapping(alloc->second->entry->typeGuid()));
+      vmap["partition guid"] = new Variant(alloc->second->entry->partGuid());
+    }
   return vmap;
 }
 
@@ -227,6 +230,7 @@ void	GptPartition::__readEntries() throw (vfsError)
   entries_count = this->__header.entriesCount();
   entry_size = this->__header.entrySize();
   offset = this->__vfile->seek(this->__header.entriesLba()*this->__sectsize);
+  std::cout << "guid: " << this->__header.diskGuid() << std::endl;
   if (entry_size > sizeof(gpt_entry))
     rsize = sizeof(gpt_entry);
   else
@@ -263,4 +267,24 @@ void		GptPartition::__makeUnallocated()
     }
   if ((this->__offset + (first_lba * this->__sectsize)) < this->__origin->size())
     this->__unallocated[first_lba] = (this->__origin->size() / this->__sectsize) - 1;
+}
+
+
+std::string	GptPartition::__guidMapping(std::string guid)
+{
+  std::string	res;
+  int		i;
+  
+  i = 0;
+  res = "Unknown";
+  while (*(guid_map[i].guid) != '\0')
+    {
+      if (guid == guid_map[i].guid)
+	{
+	  res = guid_map[i].fstype;
+	  break;
+	}
+      i++;
+    }
+  return res;
 }

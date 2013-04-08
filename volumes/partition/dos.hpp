@@ -110,7 +110,7 @@ private:
   void					__makeUnallocated();
   void					__makeResults();
   Attributes				__entryAttributes(metaiterator mit);
-  uint8_t				__readMbr() throw (vfsError);
+  void					__readMbr() throw (vfsError);
   void					__readEbr(uint64_t cur, uint64_t shift=0) throw (vfsError);
 public:
   DosPartition();

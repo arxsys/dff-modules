@@ -14,10 +14,8 @@
  *  Frederic Baguelin <fba@digital-forensic.org>
  */
 
-
-
-#ifndef __PARTTYPES_HPP__
-#define __PARTTYPES_HPP__
+#ifndef __DOSTYPES_HPP__
+#define __DOSTYPES_HPP__
 
 char dos_partition_types[256][128] = 
 {
@@ -278,6 +276,5 @@ char dos_partition_types[256][128] =
   "Linux Logical Volume Manager partition (old)",
   "Xenix Bad Block Table"
 };
-
 
 #endif

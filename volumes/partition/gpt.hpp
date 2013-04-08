@@ -61,13 +61,27 @@ typedef struct
   uint64_t	backupLba();
   uint64_t	firstUsableLba() {return _first_usable_lba;};
   uint64_t	lastUsableLba() {return _last_usable_lba;};
-  //guid_t ??
+  std::string	diskGuid()
+  {
+    std::stringstream	res;
+    int	i;
+  
+    for (i = 0; i != 16; ++i)
+      {
+	res << std::setw(2) << std::setfill('0') << std::hex << static_cast<unsigned int>(_disk_guid[i]);
+	if (i == 3 || i == 5 || i == 7 || i == 9)
+	  res << "-";
+      }
+    return res.str();
+  }
   uint64_t	entriesLba() {return _entries_lba;}
   uint32_t	entriesCount() {return _entries_count;}
   uint32_t	entrySize() {return _entry_size;}
   uint32_t	entriesCrc();
   Attributes	attributes();
 }		_packed gpt_header; 
+
+
 
 typedef struct
 {
@@ -78,6 +92,32 @@ typedef struct
   uint8_t	_flags[8];
   char		_name[72];
   
+  std::string	typeGuid()
+  {
+    std::stringstream	res;
+    int	i;
+  
+    for (i = 0; i != 16; ++i)
+      {
+	res << std::setw(2) << std::setfill('0') << std::hex << static_cast<unsigned int>(_type_guid[i]);
+	if (i == 3 || i == 5 || i == 7 || i == 9)
+	  res << "-";
+      }
+    return res.str();
+  }
+  std::string	partGuid()
+  {
+    std::stringstream	res;
+    int	i;
+  
+    for (i = 0; i != 16; ++i)
+      {
+	res << std::setw(2) << std::setfill('0') << std::hex << static_cast<unsigned int>(_part_guid[i]);
+	if (i == 3 || i == 5 || i == 7 || i == 9)
+	  res << "-";
+      }
+    return res.str();
+  }
   uint64_t	firstLba() {return _first_lba;}
   uint64_t	lastLba() {return _last_lba;}
   uint64_t	size() {return  lastLba() - firstLba() + 1;}
@@ -122,6 +162,7 @@ private:
   void					__readHeader() throw (vfsError);
   void					__readEntries() throw (vfsError);
   void					__makeUnallocated();
+  std::string				__guidMapping(std::string guid);
 public:
   GptPartition();
   virtual ~GptPartition();
