@@ -10,6 +10,10 @@
 # and IRC channels for your use.
 # 
 # Author(s):
-#  Frederic Baguelin <fba@digital-forensic.org>
+#  Jeremy MOUNIER <fba@digital-forensic.org>
 
-__all__ = ['cat', 'hexedit', 'bindiff', 'player', 'evt', 'media', 'sqlitemanager']
+install_file(
+  __init__.py
+  manager.py
+  sqlitemanager.py  
+)

@@ -10,7 +10,7 @@ from dff.api.apswvfs import apswvfs
 
 from dff.api.module.manager import ModuleProcessusManager
 
-from sqlitemanager import SqliteManager 
+from dff.modules.databases.sqlite.sqlitemanager import SqliteManager 
 
 ModuleProcessusManager().register(SqliteManager('SqliteDB'))
 
@@ -27,7 +27,7 @@ class SqliteDB(Script):
     def execute(self, cmd):
        try:
            c = self.db.cursor()
-           c.execute("PRAGMA locking_mode=EXCLUSIVE;")	
+#           c.execute("PRAGMA locking_mode=EXCLUSIVE;")
            c.execute(cmd)
            return c
        except:
