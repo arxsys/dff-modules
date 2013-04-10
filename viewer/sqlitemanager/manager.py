@@ -158,7 +158,9 @@ class Manager(Ui_SQLiteManager, QWidget, EventHandler):
         try:
             cursor = self.proc.executeFrom(database, query)
         except apsw.SQLError, e:
+            print "here"
             if TABINDEX[self.tabWidget.currentIndex()] is "CUSTOM":
+                print "here"
                 self.queryMessage.clear()
                 self.queryMessage.insertPlainText(QString(str(unicode(e).encode('utf-8'))))
                 self.customStack.setCurrentIndex(1)
