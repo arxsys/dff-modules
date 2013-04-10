@@ -13,7 +13,7 @@
 #  Jeremy MOUNIER <jmo@digital-forensic.org>
 
 from PyQt4.QtCore import QVariant, SIGNAL, QThread, Qt, QFile, QIODevice, QStringList, QRect, SLOT, QEvent, QString, QSignalMapper, pyqtSignal, pyqtSlot, SLOT
-from PyQt4.QtGui import QWidget, QTreeWidgetItem, QIcon, QTableWidgetItem, QColor, QTableWidget, QAbstractItemView, QHeaderView, QMenu, QFileDialog#QTextEdit, QDialog, QVBoxLayout
+from PyQt4.QtGui import QWidget, QTreeWidgetItem, QIcon, QTableWidgetItem, QColor, QTableWidget, QAbstractItemView, QHeaderView, QMenu, QFileDialog
 
 from dff.api.module.manager import ModuleProcessusManager
 from dff.api.vfs.vfs import vfs
@@ -72,9 +72,6 @@ class Manager(Ui_SQLiteManager, QWidget, EventHandler):
                 if ts:
                     dt = datetime.fromtimestamp(ts/1000000)
                     i.setText(QString(dt.isoformat()))
-#                else:
-#                    return None
-            
 
     def exportCSV(self, state):
         # Get current table
@@ -303,81 +300,6 @@ class TableResult(QTableWidget):
         menu.addAction(self.manager.actionReset_column)
         menu.popup(event.globalPos())
 
-
-# class DTime:
-#     def __init__(self, timestamp):
-#         self._ts = timestamp
-#         self._datetime = None
-
-#     def toPosix(self):
-#         if self._ts:
-#             self._datetime = datetime.fromtimestamp(self._ts/1000000)
-#             return self._datetime.isoformat()
-#         else:
-#             return None
-
-#     def toNT64(self):
-#       try :	
-#         if self._ts:
-#             epoch = 116444736000000000L
-#             sec = (self._ts - epoch) / 10000000
-#             self._datetime = datetime.fromtimestamp(sec)
-#             return self._datetime.isoformat()
-#         else:
-#             return None
-#       except ValueError:
-# 	 return None
-
-#     def toFAT(self):
-#         if self._ts:
-#             dos_time = (self._ts >> 16) & 0xffff
-#             dos_date = self._ts & 0xffff 
-#             day = dos_date & 31
-#             month = (dos_date >> 5) & 15
-#             year = (dos_date >> 9) + 1980
-#             if dos_time != 0:
-#                 sec = (dos_time & 31) * 2
-#                 minute = (dos_time >> 5) & 63
-#                 hour = dos_time >> 11
-#             else:
-#                 sec = minute = hour = 0
-#             self._datetime = datetime(year, month, day, hour, minute, sec)
-#             return self._datetime.isoformat()
-#         else:
-#             return None
-
-#     def __unicode__(self):
-#         if self._datetime:
-#             return self._datetime.isoformat()
-#         else:
-#             return None
-
-#     def __str__(self):
-#         if self._datetime:
-#             return self._datetime.isoformat()
-#         else:
-#             return None
-
-#      print item.text()                                                                                                                                     
-      #   self.setCurrentItem(item)
-      #   self.menu.popup(event.globalPos())
-      # else:
-      #   self.setCurrentItem(ite
-    # def connectDatabases(self):
-    #     pass
-
-    # def searchDone(self, result):
-    #     if len(result):
-    #         self.resultLabel.setText(str(len(result)))
-    #         self.searchDatabasesWidget.setCurrentWidget(self.searchFinishOK)
-    #         for res in result:
-    #             self.databases.append(res)
-    #         self.populateTree()
-    #     else:
-    #         self.searchDatabasesWidget.setCurrentWidget(self.searchFinishKO)
-
-    # def updateSearchProgress(self, count):
-    #     self.searchProgress.setValue(count)
 
 # class SearchDatabase(QThread, EventHandler):
 #     def __init__(self):
