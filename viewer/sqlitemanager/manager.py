@@ -22,6 +22,9 @@ from dff.api.events.libevents import EventHandler
 
 import apsw
 
+import time
+from datetime import *
+
 from dff.ui.gui.resources.ui_sqlitemanager import Ui_SQLiteManager
 
 TABINDEX = ['BROWSE', 'CUSTOM']
@@ -33,18 +36,45 @@ class Manager(Ui_SQLiteManager, QWidget, EventHandler):
         self.databases = []
         self.proc = ModuleProcessusManager().get('SqliteDB')
         self.createTables()
+
         self.connect(self.databaseTree, SIGNAL("itemClicked(QTreeWidgetItem*,int)"), self.selectTable)
         self.connect(self.queryRun, SIGNAL("clicked()"), self.runQuery)
         self.connect(self.selectDatabase, SIGNAL("currentIndexChanged(int )"), self.customDatabaseChanged)
         self.connect(self.tableResult, SIGNAL("itemClicked(QTableWidgetItem*)"), self.tableClicked)
         self.connect(self.queryResult, SIGNAL("itemClicked(QTableWidgetItem*)"), self.tableClicked)
-
+        # Actions
         self.connect(self.actionExport_selection_CSV, SIGNAL("triggered(bool)"), self.exportCSV)
         self.connect(self.actionExtract_Binary_BLOB, SIGNAL("triggered(bool)"), self.exportBLOB)
+        self.connect(self.actionDecode_date_column, SIGNAL("triggered(bool)"), self.decodeDate)
+        self.connect(self.actionReset_column, SIGNAL("triggered(bool)"), self.resetColumn)
 
         self.searchForDatabases()
         self.currentDB = None
         self.queryMessage.setTextColor(Qt.red)
+
+
+    def resetColumn(self):
+        table = self.currentTable()
+        item = table.currentItem()
+        if item:
+            column = item.column()
+            for row in xrange(0, table.rowCount()):
+                table.item(row, column).format()
+
+    def decodeDate(self):
+        table = self.currentTable()
+        item = table.currentItem()
+        if item:
+            column = item.column()
+            for row in xrange(0, table.rowCount()):
+                i = table.item(row, column)
+                ts = i.getData()
+                if ts:
+                    dt = datetime.fromtimestamp(ts/1000000)
+                    i.setText(QString(dt.isoformat()))
+#                else:
+#                    return None
+            
 
     def exportCSV(self, state):
         # Get current table
@@ -171,7 +201,6 @@ class Manager(Ui_SQLiteManager, QWidget, EventHandler):
     def searchForDatabases(self):
         if len(self.proc.databases):
             for base, node in self.proc.databases.iteritems():
-                print base, node
                 self.databases.append(node)
                 self.selectDatabase.addItem(QString.fromUtf8(node.name()))
             self.populateTree()
@@ -270,7 +299,64 @@ class TableResult(QTableWidget):
         menu.addAction(self.manager.actionExport_selection_CSV)
         if item.getType() == "buffer":
             menu.addAction(self.manager.actionExtract_Binary_BLOB)
+        menu.addAction(self.manager.actionDecode_date_column)
+        menu.addAction(self.manager.actionReset_column)
         menu.popup(event.globalPos())
+
+
+# class DTime:
+#     def __init__(self, timestamp):
+#         self._ts = timestamp
+#         self._datetime = None
+
+#     def toPosix(self):
+#         if self._ts:
+#             self._datetime = datetime.fromtimestamp(self._ts/1000000)
+#             return self._datetime.isoformat()
+#         else:
+#             return None
+
+#     def toNT64(self):
+#       try :	
+#         if self._ts:
+#             epoch = 116444736000000000L
+#             sec = (self._ts - epoch) / 10000000
+#             self._datetime = datetime.fromtimestamp(sec)
+#             return self._datetime.isoformat()
+#         else:
+#             return None
+#       except ValueError:
+# 	 return None
+
+#     def toFAT(self):
+#         if self._ts:
+#             dos_time = (self._ts >> 16) & 0xffff
+#             dos_date = self._ts & 0xffff 
+#             day = dos_date & 31
+#             month = (dos_date >> 5) & 15
+#             year = (dos_date >> 9) + 1980
+#             if dos_time != 0:
+#                 sec = (dos_time & 31) * 2
+#                 minute = (dos_time >> 5) & 63
+#                 hour = dos_time >> 11
+#             else:
+#                 sec = minute = hour = 0
+#             self._datetime = datetime(year, month, day, hour, minute, sec)
+#             return self._datetime.isoformat()
+#         else:
+#             return None
+
+#     def __unicode__(self):
+#         if self._datetime:
+#             return self._datetime.isoformat()
+#         else:
+#             return None
+
+#     def __str__(self):
+#         if self._datetime:
+#             return self._datetime.isoformat()
+#         else:
+#             return None
 
 #      print item.text()                                                                                                                                     
       #   self.setCurrentItem(item)

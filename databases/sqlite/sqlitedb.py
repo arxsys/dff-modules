@@ -27,7 +27,7 @@ class SqliteDB(Script):
     def execute(self, cmd):
        try:
            c = self.db.cursor()
-#           c.execute("PRAGMA locking_mode=EXCLUSIVE;")
+           c.execute("PRAGMA locking_mode=EXCLUSIVE;")
            c.execute(cmd)
            return c
        except:
