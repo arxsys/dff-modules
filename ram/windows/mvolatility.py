@@ -54,6 +54,8 @@ try:
    import volatility.plugins.modscan as modscan
    import volatility.plugins.filescan as filescan
 
+   import volatility.plugins.malware.psxview as psxview
+
    from volatility.plugins.filescan import PoolScanProcess
 
    import volatility.plugins.taskmods as taskmods
@@ -62,12 +64,17 @@ try:
    import volatility.win32.network as network
    
    with_volatility = True
+   config = conf.ConfObject()
+   registry.PluginImporter()
+   registry.register_global_options(config, addrspace.BaseAddressSpace)
+   registry.register_global_options(config, commands.Command)
+
 except ImportError:
    traceback.print_exc()
    with_volatility = False
 
 
-from winproc import WinProcNode
+from winproc import WinProcNode, DllNode
 
 import time
 
@@ -167,54 +174,76 @@ class WinRootNode(Node):
       return attribs
 
 
+class ConfigInstance(conf.ConfObject):
+   # since Volatility's configuration is a singleton, we need to define a private configuration
+   # per instance and update global configuration for context switching (from one instance to
+   # another). Per instance's configuration is initialized with the following baseconf which
+   # is itself based on ConfObject.default_opts dict. Then private configuration is updated
+   # with profile information, kdbg offset and so on
+   baseconf = {'profile': 'WinXPSP2x86',
+               'use_old_as': None,
+               'kdbg': None,
+               'output_file': None,
+               'tz': None,
+               'verbose': None,
+               'kpcr': None,
+               'output': None,
+               'dtb': 0,
+               'cache': False,
+               'conf_file': '',
+               'filename': None,
+               'write': False,
+               'location': None,
+               'debug': 0,
+               'cache_dtb': False,
+               'cache_directory': '',
+               'addr_space': None}
+
+   def __init__(self):
+      conf.ConfObject.__init__(self)
+      self.__context = {}
+      self.__context.update(ConfigInstance.baseconf)
+      for field in self.__context:
+         try:
+            self.update(field, self.__context[field])
+         except:
+            pass
+
+
+   def updateCtx(self, key, value):
+      self.__context[key.lower()] = value
+      self.update(key, value)
+
+
+   def switchContext(self):
+      for field in self.__context:
+         self.update(field, self.__context[field])
+
+
+   def dump(self):
+      for field in self.__context:
+         print field, self.__context[field], self.get_value(field)
+
 
 class Volatility(mfso):
-
-   baseconf = {'profile': '', 
-               'use_old_as': None, 
-               'kdbg': None, 
-               'help': False, 
-               'kpcr': None, 
-               'tz': None, 
-               'pid': None, 
-               'output_file': None, 
-               'physical_offset': None, 
-               'conf_file': None, 
-               'dtb': None, 
-               'output': None, 
-               'info': None, 
-               'location': None, 
-               'plugins': None, 
-               'debug': True, 
-               'cache_dtb': False, 
-               'filename': None, 
-               'cache_directory': None, 
-               'verbose': None, 
-               'write':False}
-   
    def __init__(self):
       mfso.__init__(self, "volatility")
       self.__disown__()
-      if with_volatility:
-         self._config = conf.ConfObject()
-         registry.PluginImporter()
-         registry.register_global_options(self._config, addrspace.BaseAddressSpace)
-         registry.register_global_options(self._config, commands.Command)
-
+      self._config = ConfigInstance()
 
    def start(self, args):
       if not with_volatility:
          raise RuntimeError("Volatility not found. Please install it")
       self.memdump = args["file"].value()
-      self._config.update('location', "file://" + self.memdump.absolute())
-      self._config.update('filename', self.memdump.name())
-      self._config.update('debug', True)
+      self._config.updateCtx('location', "file://" + self.memdump.absolute())
+      self._config.updateCtx('filename', self.memdump.name())
+      self._config.updateCtx('debug', True)
       starttime = time.time()
       if args.has_key("profile"):
          self._astype = utils.load_as(self._config, astype='any')
-         self._config.update('profile', args['profile'].value())
+         self._config.updateCtx('profile', args['profile'].value())
          self._kdbg = tasks.get_kdbg(self._astype)
-         self._config.update('kdbg', self._kdbg.obj_offset)
+         self._config.updateCtx('kdbg', self._kdbg.obj_offset)
       else:
          try:
             self.__guessProfile()
@@ -222,19 +251,12 @@ class Volatility(mfso):
             traceback.print_exc()
       try:
          self.root = WinRootNode("Windows RAM", self.memdump, self)
-      except:
-         traceback.print_exc()
-      
-
-      #for task in taskmods.DllList(self.volconf).calculate():
-      #   print task.UniqueProcessId
-
-      #print dir(self.addr_space)
-      try:
+         self.__psxview = psxview.PsXview(self._config)
+         self.__findProcesses()
          self.__createProcessTree()
+         self.registerTree(self.memdump, self.root)
       except:
          traceback.print_exc()
-      self.registerTree(self.memdump, self.root)
       print time.time() - starttime
 
 
@@ -244,153 +266,103 @@ class Volatility(mfso):
       profiles = [ p.__name__ for p in registry.get_plugin_classes(obj.Profile).values() ]
       scan_kdbg = kdbgscan.KDBGScan(self._config)
       suglist = []
-      print "Starting KDBG scan"
       suglist = [ s for s, _ in scan_kdbg.calculate() ]
-      print "KDBG scan finished"
       if suglist:
          bestguess = suglist[0]
       if bestguess in profiles:
          profiles = [bestguess] + profiles
       chosen = 'none'
       for profile in profiles:
-         self._config.update('profile', profile)
+         self._config.updateCtx('profile', profile)
          addr_space = utils.load_as(self._config, astype='any')
          if hasattr(addr_space, 'dtb'):
             chosen = profile
             break
       if bestguess != chosen:
          print bestguess, chosen
+      print chosen
       volmagic = obj.VolMagic(addr_space)
-      print addr_space
       kdbgoffset = volmagic.KDBG.v()
       self._kdbg = obj.Object("_KDDEBUGGER_DATA64", offset = kdbgoffset, vm = addr_space)
-      self._config.update('kdbg', self._kdbg.obj_offset)
+      self._config.updateCtx('kdbg', self._kdbg.obj_offset)
       self._astype = addr_space
 
-     
 
-   # Following functions use lambda to create keys for the dict
-   # Default ones are based on offset
-   # For example, to use pid as key: self.procMapFromPSList(key=lambda x: int(x.UniqueProcessId))
-   # concerning psscan, it directly works on physical offset, so bypass vmtop
+   #this method does exactly the same as calculate method in psxview malware plugins
+   # but as we don't need to yield each result, just create the ps_sources dict
+   def __findProcesses(self):
+      all_tasks = list(tasks.pslist(self._astype))
+      self.ps_sources = {}
+      self.ps_sources['pslist'] = self.__psxview.check_pslist(all_tasks)
+      self.ps_sources['psscan'] = self.__psxview.check_psscan()
+      self.ps_sources['thrdproc'] = self.__psxview.check_thrdproc(self._astype)
+      self.ps_sources['csrss'] = self.__psxview.check_csrss_handles(all_tasks)
+      self.ps_sources['pspcid'] = self.__psxview.check_pspcid(self._astype)
+
+
+   def __findRootProcesses(self, procmap):
+      for pid in procmap.keys():
+         for proc in procmap[pid]:
+            if proc[0].InheritedFromUniqueProcessId not in procmap.keys():
+               yield proc
+
+
+   def __createProcessNode(self, proc, parent):
+      if proc.Peb:
+         _root = Node(str(proc.ImageFileName)+"-dlls", 0, parent, self)
+         _root.__disown__()
+         for mod in proc.get_load_modules():
+            dllnode = DllNode(str(mod.BaseDllName), proc.get_process_address_space(), mod.DllBase.v(), _root, self)
+         
+
+   def __createPtree(self, procmap, ppid, parent):
+      for pid in procmap.keys():
+         for proc, offset in procmap[pid]:
+            if int(proc.InheritedFromUniqueProcessId) == ppid:
+               self.__orphaned[proc] = 1
+               procnode = WinProcNode(proc, offset, parent, self)
+               self.__createProcessNode(proc, parent)
+               self.__createPtree(procmap, int(proc.UniqueProcessId), procnode)
+
 
    def __createProcessTree(self):
-      self._pslist = [proc for proc in taskmods.PSList(self._config).calculate()]
-      self._psscan = filescan.PSScan(self._config).calculate()
-      self._thscan = self.__procMapFromThrScan()
-      poffsets = [p.obj_vm.vtop(p.obj_offset) for p in self._pslist]
-      psorphaned = []
-      phidden = []
-      print len(poffsets), "--", len(self._pslist)
-         #for p in self._pslist:
-         #   print p.UniqueProcessId, p.InheritedFromUniqueProcessId
-      for p in self._thscan.values():
-         if p.obj_offset not in poffsets:
-            print p.ExitTime, p.ImageFileName
-            #if p.ExitTime != 0:
-            #   psorphaned.append(p)
-            #else:
-            #   phidden.append(p)
-      print "PHIDDEN:", len(phidden)
-         #print len(psorphaned)
-      self.__mainProcNode = Node("Processes", 0, self.root, self)
-      self.__mainProcNode.__disown__()
+      seen_offsets = []
       procmap = {}
-      for proc in self._pslist:
-         #if procmap.has_key(proc.UniqueProcessId):
-         procmap[int(proc.UniqueProcessId)] = proc
-      self.__createActiveProcessTree(procmap)
-      for p in psorphaned:
-         if p.InheritedFromUniqueProcessId in self.__psactivetree.keys():
-            print "Found :)"
-         else:
-            print "Fucking orphaned one !"
-         #print p.ImageFileName, p.UniqueProcessId, p.InheritedFromUniqueProcessId
-      
-      #print "GATHERED IDs:"
-      #print "  scan_set    :", sorted(scan_set)
-      #print "  list_set    :", sorted(list_set)
-      #print "  thr_set     :", sorted(thr_set)
-      #print "  pspcid_set  :", sorted(pspcid_set)
+      self.__orphaned = {}
+      for source in self.ps_sources.values():
+         for offset in source.keys():
+            if offset not in seen_offsets:
+               seen_offsets.append(offset)
+               cproc = source[offset]
+               uid = int(cproc.UniqueProcessId)
+               if procmap.has_key(uid):
+                  dtb = []
+                  for _proc in procmap[uid]:
+                     if cproc.ImageFileName == _proc[0].ImageFileName and cproc.Pcb.DirectoryTableBase == _proc[0].Pcb.DirectoryTableBase:
+                        dtb.append(_proc)
+                  if len(dtb) == 0:
+                     procmap[uid].append((cproc, offset))
+                  elif cproc.Peb != None:
+                     for _proc in dtb:
+                        if _proc.Peb is None:
+                           procmap[uid].remove(_proc)
+               else:
+                  procmap[uid] = [(cproc, offset)]
+               self.__orphaned[cproc] = 0
+      if len(procmap):
+         self.__mainProcNode = Node("Processes", 0, self.root, self)
+         self.__mainProcNode.__disown__()
+         for proc, offset in self.__findRootProcesses(procmap):
+            self.__orphaned[proc] = 1
+            procnode = WinProcNode(proc, offset, self.__mainProcNode, self)
+            self.__createPtree(procmap, int(proc.UniqueProcessId), procnode)
+         for proc in self.__orphaned:
+            if self.__orphaned[proc] == 0:
+               self.__printProcess(proc)
 
-      #print "=" * 42
+   def __printProcess(self, proc):
+      print "{name:<30}{uid:<10}{puid:<10}{stime:<30}{etime:<30}{cr3:<15}".format(name=proc.ImageFileName, uid=proc.UniqueProcessId, puid=proc.InheritedFromUniqueProcessId, stime=proc.CreateTime, etime=proc.ExitTime, cr3=hex(proc.Pcb.DirectoryTableBase))
 
-      #for off in list_set:
-      #   uid = str(self.pslist[off].UniqueProcessId)
-      #   name = self.pslist[off].ImageFileName
-      #   ctime = str(self.pslist[off].CreateTime)
-      #   etime = str(self.pslist[off].ExitTime)
-      #   cr3 = self.pslist[off].Pcb.DirectoryTableBase
-      #   print uid + " " * (10-len(uid)) + name + " " * (30-len(name)) + ctime + " "*(12-len(ctime)) + etime + " "*(12-len(etime)) + hex(cr3)
-            
-      #print phidden
-      #for hidden in phidden:
-      #   process = self.psscanid[int(hidden)]
-      #   print process.ImageFileName, process.UniqueProcessId, process.ExitTime
-
-
-   def __procMapFromThrScan(self, key=lambda x: x.obj_vm.vtop(x.obj_offset)):
-      ret = dict()
-
-      for ethread in modscan.ThrdScan(self._config).calculate():
-         if ethread.ExitTime != 0:
-            continue
-         process = None
-         if hasattr(ethread.Tcb, 'Process'):
-            process = ethread.Tcb.Process.dereference_as('_EPROCESS')
-         elif hasattr(ethread, 'ThreadsProcess'):
-            process = ethread.ThreadsProcess.dereference()            
-         if (process and process.ExitTime == 0 and
-             process.UniqueProcessId > 0 and
-             process.UniqueProcessId < 65535):
-            ret[key(process)] = process
-      return ret
-
-
-   def __procMapFromPspcid(self, key=lambda x: x.obj_vm.vtop(x.obj_offset)):
-      ret = dict()
-      if hasattr(self, "_kdbg"):
-         PspCidTable = self._kdbg.PspCidTable.dereference().dereference()
-
-         for handle in PspCidTable.handles():
-            if handle.get_object_type() == "Process":
-               process = handle.dereference_as("_EPROCESS")
-               ret[key(process)] = process
-      return ret
-
-
-   def __createActiveProcessTree(self, processes):
-      """
-      Active Process Tree is created based on pslist
-      """
-      self.__psactivetree = {}
-
-      def createActiveProcessNode(parent, inherited_from):
-         for proc in processes.values():
-            if proc.InheritedFromUniqueProcessId == inherited_from:
-               n = WinProcNode(str(proc.ImageFileName), parent, self, proc)
-               self.__psactivetree[proc.UniqueProcessId] = n
-               del processes[int(proc.UniqueProcessId)]
-               #count += 1
-               createActiveProcessNode(n, int(proc.UniqueProcessId))
-               #self.stateinfo = "Step 1: creating active process tree: " + str(count) + "/" + str(total)
-               #print self.stateinfo
-
-      while len(processes.keys()) > 0:
-         keys = processes.keys()
-         root = self.find_root(processes, keys[0])
-         createActiveProcessNode(self.__mainProcNode, root)
-
-
-   def find_root(self, processes, pid):
-      seen = set()
-      print processes.keys()
-      while pid in processes and pid not in seen:
-         seen.add(pid)
-         print "\t", pid
-         pid = int(processes[pid].InheritedFromUniqueProcessId)
-      print "root: ", pid
-      return pid
 
 
 class mvolatility(Module):
@@ -399,7 +371,6 @@ class mvolatility(Module):
       if not with_volatility:
          raise RuntimeError("Volatility not found. Please install it")
       Module.__init__(self, "mvolatility", Volatility)
-      registry.PluginImporter()
       self.conf.addArgument({"name": "file",
                              "description": "Dump to analyse",
                              "input": Argument.Required|Argument.Single|typeId.Node
