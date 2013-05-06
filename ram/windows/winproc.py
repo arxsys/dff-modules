@@ -21,6 +21,16 @@ from dff.api.types.libtypes import VMap, Variant, VList, vtime, TIME_MS_64, type
 import volatility.obj as obj
 
 
+import sys
+sys.path.append("/home/udgover/sources/pefile-1.2.10-123")
+
+try:
+    import pefile
+    PEFILE_FOUND = True
+except:
+    PEFILE_FOUND = False
+
+
 def confswitch(func):
     def switch(self, *args):
         self._fsobj._config.switchContext()
@@ -45,7 +55,8 @@ class WinMapper():
             nt_header = dos_header.get_nt_header()
             soh = nt_header.OptionalHeader.SizeOfHeaders
             header_off = self._aspace.vtop(self._baseaddr)
-            fm.push(0, long(soh), self._fsobj.memdump, long(header_off))
+            real_size = len(self._aspace.zread(self._baseaddr, soh))
+            fm.push(0, real_size, self._fsobj.memdump, long(header_off))
             fa = nt_header.OptionalHeader.FileAlignment
             for sect in nt_header.get_sections(True):
                 foa = self.__round(sect.PointerToRawData, fa)
@@ -57,34 +68,36 @@ class WinMapper():
                 left_over = (data_size + data_start) % 0x1000
                 paddr = self._aspace.vtop(data_start)
                 if data_size < first_block:
-                    self.__push(fm, offset, data_size, paddr)
+                    real_size = len(self._aspace.zread(data_start, data_size))
+                    self.__push(fm, offset, real_size, paddr)
                 else:
-                    self.__push(fm, offset, first_block, paddr)
+                    real_size = len(self._aspace.zread(data_start, first_block))
+                    self.__push(fm, offset, real_size, paddr)
+                    offset += real_size
                     new_vaddr = data_start + first_block
                     for _i in range(0, full_blocks):
                         paddr = self._aspace.vtop(new_vaddr)
-                        self.__push(fm, offset, 0x1000, paddr)
+                        real_size = len(self._aspace.zread(new_vaddr, 0x1000))
+                        self.__push(fm, offset, real_size, paddr)
                         new_vaddr = new_vaddr + 0x1000
-                        offset += 0x1000
+                        offset += real_size
                     if left_over > 0:
                         paddr = self._aspace.vtop(new_vaddr)
-                        self.__push(fm, offset, left_over, paddr)
+                        real_size = len(self._aspace.zread(new_vaddr, left_over))
+                        self.__push(fm, offset, real_size, paddr)
+                        offset += real_size
         except:
             traceback.print_exc()
 
     def __push(self, fm, offset, size, paddr):
         if paddr != None:
             try:
-                fm.push(offset, size, self._fsobj.memdump, long(paddr))
+                fm.push(offset, size, self._fsobj.memdump, long(paddr), True)
             except:
-                chunk = fm.chunkFromOffset(offset)
-                #print "Tried to map file offset: ", hex(offset), "--", hex(offset+size), "@ phys offset", hex(paddr)
-                #print "But already allocated chunk ", hex(chunk.offset), "--", hex(chunk.offset+chunk.size), "@ phys offset", hex(chunk.originoffset)
-                #print "file offset: ", hex(offset), " -- size: ", size, " -- phy_offset: "
-                #print "already mapped at", chunk.offset, chunk.size, chunk.origin, chunk.originoffset
+                pass
         else:
             try:
-                fm.push(offset, size)
+                fm.push(offset, size, None, 0, True)
             except:
                 pass
 
@@ -116,7 +129,11 @@ class DllNode(Node, WinMapper):
 
     def _attributes(self):
         attrs = VMap()
-        attrs["Base address"] = Variant(self._boffset)
+        if self._baseaddr != -1:
+            attrs["Virtual Base address"] = Variant(self._boffset)
+            attrs["Physical Base address"] = Variant(self._aspace.vtop(self._boffset))
+        else:
+            attrs["Virtual Base address (not valid addr)"] = Variant(self._boffset)
         return attrs
 
     @confswitch
@@ -138,6 +155,7 @@ class WinProcNode(Node, WinMapper):
         WinMapper.__init__(self)
         self.v = vfs()
         self.__offset = offset
+        self.__pefile = None
         self.eproc = eproc
         self._aspace = self.eproc.get_process_address_space()
         self._fsobj = fsobj
@@ -238,6 +256,66 @@ class WinProcNode(Node, WinMapper):
         params_attrs["CommandLine"] = Variant(str(proc_params.CommandLine))
         attrs["Process Parameters"] = params_attrs
 
+
+    def _setImportedFunctions(self, name, attrs):
+        if self.__pe and hasattr(self.__pe, "DIRECTORY_ENTRY_IMPORT"):
+            found = False
+            for entry in self.__pe.DIRECTORY_ENTRY_IMPORT:
+                if name.lower().find(entry.dll.lower()) != -1:
+                    found = True
+                    break
+            if found:
+                funcs = VList()
+                for imp in entry.imports:
+                    func = VMap()
+                    if imp.name:
+                        func[str(imp.name)] = Variant(imp.address)
+                    else:
+                        func[str(imp.ordinal)] = Variant(imp.address)
+                    funcs.append(func)
+                attrs["Imported functions"] = Variant(funcs)
+
+
+    def _setLoadedModules(self, attrs):
+        dlls = VList()
+        for m in self.eproc.get_load_modules():
+            name = str(m.FullDllName) or 'N/A'
+            dll = VMap()
+            dllattribs = VMap()
+            dllattribs["Base"] = Variant(long(m.DllBase))
+            dllattribs["Size"] = Variant(long(m.SizeOfImage))
+            if name != "N/A":
+                self._setImportedFunctions(name, dllattribs)
+            dll[name] = Variant(dllattribs)
+            dlls.append(dll)
+            attrs["Loaded modules"] = Variant(dlls)
+
+
+    def __setConnections(self, attrs):
+        if self._fsobj.connections.has_key(long(self.eproc.UniqueProcessId)):
+            conns = VMap()
+            count = 0
+            for conn_obj in self._fsobj.connections[long(self.eproc.UniqueProcessId)]:
+                count += 1
+                conn = VMap()
+                conn["Local IP address"] = Variant(str(conn_obj.localAddr))
+                conn["Local port"] = Variant(int(conn_obj.localPort))
+                if conn_obj.proto is not None:
+                    conn["Protocol"] = Variant(int(conn_obj.proto))
+                conn["Protocol type"] = Variant(conn_obj.type)
+                if conn_obj.ctime is not None:
+                    create_datetime = conn_obj.ctime.as_windows_timestamp()
+                    vt = vtime(create_datetime, TIME_MS_64)
+                    vt.thisown = False
+                    conn["Create time"] = Variant(vt)
+                if conn_obj.remoteAddr is not None:
+                    conn["Remote IP address"] = Variant(str(conn_obj.remoteAddr))
+                    conn["Remote port"] = Variant(int(conn_obj.remotePort))
+                if conn_obj.state is not None:
+                    conn["State"] = Variant(str(conn_obj.state))
+                conns["Connection " + str(count)] = Variant(conn)
+            attrs["Connections"] = conns
+        
     
     @confswitch
     def fileMapping(self, fm):
@@ -247,23 +325,23 @@ class WinProcNode(Node, WinMapper):
     @confswitch
     def _attributes(self):
         try:
+            if PEFILE_FOUND:
+                f = self.open()
+                buff = f.read()
+                f.close()
+                try:
+                    self.__pe = pefile.PE(data=buff)
+                except:
+                    self.__pe = None
             attrs = VMap()
             attrs["PID"] = Variant(int(self.eproc.UniqueProcessId))
             attrs["Parent PID"] = Variant(int(self.eproc.InheritedFromUniqueProcessId))
             attrs["Active Threads"] = Variant(int(self.eproc.ActiveThreads))
             if self.eproc.Peb:
-                dlls = VList()
-                for m in self.eproc.get_load_modules():
-                    name = str(m.FullDllName) or 'N/A'
-                    dll = VMap()
-                    dllattribs = VMap()
-                    dllattribs["Base"] = Variant(long(m.DllBase))
-                    dllattribs["Size"] = Variant(long(m.SizeOfImage))
-                    dll[name] = Variant(dllattribs)
-                    dlls.append(dll)
-                attrs["Dlls"] = Variant(dlls)
+                self._setLoadedModules(attrs)
             for source in self._fsobj.ps_sources:
                 attrs[source] = Variant(self._fsobj.ps_sources[source].has_key(self.__offset), typeId.Bool)
+            self.__setConnections(attrs)
             hcount = int(self.eproc.ObjectTable.HandleCount)
             if hcount < 0:
                 hcount = 0
@@ -275,24 +353,8 @@ class WinProcNode(Node, WinMapper):
             self._setProcessParameters(attrs)
             self._setTimestamp(self.eproc, attrs)
             attrs["Handles"] = self.handles_map
-            #handles = VMap()
-            #for htype in self.handles_map:
-            #    hlist = VList()
-            #    for hobj in self.handles_map[htype]:
-            #        hlist.append(Variant(hobj))
-            #    handles[str(htype)] = hlist
-            #attrs["Handles"] = handles
         except:
             import traceback
             traceback.print_exc()
 
         return attrs
-
-
-class WinActiveProcNode(WinProcNode):
-    def __init__(self, name, parent, fsobj, eproc):
-        WinProcNode.__init__(name, parent, fsobj, eproc)
-        
-
-    #def icon(self):
-    #    pass

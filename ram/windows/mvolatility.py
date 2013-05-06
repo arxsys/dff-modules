@@ -15,7 +15,7 @@
 
 __dff_module_volatility_version__ = "1.0.0"
 
-VOLATILITY_PATH = "/home/udgover/sources/volatility-2.2"
+VOLATILITY_PATH = "/home/udgover/sources/volatility"
 #VOLATILITY_PATH = "/home/udgover/sources/volatility-"
 
 import sys
@@ -27,40 +27,34 @@ from dff.api.module.module import Module
 from dff.api.vfs.libvfs import mfso, AttributesHandler, Node
 from dff.api.types.libtypes import Variant, VMap, VList, typeId, Argument, Parameter, vtime, TIME_MS_64
 
+from collections import namedtuple
+
+debug = False
+
 if VOLATILITY_PATH:
    sys.path.append(VOLATILITY_PATH)
 try:
    from dff.modules.ram.addrspace import dffvol
    import volatility.conf as conf
    import volatility.timefmt as timefmt
-   import volatility.constants as constants
    import volatility.registry as registry
-   import volatility.exceptions as exceptions
    import volatility.obj as obj
-   import volatility.debug as debug
-   
    import volatility.utils as utils
-
-   import volatility.plugins.kdbgscan as kdbgscan
-   import volatility.plugins.imageinfo as imageinfo
-
    import volatility.addrspace as addrspace
    import volatility.commands as commands
-   import volatility.scan as scan
-   
+
    import volatility.win32.tasks as tasks
+   import volatility.plugins.kdbgscan as kdbgscan
+   import volatility.plugins.imageinfo as imageinfo
    import volatility.plugins.taskmods as taskmods
-   import volatility.plugins.handles as handles
-   import volatility.plugins.modscan as modscan
-   import volatility.plugins.filescan as filescan
+   import volatility.plugins.netscan as netscan
+   import volatility.plugins.sockscan as sockscan
+   import volatility.plugins.connscan as connscan
+   import volatility.protos as protos
 
    import volatility.plugins.malware.psxview as psxview
-
-   from volatility.plugins.filescan import PoolScanProcess
-
-   import volatility.plugins.taskmods as taskmods
    
-   import volatility.registry as registry
+   #import volatility.registry as registry
    import volatility.win32.network as network
    
    with_volatility = True
@@ -84,7 +78,7 @@ class WinRootNode(Node):
       Node.__init__(self, name, 0, None, fsobj)
       self.__fsobj = fsobj
       self._kdbg = self.__fsobj._kdbg
-      self._astype = self.__fsobj._astype
+      self._aspace = self.__fsobj._aspace
       self.setDir()
       self.__disown__()
 
@@ -133,14 +127,14 @@ class WinRootNode(Node):
          for kpcr in cpu_blocks:
             kpcrs["CPU " + str(kpcr.ProcessorBlock.Number)] = Variant(kpcr.obj_offset)
          attribs["KPCR(s)"] = Variant(kpcrs)
-         attribs["DTB"] = Variant(self._astype.dtb)
-         volmagic = obj.VolMagic(self._astype)
+         attribs["DTB"] = Variant(self._aspace.dtb)
+         volmagic = obj.VolMagic(self._aspace)
          KUSER_SHARED_DATA = volmagic.KUSER_SHARED_DATA.v()
          if KUSER_SHARED_DATA:
             attribs["KUSER_SHARED_DATA"] = Variant(KUSER_SHARED_DATA)
             k = obj.Object("_KUSER_SHARED_DATA",
                            offset = KUSER_SHARED_DATA,
-                           vm = self._astype)
+                           vm = self._aspace)
             if k:
                stime = k.SystemTime
                vtstime = vtime(stime.as_windows_timestamp(), TIME_MS_64)
@@ -159,7 +153,7 @@ class WinRootNode(Node):
       attribs["PsLoadedModuleList"] = Variant(mod_head)
       attribs["KDBG offsets"] = Variant(kdbg_offsets)
       attribs["KernelBase"] = Variant(long(self._kdbg.KernBase))
-      if not hasattr(self._astype, "pae"):
+      if not hasattr(self._aspace, "pae"):
          attribs["PAE type"] = Variant("No PAE")
       else:
          attribs["PAE type"] = Variant("PAE")
@@ -238,11 +232,12 @@ class Volatility(mfso):
       self._config.updateCtx('location', "file://" + self.memdump.absolute())
       self._config.updateCtx('filename', self.memdump.name())
       self._config.updateCtx('debug', True)
+      self.__dlls = {}
       starttime = time.time()
       if args.has_key("profile"):
-         self._astype = utils.load_as(self._config, astype='any')
          self._config.updateCtx('profile', args['profile'].value())
-         self._kdbg = tasks.get_kdbg(self._astype)
+         self._aspace = utils.load_as(self._config)
+         self._kdbg = tasks.get_kdbg(self._aspace)
          self._config.updateCtx('kdbg', self._kdbg.obj_offset)
       else:
          try:
@@ -254,10 +249,19 @@ class Volatility(mfso):
          self.__psxview = psxview.PsXview(self._config)
          self.__findProcesses()
          self.__createProcessTree()
+         self.__createDlls()
+         self.__findConnections()
          self.registerTree(self.memdump, self.root)
       except:
          traceback.print_exc()
-      print time.time() - starttime
+      aspace = self._aspace
+      count = 0
+      if debug:
+         while aspace:
+            count += 1
+            print 'AS Layer', str(count), aspace.__class__.__name__, "(", aspace.name, ")"
+            aspace = aspace.base
+         print time.time() - starttime
 
 
 
@@ -278,26 +282,25 @@ class Volatility(mfso):
          if hasattr(addr_space, 'dtb'):
             chosen = profile
             break
-      if bestguess != chosen:
+      if debug and bestguess != chosen:
          print bestguess, chosen
-      print chosen
       volmagic = obj.VolMagic(addr_space)
       kdbgoffset = volmagic.KDBG.v()
       self._kdbg = obj.Object("_KDDEBUGGER_DATA64", offset = kdbgoffset, vm = addr_space)
       self._config.updateCtx('kdbg', self._kdbg.obj_offset)
-      self._astype = addr_space
+      self._aspace = addr_space
 
 
    #this method does exactly the same as calculate method in psxview malware plugins
    # but as we don't need to yield each result, just create the ps_sources dict
    def __findProcesses(self):
-      all_tasks = list(tasks.pslist(self._astype))
+      all_tasks = list(tasks.pslist(self._aspace))
       self.ps_sources = {}
       self.ps_sources['pslist'] = self.__psxview.check_pslist(all_tasks)
       self.ps_sources['psscan'] = self.__psxview.check_psscan()
-      self.ps_sources['thrdproc'] = self.__psxview.check_thrdproc(self._astype)
+      self.ps_sources['thrdproc'] = self.__psxview.check_thrdproc(self._aspace)
       self.ps_sources['csrss'] = self.__psxview.check_csrss_handles(all_tasks)
-      self.ps_sources['pspcid'] = self.__psxview.check_pspcid(self._astype)
+      self.ps_sources['pspcid'] = self.__psxview.check_pspcid(self._aspace)
 
 
    def __findRootProcesses(self, procmap):
@@ -307,22 +310,57 @@ class Volatility(mfso):
                yield proc
 
 
-   def __createProcessNode(self, proc, parent):
-      if proc.Peb:
-         _root = Node(str(proc.ImageFileName)+"-dlls", 0, parent, self)
-         _root.__disown__()
-         for mod in proc.get_load_modules():
-            dllnode = DllNode(str(mod.BaseDllName), proc.get_process_address_space(), mod.DllBase.v(), _root, self)
-         
-
    def __createPtree(self, procmap, ppid, parent):
       for pid in procmap.keys():
          for proc, offset in procmap[pid]:
             if int(proc.InheritedFromUniqueProcessId) == ppid:
                self.__orphaned[proc] = 1
                procnode = WinProcNode(proc, offset, parent, self)
-               self.__createProcessNode(proc, parent)
+               if proc.Peb != None:
+                  __aspace = proc.get_process_address_space()
+                  for mod in proc.get_load_modules():
+                     paddr = -1
+                     dllname = str(mod.BaseDllName)
+                     if __aspace is not None and __aspace.is_valid_address(mod.DllBase.v()):
+                        paddr = long(__aspace.vtop(mod.DllBase.v()))
+                     if not self.__dlls.has_key(dllname):
+                        self.__dlls[dllname] = [(paddr, __aspace, mod.DllBase.v(), [procnode])]
+                     else:
+                        exists = False
+                        for item in self.__dlls[dllname]:
+                           if paddr == item[0]:
+                              exists = True
+                              break
+                        if exists:
+                           item[3].append(procnode)
+                        else:
+                           self.__dlls[dllname].append((paddr, __aspace, mod.DllBase.v(), [procnode]))
                self.__createPtree(procmap, int(proc.UniqueProcessId), procnode)
+
+
+   def __createDlls(self):
+      if len(self.__dlls):
+         self.__mainDllNode = Node("Dlls", 0, self.root, self)
+         self.__mainDllNode.setDir()
+         self.__mainDllNode.__disown__()
+         for dllname in self.__dlls:
+            if len(self.__dlls[dllname]) > 1:
+               if debug:
+                  print dllname, [entry[0] for entry in self.__dlls[dllname]]
+               i = 0
+               for entry in self.__dlls[dllname]:
+                  if entry[0] != -1:
+                     if i == 0:
+                        dllnode = DllNode(dllname, entry[1], entry[2], self.__mainDllNode, self)
+                        dllnode.__disown__()
+                     else:
+                        dllnode = DllNode(dllname+"-"+str(i), entry[1], entry[2], self.__mainDllNode, self)
+                        dllnode.__disown__()
+                     i += 1
+            else:
+               entry = self.__dlls[dllname][0]
+               dllnode = DllNode(dllname, entry[1], entry[2], self.__mainDllNode, self)
+               dllnode.__disown__()
 
 
    def __createProcessTree(self):
@@ -352,13 +390,69 @@ class Volatility(mfso):
       if len(procmap):
          self.__mainProcNode = Node("Processes", 0, self.root, self)
          self.__mainProcNode.__disown__()
+         self.__mainProcNode.setDir()
          for proc, offset in self.__findRootProcesses(procmap):
             self.__orphaned[proc] = 1
             procnode = WinProcNode(proc, offset, self.__mainProcNode, self)
             self.__createPtree(procmap, int(proc.UniqueProcessId), procnode)
          for proc in self.__orphaned:
-            if self.__orphaned[proc] == 0:
+            if debug and self.__orphaned[proc] == 0:
                self.__printProcess(proc)
+
+
+   def __findConnections(self):
+      self.connections = {}
+      conn = namedtuple("aconn", ['localAddr', 'localPort', 'proto', 'type', 'ctime', 'remoteAddr', 'remotePort', 'state'])
+      if self._aspace.profile.metadata.get('major', 0) == 6:
+         for net_object, proto, laddr, lport, raddr, rport, state in netscan.Netscan(self._config).calculate():
+            if proto.startswith("UDP"):
+               raddr = rport = None
+            if not self.connections.has_key(long(net_object.Owner.UniqueProcessId)):
+               self.connections[long(net_object.Owner.UniqueProcessId)] = [conn(laddr, lport, None, proto, net_object.CreateTime or None, raddr, rport, state)]
+            else:
+               self.connections[long(net_object.Owner.UniqueProcessId)].append(conn(laddr, lport, None, proto, net_object.CreateTime or None, raddr, rport, state))
+                                                                          
+      else:
+         socks = {}
+         conns = {}
+         for tcp_obj in connscan.ConnScan(self._config).calculate():
+            if not conns.has_key(long(tcp_obj.Pid)):
+               conns[long(tcp_obj.Pid)] = {long(tcp_obj.LocalPort): [tcp_obj]}
+            elif not conns[long(tcp_obj.Pid)].has_key(long(tcp_obj.LocalPort)):
+               conns[long(tcp_obj.Pid)][long(tcp_obj.LocalPort)] = [tcp_obj]
+            else:
+               conns[long(tcp_obj.Pid)][long(tcp_obj.LocalPort)].append(tcp_obj)
+         for sock_obj in sockscan.SockScan(self._config).calculate():
+            if not socks.has_key(long(sock_obj.Pid)):
+               socks[long(sock_obj.Pid)] = [sock_obj]
+            else:
+               socks[long(sock_obj.Pid)].append(sock_obj)
+         for pid in socks:
+            pconns = []
+            for sock_obj in socks[pid]:
+               if conns.has_key(pid) and conns[pid].has_key(long(sock_obj.LocalPort)):
+                  for tcp_obj in conns[pid][long(sock_obj.LocalPort)]:
+                     pconns.append(conn(tcp_obj.LocalIpAddress, tcp_obj.LocalPort, sock_obj.Protocol,
+                                        protos.protos.get(sock_obj.Protocol.v(), "-"), sock_obj.CreateTime,
+                                        tcp_obj.RemoteIpAddress, tcp_obj.RemotePort, None))
+                  del conns[pid][long(sock_obj.LocalPort)]
+               else:
+                  pconns.append(conn(sock_obj.LocalIpAddress, sock_obj.LocalPort, sock_obj.Protocol,
+                                     protos.protos.get(sock_obj.Protocol.v(), "-"), sock_obj.CreateTime,
+                                     None, None, None))
+            self.connections[pid] = pconns
+         for pid in conns:
+            if len(conns[pid]):
+               for port in conns[pid]:
+                  for tcp_obj in conns[pid][port]:
+                     self.connections[pid].append(conn(tcp_obj.LocalIpAddress, tcp_obj.LocalPort, 6, "TCP", None, 
+                                                       tcp_obj.RemoteIpAddress, tcp_obj.RemotePort, None))
+         if debug:
+            for pid in self.connections:
+               print "PID", pid
+               for pconn in self.connections[pid]:
+                  print "\t", pconn
+
 
    def __printProcess(self, proc):
       print "{name:<30}{uid:<10}{puid:<10}{stime:<30}{etime:<30}{cr3:<15}".format(name=proc.ImageFileName, uid=proc.UniqueProcessId, puid=proc.InheritedFromUniqueProcessId, stime=proc.CreateTime, etime=proc.ExitTime, cr3=hex(proc.Pcb.DirectoryTableBase))
