@@ -27,13 +27,16 @@
 #include <list>
 
 #ifdef WIN32
-#define _packed #pragma pack(1)
+#define PACK
 #else
-#define _packed __attribute__ ((packed))
+#define PACK __attribute__ ((packed))
 #endif
 
 #define GPT_MAGIC	0x4546492050415254L //EFI PART
 
+#ifdef WIN32
+#pragma pack(1)
+#endif
 typedef struct
 {
   uint8_t	_signature[8]; // generally EFI PART
@@ -79,10 +82,12 @@ typedef struct
   uint32_t	entrySize() {return _entry_size;}
   uint32_t	entriesCrc();
   Attributes	attributes();
-}		_packed gpt_header; 
+}		PACK gpt_header;
 
 
-
+#ifdef WIN32
+#pragma pack(1)
+#endif
 typedef struct
 {
   uint8_t	_type_guid[16];
@@ -139,7 +144,9 @@ typedef struct
     return utf8;
   }
   Attributes	attributes();
-}		_packed gpt_entry;
+}		PACK gpt_entry;
+
+
 
 typedef struct	s_gptmeta
 {
