@@ -23,6 +23,11 @@ class SqliteManager(ModuleProcessusHandler):
   def update(self, processus):
     self.databases[processus] = processus.node
 
+  def executeFrom(self, src, cmd):
+    for base, node in self.databases.iteritems():
+      if node == src:
+        return base.execute(cmd)
+
   def execute(self, basename, cmd, root):
     responses = []
     rootAbsolute = root.absolute()
