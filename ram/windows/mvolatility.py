@@ -28,6 +28,8 @@ from dff.api.vfs.libvfs import mfso, AttributesHandler, Node
 from dff.api.types.libtypes import Variant, VMap, VList, typeId, Argument, Parameter, vtime, TIME_MS_64
 
 from collections import namedtuple
+from sets import Set
+
 
 debug = False
 
@@ -47,10 +49,14 @@ try:
    import volatility.plugins.kdbgscan as kdbgscan
    import volatility.plugins.imageinfo as imageinfo
    import volatility.plugins.taskmods as taskmods
+
    import volatility.plugins.netscan as netscan
    import volatility.plugins.sockscan as sockscan
    import volatility.plugins.connscan as connscan
    import volatility.protos as protos
+
+   import volatility.plugins.modscan as modscan
+   import volatility.plugins.modules as modules
 
    import volatility.plugins.malware.psxview as psxview
    
@@ -251,6 +257,7 @@ class Volatility(mfso):
          self.__createProcessTree()
          self.__createDlls()
          self.__findConnections()
+         self.__createModules()
          self.registerTree(self.memdump, self.root)
       except:
          traceback.print_exc()
@@ -453,6 +460,34 @@ class Volatility(mfso):
                for pconn in self.connections[pid]:
                   print "\t", pconn
 
+
+
+   def __createModules(self):
+      self.__scanned_modules = Set([ldr_entry.obj_offset for ldr_entry in modscan.ModScan(self._config).calculate()])
+      self.__loaded_modules = Set([module.obj_vm.vtop(module.obj_offset) for module in modules.Modules(self._config).calculate()])
+      self.__unlinked_or_hidden = self.__scanned_modules.difference(self.__loaded_modules)
+      print self.__loaded_modules.difference(self.__scanned_modules)
+      self.__modulesNode = Node("Modules", 0, self.root, self)
+      self.__modulesNode.setDir()
+      self.__modulesNode.__disown__()
+      unknown = 0
+      address_space = utils.load_as(self._config, astype = 'physical')
+      kernel_as = utils.load_as(self._config)
+      for offset in self.__scanned_modules:
+         ldr_entry = obj.Object('_LDR_DATA_TABLE_ENTRY', vm = address_space, offset = offset, native_vm = kernel_as)
+         print ldr_entry.members
+         #print ldr_entry.
+         if not ldr_entry.BaseDllName:
+            unknow += 1
+            name = "Unknown" + str(unknown)
+         else:
+            name = str(ldr_entry.BaseDllName)
+         unlinked_or_hidden = False
+         if offset in self.__unlinked_or_hidden:
+            unlinked_or_hidden = True
+         #n = ModuleNode(name, offset, self.__modulesNode, self, unlinked_or_hidden)
+         #n.__disown__()
+         
 
    def __printProcess(self, proc):
       print "{name:<30}{uid:<10}{puid:<10}{stime:<30}{etime:<30}{cr3:<15}".format(name=proc.ImageFileName, uid=proc.UniqueProcessId, puid=proc.InheritedFromUniqueProcessId, stime=proc.CreateTime, etime=proc.ExitTime, cr3=hex(proc.Pcb.DirectoryTableBase))

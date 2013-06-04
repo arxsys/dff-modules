@@ -141,6 +141,41 @@ class DllNode(Node, WinMapper):
         self._fileMapping(fm)
 
 
+
+class ModuleNode(Node, WinMapper):
+    def __init__(self, name, poffset, parent, fsobj, unlinked_or_hidden):
+        WinMapper.__init__(self)
+        address_space = utils.load_as(self._fsobj._config, astype = 'physical')
+        kernel_as = utils.load_as(self.fsobj._config)
+        self._poffset = poffset
+        self._fsobj = fsobj
+        Node.__init__(self, name, 0, parent, fsobj)
+        self.__disown__()
+        self._aspace = aspace
+        if aspace != None and aspace.is_valid_address(boffset):
+            self._baseaddr = boffset
+        fm = FileMapping(self)
+        self.fileMapping(fm)
+        self.setSize(fm.maxOffset())
+        del fm
+
+    
+    @confswitch
+    def _attributes(self):
+        attrs = VMap()
+        if self._baseaddr != -1:
+            attrs["Virtual Base address"] = Variant(self._boffset)
+            attrs["Physical Base address"] = Variant(self._aspace.vtop(self._boffset))
+        else:
+            attrs["Virtual Base address (not valid addr)"] = Variant(self._boffset)
+        return attrs
+
+
+    @confswitch
+    def fileMapping(self, fm):
+        self._fileMapping(fm)
+
+
 class WinProcNode(Node, WinMapper):
     #filename = lambda handle : handle.dereference_as("_FILE_OBJECT").file_name_with_device()
     #keyname = lambda handle : handle.dereference_as("_CM_KEY_BODY").full_key_name()
