@@ -16,15 +16,16 @@
 __dff_module_regedit_version__ = "1.0.0"
 
 from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import Qt, SIGNAL
-from PyQt4.QtGui import QWidget, QVBoxLayout
+from PyQt4.QtCore import Qt, SIGNAL, QByteArray
+from PyQt4.QtGui import QWidget, QVBoxLayout, QDialog
 
 from dff.api.vfs.vfs import vfs
 from dff.api.module.module import Module
 from dff.api.module.script import Script
 from dff.api.types.libtypes import Variant, VList, VMap, Argument, Parameter, typeId
-
 from dff.modules.viewer.pdf.pdfWidget import PDFViewer
+
+import popplerqt4
 
 class PDF(QWidget, Script):
   def __init__(self):
@@ -46,7 +47,7 @@ class PDF(QWidget, Script):
   def g_display(self):
     QWidget.__init__(self, None)
     vlayout = QVBoxLayout()
-    self.pdfviewer = PDFViewer(self)
+    self.pdfviewer = PDFViewer(self, self.node)
     vlayout.addWidget(self.pdfviewer)
     self.setLayout(vlayout)
 
@@ -69,4 +70,4 @@ class pdf(Module):
  	                   "values": ["PDF"]})
     self.tags = "Viewers"
     self.flags = ["gui"]
-    self.icon = ":pdf"	
+    self.icon = ":pdf"
