@@ -19,98 +19,10 @@ from dff.api.vfs.vfs import vfs, VLink, ABSOLUTE_ATTR_NAME
 from dff.api.module.module import Module
 from dff.api.module.script import Script
 from dff.api.types.libtypes import typeId, Argument, Parameter, Variant
-from dff.ui.console.complete_raw_input import get_term_size
+from dff.ui.console.utils import ColumnView, bytesToHuman
 
 import os
 
-
-SYMBOLS = ('K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y')
-PREFIX = {}
- 
-for i, s in enumerate(SYMBOLS):
-  PREFIX[s] = 1 << (i+1)*10
-
-
-class ColumnInfo():
-  def __init__(self, colcount, icount, max_width):
-    remain = 1 if icount % colcount != 0 else 0
-    self.row_count = icount / colcount + remain
-    self.icount = icount
-    self.col_count = colcount
-    self.cols_len = [0 for i in xrange(0, self.col_count)]
-    self.max_width = max_width
-    self.line_len = 0
-    self.cur_col = 0
-    self.cur_row = 0
-    self.cur_item = 0
-    self.valid = True
-
-  def push(self, length):
-    tab = 2 if self.cur_col != self.col_count else 0
-    if length > self.cols_len[self.cur_col]:
-      self.cols_len[self.cur_col] = length
-    self.cur_row += 1
-    self.cur_item += 1
-    if self.cur_row == self.row_count or self.cur_item == self.icount:
-      self.cur_row = 0
-      if self.line_len + self.cols_len[self.cur_col] + tab < self.max_width:
-        self.line_len += self.cols_len[self.cur_col] + tab
-      else:
-        self.valid = False
-      self.cur_col += 1
-    if self.cur_item == self.icount and self.cur_col != self.col_count:
-      self.valid = False
-      
-
-class ColumnCalculator():
-  MinColumnWidth = 3
-
-  def __init__(self):
-    self.max_width = get_term_size()
-    self.debug = 0
-
-  def getColumnsInfo(self, items):
-    icount = len(items)
-    cols_info = [ColumnInfo(i+1, icount, self.max_width) for i in xrange(0, min(icount, self.max_width / ColumnCalculator.MinColumnWidth))]
-    for item in items:
-      for col_info in cols_info:
-        if col_info.valid:
-          col_info.push(len(unicode(item, 'utf-8', 'replace')))
-    i = len(cols_info) - 1
-    if self.debug:
-      for col_info in cols_info:
-        print "{:<5s}  {:<3d} / {:<3d}  {:<3d}  {:<4d}  {:s}".format(str(col_info.valid), col_info.cur_col, 
-                                                                     col_info.col_count, col_info.row_count, 
-                                                                     col_info.line_len, str(col_info.cols_len))
-    while i != 0 and not cols_info[i].valid:
-      i -= 1
-    col_info = cols_info[i]
-    return (col_info.col_count, col_info.row_count, col_info.cols_len)
-
-
-  def iterRows(self, items):
-    max_col, rows, cols_len = self.getColumnsInfo(items)
-    icount = len(items)
-    if icount % max_col == 0:
-      last_row = -1
-    else:
-      last_row = len(items) % rows
-    row = 0
-    while row != rows:
-      if last_row == 0:
-        cols = max_col - 1
-      else:
-        cols = max_col
-        last_row -= 1
-      col_fmt = ""
-      for i in cols_len[:cols-1]:
-        col_fmt += "{:<" + str(i) + "s}  "
-      col_fmt += "{:<" + str(cols_len[cols-1]) + "s}"
-      printable_items = [unicode(item, "utf-8", 'replace').encode('utf-8') for item in items[row::rows]]
-      yield col_fmt.format(*printable_items)
-      row += 1
-    return
-    
 
 class LevelStats():  
   def __init__(self, extattrs):
@@ -141,7 +53,6 @@ class LS(Script):
 
 
   def start(self, args):
-    self.max_width = get_term_size()
     try:
       self.nodes = args["nodes"].value()
     except IndexError:
@@ -248,14 +159,6 @@ class LS(Script):
           self.render(items, lstat)
 
 
-  def bytesToHuman(self, size):
-    for s in reversed(SYMBOLS):
-      if size >= PREFIX[s]:
-        value = float(size) / PREFIX[s]
-        return '%.1f%s' % (value, s)
-    return str(size)
-
-
   def stat(self, node, lstat):
     if not self.long:
       return
@@ -273,7 +176,7 @@ class LS(Script):
         if node.isDeleted():
           lstat.delfiles += 1
     if self.human:
-      size = self.bytesToHuman(node.size())
+      size = bytesToHuman(node.size())
     else:
       size = str(node.size())
     if len(size) > lstat.size:
@@ -333,7 +236,7 @@ class LS(Script):
       h += "-"
     if node.isFile():
       if self.human:
-        size = self.bytesToHuman(node.size())
+        size = bytesToHuman(node.size())
       else:
         size = str(node.size())
     else:
@@ -369,8 +272,8 @@ class LS(Script):
         i += 1
       print
     else:
-      cc = ColumnCalculator()
-      for row in cc.iterRows([item.name() for item in items]):
+      cv = ColumnView()
+      for row in cv.iterRows([item.name() for item in items]):
         print row
       if self.depth == -1:
         print
