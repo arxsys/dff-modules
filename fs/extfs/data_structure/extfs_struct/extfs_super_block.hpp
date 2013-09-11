@@ -21,16 +21,9 @@
 
 #include "types.h"
 
-#ifdef WIN32
-#define PACK
-#else
-#define PACK __attribute__ ((packed))
-#endif
+#include "export.hpp"
 
-#ifdef WIN32
-#pragma pack(1)
-#endif
-
+PACK_START
 typedef struct	__extfs_super_block_s
 {
   uint32	inodes_number;	// number of inodes on the fs;
@@ -76,7 +69,8 @@ typedef struct	__extfs_super_block_s
   uint32	journal_device;
   uint32	orphan_node_list;
   uint32	empty[197];
-}PACK		super_block_t_;
+}		super_block_t_;
+PACK_END
 
 #endif
 

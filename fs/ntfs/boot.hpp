@@ -28,19 +28,12 @@
 	#include "wstdint.h"
 #endif
 
-#ifdef WIN32
-#define PACK
-#else
-#define PACK __attribute__((packed))
-#endif
 
 #define	BOOT_BLOCK_SIZE			512
 #define BOOT_MEDIA_DESCRIPTOR_ID	"NTFS    "
 #define	BOOT_FAT_NTFS_SIGNATURE		0xAA55
 
-#ifdef WIN32
-#pragma pack(1)
-#endif
+PACK_START
 typedef struct	s_BootBlock
 {
   uint8_t       jmpLoaderRoutine[3];
@@ -65,7 +58,8 @@ typedef struct	s_BootBlock
   uint8_t	unused9[4];
   uint8_t	bootCode[426];
   uint16_t	signature;	// BOOT_FAT_NTFS_SIGNATURE
-}		PACK BootBlock;
+}		BootBlock;
+PACK_END
 
 class Boot
 {

@@ -31,24 +31,16 @@
 
 
 
-#ifdef WIN32
-#define PACK
-#else
-#define PACK __attribute__((packed))
-#endif
-
 /**
  * $DATA attribute
  */
 
-#ifdef WIN32
-#pragma pack(1)
-#endif
+PACK_START
 typedef struct	s_AttributeData
 {
   uint8_t	todo;
-}		PACK AttributeData_t;
-
+}		AttributeData_t;
+PACK_END
 
 class AttributeData : public Attribute
 {

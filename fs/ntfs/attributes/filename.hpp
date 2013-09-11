@@ -24,12 +24,6 @@
 #include "standardinformation.hpp" // need flags
 #include <sstream>
 
-#ifdef WIN32
-#define PACK
-#else
-#define PACK __attribute__((packed))
-#endif
-
 /**
  * $FILE_NAME attribute
  *  Used in two places :
@@ -44,9 +38,7 @@
 
 #define ATTRIBUTE_FN_SIZE	66
 
-#ifdef WIN32
-#pragma pack(1)
-#endif
+PACK_START
 typedef struct	s_AttributeFileName
 {
   uint64_t	parentDirectoryFileReference;	// Windows displays/update times
@@ -61,8 +53,8 @@ typedef struct	s_AttributeFileName
   uint8_t	nameLength;		// Essential in directory index
   uint8_t	nameSpace;		// Essential in directory index
   //uint8_t	*name			// Essential in directory index
-}		PACK AttributeFileName_t;
-
+}		AttributeFileName_t;
+PACK_END
 
 class AttributeFileName : public Attribute
 {

@@ -22,12 +22,6 @@
 #include "common.hpp"
 #include "attribute.hpp"
 
-#ifdef WIN32
-#define PACK
-#else
-#define PACK __attribute__((packed))
-#endif
-
 
 /**
  * $INDEX_ROOT attribute
@@ -35,9 +29,7 @@
 
 #define ATTRIBUTE_INDEXROOT_SIZE	16
 
-#ifdef WIN32
-#pragma pack(1)
-#endif
+PACK_START
 typedef struct	s_AttributeIndexRoot
 {
   uint32_t	attributeInIndexType;	// 0 if this entry does not use an attribute
@@ -45,8 +37,8 @@ typedef struct	s_AttributeIndexRoot
   uint32_t	indexRecordSizeBytes;
   uint8_t	indexRecordSizeClusters;
   uint8_t	unused[3];
-}		PACK AttributeIndexRoot_t;
-
+}		AttributeIndexRoot_t;
+PACK_END
 
 /**
  * Node header following IndexRoot header
@@ -54,17 +46,15 @@ typedef struct	s_AttributeIndexRoot
 
 #define	NODEHEADER_SIZE	16
 
-#ifdef WIN32
-#pragma pack(1)
-#endif
+PACK_START
 typedef struct	s_NodeHeader
 {
   uint32_t	relOffsetStart;		// Offset to start of index entry list, rel to start of node header
   uint32_t	relOffsetEndUsed;	// Offset to end of index entry list used area
   uint32_t	relOffsetEndAlloc;
   uint32_t	flags;			// only 0x01, if this entry has children nodes
-}		PACK NodeHeader;
-
+}		NodeHeader;
+PACK_END
 
 /**
  * Generic Index entry
@@ -77,9 +67,7 @@ typedef struct	s_NodeHeader
 
 #define INDEX_ENTRY_SIZE	16
 
-#ifdef WIN32
-#pragma pack(1)
-#endif
+PACK_START
 typedef struct	IndexEntry
 {
   uint64_t	undefined;
@@ -89,7 +77,8 @@ typedef struct	IndexEntry
   // content
   // last 8 bytes is starting VCN of child node in $INDEX_ALLOCATION (if flag set),
   //  on an 8-byte boundary
-}		PACK IndexEntry;
+}		IndexEntry;
+PACK_END
 
 /**
  * Directory Index entry
@@ -97,9 +86,7 @@ typedef struct	IndexEntry
 
 #define DIRECTORY_INDEX_ENTRY_SIZE	16
 
-#ifdef WIN32
-#pragma pack(1)
-#endif
+PACK_START
 typedef struct	DirectoryIndexEntry
 {
   uint64_t	fileNameMFTFileReference;
@@ -110,7 +97,8 @@ typedef struct	DirectoryIndexEntry
   // last 8 bytes is starting VCN of child node in $INDEX_ALLOCATION (if flag set),
   //  on an 8-byte boundary
 
-}		PACK DirectoryIndexEntry;
+}		DirectoryIndexEntry;
+PACK_END
 
 class AttributeIndexRoot : Attribute
 {

@@ -30,23 +30,16 @@
 #endif
 
 
-#ifdef WIN32
-#define PACK
-#else
-#define PACK __attribute__((packed))
-#endif
-
 /**
  * $BITMAP attribute
  */
 
-#ifdef WIN32
-#pragma pack(1)
-#endif
+PACK_START
 typedef struct	s_AttributeBitmap
 {
   uint8_t	todo;
-}		PACK AttributeBitmap_t;
+}		AttributeBitmap_t;
+PACK_END
 
 
 class AttributeBitmap : public Attribute

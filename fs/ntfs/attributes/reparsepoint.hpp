@@ -22,19 +22,12 @@
 #include "common.hpp"
 #include "attribute.hpp"
 
-#ifdef WIN32
-#define PACK
-#else
-#define PACK __attribute__((packed))
-#endif
 
 /**
  * $SYMBOLINK_LINK_OR_REPARSE_POINT attribute
  */
 
-#ifdef WIN32
-#pragma pack(1)
-#endif
+PACK_START
 typedef struct	s_AttributeReparsePoint
 {
   uint32_t	flags;
@@ -44,7 +37,8 @@ typedef struct	s_AttributeReparsePoint
   uint16_t	targetNameLength;
   uint16_t	targetPrintNameOffset;
   uint16_t	targetPrintNameLength;
-}		PACK AttributeReparsePoint_t;
+}		AttributeReparsePoint_t;
+PACK_END
 
 class AttributeReparsePoint : Attribute
 {
