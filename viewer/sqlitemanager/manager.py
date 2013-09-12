@@ -42,6 +42,7 @@ class Manager(Ui_SQLiteManager, QWidget, EventHandler):
         self.connect(self.selectDatabase, SIGNAL("currentIndexChanged(int )"), self.customDatabaseChanged)
         self.connect(self.tableResult, SIGNAL("itemClicked(QTableWidgetItem*)"), self.tableClicked)
         self.connect(self.queryResult, SIGNAL("itemClicked(QTableWidgetItem*)"), self.tableClicked)
+        self.connect(self.refreshButton, SIGNAL("clicked()"), self.refreshDatabases)
         # Actions
         self.connect(self.actionExport_selection_CSV, SIGNAL("triggered(bool)"), self.exportCSV)
         self.connect(self.actionExtract_Binary_BLOB, SIGNAL("triggered(bool)"), self.exportBLOB)
@@ -208,13 +209,17 @@ class Manager(Ui_SQLiteManager, QWidget, EventHandler):
                 tableitem.setText(0, QString.fromUtf8(c[0]))
 
 
+    def refreshDatabases(self):
+        self.databaseTree.clear()
+        self.searchForDatabases()
+
     def searchForDatabases(self):
         if len(self.proc.databases):
+            self.databases = []
             for base, node in self.proc.databases.iteritems():
                 self.databases.append(node)
                 self.selectDatabase.addItem(QString.fromUtf8(node.name()))
             self.populateTree()
-
 
 class DatabaseTableItem(QTableWidgetItem):
     def __init__(self, data):
