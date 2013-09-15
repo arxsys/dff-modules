@@ -26,8 +26,6 @@
 #include "filemapping.hpp"
 #include "variant.hpp"
 
-#include "fatnodes.hpp"
-
 typedef struct
 {
   uint8_t	f1[3];
