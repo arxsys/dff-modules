@@ -27,7 +27,7 @@ from datetime import *
 
 from dff.ui.gui.resources.ui_sqlitemanager import Ui_SQLiteManager
 
-TABINDEX = ['BROWSE', 'CUSTOM']
+TABINDEX = ['BROWSE', 'CUSTOM', 'SCHEMA']
  
 class Manager(Ui_SQLiteManager, QWidget, EventHandler):
     def __init__(self):
@@ -42,6 +42,7 @@ class Manager(Ui_SQLiteManager, QWidget, EventHandler):
         self.connect(self.selectDatabase, SIGNAL("currentIndexChanged(int )"), self.customDatabaseChanged)
         self.connect(self.tableResult, SIGNAL("itemClicked(QTableWidgetItem*)"), self.tableClicked)
         self.connect(self.queryResult, SIGNAL("itemClicked(QTableWidgetItem*)"), self.tableClicked)
+        self.connect(self.refreshButton, SIGNAL("clicked()"), self.refreshDatabases)
         # Actions
         self.connect(self.actionExport_selection_CSV, SIGNAL("triggered(bool)"), self.exportCSV)
         self.connect(self.actionExtract_Binary_BLOB, SIGNAL("triggered(bool)"), self.exportBLOB)
@@ -158,9 +159,7 @@ class Manager(Ui_SQLiteManager, QWidget, EventHandler):
         try:
             cursor = self.proc.executeFrom(database, query)
         except apsw.SQLError, e:
-            print "here"
             if TABINDEX[self.tabWidget.currentIndex()] is "CUSTOM":
-                print "here"
                 self.queryMessage.clear()
                 self.queryMessage.insertPlainText(QString(str(unicode(e).encode('utf-8'))))
                 self.customStack.setCurrentIndex(1)
@@ -175,7 +174,6 @@ class Manager(Ui_SQLiteManager, QWidget, EventHandler):
             for count, data in enumerate(c):
                 table.setRowCount(row + 1)
                 table.setItem(row, count, DatabaseTableItem(data))
-#        table.resizeColumnsToContents()
 
     def setCurrentDatabase(self, db):
         self.currentDB = db
@@ -186,6 +184,19 @@ class Manager(Ui_SQLiteManager, QWidget, EventHandler):
             self.setCurrentDatabase(item.nodeDB())
             query = "SELECT * FROM " + item.text(0)
             self.buildDatabaseTable(self.tableResult, query, item.nodeDB())
+            qschema = "pragma table_info('" + item.text(0) + "')"
+            self.populateSchema(item.nodeDB(), qschema)
+
+    def populateSchema(self, db, query):
+        self.schemaTable.setRowCount(0)
+        try:
+            rows = self.proc.executeFrom(db, query).fetchall()
+        except apsw.SQLError, e:
+            return
+        for rcount, row in enumerate(rows):
+            for ccount, col in enumerate(row):
+                self.schemaTable.setRowCount(rcount + 1)
+                self.schemaTable.setItem(rcount, ccount, DatabaseTableItem(col))
 
     def populateTree(self):
         for db in self.databases:
@@ -197,8 +208,14 @@ class Manager(Ui_SQLiteManager, QWidget, EventHandler):
                 tableitem = DatabaseTreeItem(item, db, isTable=True)
                 tableitem.setText(0, QString.fromUtf8(c[0]))
 
+
+    def refreshDatabases(self):
+        self.databaseTree.clear()
+        self.searchForDatabases()
+
     def searchForDatabases(self):
         if len(self.proc.databases):
+            self.databases = []
             for base, node in self.proc.databases.iteritems():
                 self.databases.append(node)
                 self.selectDatabase.addItem(QString.fromUtf8(node.name()))
