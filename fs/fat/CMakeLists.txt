@@ -13,7 +13,7 @@
 #  Frederic Baguelin <fba@digital-forensic.org>
 
 dff_cpp_module(FATFS
-  CPP_FILES fatfs.cpp bootsector.cpp fat.cpp fattree.cpp fatnodes.cpp entries.cpp
+  CPP_FILES fatfs.cpp bootsector.cpp fat.cpp fattree.cpp entries.cpp
   SWIG_FILE fatfs.i
   LINK_LIBRARIES ${ICU_LIBRARIES} exceptions types vfs tree
   INCLUDE_DIRS ${ICU_INCLUDE_DIRS} ${CMAKE_HOME_DIRECTORY}/dff/api/tree
