@@ -235,7 +235,7 @@ void	BootSector::fillCtx()
   this->prevsect = *((uint32_t*)this->__bs.prevsect);
   if (this->err != 0)
     {
-      throw("bad bootsector");
+      throw(std::string("bad bootsector"));
     }
   else
     {

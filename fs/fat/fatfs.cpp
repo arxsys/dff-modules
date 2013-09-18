@@ -42,7 +42,7 @@ void		Fatfs::__process() throw (std::string)
     }
   catch(...)
     {
-      throw("Fatfs module: error while processing");
+      throw(std::string("Fatfs module: error while processing"));
     }
   return;
 }

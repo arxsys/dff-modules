@@ -117,7 +117,7 @@ void	FatTree::process(Node* origin, fso* fsobj, bool metacarve) throw (std::stri
     }
   catch(...)
     {
-      throw("err");
+      throw(std::string("Cannot process fat tree"));
     }
 }
 

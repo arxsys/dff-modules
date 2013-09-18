@@ -134,7 +134,7 @@ void	FileAllocationTable::process(Node* origin, fso* fsobj) throw (std::string)
   catch(vfsError e)
     {
       this->__vfile = NULL;
-      throw("Fat module: FileAllocationTable error while opening node" + e.error);
+      throw(std::string("Fat module: FileAllocationTable error while opening node") + e.error);
     }
   if (!this->__initCache())
     {

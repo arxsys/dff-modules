@@ -19,12 +19,14 @@
 
 #include <list>
 #include <string>
+#include <stdint.h>
 
 #include "vfile.hpp"
 #include "fso.hpp"
 #include "node.hpp"
 #include "filemapping.hpp"
 #include "variant.hpp"
+#include "datatype.hpp"
 
 typedef struct
 {
