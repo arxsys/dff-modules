@@ -315,7 +315,7 @@ ReservedSectors::~ReservedSectors()
 
 void		ReservedSectors::setContext(uint64_t reserved, uint64_t ssize, Node* origin)
 {
-  this->__reserved = reserved;
+  this->__sreserved = reserved;
   this->__ssize = ssize;
   this->__origin = origin;
 }
@@ -330,7 +330,7 @@ Attributes	ReservedSectors::dataType()
 
 void		ReservedSectors::fileMapping(FileMapping* fm)
 {
-  fm->push(0, this->__reserved * this->__ssize, this->__origin, 0);
+  fm->push(0, this->__sreserved * this->__ssize, this->__origin, 0);
 }
 
 Attributes	ReservedSectors::_attributes(void)
@@ -338,7 +338,7 @@ Attributes	ReservedSectors::_attributes(void)
   Attributes	attrs;
 
   attrs["starting sector"] = Variant_p(new Variant(1));
-  attrs["total sectors"] = Variant_p(new Variant(this->__reserved));
+  attrs["total sectors"] = Variant_p(new Variant(this->__sreserved));
   return attrs;
 }
 

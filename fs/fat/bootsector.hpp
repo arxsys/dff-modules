@@ -179,7 +179,7 @@ class ReservedSectors: public Node
 {
 private:
   fso*	__fsobj;
-  uint64_t	__reserved;
+  uint64_t	__sreserved;
   uint64_t	__ssize;
   Node*		__origin;
 public:
