@@ -19,253 +19,108 @@
 
 FatTree::FatTree()
 {
-  //this->ectx = new EntryContext();
-  //this->converter = new EntryConverter();
+  this->__bs = NULL;
+  this->__fat = NULL;
+  this->__origin = NULL;
+  this->__fsobj = NULL;
+  this->__vfile = NULL;
+  this->__emanager = NULL;
+  this->__allocatedClusters = NULL;
   this->__volname = "";
-  this->depth = 0;
-  this->allocatedClusters = new TwoThreeTree();
+  this->__depth = 0;
+  this->__usedfat = 0;
 }
+
 
 FatTree::~FatTree()
 {
-  this->vfile->close();
+  if (this->__vfile != NULL)
+    {
+      this->__vfile->close();
+      delete this->__vfile;
+    }
+  if (this->__emanager != NULL)
+    delete this->__emanager;
+  if (this->__allocatedClusters != NULL)
+    delete this->__allocatedClusters;
 }
 
 
-void	FatTree::rootdir(Node* parent)
+void	FatTree::setBootSector(BootSector* bs) throw (std::string)
 {
-  uint32_t			bpos;
-  uint8_t*			buff;
-  Node*				node;
-  ctx*				c;
+  if (bs != NULL)
+    this->__bs = bs;
+  else
+    {
+      this->__bs = NULL;
+      throw std::string("Boot sector is not defined");
+    }
+}
 
-  buff = NULL;
+
+void	FatTree::setFat(FileAllocationTable* fat) throw (std::string)
+{
+  if (fat != NULL)
+    this->__fat = fat;
+  else
+    {
+      this->__fat = NULL;
+      throw std::string("Fat is not defined");
+    }
+}
+
+
+void		FatTree::setUsedFat(uint8_t usedfat)
+{
+  if (usedfat > 0 && this->__bs != NULL && (usedfat - 1) < this->__bs->numfat)
+    this->__usedfat = usedfat - 1;
+  else
+    this->__usedfat = 0;
+}
+
+
+void	FatTree::process(Node* origin, fso* fsobj, bool metacarve) throw (std::string)
+{
+  Node*		fsroot;
+  uint32_t	i;
+
+  if (this->__bs == NULL || this->__fat == NULL)
+    throw std::string("Missing boot sector or fat");
+  if (origin == NULL || fsobj == NULL)
+    return;
+  this->__origin = origin;
+  this->__fsobj = fsobj;
   try
     {
-      if ((buff = (uint8_t*)malloc(this->fs->bs->rootdirsize)) == NULL)
-	return;
-      this->vfile->seek(this->fs->bs->rootdiroffset);
-      if (this->vfile->read(buff, this->fs->bs->rootdirsize) != (int32_t)this->fs->bs->rootdirsize)
-	{
-	  free(buff);
-	  return;
-	}
-      for (bpos = 0; bpos != this->fs->bs->rootdirsize; bpos += 32)
-	{
-	  if (this->emanager->push(buff+bpos, this->fs->bs->rootdiroffset + bpos))
-	    {
-	      c = this->emanager->fetchCtx();
-	      if ((c->valid) && (c->cluster < this->fs->bs->totalcluster))
-		{
-		  if (!c->deleted)
-		    {
-		      if (c->volume)
-			this->__volname = c->dosname;
-		      else
-			{
-			  node = this->allocNode(c, parent);
-			  if (c->dir)
-			    {
-			      this->depth++;
-			      this->walk(c->cluster, node);
-			      this->depth--;
-			    }
-			  // else
-			  //   this->updateAllocatedClusters(c->cluster);
-			  delete c;
-			}
-		    }
-		  else
-		    this->updateDeletedItems(c, parent);
-		}
-	      else
-		delete c;
-	    }
-	}
-      free(buff);
+      this->__reset();
+      this->__vfile = this->__origin->open();
+      this->__allocount = this->__fat->allocatedClustersCount(this->__usedfat);
+      this->__fsobj->stateinfo = std::string("processing regular tree 0%");
+      if (this->__bs->fattype == 32)
+	this->walk(this->__bs->rootclust, NULL);
+      else
+	this->rootdir(NULL);
+      if (!this->__volname.empty())
+	fsroot = new Node(this->__volname, 0, NULL, fsobj);
+      else
+	fsroot = new Node("NONAME", 0, NULL, fsobj);
+      fsroot->setDir();
+      this->__fsobj->stateinfo = std::string("processing regular tree 100%");
+      this->makeSlackNodes();
+      this->processDeleted();
+      for (i = 0; i != this->__rootdir.size(); i++)
+	fsroot->addChild(this->__rootdir[i]);
+      fsobj->registerTree(origin, fsroot);
+      this->walkMissingAlloc(origin);
+      if (metacarve)
+	this->walkFree(origin);
     }
   catch(...)
     {
-      if (buff != NULL)
-	free(buff);
+      throw(std::string("Cannot process fat tree"));
     }
 }
 
-void	hexlify(uint8_t *entry)
-{
-  char		hex[512];
-  int		i;
-  int		pos;
-
-  memset(hex, 0, 512);
-  pos = 0;
-  for (i = 0; i != 32; i++)
-    {
-      if ((i % 4) == 0)
-	{
-	  sprintf(hex+pos, " ");
-	  pos++;
-	}
-      if ((i == 20) || (i == 21))
-	{
-	  sprintf(hex+pos, "\e[32m");
-	  pos += 5;
-	}
-      if ((i == 26) || (i == 27))
-	{
-	  sprintf(hex+pos, "\e[33m");
-	  pos += 5;
-	}
-      if (entry[i] <= 15)
-	{
-	  sprintf(hex+pos, "0%x ", entry[i]);
-	  pos += 3;
-	}
-      else
-	{
-	  sprintf(hex+pos, "%x ", entry[i]);
-	  pos += 3;
-	}
-      if ((i == 20) || (i == 21) || (i == 26) || (i == 27))
-	{
-	  sprintf(hex+pos, "\e[m");
-	  pos += 3;
-	}
-      if (i == 15)
-	{
-	  sprintf(hex+pos, "\n");
-	  pos++;
-	}
-    }
-  printf("%s\n", hex);
-}
-
-
-// void	FatTree::CheckSlackNode()
-// {
-//   void*					zeroed;
-//   void*					buff;
-
-//   if ((zeroed = malloc(clustsize)) != NULL)
-//     memset(zeroed, 0, clustsize);
-//   else
-//     return;
-//   if ((buff = malloc(clustsize)) == NULL)
-//     {
-//       free(zeroed);
-//       return;
-//     }
-//   this->vfile->seek(offset);
-//   if ((uint64_t)this->vfile->read(buff, size) == size)
-//     if (memcmp(zeroed, buff, size) != 0)
-//       {
-// 	FileSlack* fslack = new FileSlack(mit->second->name() + ".SLACK", size, mit->second->parent(), this->fs);
-// 	fslack->setContext(mit->first, mit->second->size());
-//       }
-//   free(buff);
-//   free(zeroed);
-// }
-
-
-void	FatTree::makeSlackNodes()
-{
-  std::map<uint32_t, Node*>::iterator	mit;
-  uint64_t				clustsize, slackcount;
-
-  slackcount = this->_slacknodes.size();
-  clustsize = (uint64_t)this->fs->bs->csize * this->fs->bs->ssize;
-  if (slackcount != 0)
-    {
-      uint64_t			sprocessed, percent, prevpercent, size, clistsize;
-      std::stringstream		sstr;
-      std::vector<uint32_t>	clusters;
-      sprocessed = percent = prevpercent = 0;
-      for (mit = this->_slacknodes.begin(); mit != this->_slacknodes.end(); mit++)
-	{
-	  clusters = this->fs->fat->clusterChain(mit->first);
-	  clistsize = clusters.size();
-	  if (mit->second->size() < clistsize * clustsize)
-	    {
-	      size = clistsize * clustsize - mit->second->size();
-	      FileSlack* fslack = new FileSlack(mit->second->name() + ".SLACK", size, mit->second->parent(), this->fs);
-	      fslack->setContext(mit->first, mit->second->size());
-	    }
-	  percent = (sprocessed * 100) / slackcount;
-	  if (prevpercent < percent)
-	    {
-	      sstr << "processing slack space for each regular files " << percent << "%";
-	      this->fs->stateinfo = sstr.str();
-	      sstr.str("");
-	      prevpercent = percent;
-	    }
-	  sprocessed += 1;
-	}
-    }
-}
-
-Node*	FatTree::allocNode(ctx* c, Node* parent)
-{
-  FatNode*	node;
-  
-  if (!c->lfnname.empty())
-    {
-      UnicodeString	us(c->lfnname.data(), c->lfnname.size(), "UTF-16LE");
-      std::string	utf8 = "";
-      std::string ret = us.toUTF8String(utf8);
-      node = new FatNode(std::string(utf8.data(), utf8.size()), c->size, parent, this->fs);
-    }
-  else
-    node = new FatNode(c->dosname, c->size, parent, this->fs);
-  if (!this->allocatedClusters->find(c->cluster))
-    node->setCluster(c->cluster);
-  else
-    node->setCluster(c->cluster, true);
-  if (c->deleted)
-    node->setDeleted();
-  if (c->dir)
-    node->setDir();
-  else
-    {
-      node->setFile();
-      if (!c->deleted)
-	{
-	  this->updateAllocatedClusters(c->cluster);
-	  this->_slacknodes[c->cluster] = node;
-	}
-    }
-  node->setLfnMetaOffset(c->lfnmetaoffset);
-  node->setDosMetaOffset(c->dosmetaoffset);
-  return node;
-}
-
-void	FatTree::updateAllocatedClusters(uint32_t cluster)
-{
-  std::vector<uint32_t>		clusters;
-  uint32_t			cidx;
-  std::stringstream		sstr;
-
-  if (cluster != 0)
-    {
-      this->allocatedClusters->insert(cluster);
-      clusters = this->fs->fat->clusterChain(cluster);
-      this->processed += clusters.size();
-      sstr << "processing regular tree " << (this->processed * 100) / this->allocount << "%";
-      this->fs->stateinfo = sstr.str();
-      for (cidx = 0; cidx != clusters.size(); cidx++)
-	if (clusters[cidx] != 0)
-	  this->allocatedClusters->insert(clusters[cidx]);
-    }
-}
-
-void	FatTree::updateDeletedItems(ctx* c, Node* parent)
-{
-  deletedItems*	d;
-
-  d = new deletedItems;
-  d->c = c;
-  d->node = parent;
-  this->deleted.push_back(d);
-}
 
 void	FatTree::walk(uint32_t cluster, Node* parent)
 {
@@ -279,42 +134,44 @@ void	FatTree::walk(uint32_t cluster, Node* parent)
   buff = NULL;
   try
     {
-      this->updateAllocatedClusters(cluster);
-      clusters = this->fs->fat->clusterChainOffsets(cluster);
-      if ((buff = (uint8_t*)malloc(this->fs->bs->csize * this->fs->bs->ssize)) == NULL)
+      if (this->__allocatedClusters->exists(cluster))
+	return;
+      this->__updateAllocatedClusters(cluster);
+      clusters = this->__fat->clusterChainOffsets(cluster, this->__usedfat);
+      if ((buff = (uint8_t*)malloc(this->__bs->csize * this->__bs->ssize)) == NULL)
 	return;
       for (cidx = 0; cidx != clusters.size(); cidx++)
 	{
-	  this->vfile->seek(clusters[cidx]);
-	  if (this->vfile->read(buff, this->fs->bs->csize * this->fs->bs->ssize) != (this->fs->bs->csize * this->fs->bs->ssize))
+	  this->__vfile->seek(clusters[cidx]);
+	  if (this->__vfile->read(buff, this->__bs->csize * this->__bs->ssize) != (this->__bs->csize * this->__bs->ssize))
 	    {
 	      free(buff);
 	      return;
 	    }
-	  for (bpos = 0; bpos != this->fs->bs->csize * this->fs->bs->ssize; bpos += 32)
+	  for (bpos = 0; bpos != this->__bs->csize * this->__bs->ssize; bpos += 32)
 	    {
-	      if (this->emanager->push(buff+bpos, clusters[cidx]+bpos))
+	      if (this->__emanager->push(buff+bpos, clusters[cidx]+bpos))
 		{
-		  c = this->emanager->fetchCtx();
-		  if ((c->valid) && (c->cluster < this->fs->bs->totalcluster))
+		  c = this->__emanager->fetchCtx();
+		  if ((c->valid) && (c->cluster < this->__bs->totalcluster))
 		    {
-		      if (c->volume)
+		      if (c->volume && this->__depth == 0)
 			this->__volname = c->dosname;
 		      else
 			{
 			  if (!c->deleted)
 			    {
-			      node = this->allocNode(c, parent);
+			      node = this->__allocNode(c, parent);
 			      if (c->dir)
 				{
-				  this->depth++;
+				  this->__depth++;
 				  this->walk(c->cluster, node);
-				  this->depth--;
+				  this->__depth--;
 				}
 			      delete c;
 			    }
 			  else
-			    this->updateDeletedItems(c, parent);
+			    this->__updateDeletedItems(c, parent);
 			}
 		    }
 		  else
@@ -331,74 +188,128 @@ void	FatTree::walk(uint32_t cluster, Node* parent)
     }
 }
 
-void	FatTree::walk_free(Node* parent)
+
+void	FatTree::rootdir(Node* parent)
 {
-  std::vector<uint32_t>		clusters;
-  uint32_t			cidx;
   uint32_t			bpos;
   uint8_t*			buff;
-  Node*				rootunalloc;
+  Node*				node;
   ctx*				c;
-  uint32_t			fcsize;
-  std::stringstream		sstr;
 
   buff = NULL;
   try
     {
-      rootunalloc = NULL;
-      clusters = this->fs->fat->listFreeClusters();
-      if ((buff = (uint8_t*)malloc(this->fs->bs->csize * this->fs->bs->ssize)) == NULL)
+      if ((buff = (uint8_t*)malloc(this->__bs->rootdirsize)) == NULL)
 	return;
-      fcsize = clusters.size();
-      for (cidx = 0; cidx != fcsize; cidx++)
+      this->__vfile->seek(this->__bs->rootdiroffset);
+      if (this->__vfile->read(buff, this->__bs->rootdirsize) != (int32_t)this->__bs->rootdirsize)
 	{
-	  sstr << "carving entries in free clusters " << ((cidx * 100) / fcsize) << "%";
-	  this->fs->stateinfo = sstr.str();
-	  sstr.str("");
-	  if ((!this->allocatedClusters->find(clusters[cidx])) && (clusters[cidx] != 0))
+	  free(buff);
+	  return;
+	}
+      for (bpos = 0; bpos != this->__bs->rootdirsize; bpos += 32)
+	{
+	  if (this->__emanager->push(buff+bpos, this->__bs->rootdiroffset + bpos))
 	    {
-	      uint64_t	clustoff;
-	      clustoff = this->fs->fat->clusterToOffset(clusters[cidx]);
-	      this->vfile->seek(clustoff);
-	      if (this->vfile->read(buff, this->fs->bs->csize * this->fs->bs->ssize) != (this->fs->bs->csize * this->fs->bs->ssize))
+	      c = this->__emanager->fetchCtx();
+	      if ((c->valid) && (c->cluster < this->__bs->totalcluster))
 		{
-		  free(buff);
-		  return;
-		}
-	      for (bpos = 0; bpos != this->fs->bs->csize * this->fs->bs->ssize; bpos += 32)
-		{
-		  if (*(buff+bpos) == 0xE5)
+		  if (!c->deleted)
 		    {
-		      if (this->emanager->push(buff+bpos, clustoff+bpos))
+		      if (c->volume)
+			this->__volname = c->dosname;
+		      else
 			{
-			  c = this->emanager->fetchCtx();
-			  if (c->valid)
+			  node = this->__allocNode(c, parent);
+			  if (c->dir)
 			    {
-			      if (rootunalloc == NULL)
-				{
-				  rootunalloc = new Node("$OrphanedFiles", 0, NULL, this->fs);
-				  rootunalloc->setDir();
-				}
-			      if ((c->size < this->fs->bs->totalsize) && (c->cluster < this->fs->bs->totalcluster))
-				this->allocNode(c, rootunalloc);
+			      this->__depth++;
+			      this->walk(c->cluster, node);
+			      this->__depth--;
 			    }
 			  delete c;
 			}
 		    }
+		  else
+		    this->__updateDeletedItems(c, parent);
 		}
+	      else
+		delete c;
 	    }
 	}
-      this->fs->stateinfo = std::string("carving entries in free clusters 100%");
       free(buff);
-      if (rootunalloc != NULL)
-      	this->fs->registerTree(parent, rootunalloc);
     }
   catch(...)
     {
       if (buff != NULL)
 	free(buff);
-    }  
+    }
 }
+
+
+void	FatTree::makeSlackNodes()
+{
+  std::map<uint32_t, Node*>::iterator	mit;
+  uint64_t				clustsize, slackcount;
+
+  slackcount = this->__slacknodes.size();
+  clustsize = (uint64_t)this->__bs->csize * this->__bs->ssize;
+  if (slackcount != 0)
+    {
+      uint64_t			sprocessed, percent, prevpercent, size, clistsize;
+      std::stringstream		sstr;
+      std::vector<uint32_t>	clusters;
+      sprocessed = percent = prevpercent = 0;
+      for (mit = this->__slacknodes.begin(); mit != this->__slacknodes.end(); mit++)
+	{
+	  clusters = this->__fat->clusterChain(mit->first, this->__usedfat);
+	  clistsize = clusters.size();
+	  if (mit->second->size() < clistsize * clustsize)
+	    {
+	      size = clistsize * clustsize - mit->second->size();
+	      FileSlack* fslack = new FileSlack(mit->second->name() + ".SLACK", size, mit->second->parent(), this->__fsobj, this);
+	      if (mit->second->parent() == NULL)
+		this->__rootdir.push_back(fslack);
+	      fslack->setContext(mit->first, mit->second->size());
+	    }
+	  percent = (sprocessed * 100) / slackcount;
+	  if (prevpercent < percent)
+	    {
+	      sstr << "processing slack space for each regular files " << percent << "%";
+	      this->__fsobj->stateinfo = sstr.str();
+	      sstr.str("");
+	      prevpercent = percent;
+	    }
+	  sprocessed += 1;
+	}
+    }
+}
+
+
+void	FatTree::processDeleted()
+{
+  uint32_t	i;
+  Node*		node;
+  deletedItems*	d;
+  std::stringstream	sstr;
+  uint32_t		dsize;
+
+  dsize = this->__deleted.size();
+  for (i = 0; i != dsize; i++)
+    {
+      d = this->__deleted[i];
+      sstr << "processing deleted entries " << ((i * 100) / dsize) << "%";
+      this->__fsobj->stateinfo = sstr.str();
+      sstr.str("");
+      node = this->__allocNode(d->c, d->node);
+      if (d->c->dir)
+	this->walkDeleted(d->c->cluster, node);
+      delete d->c;
+      delete d;
+    }
+  this->__fsobj->stateinfo = std::string("processing deleted entries 100%");
+}
+
 
 void	FatTree::walkDeleted(uint32_t cluster, Node* parent)
 {
@@ -411,38 +322,43 @@ void	FatTree::walkDeleted(uint32_t cluster, Node* parent)
   ctx*				c;
 
   buff = NULL;
-  if ((!this->allocatedClusters->find(cluster)) && (cluster != 0))
+  if ((!this->__allocatedClusters->find(cluster)) && (cluster != 0))
     {
       try
 	{
-	  clusters = this->fs->fat->clusterChain(cluster);
-	  if ((buff = (uint8_t*)malloc(this->fs->bs->csize * this->fs->bs->ssize)) == NULL)
+	  clusters = this->__fat->clusterChain(cluster, this->__usedfat);
+	  if ((buff = (uint8_t*)malloc(this->__bs->csize * this->__bs->ssize)) == NULL)
 	    return;
 	  for (cidx = 0; cidx != clusters.size(); cidx++)
 	    {
-	      if ((!this->allocatedClusters->find(clusters[cidx])) && (clusters[cidx] != 0))
+	      if ((!this->__allocatedClusters->find(clusters[cidx])) && (clusters[cidx] != 0))
 		{
-		  coffset = this->fs->fat->clusterToOffset(clusters[cidx]);
-		  this->vfile->seek(coffset);
-		  if (this->vfile->read(buff, this->fs->bs->csize * this->fs->bs->ssize) != this->fs->bs->csize * this->fs->bs->ssize)
+		  coffset = this->__fat->clusterToOffset(clusters[cidx]);
+		  this->__vfile->seek(coffset);
+		  if (this->__vfile->read(buff, this->__bs->csize * this->__bs->ssize) != this->__bs->csize * this->__bs->ssize)
 		    {
 		      free(buff);
 		      return;
 		    }
-		  for (bpos = 0; bpos != this->fs->bs->csize * this->fs->bs->ssize; bpos += 32)
+		  for (bpos = 0; bpos != this->__bs->csize * this->__bs->ssize; bpos += 32)
 		    {
-		      if (this->emanager->push(buff+bpos, coffset+bpos))
+		      if (this->__emanager->push(buff+bpos, coffset+bpos))
 			{
-			  c = this->emanager->fetchCtx();
-			  if ((c->valid) && (c->cluster < this->fs->bs->totalcluster))
+			  c = this->__emanager->fetchCtx();
+			  if ((c->valid) && (c->cluster < this->__bs->totalcluster))
 			    {
 			      if (c->deleted)
 				{
-				  node = this->allocNode(c, parent);
-				  this->updateAllocatedClusters(cluster);
-				  if ((c->dir) && (!this->allocatedClusters->find(c->cluster)))
-				    this->walkDeleted(c->cluster, node);
-				  this->updateAllocatedClusters(c->cluster);
+				  node = this->__allocNode(c, parent);
+				  this->__updateAllocatedClusters(cluster);
+				  if ((c->dir) && (!this->__allocatedClusters->find(c->cluster)))
+				    {
+				      this->walkDeleted(c->cluster, node);
+				      ctx* tricky;
+				      if ((tricky = this->__emanager->fetchCtx()) != NULL)
+					delete tricky;//std::cout << "Trciky Case: " << tricky->lfnname << " -- "  << tricky->dosname << std::endl;
+				    }
+				  this->__updateAllocatedClusters(c->cluster);
 				}
 			    }
 			  delete c;
@@ -460,100 +376,484 @@ void	FatTree::walkDeleted(uint32_t cluster, Node* parent)
     }
 }
 
-void	FatTree::processUnallocated(Node* parent, std::vector<uint32_t> &clusters)
+
+void	FatTree::walkMissingAlloc(Node* parent)
 {
-  uint32_t			cidx;
-  uint32_t			start;
-  uint32_t			count;
-  UnallocatedSpace*		unode;
+  std::vector<uint32_t>		clusters;
+  uint32_t			bpos;
+  uint8_t*			buff;
+  Node*				rootunalloc;
+  ctx*				c;
+  uint64_t			clustoff;
+  uint32_t			fcsize;
   std::stringstream		sstr;
 
-  start = count = (uint32_t)-1;
-  for (cidx = 0; cidx != clusters.size(); cidx++)
-    {
-      if (clusters[cidx] != 0)
-	{
-	  if (start == (uint32_t)-1)
-	    {
-	      start = clusters[cidx];
-	      count = 1;
-	    }	
-	  else
-	    {
-	      //current unallocated cluster starts another area. Push the current context and start another one
-	      if (clusters[cidx] != start+count)
-		{
-		  sstr << start << "--" << start+count;
-		  unode = new UnallocatedSpace(sstr.str(), (uint64_t)count*this->fs->bs->ssize*this->fs->bs->csize, parent, this->fs);
-		  sstr.str("");
-		  unode->setContext(start, count);
-		  start = clusters[cidx];
-		  count = 1;
-		}
-	      else
-		count++;
-	    }
-	}
-    }
-  if (start != (uint32_t)-1)
-    {
-      sstr << start << "--" << start+count;
-      unode = new UnallocatedSpace(sstr.str(), (uint64_t)count*this->fs->bs->ssize*this->fs->bs->csize, parent, this->fs);
-      sstr.str("");
-      unode->setContext(start, count);
-    }
-}
-
-
-void	FatTree::processDeleted()
-{
-  uint32_t	i;
-  Node*		node;
-  deletedItems*	d;
-  std::stringstream	sstr;
-  uint32_t		dsize;
-
-  dsize = this->deleted.size();
-  for (i = 0; i != dsize; i++)
-    {
-      d = this->deleted[i];
-      sstr << "processing deleted entries " << ((i * 100) / dsize) << "%";
-      this->fs->stateinfo = sstr.str();
-      sstr.str("");
-      node = this->allocNode(d->c, d->node);
-      if (d->c->dir)
-	this->walkDeleted(d->c->cluster, node);
-      delete d->c;
-      delete d;
-    }
-  this->fs->stateinfo = std::string("processing deleted entries 100%");
-}
-
-void	FatTree::process(Node* origin, Fatfs* fs, Node* parent)
-{
-  this->origin = origin;
-  this->fs = fs;
+  buff = NULL;
   try
     {
-      this->vfile = this->origin->open();
-      this->allocount = this->fs->fat->allocatedClustersCount(0);
-      this->processed = 0;
-      this->fs->stateinfo = std::string("processing regular tree 0%");
-      this->emanager = new EntriesManager(this->fs->bs->fattype);
-      if (this->fs->bs->fattype == 32)
-	this->walk(this->fs->bs->rootclust, parent);
-      else
-	this->rootdir(parent);
-      this->fs->stateinfo = std::string("processing regular tree 100%");
-      this->makeSlackNodes();
-      this->processDeleted();
-      // int32_t	max = ucnv_countAvailable();
-      // for (int32_t i = 0; i != max; i++)
-      // 	printf("%04i -- %s\n", i, ucnv_getAvailableName(i));
-      // printf("current --> %s\n", ucnv_getDefaultName());
+      rootunalloc = NULL;
+      if ((buff = (uint8_t*)malloc(this->__bs->csize * this->__bs->ssize)) == NULL)
+	return;
+      clusters = this->__fat->listAllocatedClusters(this->__usedfat);
+      fcsize = clusters.size();
+      uint32_t i;
+      for (i = 0; i != fcsize; i++)
+	{
+	  sstr << "carving entries in not parsed allocated clusters " << ((i * 100) / fcsize) << "%";
+	  this->__fsobj->stateinfo = sstr.str();
+	  sstr.str("");
+	  if (!this->__allocatedClusters->find(i))
+	    {
+	      this->__allocatedClusters->insert(i);
+	      clustoff = this->__fat->clusterToOffset(i);
+	      this->__vfile->seek(clustoff);
+	      if (this->__vfile->read(buff, this->__bs->csize * this->__bs->ssize) != (this->__bs->csize * this->__bs->ssize))
+		{
+		  free(buff);
+		  return;
+		}
+	      for (bpos = 0; bpos != this->__bs->csize * this->__bs->ssize; bpos += 32)
+		{
+		  if (this->__emanager->push(buff+bpos, clustoff+bpos))
+		    {
+		      c = this->__emanager->fetchCtx();
+		      if (c->valid)
+			{
+			  if (rootunalloc == NULL)
+			    {
+			      rootunalloc = new Node("$OrphanedFiles", 0, NULL, this->__fsobj);
+			      rootunalloc->setDir();
+			    }
+			  if ((c->size < this->__bs->totalsize) && (c->cluster < this->__bs->totalcluster))
+			    this->__allocNode(c, rootunalloc);
+			}
+		      delete c;
+		    }
+		}
+	    }
+	}
+      this->__fsobj->stateinfo = std::string("carving entries in free clusters 100%");
+      free(buff);
+      if (rootunalloc != NULL)
+      	this->__fsobj->registerTree(parent, rootunalloc);
     }
   catch(...)
     {
-      throw("err");
+      if (buff != NULL)
+	free(buff);
+    }  
+}
+
+
+void	FatTree::walkFree(Node* parent)
+{
+  uint32_t			bpos;
+  uint64_t			clustoff;
+  uint8_t*			buff;
+  uint32_t			i;
+  Node*				rootcarved;
+  ctx*				c;
+  std::stringstream		sstr;
+
+  buff = NULL;
+  try
+    {
+      rootcarved = NULL;
+      if ((buff = (uint8_t*)malloc(this->__bs->csize * this->__bs->ssize)) == NULL)
+	return;
+      for (i = 0; i != this->__bs->totalcluster; i++)
+	{
+	  sstr << "carving entries in free clusters " << ((i * 100) / this->__bs->totalcluster) << "%";
+	  this->__fsobj->stateinfo = sstr.str();
+	  sstr.str("");
+	  if (!this->__allocatedClusters->find(i))
+	    {
+	      clustoff = this->__fat->clusterToOffset(i);
+	      this->__vfile->seek(clustoff);
+	      if (this->__vfile->read(buff, this->__bs->csize * this->__bs->ssize) != (this->__bs->csize * this->__bs->ssize))
+		{
+		  free(buff);
+		  return;
+		}
+	      for (bpos = 0; bpos != this->__bs->csize * this->__bs->ssize; bpos += 32)
+		{
+		  if (this->__emanager->push(buff+bpos, clustoff+bpos))
+		    {
+		      c = this->__emanager->fetchCtx();
+		      if (c->valid)
+			{
+			  if (rootcarved == NULL)
+			    {
+			      rootcarved = new Node("$CarvedEntries", 0, NULL, this->__fsobj);
+			      rootcarved->setDir();
+			    }
+			  if ((c->size < this->__bs->totalsize) && (c->cluster < this->__bs->totalcluster))
+			    this->__allocNode(c, rootcarved);
+			}
+		      delete c;
+		    }
+		}
+	    }
+	}
+      this->__fsobj->stateinfo = std::string("carving entries in free clusters 100%");
+      free(buff);
+      if (rootcarved != NULL)
+      	this->__fsobj->registerTree(parent, rootcarved);
     }
+  catch(...)
+    {
+      if (buff != NULL)
+	free(buff);
+    }
+}
+
+
+void	FatTree::fileMapping(FileMapping* fm, FatNode* fnode)
+{
+  std::vector<uint64_t>	clusters;
+  unsigned int		i;
+  uint64_t		voffset;
+  uint64_t		clustsize;
+  uint64_t		rsize;
+
+  voffset = 0;
+  rsize = fnode->size();
+  clustsize = (uint64_t)this->__bs->csize * this->__bs->ssize;
+  if (!fnode->clustrealloc || (fnode->clustrealloc && !fnode->isDeleted()))
+    {
+      clusters = this->__fat->clusterChainOffsets(fnode->cluster, this->__usedfat);
+      uint64_t	clistsize = clusters.size();
+      //cluster chain is not complete
+      if (clistsize > 0)
+	{
+	  if ((clistsize*clustsize) < fnode->size())
+	    {
+	      for (i = 0; i != clistsize; i++)
+		{
+		  fm->push(voffset, clustsize, this->__origin, clusters[i]);
+		  voffset += clustsize;
+		}
+	      uint64_t	gap = fnode->size() - clistsize*clustsize;
+	      //last chunk corresponds to the last gap between last cluster and the size and is
+	      //based on the following blocks of the last cluster
+	      fm->push(voffset, gap, this->__origin, clusters[clistsize-1]+clustsize);
+	    }
+	  else
+	    {
+	      //manage the mapping based on cluster chain untill node->size() is reached
+	      for (i = 0; i != clusters.size(); i++)
+		{
+		  if (rsize < clustsize)
+		    fm->push(voffset, rsize, this->__origin, clusters[i]);
+		  else
+		    fm->push(voffset, clustsize, this->__origin, clusters[i]);
+		  rsize -= clustsize;
+		  voffset += clustsize;
+		}
+	    }
+	}
+    }
+}
+
+
+void			FatTree::slackMapping(FileMapping* fm, FileSlack* snode)
+{
+  std::vector<uint64_t>	clusters;
+  uint64_t		idx;
+  uint64_t		remaining;
+  uint64_t		voffset;
+  uint64_t		clustsize;
+
+  voffset = 0;
+  clustsize = (uint64_t)this->__bs->csize * this->__bs->ssize;
+  clusters = this->__fat->clusterChainOffsets(snode->ocluster, this->__usedfat);
+  if (clusters.size() > 0)
+    {
+      idx = snode->originsize / clustsize;
+      remaining = snode->originsize % clustsize;
+      //first chunk can be truncated
+      fm->push(voffset, clustsize - remaining, this->__origin, clusters[idx] + remaining);
+      voffset += (clustsize - remaining);
+      idx++;
+      while (idx != clusters.size())
+	{
+	  fm->push(voffset, clustsize, this->__origin, clusters[idx]);
+	  voffset += clustsize;
+	  idx++;
+	}
+    }
+
+}
+
+
+Attributes		FatTree::attributes(FatNode* fnode)
+{
+  Attributes		attr;
+  VFile*		vf;
+  std::vector<uint32_t>	clusters;
+  uint8_t*		entry;
+  EntriesManager*	em;
+  dosentry*		dos;
+
+  try
+    {
+      em = new EntriesManager(this->__bs->fattype);
+      vf = this->__origin->open();
+      attr["lfn entries start offset"] =  Variant_p(new Variant(fnode->lfnmetaoffset));
+      attr["dos entry offset"] = Variant_p(new Variant(fnode->dosmetaoffset));
+      if ((entry = (uint8_t*)malloc(sizeof(dosentry))) != NULL)
+	{
+	  vf->seek(fnode->dosmetaoffset);
+	  if (vf->read(entry, sizeof(dosentry)) != sizeof(dosentry))
+	    {
+	      free(entry);
+	      return attr;
+	    }
+	  dos = em->toDos(entry);
+	  free(entry);
+	  attr["modified"] = Variant_p(new Variant(new vtime(dos->mtime, dos->mdate)));
+	  attr["accessed"] = Variant_p(new Variant(new vtime(0, dos->adate)));
+	  attr["created"] = Variant_p(new Variant(new vtime(dos->ctime, dos->cdate)));
+	  attr["dos name (8+3)"] = Variant_p(new Variant(em->formatDosname(dos)));
+	  delete em;
+	  attr["Read Only"] = Variant_p(new Variant(bool(dos->attributes & ATTR_READ_ONLY)));
+	  attr["Hidden"] = Variant_p(new Variant(bool(dos->attributes & ATTR_HIDDEN)));
+	  attr["System"] = Variant_p(new Variant(bool(dos->attributes & ATTR_SYSTEM)));
+	  attr["Archive"] = Variant_p(new Variant(bool(dos->attributes & ATTR_ARCHIVE)));
+	  attr["Volume"] = Variant_p(new Variant(bool(dos->attributes & ATTR_VOLUME)));
+	  delete dos;
+	  uint64_t clustsize = (uint64_t)this->__bs->csize * this->__bs->ssize;
+	  if (fnode->clustrealloc)
+	    attr["first cluster (!! reallocated to another existing entry)"] = Variant_p(new Variant(fnode->cluster));
+	  else
+	    {
+	      if (!fnode->isDeleted() && fnode->size())
+		{
+		  clusters = this->__fat->clusterChain(fnode->cluster, this->__usedfat);
+		  uint64_t clistsize = clusters.size();
+		  attr["allocated clusters"] = Variant_p(new Variant(clistsize));
+		  if (fnode->size() < clistsize * clustsize)
+		    {
+		      uint64_t	ssize = clistsize * clustsize - fnode->size();
+		      attr["slack space size"] = Variant_p(new Variant(ssize));
+		    }
+		  else
+		    {
+		      uint32_t	missclust;
+		      uint64_t	gap;
+		      gap = fnode->size() - clistsize * clustsize;
+		      missclust = gap / clustsize;
+		      attr["file truncated"] = Variant_p(new Variant(true));
+		      attr["missing cluters"] = Variant_p(new Variant(missclust));
+		      attr["missing size"] = Variant_p(new Variant(gap));
+		    }
+		}
+	      //for (i = 0; i != clusters.size(); i++)
+	      //clustlist.push_back(new Variant(clusters[i]));
+	      attr["first cluster"] = Variant_p(new Variant(fnode->cluster));
+	      //attr["allocated clusters"] = new Variant(clustlist);
+	    }
+	}
+    }
+  catch(vfsError e)
+    {
+    }
+  if (vf != NULL)
+    {
+      vf->close();
+      delete vf;
+    }
+  return attr;
+}
+
+
+// void	FatTree::CheckSlackNode()
+// {
+//   void*					zeroed;
+//   void*					buff;
+
+//   if ((zeroed = malloc(clustsize)) != NULL)
+//     memset(zeroed, 0, clustsize);
+//   else
+//     return;
+//   if ((buff = malloc(clustsize)) == NULL)
+//     {
+//       free(zeroed);
+//       return;
+//     }
+//   this->__vfile->seek(offset);
+//   if ((uint64_t)this->__vfile->read(buff, size) == size)
+//     if (memcmp(zeroed, buff, size) != 0)
+//       {
+// 	FileSlack* fslack = new FileSlack(mit->second->name() + ".SLACK", size, mit->second->parent(), this->__fsobj);
+// 	fslack->setContext(mit->first, mit->second->size());
+//       }
+//   free(buff);
+//   free(zeroed);
+// }
+
+void	FatTree::__reset()
+{
+  if (this->__vfile != NULL)
+    {
+      this->__vfile->close();
+      delete this->__vfile;
+    }
+  this->__vfile = NULL;
+  if (this->__emanager != NULL)
+    delete this->__emanager;
+  this->__emanager = new EntriesManager(this->__bs->fattype);
+  if (this->__allocatedClusters != NULL)
+    delete this->__allocatedClusters;
+  this->__allocatedClusters = new TwoThreeTree();
+  this->__depth = 0;
+  this->__allocount = 0;
+  this->__processed = 0;
+  this->__volname = "";
+  this->__rootdir.clear();
+  this->__deleted.clear();
+  this->__slacknodes.clear();
+}
+
+
+Node*	FatTree::__allocNode(ctx* c, Node* parent)
+{
+  FatNode*	node;
+  std::string	name;
+  
+  if (!c->lfnname.empty())
+    {
+      UnicodeString	us(c->lfnname.data(), c->lfnname.size(), "UTF-16LE");
+      std::string	utf8 = "";
+      std::string ret = us.toUTF8String(utf8);
+      name = std::string(utf8.data(), utf8.size());
+    }
+  else
+    name = c->dosname;
+  node = new FatNode(name, c->size, parent, this->__fsobj, this);
+  if (parent == NULL)
+    this->__rootdir.push_back(node);
+  if (!this->__allocatedClusters->find(c->cluster))
+    node->setCluster(c->cluster);
+  else
+    node->setCluster(c->cluster, true);
+  if (c->deleted)
+    node->setDeleted();
+  if (c->dir)
+    node->setDir();
+  else
+    {
+      node->setFile();
+      if (!c->deleted)
+	{
+	  this->__updateAllocatedClusters(c->cluster);
+	  this->__slacknodes[c->cluster] = node;
+	}
+    }
+  node->setLfnMetaOffset(c->lfnmetaoffset);
+  node->setDosMetaOffset(c->dosmetaoffset);
+  return node;
+}
+
+void	FatTree::__updateAllocatedClusters(uint32_t cluster)
+{
+  std::vector<uint32_t>		clusters;
+  uint32_t			cidx;
+  std::stringstream		sstr;
+
+  if (cluster != 0 && !this->__fat->isBadCluster(cluster))
+    {
+      this->__allocatedClusters->insert(cluster);
+      clusters = this->__fat->clusterChain(cluster, this->__usedfat);
+      this->__processed += clusters.size();
+      sstr << "processing regular tree " << (this->__processed * 100) / this->__allocount << "%";
+      this->__fsobj->stateinfo = sstr.str();
+      for (cidx = 0; cidx != clusters.size(); cidx++)
+	if (clusters[cidx] != 0)
+	  this->__allocatedClusters->insert(clusters[cidx]);
+    }
+}
+
+void	FatTree::__updateDeletedItems(ctx* c, Node* parent)
+{
+  deletedItems*	d;
+
+  d = new deletedItems;
+  d->c = c;
+  d->node = parent;
+  this->__deleted.push_back(d);
+}
+
+
+FatNode::FatNode(std::string name, uint64_t size, Node* parent, fso* fsobj, FatTree* ftree): Node(name, size, parent, fsobj)										  
+{
+  this->__ftree = ftree;
+}
+
+
+FatNode::~FatNode()
+{
+}
+
+
+Attributes	FatNode::_attributes()
+{
+  return this->__ftree->attributes(this);
+}
+
+void		FatNode::fileMapping(FileMapping* fm)
+{
+  return this->__ftree->fileMapping(fm, this);
+}
+
+
+void		FatNode::setLfnMetaOffset(uint64_t lfnmetaoffset)
+{
+  this->lfnmetaoffset = lfnmetaoffset;
+}
+
+
+void		FatNode::setDosMetaOffset(uint64_t dosmetaoffset)
+{
+  this->dosmetaoffset = dosmetaoffset;
+}
+
+
+void		FatNode::setCluster(uint32_t cluster, bool reallocated)
+{
+  this->clustrealloc = reallocated;
+  this->cluster = cluster;
+}
+
+
+FileSlack::FileSlack(std::string name, uint64_t size, Node* parent, fso* fsobj, FatTree* ftree) : Node(name, size, parent, fsobj)
+{
+  this->__ftree = ftree;
+}
+
+
+FileSlack::~FileSlack()
+{
+}
+
+
+void		FileSlack::setContext(uint32_t ocluster, uint64_t originsize)
+{
+  this->ocluster = ocluster;
+  this->originsize = originsize;
+}
+
+
+void		FileSlack::fileMapping(FileMapping* fm)
+{
+  this->__ftree->slackMapping(fm, this);
+}
+
+
+Attributes	FileSlack::_attributes()
+{
+  Attributes	attrs;
+
+  //attrs["starting offset"] = new Variant(this->__offset);
+  return attrs;
 }

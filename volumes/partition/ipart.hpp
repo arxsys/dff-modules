@@ -14,32 +14,26 @@
  *  Frederic Baguelin <fba@digital-forensic.org>
  */
 
-#ifndef __FATFS_HPP__
-#define __FATFS_HPP__
+#ifndef __IPART_HPP__
+#define __IPART_HPP__
 
-#include <map>
-
-#include "variant.hpp"
-#include "mfso.hpp"
+#include "fso.hpp"
+#include "filemapping.hpp"
 #include "node.hpp"
 
-#include "bootsector.hpp"
-#include "fat.hpp"
-#include "fattree.hpp"
+#include <stdint.h>
 
-class Fatfs : public mfso
+class PartInterface
 {
-private:
-  uint8_t	__fat_to_use;
-  bool		__metacarve;
-  bool		__checkslack;
-  void		__process() throw (std::string);
-  void		__setContext(std::map<std::string, Variant_p > args) throw (std::string);
-  Node*		__parent;
 public:
-  Fatfs();
-  ~Fatfs();
-  virtual void	start(std::map<std::string, Variant_p > args);
+  virtual		~PartInterface(){}
+  virtual bool		process(Node* origin, uint64_t offset, uint32_t sectsize) throw (vfsError) = 0;
+  virtual void		makeNodes(Node* root, fso* fsobj) = 0;
+  virtual Attributes	result() = 0;
+  virtual Attributes	entryAttributes(uint64_t entry, uint8_t type) = 0;
+  virtual void		mapping(FileMapping* fm, uint64_t entry, uint8_t type) = 0;
+  virtual uint32_t	entriesCount() = 0;
+  virtual uint64_t	lba(uint32_t which) = 0;
 };
 
 #endif

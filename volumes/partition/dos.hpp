@@ -17,15 +17,22 @@
 #ifndef __DOS_HPP__
 #define __DOS_HPP__
 
+// API includes
 #include "exceptions.hpp"
+#include "fso.hpp"
 #include "vfile.hpp"
 #include "node.hpp"
-#include "partition.hpp"
 
+// Module includes
+#include "partnode.hpp"
+#include "ipart.hpp"
+
+// std includes
 #include <vector>
 #include <deque>
 
 #define IS_EXTENDED(t) ((((t) == 0x05) || ((t) == 0x0F) || ((t) == 0x85)) ? 1 : 0)
+#define GPT_PROTECTIVE	0xee
 
 typedef struct		
 {
@@ -41,13 +48,6 @@ typedef struct
   uint32_t		total_blocks;
 }		        dos_pte;
 
-
-// typedef struct
-// {
-//   uint32_t	start;
-//   uint32_t	end;
-//   uint32_t	meta;
-// }		entry;
 
 /*
 "code" field is usually empty in extended boot record but could contain
@@ -86,34 +86,11 @@ typedef struct
   uint32_t	sslot;
 }		metadatum;
 
-class DosPartition;
-
-class DosPartitionNode: public Node
-{
-private:
-  uint64_t		__entry;
-  uint8_t		__type;
-  DosPartition*		__handler;
-public:
-  DosPartitionNode(std::string name, uint64_t size, Node* parent, class Partition* fsobj);
-  ~DosPartitionNode();
-  void			setCtx(DosPartition* handler, uint64_t entry, uint8_t type);
-  virtual void		fileMapping(FileMapping* fm);
-  virtual Attributes	_attributes(void);
-  virtual Attributes	dataType();
-  virtual std::string	icon();
-};
-
-#define PRIMARY		0x01
-#define EXTENDED	0x02
-#define	LOGICAL		0x04
-#define HIDDEN		0x08
-#define UNALLOCATED	0x10
 
 typedef std::map<uint64_t, metadatum* >	metamap;
 typedef metamap::iterator		metaiterator;
 
-class DosPartition
+class DosPartition : public PartInterface
 {
 private:
   uint32_t				__logical;
@@ -121,31 +98,31 @@ private:
   uint32_t				__extended;
   uint32_t				__hidden;
   uint32_t				__slot;
-  std::map<uint64_t, metadatum*>	allocated;
-  std::map<uint64_t, metadatum*>	unallocated;
-  Node*					root;
-  Node*					origin;
-  class Partition*			fsobj;
-  VFile*				vfile;
-  uint32_t				sectsize;
-  uint64_t				offset;
-  bool					mbrBadMagic;
-  uint64_t				ebr_base;
-  std::map<std::string, Variant_p >	res;
-  dos_pte*				toPte(uint8_t* buff);
-  void					makeNodes();
-  void					makeUnallocated();
-  void					makeResults();
+  std::map<uint64_t, metadatum*>	__allocated;
+  std::map<uint64_t, metadatum*>	__unallocated;
+  Node*					__origin;
+  VFile*				__vfile;
+  uint32_t				__sectsize;
+  uint64_t				__offset;
+  uint64_t				__ebr_base;
+  bool					__protective;
+  dos_pte*				__toPte(uint8_t* buff);
+  void					__makeUnallocated();
+  void					__makeResults();
   Attributes				__entryAttributes(metaiterator mit);
+  void					__readMbr() throw (vfsError);
+  void					__readEbr(uint64_t cur, uint64_t shift=0) throw (vfsError);
 public:
   DosPartition();
-  ~DosPartition();
-  Attributes		result();
-  Attributes		entryAttributes(uint64_t entry, uint8_t type);
-  void			mapping(FileMapping* fm, uint64_t entry, uint8_t type);
-  void			open(Node* origin, uint64_t offset, uint32_t sectsize, Partition* fsobj) throw (vfsError);
-  void			readEbr(uint64_t cur, uint64_t shift=0) throw (vfsError);
-  void			readMbr() throw (vfsError);
+  virtual ~DosPartition();
+  virtual bool				isProtective();
+  virtual bool				process(Node* origin, uint64_t offset, uint32_t sectsize) throw (vfsError);
+  virtual void				makeNodes(Node* root, fso* fsobj);
+  virtual Attributes			result();
+  virtual Attributes			entryAttributes(uint64_t entry, uint8_t type);
+  virtual void				mapping(FileMapping* fm, uint64_t entry, uint8_t type);
+  virtual uint32_t			entriesCount();
+  virtual uint64_t			lba(uint32_t which);
 };
 
 #endif

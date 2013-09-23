@@ -40,19 +40,11 @@
 #endif
 
 
-#ifdef WIN32
-#define PACK
-#else
-#define PACK __attribute__((packed))
-#endif
-
 #define MFTENTRY_HEADER_SIZE	42
 #define	MFTENTRY_SIGNATURE	"FILE"
 #define MFTENTRY_ROOT		0x5
 
-#ifdef WIN32
-#pragma pack(1)
-#endif
+PACK_START
 typedef struct	s_MftEntryBlock
 {
   char		signature[4];
@@ -70,7 +62,8 @@ typedef struct	s_MftEntryBlock
   uint16_t	unused;
   uint16_t	fileRef;
   //uint8_t	attributesAndFixupValues[982];
-}		PACK MftEntryBlock;
+}		MftEntryBlock;
+PACK_END
 
 class MftEntry
 {

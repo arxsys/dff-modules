@@ -14,32 +14,33 @@
  *  Frederic Baguelin <fba@digital-forensic.org>
  */
 
-#ifndef __FATFS_HPP__
-#define __FATFS_HPP__
+#ifndef __PARTNODE_HPP__
+#define __PARTNODE_HPP__
 
-#include <map>
+#define PRIMARY		0x01
+#define EXTENDED	0x02
+#define	LOGICAL		0x04
+#define HIDDEN		0x08
+#define UNALLOCATED	0x10
 
-#include "variant.hpp"
-#include "mfso.hpp"
+#include "ipart.hpp"
 #include "node.hpp"
+#include "fso.hpp"
 
-#include "bootsector.hpp"
-#include "fat.hpp"
-#include "fattree.hpp"
-
-class Fatfs : public mfso
+class PartitionNode : public Node
 {
 private:
-  uint8_t	__fat_to_use;
-  bool		__metacarve;
-  bool		__checkslack;
-  void		__process() throw (std::string);
-  void		__setContext(std::map<std::string, Variant_p > args) throw (std::string);
-  Node*		__parent;
+  uint64_t		__entry;
+  uint8_t		__type;
+  PartInterface*	__handler;
 public:
-  Fatfs();
-  ~Fatfs();
-  virtual void	start(std::map<std::string, Variant_p > args);
+  PartitionNode(std::string name, uint64_t size, Node* parent, fso* fsobj);
+  ~PartitionNode();
+  void			setCtx(PartInterface* handler, uint64_t entry, uint8_t type);
+  virtual void		fileMapping(FileMapping* fm);
+  virtual Attributes	_attributes(void);
+  virtual Attributes	dataType();
+  virtual std::string	icon();
 };
 
 #endif

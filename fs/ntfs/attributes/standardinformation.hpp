@@ -30,12 +30,6 @@
 	#include "wstdint.h"
 #endif
 
-#ifdef WIN32
-#define PACK
-#else
-#define PACK __attribute__((packed))
-#endif
-
 /**
  * $STANDARD_INFORMATION attribute
  */
@@ -58,9 +52,7 @@
 #define ATTRIBUTE_SI_FLAG_DIRECTORY		0x10000000
 #define ATTRIBUTE_SI_FLAG_INDEX_VIEW		0x20000000
 
-#ifdef WIN32
-#pragma pack(1)
-#endif
+PACK_START
 typedef struct	s_AttributeStandardInformation
 {
   uint64_t	creationTime;		// Windows display/update those times
@@ -75,7 +67,8 @@ typedef struct	s_AttributeStandardInformation
   uint32_t	securityID;		// v3.0+
   uint32_t	quotaCharged;		// v3.0+
   uint64_t	updateSequenceNumber;	// USN v3.0+
-}		PACK AttributeStandardInformation_t;
+}		AttributeStandardInformation_t;
+PACK_END
 
 class AttributeStandardInformation : public Attribute
 {

@@ -23,11 +23,6 @@
 #include "attribute.hpp"
 #include "attributes/indexroot.hpp"
 
-#ifdef WIN32
-#define PACK
-#else
-#define PACK __attribute__((packed))
-#endif
 /**
  * $INDEX_ALLOCATION attribute
  */
@@ -35,9 +30,7 @@
 #define ATTRIBUTE_IA_SIGNATURE	"INDX"
 #define ATTRIBUTE_IA_SIZE	24
 
-#ifdef WIN32
-#pragma pack(1)
-#endif
+PACK_START
 typedef struct	s_AttributeIndexAllocation
 {
   char		signature[4];
@@ -45,8 +38,8 @@ typedef struct	s_AttributeIndexAllocation
   uint16_t	fixupAmount;
   uint64_t	sequenceNumber;	//$Logfile LSN
   uint64_t	recordVCN; // The VCN of this record in the full index stream
-}		PACK AttributeIndexAllocation_t;
-
+}		AttributeIndexAllocation_t;
+PACK_END
 
 class AttributeIndexAllocation : public Attribute
 {

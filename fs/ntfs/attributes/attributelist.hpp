@@ -22,11 +22,6 @@
 #include "common.hpp"
 #include "attribute.hpp"
 
-#ifdef WIN32
-#define PACK
-#else
-#define PACK __attribute__((packed))
-#endif
 
 /**
  * $ATTRIBUTE_LIST attribute
@@ -39,9 +34,7 @@
 
 #define ATTRIBUTE_ATTRIBUTE_LIST_SIZE	25
 
-#ifdef WIN32
-#pragma pack(1)
-#endif
+PACK_START
 typedef struct	s_AttributeAttributeList
 {
   uint32_t	attributeType;
@@ -51,7 +44,8 @@ typedef struct	s_AttributeAttributeList
   uint64_t	startingVCNInAttribute;
   uint64_t	fileReference;	// file reference where attribute is located
   uint8_t	attributeID;
-}		PACK AttributeAttributeList_t;
+}		AttributeAttributeList_t;
+PACK_END
 
 class AttributeAttributeList : Attribute
 {

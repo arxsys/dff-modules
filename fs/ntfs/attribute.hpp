@@ -36,11 +36,6 @@
 
 class VFile;
 
-#ifdef WIN32
-#define PACK
-#else
-#define PACK __attribute__((packed))
-#endif
 
 /**
  * Attribute header
@@ -71,9 +66,7 @@ class VFile;
 
 #define ATTRIBUTE_END	0xFFFFFFFF
 
-#ifdef WIN32
-#pragma pack(1)
-#endif
+PACK_START
 typedef struct	s_AttributeHeader
 {
   uint32_t	attributeTypeIdentifier;
@@ -83,7 +76,8 @@ typedef struct	s_AttributeHeader
   uint16_t	nameOffset;
   uint16_t	flags;
   uint16_t	attributeIdentifier;
-}		PACK AttributeHeader;
+}		AttributeHeader;
+PACK_END
 
 /**
  * $VOLUME_VERSION_OR_OBJECT_ID attribute
@@ -91,85 +85,77 @@ typedef struct	s_AttributeHeader
 
 #define ATTRIBUTE_ID_SIZE	16U
 
-#ifdef WIN32
-#pragma pack(1)
-#endif
+PACK_START
 typedef struct	s_AttributeObjectID
 {
   uint8_t	objectID[ATTRIBUTE_ID_SIZE];
   uint8_t	birthVolumeID[ATTRIBUTE_ID_SIZE];
   uint8_t	birthObjectID[ATTRIBUTE_ID_SIZE];
   uint8_t	birthDomainID[ATTRIBUTE_ID_SIZE];
-}		PACK AttributeObjectID_t;
-
+}		AttributeObjectID_t;
+PACK_END
 /**
  * $VOLUME_NAME attribute
  */
 
-#ifdef WIN32
-#pragma pack(1)
-#endif
+PACK_START
 typedef struct	s_AttributeVolumeName
 {
   uint8_t	todo;
-}		PACK AttributeVolumeName_t;
+}		AttributeVolumeName_t;
+PACK_END
 
 /**
  * $VOLUME_INFORMATION attribute
  */
 
-#ifdef WIN32
-#pragma pack(1)
-#endif
+PACK_START
 typedef struct	s_AttributeVolumeInformation
 {
   uint8_t	todo;
-}		PACK AttributeVolumeInformation_t;
+}		AttributeVolumeInformation_t;
+PACK_END
 
 /**
  * $EA_INFORMATION attribute
  */
 
-#ifdef WIN32
-#pragma pack(1)
-#endif
+PACK_START
 typedef struct	s_AttributeEAInformation
 {
   uint8_t	todo;
-}		PACK AttributeEAInformation_t;
+}		AttributeEAInformation_t;
+PACK_END
 
 /**
  * $EA attribute
  */
 
-#ifdef WIN32
-#pragma pack(1)
-#endif
+PACK_END
 typedef struct	s_AttributeEA
 {
   uint8_t	todo;
-}		PACK AttributeEA_t;
+}		AttributeEA_t;
+PACK_END
 
 /**
  * $LOGGED_UTILITY_STREAM attribute
  */
 
-#ifdef WIN32
-#pragma pack(1)
-#endif
+PACK_START
 typedef struct	s_AttributeLoggedUtilityStream
 {
   uint8_t	todo;
-}		PACK AttributeLoggedUtilityStream_t;
+}		AttributeLoggedUtilityStream_t;
+PACK_END
 
-#ifdef WIN32
-#pragma pack(1)
-#endif
+PACK_START
 typedef struct	s_OffsetRun
 {
   uint32_t	runLength;
   int64_t	runOffset;
-}		PACK OffsetRun;
+}		OffsetRun;
+PACK_END
 
 /**
  * Resident attribute header
@@ -177,22 +163,19 @@ typedef struct	s_OffsetRun
 
 #define ATTRIBUTE_RESIDENT_DATA_HEADER_SIZE	6
 
-#ifdef WIN32
-#pragma pack(1)
-#endif
+PACK_START
 typedef struct	s_AttributeResidentDataHeader
 {
   uint32_t	contentSize;
   uint16_t	contentOffset;
-}		PACK AttributeResidentDataHeader;
+}		AttributeResidentDataHeader;
+PACK_END
 
 /**
  * Non-resident attribute header
  */
 
-#ifdef WIN32
-#pragma pack(1)
-#endif
+PACK_START
 typedef struct	s_AttributeNonResidentDataHeader
 {
   // AttributeHeader just before
@@ -204,8 +187,8 @@ typedef struct	s_AttributeNonResidentDataHeader
   uint64_t	attributeContentAllocatedSize;
   uint64_t	attributeContentActualSize;
   uint64_t	attributeContentInitializedSize;
-}		PACK AttributeNonResidentDataHeader;
-
+}		AttributeNonResidentDataHeader;
+PACK_END
 
 class Attribute
 {

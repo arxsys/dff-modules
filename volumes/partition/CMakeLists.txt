@@ -13,7 +13,8 @@
 #  Frederic Baguelin <fba@digital-forensic.org>
 
 dff_cpp_module(PARTITION
-  CPP_FILES partition.cpp dos.cpp
+  CPP_FILES partition.cpp dos.cpp gpt.cpp partnode.cpp
   SWIG_FILE partition.i
-  LINK_LIBRARIES exceptions types vfs tree  
+  LINK_LIBRARIES ${ICU_LIBRARIES} exceptions types vfs tree
+  INCLUDE_DIRS ${ICU_INCLUDE_DIRS}
 )
