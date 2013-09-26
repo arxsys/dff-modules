@@ -15,25 +15,22 @@
 
 __dff_module_volatility_version__ = "1.0.0"
 
-VOLATILITY_PATH = "/home/udgover/sources/volatility"
-#VOLATILITY_PATH = "/home/udgover/sources/volatility-"
-
 import sys
 import os
 import traceback
 
+VOLATILITY_PATH = os.path.expanduser("~/sources/volatility-trunk")
 
 from dff.api.module.module import Module
-from dff.api.vfs.libvfs import mfso, AttributesHandler, Node
+from dff.api.vfs.libvfs import mfso, AttributesHandler, Node, FileMapping
 from dff.api.types.libtypes import Variant, VMap, VList, typeId, Argument, Parameter, vtime, TIME_MS_64
 
 from collections import namedtuple
 from sets import Set
 
-
 debug = False
 
-if VOLATILITY_PATH:
+if VOLATILITY_PATH and os.path.exists(VOLATILITY_PATH):
    sys.path.append(VOLATILITY_PATH)
 try:
    from dff.modules.ram.addrspace import dffvol
@@ -63,6 +60,8 @@ try:
    #import volatility.registry as registry
    import volatility.win32.network as network
    
+   import volatility.plugins.imagecopy as imagecopy
+
    with_volatility = True
    config = conf.ConfObject()
    registry.PluginImporter()
@@ -74,10 +73,9 @@ except ImportError:
    with_volatility = False
 
 
-from winproc import WinProcNode, DllNode
+from winproc import WinProcNode, DllNode, ModuleNode, VadNode
 
 import time
-
 
 class WinRootNode(Node):
    def __init__(self, name, parent, fsobj):
@@ -85,11 +83,20 @@ class WinRootNode(Node):
       self.__fsobj = fsobj
       self._kdbg = self.__fsobj._kdbg
       self._aspace = self.__fsobj._aspace
+      self.__attrs = self.__attributes()
       self.setDir()
       self.__disown__()
 
 
+   def icon(self):
+      return ":dev_ram.png"
+
+
    def _attributes(self):
+      return self.__attrs
+
+
+   def __attributes(self):
       attribs = VMap()
       kdbg_offsets = VMap()
       proc_head = VMap()
@@ -238,9 +245,13 @@ class Volatility(mfso):
       self._config.updateCtx('location', "file://" + self.memdump.absolute())
       self._config.updateCtx('filename', self.memdump.name())
       self._config.updateCtx('debug', True)
+      self.__processes = []
       self.__dlls = {}
+      self.__step = 1
+      self.__steps = 6
       starttime = time.time()
       if args.has_key("profile"):
+         self.stateinfo = "Using provided profile: " + args['profile'].toString()
          self._config.updateCtx('profile', args['profile'].value())
          self._aspace = utils.load_as(self._config)
          self._kdbg = tasks.get_kdbg(self._aspace)
@@ -252,13 +263,15 @@ class Volatility(mfso):
             traceback.print_exc()
       try:
          self.root = WinRootNode("Windows RAM", self.memdump, self)
+         self.registerTree(self.memdump, self.root)
          self.__psxview = psxview.PsXview(self._config)
+         self.__findConnections()
          self.__findProcesses()
          self.__createProcessTree()
          self.__createDlls()
-         self.__findConnections()
          self.__createModules()
-         self.registerTree(self.memdump, self.root)
+         self.__createProcessesVadTree()
+         self.stateinfo = ""
       except:
          traceback.print_exc()
       aspace = self._aspace
@@ -273,6 +286,7 @@ class Volatility(mfso):
 
 
    def __guessProfile(self):
+      self.__steps += 1
       bestguess = None
       profiles = [ p.__name__ for p in registry.get_plugin_classes(obj.Profile).values() ]
       scan_kdbg = kdbgscan.KDBGScan(self._config)
@@ -283,12 +297,16 @@ class Volatility(mfso):
       if bestguess in profiles:
          profiles = [bestguess] + profiles
       chosen = 'none'
+      profcount = len(profiles)
+      count = 1
       for profile in profiles:
+         self.stateinfo = "Step {:<2d} / {:<2d} -- Guessing profile: trying profile {:<20s} ({:<2d} / {:<2d})".format(self.__step, self.__steps, profile, count, profcount)
          self._config.updateCtx('profile', profile)
          addr_space = utils.load_as(self._config, astype='any')
          if hasattr(addr_space, 'dtb'):
             chosen = profile
             break
+         count += 1
       if debug and bestguess != chosen:
          print bestguess, chosen
       volmagic = obj.VolMagic(addr_space)
@@ -296,18 +314,68 @@ class Volatility(mfso):
       self._kdbg = obj.Object("_KDDEBUGGER_DATA64", offset = kdbgoffset, vm = addr_space)
       self._config.updateCtx('kdbg', self._kdbg.obj_offset)
       self._aspace = addr_space
-
+      self.__step += 1
 
    #this method does exactly the same as calculate method in psxview malware plugins
    # but as we don't need to yield each result, just create the ps_sources dict
    def __findProcesses(self):
       all_tasks = list(tasks.pslist(self._aspace))
       self.ps_sources = {}
+      self.stateinfo = "Step {:<2d} / {:<2d}: Processes -- Looking for all processes structures --> pslist".format(self.__step, self.__steps)
       self.ps_sources['pslist'] = self.__psxview.check_pslist(all_tasks)
+      self.stateinfo = "Step {:<2d} / {:<2d}: Processes -- Looking for all processes structures --> psscan".format(self.__step, self.__steps)
       self.ps_sources['psscan'] = self.__psxview.check_psscan()
+      self.stateinfo = "Step {:<2d} / {:<2d}: Processes -- Looking for all processes structures --> thrdproc".format(self.__step, self.__steps)
       self.ps_sources['thrdproc'] = self.__psxview.check_thrdproc(self._aspace)
+      self.stateinfo = "Step {:<2d} / {:<2d}: Processes -- Looking for all processes structures --> csrss".format(self.__step, self.__steps)
       self.ps_sources['csrss'] = self.__psxview.check_csrss_handles(all_tasks)
+      self.stateinfo = "Step {:<2d} / {:<2d}: Processes -- Looking for all processes structures --> pspcid".format(self.__step, self.__steps)
       self.ps_sources['pspcid'] = self.__psxview.check_pspcid(self._aspace)
+      self.__step += 1
+
+
+   def __createProcessTree(self):
+      seen_offsets = []
+      procmap = {}
+      self.__orphaned = {}
+      self.stateinfo = "Step {:<2d} / {:<2d}: Processes -- Creating tree".format(self.__step, self.__steps)
+      for source in self.ps_sources.values():
+         for offset in source.keys():
+            if offset not in seen_offsets:
+               seen_offsets.append(offset)
+               cproc = source[offset]
+               uid = int(cproc.UniqueProcessId)
+               if procmap.has_key(uid):
+                  dtb = []
+                  for _proc in procmap[uid]:
+                     if cproc.ImageFileName == _proc[0].ImageFileName and cproc.Pcb.DirectoryTableBase == _proc[0].Pcb.DirectoryTableBase:
+                        dtb.append(_proc)
+                  if len(dtb) == 0:
+                     procmap[uid].append((cproc, offset))
+                  elif cproc.Peb != None:
+                     for _proc, _off in dtb:
+                        if _proc.Peb is None:
+                           procmap[uid].remove(_proc)
+               else:
+                  procmap[uid] = [(cproc, offset)]
+               self.__orphaned[cproc] = 0
+      if len(procmap):
+         self.stateinfo = "Step {:<2d} / {:<2d}: Processes -- Creating tree {:>3d} / {:<3d}".format(self.__step, self.__steps, 0, len(procmap))
+         self.__mainProcNode = Node("Processes", 0, None, self)
+         self.__mainProcNode.__disown__()
+         self.__mainProcNode.setDir()
+         for proc, offset in self.__findRootProcesses(procmap):
+            self.__orphaned[proc] = 1
+            procnode = WinProcNode(proc, offset, self.__mainProcNode, self)
+            self.__processes.append(procnode)
+            self.__createPtree(procmap, int(proc.UniqueProcessId), procnode)
+            count = sum([v for v in self.__orphaned.itervalues() if v == 1])
+            self.stateinfo = "Step {:<2d} / {:<2d}: Processes -- Creating tree {:>3d} / {:<3d}".format(self.__step, self.__steps, count, len(procmap))
+         for proc in self.__orphaned:
+            if debug and self.__orphaned[proc] == 0:
+               self.__printProcess(proc)
+      self.registerTree(self.root, self.__mainProcNode)
+      self.__step += 1
 
 
    def __findRootProcesses(self, procmap):
@@ -315,42 +383,63 @@ class Volatility(mfso):
          for proc in procmap[pid]:
             if proc[0].InheritedFromUniqueProcessId not in procmap.keys():
                yield proc
-
+   
 
    def __createPtree(self, procmap, ppid, parent):
       for pid in procmap.keys():
          for proc, offset in procmap[pid]:
+            count = sum([v for v in self.__orphaned.itervalues() if v == 1])
+            self.stateinfo = "Step {:<2d} / {:<2d}: Processes -- Creating tree {:>3d} / {:<3d}".format(self.__step, self.__steps, count, len(procmap))
             if int(proc.InheritedFromUniqueProcessId) == ppid:
                self.__orphaned[proc] = 1
                procnode = WinProcNode(proc, offset, parent, self)
-               if proc.Peb != None:
-                  __aspace = proc.get_process_address_space()
-                  for mod in proc.get_load_modules():
-                     paddr = -1
-                     dllname = str(mod.BaseDllName)
-                     if __aspace is not None and __aspace.is_valid_address(mod.DllBase.v()):
-                        paddr = long(__aspace.vtop(mod.DllBase.v()))
-                     if not self.__dlls.has_key(dllname):
-                        self.__dlls[dllname] = [(paddr, __aspace, mod.DllBase.v(), [procnode])]
-                     else:
-                        exists = False
-                        for item in self.__dlls[dllname]:
-                           if paddr == item[0]:
-                              exists = True
-                              break
-                        if exists:
-                           item[3].append(procnode)
-                        else:
-                           self.__dlls[dllname].append((paddr, __aspace, mod.DllBase.v(), [procnode]))
+               self.__processes.append(procnode)
                self.__createPtree(procmap, int(proc.UniqueProcessId), procnode)
 
 
+   def __loadModulesFromProcesses(self):
+      pcount = 1
+      lpcount = len(self.__processes)
+      for procnode in self.__processes:
+         self.stateinfo = "Step {:<2d} / {:<2d}: Dlls -- Getting load modules for each process {:>3d} / {:<3d}".format(self.__step, self.__steps, pcount, lpcount)
+         proc = procnode.eproc
+         if proc.Peb != None:
+            __aspace = proc.get_process_address_space()
+            load_modules = [load_module for load_module in proc.get_load_modules()]
+            lmodcount = len(load_modules)
+            modcount = 1
+            for mod in load_modules:
+               self.stateinfo = "Step {:<2d} / {:<2d}: Dlls -- Getting load modules for {:<16s} (process {:>3d} / {:<3d}) (dll {:>6d} / {:<6d})".format(self.__step, self.__steps, procnode.name(), pcount, lpcount, modcount, lmodcount)
+               modcount += 1
+               paddr = -1
+               dllname = str(mod.BaseDllName)
+               if __aspace is not None and __aspace.is_valid_address(mod.DllBase.v()):
+                  paddr = long(__aspace.vtop(mod.DllBase.v()))
+               if not self.__dlls.has_key(dllname):
+                  self.__dlls[dllname] = [(paddr, __aspace, mod.DllBase.v(), [procnode])]
+               else:
+                  exists = False
+                  for item in self.__dlls[dllname]:
+                     if paddr == item[0]:
+                        exists = True
+                        break
+                  if exists:
+                     item[3].append(procnode)
+                  else:
+                     self.__dlls[dllname].append((paddr, __aspace, mod.DllBase.v(), [procnode]))
+         pcount += 1
+
+
    def __createDlls(self):
+      self.__loadModulesFromProcesses()
       if len(self.__dlls):
-         self.__mainDllNode = Node("Dlls", 0, self.root, self)
+         self.__mainDllNode = Node("Dlls", 0, None, self)
          self.__mainDllNode.setDir()
          self.__mainDllNode.__disown__()
+         dcount = 1
+         dllcount = len(self.__dlls)
          for dllname in self.__dlls:
+            self.stateinfo = "Step {:<2d} / {:<2d}: Dlls -- Creating nodes ({:>6d} / {:<6d})".format(self.__step, self.__steps, dcount, dllcount)
             if len(self.__dlls[dllname]) > 1:
                if debug:
                   print dllname, [entry[0] for entry in self.__dlls[dllname]]
@@ -368,49 +457,15 @@ class Volatility(mfso):
                entry = self.__dlls[dllname][0]
                dllnode = DllNode(dllname, entry[1], entry[2], self.__mainDllNode, self)
                dllnode.__disown__()
-
-
-   def __createProcessTree(self):
-      seen_offsets = []
-      procmap = {}
-      self.__orphaned = {}
-      for source in self.ps_sources.values():
-         for offset in source.keys():
-            if offset not in seen_offsets:
-               seen_offsets.append(offset)
-               cproc = source[offset]
-               uid = int(cproc.UniqueProcessId)
-               if procmap.has_key(uid):
-                  dtb = []
-                  for _proc in procmap[uid]:
-                     if cproc.ImageFileName == _proc[0].ImageFileName and cproc.Pcb.DirectoryTableBase == _proc[0].Pcb.DirectoryTableBase:
-                        dtb.append(_proc)
-                  if len(dtb) == 0:
-                     procmap[uid].append((cproc, offset))
-                  elif cproc.Peb != None:
-                     for _proc in dtb:
-                        if _proc.Peb is None:
-                           procmap[uid].remove(_proc)
-               else:
-                  procmap[uid] = [(cproc, offset)]
-               self.__orphaned[cproc] = 0
-      if len(procmap):
-         self.__mainProcNode = Node("Processes", 0, self.root, self)
-         self.__mainProcNode.__disown__()
-         self.__mainProcNode.setDir()
-         for proc, offset in self.__findRootProcesses(procmap):
-            self.__orphaned[proc] = 1
-            procnode = WinProcNode(proc, offset, self.__mainProcNode, self)
-            self.__createPtree(procmap, int(proc.UniqueProcessId), procnode)
-         for proc in self.__orphaned:
-            if debug and self.__orphaned[proc] == 0:
-               self.__printProcess(proc)
+      self.registerTree(self.root, self.__mainDllNode)
+      self.__step += 1
 
 
    def __findConnections(self):
       self.connections = {}
       conn = namedtuple("aconn", ['localAddr', 'localPort', 'proto', 'type', 'ctime', 'remoteAddr', 'remotePort', 'state'])
       if self._aspace.profile.metadata.get('major', 0) == 6:
+         self.stateinfo = "Step {:<2d} / {:<2d}: Connections -- NetScan".format(self.__step, self.__steps)
          for net_object, proto, laddr, lport, raddr, rport, state in netscan.Netscan(self._config).calculate():
             if proto.startswith("UDP"):
                raddr = rport = None
@@ -422,6 +477,7 @@ class Volatility(mfso):
       else:
          socks = {}
          conns = {}
+         self.stateinfo = "Step {:<2d} / {:<2d}: Connections -- ConnScan".format(self.__step, self.__steps)
          for tcp_obj in connscan.ConnScan(self._config).calculate():
             if not conns.has_key(long(tcp_obj.Pid)):
                conns[long(tcp_obj.Pid)] = {long(tcp_obj.LocalPort): [tcp_obj]}
@@ -429,6 +485,7 @@ class Volatility(mfso):
                conns[long(tcp_obj.Pid)][long(tcp_obj.LocalPort)] = [tcp_obj]
             else:
                conns[long(tcp_obj.Pid)][long(tcp_obj.LocalPort)].append(tcp_obj)
+         self.stateinfo = "Step {:<2d} / {:<2d}: Connections -- SockScan".format(self.__step, self.__steps)
          for sock_obj in sockscan.SockScan(self._config).calculate():
             if not socks.has_key(long(sock_obj.Pid)):
                socks[long(sock_obj.Pid)] = [sock_obj]
@@ -452,42 +509,95 @@ class Volatility(mfso):
             if len(conns[pid]):
                for port in conns[pid]:
                   for tcp_obj in conns[pid][port]:
-                     self.connections[pid].append(conn(tcp_obj.LocalIpAddress, tcp_obj.LocalPort, 6, "TCP", None, 
-                                                       tcp_obj.RemoteIpAddress, tcp_obj.RemotePort, None))
+                     if self.connections.has_key(pid):
+                        self.connections[pid].append(conn(tcp_obj.LocalIpAddress, tcp_obj.LocalPort, 6, "TCP", None, 
+                                                          tcp_obj.RemoteIpAddress, tcp_obj.RemotePort, None))
+                     else:
+                        self.connections[pid] = [conn(tcp_obj.LocalIpAddress, tcp_obj.LocalPort, 6, "TCP", None, 
+                                                          tcp_obj.RemoteIpAddress, tcp_obj.RemotePort, None)]
+
          if debug:
             for pid in self.connections:
                print "PID", pid
                for pconn in self.connections[pid]:
                   print "\t", pconn
-
+      self.__step += 1
 
 
    def __createModules(self):
+      self.stateinfo = "Step {:<2d} / {:<2d}: Modules -- ModScan".format(self.__step, self.__steps)
       self.__scanned_modules = Set([ldr_entry.obj_offset for ldr_entry in modscan.ModScan(self._config).calculate()])
+      self.stateinfo = "Step {:<2d} / {:<2d}: Modules -- Modules calculate".format(self.__step, self.__steps)
       self.__loaded_modules = Set([module.obj_vm.vtop(module.obj_offset) for module in modules.Modules(self._config).calculate()])
       self.__unlinked_or_hidden = self.__scanned_modules.difference(self.__loaded_modules)
-      print self.__loaded_modules.difference(self.__scanned_modules)
-      self.__modulesNode = Node("Modules", 0, self.root, self)
+      self.__modulesNode = Node("Modules", 0, None, self)
       self.__modulesNode.setDir()
       self.__modulesNode.__disown__()
       unknown = 0
       address_space = utils.load_as(self._config, astype = 'physical')
       kernel_as = utils.load_as(self._config)
+      procs = list(tasks.pslist(kernel_as))
+      modcount = 1
+      lmodcount = len(self.__scanned_modules)
       for offset in self.__scanned_modules:
+         self.stateinfo = "Step {:<2d} / {:<2d}: Modules -- creating nodes ({:>6d} / {:<6d})".format(self.__step, self.__steps, modcount, lmodcount)
+         modcount += 1
          ldr_entry = obj.Object('_LDR_DATA_TABLE_ENTRY', vm = address_space, offset = offset, native_vm = kernel_as)
-         print ldr_entry.members
-         #print ldr_entry.
          if not ldr_entry.BaseDllName:
-            unknow += 1
+            unknown += 1
             name = "Unknown" + str(unknown)
          else:
             name = str(ldr_entry.BaseDllName)
          unlinked_or_hidden = False
          if offset in self.__unlinked_or_hidden:
             unlinked_or_hidden = True
-         #n = ModuleNode(name, offset, self.__modulesNode, self, unlinked_or_hidden)
-         #n.__disown__()
+         aspace = tasks.find_space(kernel_as, procs, ldr_entry.DllBase.v())
+         n = ModuleNode(name, ldr_entry, self.__modulesNode, self, aspace, unlinked_or_hidden)
+         n.__disown__()
+      self.registerTree(self.root, self.__modulesNode)
+      self.__step += 1
+   
+
+   def __createVadTree(self, proc, procnode, pcount, lpcount):
+      parents = {}
+      bad = False
+      if proc.Peb != None:
+         aspace = proc.get_process_address_space()
+      else:
+         aspace = None
+      vadtree = [vad for vad in proc.VadRoot.traverse()]
+      lvadcount = len(vadtree)
+      vadcount = 1
+      for vad in vadtree:
+         self.stateinfo = "Step {:<2d} / {:<2d}: Processes -- Creating Vad Tree for {:<16s} (process {:>3d} / {:<3d}) (vad {:>6d} / {:<6d})".format(self.__step, self.__steps, procnode.name(), pcount, lpcount, vadcount, lvadcount)
+         vadcount += 1
+         if not vad:
+            continue
+         parent = parents.get(vad.Parent.obj_offset, None)
+         if parent is None:
+            vadnode = VadNode(vad, aspace, procnode, self)
+         else:
+            vadnode = VadNode(vad, aspace, parent, self)
+         if proc._injection_filter(vad):
+            bad = True
+            vadnode.setSuspicious(True)
+         parents[vad.obj_offset] = vadnode
+      return bad
+
+
+   def __createProcessesVadTree(self):
+      pcount = 1
+      lpcount = len(self.__processes)
+      for procnode in self.__processes:
+         proc = procnode.eproc
+         base, ext = os.path.splitext(str(proc.ImageFileName))
+         vadroot = Node(base+".vad", 0, None, self)
+         vadroot.__disown__()
+         procnode.setSuspicious(self.__createVadTree(proc, vadroot, pcount, lpcount))
+         pcount += 1
+         self.registerTree(procnode, vadroot)
          
+      
 
    def __printProcess(self, proc):
       print "{name:<30}{uid:<10}{puid:<10}{stime:<30}{etime:<30}{cr3:<15}".format(name=proc.ImageFileName, uid=proc.UniqueProcessId, puid=proc.InheritedFromUniqueProcessId, stime=proc.CreateTime, etime=proc.ExitTime, cr3=hex(proc.Pcb.DirectoryTableBase))
@@ -514,8 +624,16 @@ class mvolatility(Module):
                              "description": "Profile to use",
                              "input": Argument.Optional|Argument.Single|typeId.String,
                              "parameters": {"type": Parameter.NotEditable,
-                                            "predefined": [ p.__name__ for p in registry.get_plugin_classes(obj.Profile).values() ]}
+                                            "predefined": sorted([ p.__name__ for p in registry.get_plugin_classes(obj.Profile).values() ])}
                              })
+      self.conf.addConstant({"name": "extention-type", 
+                             "type": typeId.String,
+                             "description": "managed extension",
+                             "values": ["vmem"]})
+      self.conf.addConstant({"name": "mime-type", 
+                             "type": typeId.String,
+                             "description": "managed mime type",
+                             "values": ["x-coredump"]})
       self.conf.description = "Analyse windows ram dump"
       self.tags = "Volatile memory"
       self.icon = ":dev_ram.png"

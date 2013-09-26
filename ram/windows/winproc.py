@@ -18,11 +18,15 @@ from dff.api.vfs.libvfs import Node, FileMapping
 from dff.api.vfs.vfs import vfs
 from dff.api.types.libtypes import VMap, Variant, VList, vtime, TIME_MS_64, typeId
 
+import volatility.constants as constants
 import volatility.obj as obj
 
+import sys, os
 
-import sys
-sys.path.append("/home/udgover/sources/pefile-1.2.10-123")
+PEFILE_PATH = os.path.expanduser("~/sources/pefile-1.2.10-123")
+
+if PEFILE_PATH and os.path.exists(PEFILE_PATH):
+    sys.path.append(PEFILE_PATH)
 
 try:
     import pefile
@@ -43,10 +47,40 @@ class WinMapper():
         self._aspace = None
         self._baseaddr = -1
         self._fsobj = None
+        self._fm = None
 
-        
-    def _fileMapping(self, fm):
-        if self._aspace is None or self._baseaddr == -1 or self._fsobj is None:
+
+    def fileMapping(self, fm):
+        if self._fm != None:
+            chunks = self._fm.chunks()
+            for chunk in chunks:
+                fm.push(chunk.offset, chunk.size, chunk.origin, chunk.originoffset)
+
+
+    def _zread(self, offset, vaddr, length):
+        if self._aspace is None:
+            self.__push(offset, length, None)
+            return length
+        vaddr, length = int(vaddr), int(length)
+        size = 0
+        while length > 0:
+            chunk_len = min(length, 0x1000 - (vaddr % 0x1000))
+            paddr = self._aspace.translate(vaddr)
+            if paddr is None or not self._aspace.base.is_valid_address(paddr):
+                self.__push(offset, chunk_len, None)
+            else:
+                buf = self._aspace.base.read(paddr, length)
+                self.__push(offset, chunk_len, paddr)
+            vaddr += chunk_len
+            length -= chunk_len
+            offset += chunk_len
+            size += chunk_len
+        return size
+
+
+    @confswitch
+    def _fileMapping(self):
+        if self._aspace is None or self._baseaddr == -1 or self._fsobj is None or self._fm is None:
             return
         try:
             dos_header = obj.Object("_IMAGE_DOS_HEADER", 
@@ -54,9 +88,7 @@ class WinMapper():
                                     vm = self._aspace)
             nt_header = dos_header.get_nt_header()
             soh = nt_header.OptionalHeader.SizeOfHeaders
-            header_off = self._aspace.vtop(self._baseaddr)
-            real_size = len(self._aspace.zread(self._baseaddr, soh))
-            fm.push(0, real_size, self._fsobj.memdump, long(header_off))
+            real_size = self._zread(0, self._baseaddr, soh)
             fa = nt_header.OptionalHeader.FileAlignment
             for sect in nt_header.get_sections(True):
                 foa = self.__round(sect.PointerToRawData, fa)
@@ -66,38 +98,32 @@ class WinMapper():
                 first_block = 0x1000 - data_start % 0x1000
                 full_blocks = ((data_size + (data_start % 0x1000)) / 0x1000) - 1
                 left_over = (data_size + data_start) % 0x1000
-                paddr = self._aspace.vtop(data_start)
                 if data_size < first_block:
-                    real_size = len(self._aspace.zread(data_start, data_size))
-                    self.__push(fm, offset, real_size, paddr)
+                    real_size = self._zread(offset, data_start, data_size)
                 else:
-                    real_size = len(self._aspace.zread(data_start, first_block))
-                    self.__push(fm, offset, real_size, paddr)
+                    real_size = self._zread(offset, data_start, first_block)
                     offset += real_size
                     new_vaddr = data_start + first_block
                     for _i in range(0, full_blocks):
-                        paddr = self._aspace.vtop(new_vaddr)
-                        real_size = len(self._aspace.zread(new_vaddr, 0x1000))
-                        self.__push(fm, offset, real_size, paddr)
+                        real_size = self._zread(offset, new_vaddr, 0x1000)
                         new_vaddr = new_vaddr + 0x1000
                         offset += real_size
                     if left_over > 0:
-                        paddr = self._aspace.vtop(new_vaddr)
-                        real_size = len(self._aspace.zread(new_vaddr, left_over))
-                        self.__push(fm, offset, real_size, paddr)
+                        real_size = self._zread(offset, new_vaddr, left_over)
                         offset += real_size
         except:
             traceback.print_exc()
 
-    def __push(self, fm, offset, size, paddr):
+
+    def __push(self, offset, size, paddr):
         if paddr != None:
             try:
-                fm.push(offset, size, self._fsobj.memdump, long(paddr), True)
+                self._fm.push(offset, size, self._fsobj.memdump, long(paddr), True)
             except:
-                pass
+                traceback.print_exc()
         else:
             try:
-                fm.push(offset, size, None, 0, True)
+                self._fm.push(offset, size, None, 0, True)
             except:
                 pass
 
@@ -109,71 +135,6 @@ class WinMapper():
             if up:
                 return (addr + (align - (addr % align)))
             return (addr - (addr % align))
-        
-
-class DllNode(Node, WinMapper):
-    def __init__(self, name, aspace, boffset, parent, fsobj):
-        WinMapper.__init__(self)
-        self._boffset = boffset
-        self._fsobj = fsobj
-        Node.__init__(self, name, 0, parent, fsobj)
-        self.__disown__()
-        self._aspace = aspace
-        if aspace != None and aspace.is_valid_address(boffset):
-            self._baseaddr = boffset
-        fm = FileMapping(self)
-        self.fileMapping(fm)
-        self.setSize(fm.maxOffset())
-        del fm
-
-
-    def _attributes(self):
-        attrs = VMap()
-        if self._baseaddr != -1:
-            attrs["Virtual Base address"] = Variant(self._boffset)
-            attrs["Physical Base address"] = Variant(self._aspace.vtop(self._boffset))
-        else:
-            attrs["Virtual Base address (not valid addr)"] = Variant(self._boffset)
-        return attrs
-
-    @confswitch
-    def fileMapping(self, fm):
-        self._fileMapping(fm)
-
-
-
-class ModuleNode(Node, WinMapper):
-    def __init__(self, name, poffset, parent, fsobj, unlinked_or_hidden):
-        WinMapper.__init__(self)
-        address_space = utils.load_as(self._fsobj._config, astype = 'physical')
-        kernel_as = utils.load_as(self.fsobj._config)
-        self._poffset = poffset
-        self._fsobj = fsobj
-        Node.__init__(self, name, 0, parent, fsobj)
-        self.__disown__()
-        self._aspace = aspace
-        if aspace != None and aspace.is_valid_address(boffset):
-            self._baseaddr = boffset
-        fm = FileMapping(self)
-        self.fileMapping(fm)
-        self.setSize(fm.maxOffset())
-        del fm
-
-    
-    @confswitch
-    def _attributes(self):
-        attrs = VMap()
-        if self._baseaddr != -1:
-            attrs["Virtual Base address"] = Variant(self._boffset)
-            attrs["Physical Base address"] = Variant(self._aspace.vtop(self._boffset))
-        else:
-            attrs["Virtual Base address (not valid addr)"] = Variant(self._boffset)
-        return attrs
-
-
-    @confswitch
-    def fileMapping(self, fm):
-        self._fileMapping(fm)
 
 
 class WinProcNode(Node, WinMapper):
@@ -194,6 +155,7 @@ class WinProcNode(Node, WinMapper):
         self.eproc = eproc
         self._aspace = self.eproc.get_process_address_space()
         self._fsobj = fsobj
+        self.__suspicious = False
         Node.__init__(self, str(self.eproc.ImageFileName), 0, parent, fsobj)
         self.__disown__()
         if self._aspace is not None and self.eproc.Peb is not None and self._aspace.is_valid_address(self.eproc.Peb.ImageBaseAddress):
@@ -201,11 +163,31 @@ class WinProcNode(Node, WinMapper):
         else:
             self._baseaddr = -1
         self._setHandles()
-        fm = FileMapping(self)
-        self.fileMapping(fm)
-        self.setSize(fm.maxOffset())
-        del fm
+        self._fm = FileMapping(self)
+        self._fileMapping()
+        self.setSize(self._fm.maxOffset())
+        self.__attrs = self.__attributes()
 
+
+    def icon(self):
+        if self.__suspicious:
+            return ":virus"
+        else:
+            return ":winexec"
+        
+
+    def _attributes(self):
+        return self.__attrs
+
+
+    def setSuspicious(self, suspicious):
+        self.__suspicious = suspicious
+        if self.__suspicious:
+            self.setTag("malware")
+
+    #
+    # Private method
+    #
 
     def _setKeyAttributes(self, handle, keys):
         keybody = handle.dereference_as("_CM_KEY_BODY")
@@ -350,15 +332,10 @@ class WinProcNode(Node, WinMapper):
                     conn["State"] = Variant(str(conn_obj.state))
                 conns["Connection " + str(count)] = Variant(conn)
             attrs["Connections"] = conns
-        
-    
-    @confswitch
-    def fileMapping(self, fm):
-        self._fileMapping(fm)
-        
+
 
     @confswitch
-    def _attributes(self):
+    def __attributes(self):
         try:
             if PEFILE_FOUND:
                 f = self.open()
@@ -369,6 +346,7 @@ class WinProcNode(Node, WinMapper):
                 except:
                     self.__pe = None
             attrs = VMap()
+            attrs["Offset (P)"] = Variant(self._aspace.translate(self.eproc.obj_offset))
             attrs["PID"] = Variant(int(self.eproc.UniqueProcessId))
             attrs["Parent PID"] = Variant(int(self.eproc.InheritedFromUniqueProcessId))
             attrs["Active Threads"] = Variant(int(self.eproc.ActiveThreads))
@@ -383,7 +361,7 @@ class WinProcNode(Node, WinMapper):
             attrs["Handle Count"] = Variant(hcount)
             if self.eproc.Peb == None:
                 attrs["PEB"] = Variant("at " + hex(self.eproc.m('Peb')) + " is paged")
-            elif self._aspace.vtop(self.eproc.Peb.ImageBaseAddress) == None:
+            elif self._aspace.translate(self.eproc.Peb.ImageBaseAddress) == None:
                 attrs["ImageBaseAddress"] = Variant("at " + hex(self.eproc.Peb.ImageBaseAddress) + " is paged")
             self._setProcessParameters(attrs)
             self._setTimestamp(self.eproc, attrs)
@@ -391,5 +369,124 @@ class WinProcNode(Node, WinMapper):
         except:
             import traceback
             traceback.print_exc()
-
         return attrs
+
+
+class DllNode(Node, WinMapper):
+    def __init__(self, name, aspace, boffset, parent, fsobj):
+        WinMapper.__init__(self)
+        self._boffset = boffset
+        self._fsobj = fsobj
+        Node.__init__(self, name, 0, parent, fsobj)
+        self.__disown__()
+        self._aspace = aspace
+        if aspace != None and aspace.is_valid_address(boffset):
+            self._baseaddr = boffset
+        self._fm = FileMapping(self)
+        self._fileMapping()
+        self.setSize(self._fm.maxOffset())
+        self.__attrs = self.__attributes()
+
+    
+    def _attributes(self):
+        return self.__attrs
+
+
+    @confswitch
+    def __attributes(self):
+        attrs = VMap()
+        if self._baseaddr != -1:
+            attrs["Virtual Base address"] = Variant(self._boffset)
+            attrs["Physical Base address"] = Variant(self._aspace.translate(self._boffset))
+        else:
+            attrs["Virtual Base address (not valid addr)"] = Variant(self._boffset)
+        return attrs
+
+
+class ModuleNode(Node, WinMapper):
+    def __init__(self, name, ldr_entry, parent, fsobj, aspace, unlinked_or_hidden):
+        WinMapper.__init__(self)
+        self._ldr_entry = ldr_entry
+        self._boffset = ldr_entry.DllBase.v()
+        self._aspace = aspace
+        self._fsobj = fsobj
+        Node.__init__(self, name, 0, parent, fsobj)
+        self.__disown__()
+        self._aspace = aspace
+        if aspace != None and aspace.is_valid_address(self._boffset):
+            self._baseaddr = self._boffset
+        self._fm = FileMapping(self)
+        self._fileMapping()
+        self.setSize(self._fm.maxOffset())
+        self.__attrs = self.__attributes()
+
+
+    def _attributes(self):
+        return self.__attrs
+
+    
+    @confswitch
+    def __attributes(self):
+        attrs = VMap()
+        if self._baseaddr != -1:
+            attrs["Virtual Base address"] = Variant(self._boffset)
+            attrs["Physical Base address"] = Variant(self._ldr_entry.obj_offset)
+        else:
+            attrs["Virtual Base address (not valid addr)"] = Variant(self._boffset)
+        return attrs
+
+
+class VadNode(Node, WinMapper):
+    def __init__(self, vad, aspace, parent, fsobj):
+        WinMapper.__init__(self)
+        self.__vad = vad
+        self._fsobj = fsobj
+        self._aspace = aspace
+        if aspace != None:
+            self._baseaddr = vad.Start
+        self.__suspicious = False
+        name = "0x{:0>8x}-0x{:0>8x}".format(vad.Start, vad.End)
+        Node.__init__(self, name, 0, parent, fsobj)
+        self.__disown__()
+        self._fm = FileMapping(self)
+        self._fileMapping()
+        self.setSize(self._fm.maxOffset())
+        self.__attrs = self.__attributes()
+
+
+    def setSuspicious(self, suspicious):
+        self.__suspicious = suspicious
+        if self.__suspicious:
+            self.setTag("malware")
+
+
+    def icon(self):
+        if self.__suspicious:
+            return ":virus"
+        else:
+            return ":binary"
+
+
+    def _attributes(self):
+        return self.__attrs
+
+
+    @confswitch
+    def __attributes(self):
+        attrs = VMap()
+        return attrs
+
+
+    @confswitch
+    def _fileMapping(self):
+        vaddr = self.__vad.Start
+        out_of_range = self.__vad.Start + self.__vad.Length
+        offset = 0
+        while vaddr < out_of_range:
+            to_read = min(constants.SCAN_BLOCKSIZE, out_of_range - vaddr)
+            real_size = self._zread(offset, vaddr, to_read)
+            if real_size == 0:
+                break
+            vaddr += real_size
+            offset += real_size
+
