@@ -20,6 +20,7 @@ from dff.api.types.libtypes import VMap, Variant, VList, vtime, TIME_MS_64, type
 
 import volatility.constants as constants
 import volatility.obj as obj
+import volatility.plugins.vadinfo as vadinfo
 
 import sys, os
 
@@ -42,12 +43,14 @@ def confswitch(func):
     return switch
 
 
-class WinMapper():
-    def __init__(self):
+class WinMapper(Node):
+    def __init__(self, name, size, parent, fsobj):
+        Node.__init__(self, name, size, parent, fsobj)
+        self.__disown__()
+        self._fsobj = fsobj
+        self._fm = FileMapping(self)
         self._aspace = None
         self._baseaddr = -1
-        self._fsobj = None
-        self._fm = None
 
 
     def fileMapping(self, fm):
@@ -137,7 +140,7 @@ class WinMapper():
             return (addr - (addr % align))
 
 
-class WinProcNode(Node, WinMapper):
+class WinProcNode(WinMapper):
     #filename = lambda handle : handle.dereference_as("_FILE_OBJECT").file_name_with_device()
     #keyname = lambda handle : handle.dereference_as("_CM_KEY_BODY").full_key_name()
     #procname = lambda handle : handle.dereference_as("_EPROCESS").ImageFileName
@@ -148,22 +151,18 @@ class WinProcNode(Node, WinMapper):
                         
     
     def __init__(self, eproc, offset, parent, fsobj):
-        WinMapper.__init__(self)
+        WinMapper.__init__(self, str(eproc.ImageFileName), 0, parent, fsobj)
         self.v = vfs()
         self.__offset = offset
         self.__pefile = None
         self.eproc = eproc
         self._aspace = self.eproc.get_process_address_space()
-        self._fsobj = fsobj
         self.__suspicious = False
-        Node.__init__(self, str(self.eproc.ImageFileName), 0, parent, fsobj)
-        self.__disown__()
         if self._aspace is not None and self.eproc.Peb is not None and self._aspace.is_valid_address(self.eproc.Peb.ImageBaseAddress):
             self._baseaddr = self.eproc.Peb.ImageBaseAddress
         else:
             self._baseaddr = -1
         self._setHandles()
-        self._fm = FileMapping(self)
         self._fileMapping()
         self.setSize(self._fm.maxOffset())
         self.__attrs = self.__attributes()
@@ -372,17 +371,13 @@ class WinProcNode(Node, WinMapper):
         return attrs
 
 
-class DllNode(Node, WinMapper):
+class DllNode(WinMapper):
     def __init__(self, name, aspace, boffset, parent, fsobj):
-        WinMapper.__init__(self)
+        WinMapper.__init__(self, name, 0, parent, fsobj)
         self._boffset = boffset
-        self._fsobj = fsobj
-        Node.__init__(self, name, 0, parent, fsobj)
-        self.__disown__()
         self._aspace = aspace
         if aspace != None and aspace.is_valid_address(boffset):
             self._baseaddr = boffset
-        self._fm = FileMapping(self)
         self._fileMapping()
         self.setSize(self._fm.maxOffset())
         self.__attrs = self.__attributes()
@@ -403,19 +398,14 @@ class DllNode(Node, WinMapper):
         return attrs
 
 
-class ModuleNode(Node, WinMapper):
+class ModuleNode(WinMapper):
     def __init__(self, name, ldr_entry, parent, fsobj, aspace, unlinked_or_hidden):
-        WinMapper.__init__(self)
+        WinMapper.__init__(self, name, 0, parent, fsobj)
         self._ldr_entry = ldr_entry
         self._boffset = ldr_entry.DllBase.v()
         self._aspace = aspace
-        self._fsobj = fsobj
-        Node.__init__(self, name, 0, parent, fsobj)
-        self.__disown__()
-        self._aspace = aspace
         if aspace != None and aspace.is_valid_address(self._boffset):
             self._baseaddr = self._boffset
-        self._fm = FileMapping(self)
         self._fileMapping()
         self.setSize(self._fm.maxOffset())
         self.__attrs = self.__attributes()
@@ -436,19 +426,15 @@ class ModuleNode(Node, WinMapper):
         return attrs
 
 
-class VadNode(Node, WinMapper):
+class VadNode(WinMapper):
     def __init__(self, vad, aspace, parent, fsobj):
-        WinMapper.__init__(self)
+        name = "0x{:0>8x}-0x{:0>8x}".format(vad.Start, vad.End)
+        WinMapper.__init__(self, name, 0, parent, fsobj)
         self.__vad = vad
-        self._fsobj = fsobj
         self._aspace = aspace
         if aspace != None:
             self._baseaddr = vad.Start
         self.__suspicious = False
-        name = "0x{:0>8x}-0x{:0>8x}".format(vad.Start, vad.End)
-        Node.__init__(self, name, 0, parent, fsobj)
-        self.__disown__()
-        self._fm = FileMapping(self)
         self._fileMapping()
         self.setSize(self._fm.maxOffset())
         self.__attrs = self.__attributes()
@@ -474,7 +460,57 @@ class VadNode(Node, WinMapper):
     @confswitch
     def __attributes(self):
         attrs = VMap()
+        vadflags = self.__vad.u.VadFlags
+        attrs["Protection"] = Variant(vadinfo.PROTECT_FLAGS.get(self.__vad.u.VadFlags.Protection.v(), hex(self.__vad.u.VadFlags.Protection)))
+        attrs["Tag"] = Variant(str(self.__vad.Tag))
+        flags = self.__flagsToVariant(vadflags)
+        attrs["Flags"] = Variant(flags)
+        if hasattr(vadflags, "VadType"):
+            attrs["Vad Type"] = Variant(vadinfo.MI_VAD_TYPE.get(vadflags.VadType.v(), hex(vadflags.VadType)))
+        if vadflags.PrivateMemory != -1 and self.__vad.members.has_key("ControlArea"):
+            control_area = self.__vad.ControlArea
+            control_attrs = VMap()
+            try:
+                control_attrs["Offset"] = Variant(long(control_area.dereference().obj_offset))
+                control_attrs["Segment"] = Variant(long(control_area.Segment))
+                dereflnk = VMap()
+                dereflnk["Flink"] = Variant(long(control_area.DereferenceList.Flink))
+                dereflnk["Blink"] = Variant(long(control_area.DereferenceList.Blink))
+                control_attrs["Dereference list"] = Variant(dereflnk)
+                control_attrs["NumberOfSectionReferences"] = Variant(long(control_area.NumberOfSectionReferences))
+                control_attrs["NumberOfPfnReferences"] = Variant(long(control_area.NumberOfPfnReferences))
+                control_attrs["NumberOfMappedViews"] = Variant(long(control_area.NumberOfMappedViews))
+                control_attrs["NumberOfUserReferences"] = Variant(long(control_area.NumberOfUserReferences))
+                control_attrs["WaitingForDeletion Event"] = Variant(long(control_area.WaitingForDeletion))
+                ctrlflags = self.__flagsToVariant(control_area.u.Flags)
+                control_attrs["Flags"] = Variant(ctrlflags)
+                attrs["Control Area"] = Variant(control_attrs)
+                if self.__vad.FileObject:
+                    fileobj = VMap()
+                    fileobj["Offset"] = Variant(long(self.__vad.FileOject.obj_offset))
+                    fileobj["Name"] = Variant(str(self.__vad.FileObject.FileName or ''))
+                    attrs["FileObject"] = Variant(fileobj)
+                extattrs = VMap()
+                extattrs["First prototype PTE"] = Variant(long(self.__vad.FirstPrototypePte))
+                extattrs["Last contiguous PTE"] = Variant(long(self.__vad.LastContiguousPte))
+                attrs["Long Vad Information"] = Variant(extattrs)
+            except AttributeError:
+                pass
+        try:
+            flags2 = self.__flagsToVariant(self.__vad.u2.VadFlags2)
+            attrs["Flags2"] = Variant(flags2)
+        except:
+            pass
         return attrs
+
+
+    def __flagsToVariant(self, flags):
+        attrsflags = VMap()
+        for name in sorted(flags.members.keys()):
+            value = flags.m(name)
+            if value != 0:
+                attrsflags[str(name)] = Variant(long(value))
+        return attrsflags
 
 
     @confswitch
