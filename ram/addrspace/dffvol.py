@@ -14,7 +14,6 @@
 
 import volatility.addrspace as addrspace
 import volatility.plugins.addrspaces.standard as standard
-import urllib
 
 from dff.api.vfs.vfs import vfs
 
@@ -23,7 +22,7 @@ class dffAdressSpace(standard.FileAddressSpace):
     def __init__(self, base, config, **kwargs):
         addrspace.BaseAddressSpace.__init__(self, base, config, **kwargs)
         self.as_assert(base == None or layered, 'Must be first Address Space')
-        self.path = urllib.url2pathname(config.LOCATION[7:])
+        self.path = config.LOCATION[7:]
         self.vfs = vfs()
         self.name = self.path
         self.fname = self.path
