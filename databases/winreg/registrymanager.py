@@ -20,17 +20,66 @@ class RegistryManager(ModuleProcessusHandler):
   def __init__(self, moduleName):
     ModuleProcessusHandler.__init__(self, moduleName)
     self.registry = {}
-  
+    self._hives = {}
+
   def update(self, processus):
      rtype = processus.regType()
      if rtype != None:
        self.registry[processus] = rtype
+     self._hives = {}
+     for proc, regtype in self.registry.iteritems():
+       try:
+         self._hives[regtype[0]].append(regtype[1])
+       except:
+         self._hives[regtype[0]] = []
+         self._hives[regtype[0]].append(regtype[1])
  
   def splitPath(self, path):
     if path:
       return path.split('\\')
     else:
       return None
+
+  def getAllKeys(self, query):
+    # Compatible with only {"KEY_PATH" : {"values" :'', 'description' : ''}}
+    results = []
+    for keypath, conf in query.iteritems():
+      if not isinstance(conf, dict):
+        return None
+      spath = self.splitPath(keypath)
+      tag = self.getTag(spath)
+      res = {}
+      res["query"] = keypath
+      res["description"] = conf["description"]
+      res["keys"] = {}
+      for proc, (rtag, node) in self.registry.iteritems():
+        if rtag.capitalize() == tag.capitalize():
+          try:
+            hive, keys = self.searchRegExp(spath, proc)
+            for key in keys:
+              values = self.dumpValues(key, conf["values"])
+              if values:
+                res["keys"][key.name] = values
+          except TypeError:
+            pass
+      results.append(res)
+    return results
+
+  def dumpValues(self, key, requested):
+    values = {}
+    if key.values:
+      if len(requested) == 1 and requested[0] == '*':
+        for v in key.values:
+          values[v.name] = v.fetch_data()
+      else:
+        for value in key.values:
+          for v in requested:
+            if re.match(v, value.name, re.IGNORECASE):
+              values[v.name] = v.fetch_data()
+      return values
+    else:
+      return {}
+
 
   def getKeys(self, kvdict, root):
     # Dict of key path : value list 
