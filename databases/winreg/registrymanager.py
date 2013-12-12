@@ -170,6 +170,9 @@ class RegKey:
     setattr(self, "name", self._key.name)
     setattr(self, "hive", self._key._hive._fh.node()) #XXX sans () fonction
 
+  def parent(self):
+     return self._key.get_parent()
+
   def path(self):
      c = self._key.get_parent()
      path = [c.name]
