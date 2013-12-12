@@ -20,19 +20,19 @@ class RegistryManager(ModuleProcessusHandler):
   def __init__(self, moduleName):
     ModuleProcessusHandler.__init__(self, moduleName)
     self.registry = {}
-    self._hives = {}
+#    self._hives = {}
 
   def update(self, processus):
      rtype = processus.regType()
      if rtype != None:
        self.registry[processus] = rtype
-     self._hives = {}
-     for proc, regtype in self.registry.iteritems():
-       try:
-         self._hives[regtype[0]].append(regtype[1])
-       except:
-         self._hives[regtype[0]] = []
-         self._hives[regtype[0]].append(regtype[1])
+     # self._hives = {}
+     # for proc, regtype in self.registry.iteritems():
+     #   try:
+     #     self._hives[regtype[0]].append(regtype[1])
+     #   except:
+     #     self._hives[regtype[0]] = []
+     #     self._hives[regtype[0]].append(regtype[1])
  
   def splitPath(self, path):
     if path:
@@ -42,6 +42,7 @@ class RegistryManager(ModuleProcessusHandler):
 
   def getAllKeys(self, query):
     # Compatible with only {"KEY_PATH" : {"values" :'', 'description' : ''}}
+    # Returns a list containing from each query (key path query) a dictionnary of key : values
     results = []
     for keypath, conf in query.iteritems():
       if not isinstance(conf, dict):
@@ -58,8 +59,9 @@ class RegistryManager(ModuleProcessusHandler):
             hive, keys = self.searchRegExp(spath, proc)
             for key in keys:
               values = self.dumpValues(key, conf["values"])
-              if values:
-                res["keys"][key.name] = values
+              values["KeyModifiedTime"] = key.mtime
+              values["Hive"] = node
+              res["keys"][key.name] = values
           except TypeError:
             pass
       results.append(res)
@@ -75,7 +77,7 @@ class RegistryManager(ModuleProcessusHandler):
         for value in key.values:
           for v in requested:
             if re.match(v, value.name, re.IGNORECASE):
-              values[v.name] = v.fetch_data()
+              values[value.name] = value.fetch_data()
       return values
     else:
       return {}
