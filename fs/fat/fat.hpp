@@ -55,6 +55,8 @@ private:
   void				__clearCache();
   void				__createNodes(Node* parent, fso* fsobj, uint8_t i);
   void				__clustersListToNodes(Node* parent, fso* fsobj, const std::vector<uint32_t>& clusters);
+  mutex_def(__mutex);
+
 public:
   FileAllocationTable();
   ~FileAllocationTable();
