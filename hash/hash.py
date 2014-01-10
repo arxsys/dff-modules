@@ -21,7 +21,7 @@ from dff.api.vfs import vfs
 from dff.api.module.script import Script 
 from dff.api.module.module import Module 
 from dff.api.types.libtypes import Variant, VMap, VList, Parameter, Argument, typeId
-from dff.api.vfs.libvfs import AttributesHandler
+from dff.api.vfs.libvfs import AttributesHandler, VLink
 
 class HashSets(object):
   KNOWN_GOOD = True
@@ -265,6 +265,8 @@ class HASH(Script):
         except IndexError:
 	  algorithms = [] 
         node = args["file"].value()
+        if isinstance(node, VLink):
+          node = node.linkNode()
 	try:
 	   maxSize = args["skip_size"].value() 
  	   if node.size() > maxSize:

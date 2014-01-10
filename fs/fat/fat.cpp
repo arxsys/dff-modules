@@ -23,6 +23,7 @@ FileAllocationTable::FileAllocationTable()
 
   this->__vfile = NULL;
   this->__bs = NULL;
+  mutex_init(&this->__mutex);
   if ((this->__fatscache = (fatcache**)malloc(sizeof(fatcache)*MAX_FAT_COUNT)) != NULL)
     {
       for (i = 0; i != MAX_FAT_COUNT; i++)
@@ -35,6 +36,7 @@ FileAllocationTable::FileAllocationTable()
 
 FileAllocationTable::~FileAllocationTable()
 {
+  mutex_destroy(&this->__mutex);
   if (this->__vfile != NULL)
     {
       //XXX VFile dtor must close the opened file...
@@ -334,6 +336,8 @@ std::vector<uint64_t>	FileAllocationTable::clusterChainOffsets(uint32_t cluster,
   uint64_t		offset;
   uint32_t		i;
 
+
+  
   clusters = this->clusterChain(cluster, which);
   for (i = 0; i != clusters.size(); i++)
     {
@@ -363,6 +367,7 @@ std::vector<uint32_t>	FileAllocationTable::clusterChain(uint32_t cluster, uint8_
       if (this->__bs->fattype == 32)
 	eoc = 0x0FFFFFF8;
       max = 0;
+      mutex_lock(&this->__mutex);
       while ((cluster > 1) && (cluster < eoc) && (max < 0xFFFFFFFFL) && !this->isBadCluster(cluster) && (parsed.find(cluster) == parsed.end()))
 	{
 	  clusters.push_back(cluster);
@@ -377,6 +382,7 @@ std::vector<uint32_t>	FileAllocationTable::clusterChain(uint32_t cluster, uint8_
 	      break;
 	    }
 	}
+      mutex_unlock(&this->__mutex);
     }
   return clusters;
 }

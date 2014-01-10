@@ -73,7 +73,7 @@ void	FatTree::setFat(FileAllocationTable* fat) throw (std::string)
 void		FatTree::setUsedFat(uint8_t usedfat)
 {
   if (usedfat > 0 && this->__bs != NULL && (usedfat - 1) < this->__bs->numfat)
-    this->__usedfat = usedfat - 1;
+     this->__usedfat = usedfat - 1;
   else
     this->__usedfat = 0;
 }
@@ -575,14 +575,13 @@ void			FatTree::slackMapping(FileMapping* fm, FileSlack* snode)
       fm->push(voffset, clustsize - remaining, this->__origin, clusters[idx] + remaining);
       voffset += (clustsize - remaining);
       idx++;
-      while (idx != clusters.size())
+      while (idx < clusters.size())
 	{
 	  fm->push(voffset, clustsize, this->__origin, clusters[idx]);
 	  voffset += clustsize;
 	  idx++;
 	}
     }
-
 }
 
 
