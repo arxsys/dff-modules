@@ -53,7 +53,7 @@ uint8_t*	PffNodeEmailTransportHeaders::dataBuffer(void)
   {
     check_error(pff_error)
     delete item;
-    delete entry_string;
+    delete[] entry_string;
     return (NULL);
   }
   delete item; 

@@ -102,7 +102,7 @@ void	ewf::__initHandle(libewf_handle_t** handle, libewf_error_t** error) throw (
 	  cerr = new char[512];
 	  libewf_error_backtrace_sprint(*error, cerr, 511);
 	  err = std::string(cerr);
-	  delete cerr;
+	  delete[] cerr;
 	}
       else
 	err = std::string("Ewf: Unable to initialize handle");
@@ -147,7 +147,7 @@ void	ewf::__getVolumeName()
 	this->volumeName = std::string((char*)value, val_size-1);
       else
 	this->volumeName = std::string("ewf_volume");
-      delete value;
+      delete[] value;
     }
   return;
 }

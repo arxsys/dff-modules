@@ -61,10 +61,12 @@ ext4_extents_header *	Ext4Extents::read_header(uint8_t * block)
   ext4_extents_header *	header = NULL;
 
   if (block)
+  {
     header = (ext4_extents_header *)block;
-  if (header->magic != 0xF30A)
-    return NULL;
-  return header;
+    if (header->magic == 0xF30A)
+      return header;
+  }
+  return NULL;
 }
 
 void			Ext4Extents::read_indexes(ext4_extents_header * header,

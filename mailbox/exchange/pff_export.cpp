@@ -436,7 +436,7 @@ int pff::export_attachments(ItemInfo* itemInfo, Node* parent)
      {
        if (libpff_item_free(&attachment, &(pff_error)) == 1)
           check_error(pff_error)
-       delete attachment_filename;
+       delete[] attachment_filename;
        continue;
      }	
      std::ostringstream attachmentName;
@@ -458,13 +458,13 @@ int pff::export_attachments(ItemInfo* itemInfo, Node* parent)
 	 {
            check_error(pff_error)
 	   libpff_item_free(&attachment, &(pff_error));
-	   delete attachment_filename;
+	   delete[] attachment_filename;
 	   continue;
 	 }
          if ((result != 0) && (attachment_data_size > 0 ))
 	 {
 	   new PffNodeAttachment(attachmentName.str(), parent, this, itemInfo, attachment_data_size, attachment_iterator);
-	   delete attachment_filename;
+	   delete[] attachment_filename;
 	   libpff_item_free(&attachment, &(pff_error));
 	 }
      }    
@@ -485,7 +485,7 @@ int pff::export_attachments(ItemInfo* itemInfo, Node* parent)
 	
 	if (libpff_item_free(&attachment, &(pff_error)) != 1)
           check_error(pff_error)
-	delete attachment_filename;
+	delete[] attachment_filename;
      }
   }
   return (1);
