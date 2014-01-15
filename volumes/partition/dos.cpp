@@ -51,7 +51,7 @@ DosPartition::~DosPartition()
 	}
       catch(vfsError e)
 	{
-	  throw vfsError("Partition error while closing file" + e.error);
+	  std::cout << "Partition error while closing file" << e.error << std::endl;
 	}
     }
 }

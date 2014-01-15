@@ -59,6 +59,7 @@ uint8_t*	PffNodeAttachment::dataBuffer(void)
     if (libpff_item_free(&attachment, &pff_error) != 1)
       check_error(pff_error) 
     delete item;
+    delete[] buff;
 
     return (NULL);
   }

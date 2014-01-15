@@ -175,12 +175,12 @@ int PffNodeEMail::attributesTransportHeaders(Attributes* attr, libpff_item_t* it
   if (libpff_message_get_utf8_transport_headers(item, entry_string, message_transport_headers_size, &pff_error) != 1 )
   {
     check_error(pff_error)
-    delete entry_string;
+    delete[] entry_string;
     return (0);
   }
   this->splitTextToAttributes(std::string((char *)entry_string), attr);
 
-  delete entry_string;
+  delete[] entry_string;
   return (1);
 }
 
@@ -286,7 +286,7 @@ int PffNodeEMail::attributesRecipients(Attributes* attr, libpff_item_t* item)
 
 	   keyRecipient << "Recipient " << recipient_iterator + 1;
 	   (*attr)[keyRecipient.str()] = new Variant(attrRecipient);
-	   delete entry_value_string;
+	   delete[] entry_value_string;
 	}	
      }
      else
@@ -498,6 +498,6 @@ int PffNodeEMail::attributesMessageHeader(Attributes* attr, libpff_item_t* item)
   else
     check_error(pff_error)
 
-  delete entry_value_string;
+  delete[] entry_value_string;
   return (1);
 }

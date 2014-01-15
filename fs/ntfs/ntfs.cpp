@@ -1281,7 +1281,7 @@ void		Ntfs::_readBitmap()
     new Node(unallocChunkName.str(), (clusterIndex - unallocChunkStart) * _boot->clusterSize(), unallocatedByAddresses, NULL);
   }
 
-  delete data;
+  delete[] data;
 }
 
 void	Ntfs::_setStateInfo(std::string currentState)

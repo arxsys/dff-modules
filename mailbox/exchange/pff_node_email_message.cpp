@@ -54,7 +54,7 @@ uint8_t*	PffNodeEmailMessageText::dataBuffer(void)
   {
     check_error(pff_error)
     delete item;
-    delete entry_string;
+    delete[] entry_string;
     return (NULL);
   }
 
@@ -100,7 +100,7 @@ uint8_t*	PffNodeEmailMessageHTML::dataBuffer(void)
   {
     check_error(pff_error)
     delete item;
-    delete entry_string;
+    delete[] entry_string;
     return (NULL);
   }
 
@@ -146,7 +146,7 @@ uint8_t*	PffNodeEmailMessageRTF::dataBuffer(void)
   {
     check_error(pff_error)
     delete item;
-    delete entry_string;
+    delete[] entry_string;
 
     return (NULL);
   }
