@@ -27,8 +27,11 @@ class SqliteDB(Script):
     def execute(self, cmd):
         c = self.db.cursor()
         c.execute("PRAGMA locking_mode=EXCLUSIVE;")
-        c.execute(cmd)
-        return c
+        try:
+            c.execute(cmd)
+            return c
+        except:
+            return c
 
 
 class sqlitedb(Module):
