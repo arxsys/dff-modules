@@ -23,6 +23,7 @@ FileAllocationTable::FileAllocationTable()
 
   this->__vfile = NULL;
   this->__bs = NULL;
+  this->__origin = NULL;
   mutex_init(&this->__mutex);
   if ((this->__fatscache = (fatcache**)malloc(sizeof(fatcache)*MAX_FAT_COUNT)) != NULL)
     {
@@ -129,6 +130,7 @@ void	FileAllocationTable::process(Node* origin, fso* fsobj) throw (std::string)
 
   if (origin == NULL || fsobj == NULL)
     return;
+  this->__origin = origin;
   try
     {
       this->__vfile = origin->open();
@@ -627,13 +629,11 @@ void			FileAllocationTable::__createNodes(Node* parent, fso* fsobj, uint8_t fatn
   if (!lfree.empty())
     {
       Node* unalloc = new Node(std::string("unallocated space"), 0, fnode, fsobj);
-      unalloc->setDir();
       this->__clustersListToNodes(unalloc, fsobj, lfree);
     }
   if (!lbad.empty())
     {
       Node* bad = new Node(std::string("bad clusters"), 0, fnode, fsobj);
-      bad->setDir();
       this->__clustersListToNodes(bad, fsobj, lbad);
     }
   sstr.str("");
@@ -774,6 +774,7 @@ void		ClustersChainNode::setContext(uint32_t scluster, uint32_t count, uint64_t 
 void		ClustersChainNode::fileMapping(FileMapping* fm)
 {
   fm->push(0, this->size(), this->__origin, this->__soffset);
+  return;
 }
 
 Attributes	ClustersChainNode::_attributes(void)
