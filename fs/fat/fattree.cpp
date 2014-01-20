@@ -104,7 +104,6 @@ void	FatTree::process(Node* origin, fso* fsobj, bool metacarve) throw (std::stri
 	fsroot = new Node(this->__volname, 0, NULL, fsobj);
       else
 	fsroot = new Node("NONAME", 0, NULL, fsobj);
-      fsroot->setDir();
       this->__fsobj->stateinfo = std::string("processing regular tree 100%");
       this->makeSlackNodes();
       this->processDeleted();
@@ -420,10 +419,7 @@ void	FatTree::walkMissingAlloc(Node* parent)
 		      if (c->valid)
 			{
 			  if (rootunalloc == NULL)
-			    {
-			      rootunalloc = new Node("$OrphanedFiles", 0, NULL, this->__fsobj);
-			      rootunalloc->setDir();
-			    }
+			    rootunalloc = new Node("$OrphanedFiles", 0, NULL, this->__fsobj);
 			  if ((c->size < this->__bs->totalsize) && (c->cluster < this->__bs->totalcluster))
 			    this->__allocNode(c, rootunalloc);
 			}
@@ -483,10 +479,7 @@ void	FatTree::walkFree(Node* parent)
 		      if (c->valid)
 			{
 			  if (rootcarved == NULL)
-			    {
-			      rootcarved = new Node("$CarvedEntries", 0, NULL, this->__fsobj);
-			      rootcarved->setDir();
-			    }
+			    rootcarved = new Node("$CarvedEntries", 0, NULL, this->__fsobj);
 			  if ((c->size < this->__bs->totalsize) && (c->cluster < this->__bs->totalcluster))
 			    this->__allocNode(c, rootcarved);
 			}
