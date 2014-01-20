@@ -50,20 +50,20 @@ void VMNode::fileMapping(FileMapping *fmap)
   // Get number of extents
   uint32_t	nextents = extents.size();
   uint32_t	curextent = 0;
-  uint64_t	voffset = 0;
-  uint64_t	vextoffset = 0;
+  //uint64_t	voffset = 0;
+  //uint64_t	vextoffset = 0;
   uint64_t	currentGDE = 0;
-  int		mapcheck;
+  //int		mapcheck;
   // Parse All extents
 
   while (curextent < nextents)
     {
       currentGDE = 0;
-      vextoffset = 0;
+      //vextoffset = 0;
       while (currentGDE < extents[curextent]->GDEntries)
   	{
-  	  mapcheck = this->mapGTGrains(currentGDE, curextent, fmap, &voffset, &vextoffset, extents[curextent]->GTEntries);
-	  //	  if mapcheck
+          //mapcheck = this->mapGTGrains(currentGDE, curextent, fmap, &voffset, &vextoffset, extents[curextent]->GTEntries);
+	  //if mapcheck
   	  currentGDE++;
   	}
       curextent++;

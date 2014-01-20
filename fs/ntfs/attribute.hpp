@@ -131,7 +131,7 @@ PACK_END
  * $EA attribute
  */
 
-PACK_END
+PACK_START
 typedef struct	s_AttributeEA
 {
   uint8_t	todo;

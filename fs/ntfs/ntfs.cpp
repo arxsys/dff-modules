@@ -1050,26 +1050,28 @@ void				Ntfs::_deletedNodeWithADS(uint64_t offset,
   AttributeFileName		*metaFileName = NULL;
   AttributeFileName		*fullFileName = NULL;
   AttributeData			**data = new AttributeData *[adsAmount];
-  uint8_t			fileType = 0;
+  //uint8_t			fileType = 0;
   uint64_t			size = 0;
   uint32_t			iADS = 0;
   
   _mftEntry->decode(offset);
-  while ((attribute = _mftEntry->getNextAttribute())) {
+  while ((attribute = _mftEntry->getNextAttribute())) 
+  {
     attribute->readHeader();
-    if (attribute->getType() == ATTRIBUTE_FILE_NAME) {
+    if (attribute->getType() == ATTRIBUTE_FILE_NAME) 
+    {
       metaFileName = new AttributeFileName(*attribute);
       if (metaFileName->data()->nameSpace & ATTRIBUTE_FN_NAMESPACE_WIN32 ||
-	  metaFileName->data()->nameSpace == ATTRIBUTE_FN_NAMESPACE_POSIX) {
-	fullFileName = metaFileName;
-      }
-      if (metaFileName->data()->nameSpace & ATTRIBUTE_FN_NAMESPACE_WIN32 ||
-	  metaFileName->data()->nameSpace & ATTRIBUTE_FN_NAMESPACE_POSIX) {
-	if (metaFileName->data()->flags & ATTRIBUTE_SI_FLAG_SYSTEM ||
-	    metaFileName->data()->flags & ATTRIBUTE_SI_FLAG_ARCHIVE) {
-	  fileType = 1;
-	}
-      }
+	  metaFileName->data()->nameSpace == ATTRIBUTE_FN_NAMESPACE_POSIX) 
+	  fullFileName = metaFileName;
+      //if (metaFileName->data()->nameSpace & ATTRIBUTE_FN_NAMESPACE_WIN32 ||
+      //metaFileName->data()->nameSpace & ATTRIBUTE_FN_NAMESPACE_POSIX) 
+      //{
+      //if (metaFileName->data()->flags & ATTRIBUTE_SI_FLAG_SYSTEM ||
+      //metaFileName->data()->flags & ATTRIBUTE_SI_FLAG_ARCHIVE) {
+      //fileType = 1;
+      //}
+      //}
       if (!size)
 	size = metaFileName->data()->realSizeOfFile;
     }
@@ -1302,7 +1304,7 @@ void			Ntfs::_setStateInfo(uint32_t percent)
 void		Ntfs::start(std::map<std::string, Variant_p > args)
 {
   uint64_t	offset = 0;
-  uint16_t	mftEntryNumber;
+  //uint16_t	mftEntryNumber;
   std::map<std::string, Variant_p >::iterator	it;
   bool          noorphan = false;
   bool          unalloc = true;
@@ -1465,7 +1467,7 @@ void		Ntfs::start(std::map<std::string, Variant_p > args)
 	DEBUG(INFO, "\tValid MFTEntry found\n");
 	_root = new NtfsNode("NTFS", 0, NULL, this, _boot->getBootBlock());
 
-	mftEntryNumber = 0;
+        //mftEntryNumber = 0;
 	_mftMainFile = new MftFile(_vfile, _boot->mftEntrySize(),
 				   _boot->indexRecordSize(),
 				   _boot->sectorSize(),

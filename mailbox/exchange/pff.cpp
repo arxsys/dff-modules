@@ -266,12 +266,10 @@ int32_t  pff::vread(int fd, void *buff, unsigned int size)
 int32_t pff::vclose(int fd)
 {
   fdinfo*		fi;
-  PffNodeData*		node;
 
   try
   {
     fi = this->__fdmanager->get(fd);
-    node = dynamic_cast<PffNodeData* >(fi->node);
     PffNodeData* node = dynamic_cast<PffNodeData *>(fi->node);
     if (node == NULL)
     {
