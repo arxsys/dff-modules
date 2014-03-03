@@ -752,14 +752,19 @@ void	FatTree::__updateAllocatedClusters(uint32_t cluster)
   std::vector<uint32_t>		clusters;
   uint32_t			cidx;
   std::stringstream		sstr;
+  double			percent;
 
   if (cluster != 0 && !this->__fat->isBadCluster(cluster))
     {
       this->__allocatedClusters->insert(cluster);
       clusters = this->__fat->clusterChain(cluster, this->__usedfat);
       this->__processed += clusters.size();
-      sstr << "processing regular tree " << (this->__processed * 100) / this->__allocount << "%";
-      this->__fsobj->stateinfo = sstr.str();
+      percent = (this->__processed * 100) / this->__allocount;
+      if (percent <= 100)
+	{
+	  sstr << "processing regular tree " << percent << "%";
+	  this->__fsobj->stateinfo = sstr.str();
+	}
       for (cidx = 0; cidx != clusters.size(); cidx++)
 	if (clusters[cidx] != 0)
 	  this->__allocatedClusters->insert(clusters[cidx]);
