@@ -163,12 +163,11 @@ class AttributeHash(AttributesHandler):
       self.__lock.release()
       return h
 
-
     def setHash(self, node, algo, h):
       idx = long(node.this)
       self.__lock.acquire()
       if self.__hashs.has_key(idx):
-        hashInfo = self.__hashs[idx].hashes[algo]
+        hashInfo = self.__hashs[idx]
       else:
         hashInfo = HashInfo()
         self.__hashs[idx] = hashInfo
@@ -265,9 +264,6 @@ class HASH(Script):
       self.__knownGoodFiles = 0
       self.__errorFiles = 0
       self.__skippedFiles = 0
-      self.__calls = 0
-      self.__effectcall = 0
-      self.__hashs = set()
       self.attributeHash = AttributeHash(self, "hash")
 
 
@@ -275,11 +271,6 @@ class HASH(Script):
       node = args["file"].value()
       if isinstance(node, VLink):
         node = node.linkNode()
-      self.__lock.acquire()
-      self.__calls += 1
-      if node.uid() not in self.__hashs:
-        self.__hashs.add(node.uid())
-      self.__lock.release()
       self.__setResults()
       if node.size() == 0:
           self.__lock.acquire()
@@ -300,12 +291,14 @@ class HASH(Script):
       else:
         self.__cacheSize = 0
       currentHashSets = self.__getHashSets(args)
-      algorithms = ["sha1"]
+      algorithms = []
       if args.has_key("algorithm"):
         algos = args["algorithm"].value()
         for algo in algos:
           algo = algo.value()
           algorithms.append(algo)
+      else:
+        algorithms = ["sha1"]
       if len(currentHashSets):
         for hsetId in currentHashSets:
           self.__lock.acquire()
@@ -387,9 +380,6 @@ class HASH(Script):
           for hinstance in hinstances:
             xdigest = hinstance.hexdigest()
             hashmap[hinstance.name] = xdigest
-            self.__lock.acquire()
-            self.__effectcall += 1
-            self.__lock.release()
             if node.size() > self.__cacheSize:
               self.attributeHash.setHash(node, hinstance.name, xdigest)
             else:
@@ -425,12 +415,6 @@ class HASH(Script):
         self.res["skipped files"] = v
         v =  Variant(self.__errorFiles)
         self.res["Errors"] = v
-        v =  Variant(self.__calls)
-        self.res["calls"] = v
-        v =  Variant(self.__effectcall)
-        self.res["effective calls"] = v
-        v =  Variant(len(self.__hashs))
-        self.res["internal hash set"] = v
       except:
         pass
       self.__lock.release()
