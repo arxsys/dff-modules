@@ -20,6 +20,16 @@ class SqliteManager(ModuleProcessusHandler):
     ModuleProcessusHandler.__init__(self, name)
     self.databases = {}
 
+  def processus(self):
+     return self.databases
+
+  def childrenOf(self, mountpoint):
+    dbs = []
+    for proc, node in self.databases.iteritems():
+       if node.absolute().find(mountpoint.absolute()) == 0:
+         dbs.append(proc)
+    return dbs
+
   def update(self, processus):
     self.databases[processus] = processus.node
 
@@ -40,7 +50,7 @@ class SqliteManager(ModuleProcessusHandler):
 class Cursor:
   def __init__(self, source, cursor):
     self._cursor = cursor
-    setattr(self, "source", source)
+    self.source =  source
 
   def __iter__(self):
     return iter(self._cursor)
