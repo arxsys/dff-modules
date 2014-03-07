@@ -15,5 +15,5 @@
 install_file(
   __init__.py
   manager.py
-  sqlitemanager.py  
+  sqliteviewer.py  
 )
