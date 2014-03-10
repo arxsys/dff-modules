@@ -1,5 +1,5 @@
 # DFF -- An Open Source Digital Forensics Framework
-# Copyright (C) 2009-2013 ArxSys
+# Copyright (C) 2009-2014 ArxSys
 # This program is free software, distributed under the terms of
 # the GNU General Public License Version 2. See the LICENSE file
 # at the top of the source tree.
@@ -12,16 +12,18 @@
 # Author(s):
 #  Frederic Baguelin <fba@digital-forensic.org>
 
-add_subdirectory(partition)
-add_subdirectory(vmware)
 
-if(VSHADOW_FOUND AND BFIO_FOUND)
-  add_subdirectory (vshadow)
-else(VSHADOW_FOUND AND BFIO_FOUND)
-  message(STATUS "VSHADOW or BFIO library not found. Vshadow module will not be built.")
-endif(VSHADOW_FOUND AND BFIO_FOUND)
+if(WIN32)
+  set(definitions -DLIBPFF_HAVE_BFIO -D_LIBPFF_TYPES_H_INTEGERS -D_LIBBFIO_TYPES_H_INTEGERS)
+  set(vshadow_files ${VSHADOW_DYN_LIBRARIES} ${BFIO_DYN_LIBRARIES})
+endif()
 
-
-install_file(
-  __init__.py
-)
+dff_cpp_module(VSHADOW
+  CPP_FILES vshadow.cpp
+  libbfio_wrapper.cpp
+  SWIG_FILE vshadow.i
+  DEFINITIONS ${definitions}
+  LINK_LIBRARIES exceptions types vfs ${VSHADOW_LIBRARY} ${BFIO_LIBRARY}
+  INCLUDE_DIRS ${VSHADOW_INCLUDE_DIR} ${BFIO_INCLUDE_DIR}
+  EXTRA_FILES ${vshadow_files}
+  )
