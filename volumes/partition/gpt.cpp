@@ -231,7 +231,6 @@ void	GptPartition::__readEntries() throw (vfsError)
   entries_count = this->__header.entriesCount();
   entry_size = this->__header.entrySize();
   offset = this->__vfile->seek(this->__header.entriesLba()*this->__sectsize);
-  std::cout << "guid: " << this->__header.diskGuid() << std::endl;
   if (entry_size > sizeof(gpt_entry))
     rsize = sizeof(gpt_entry);
   else
