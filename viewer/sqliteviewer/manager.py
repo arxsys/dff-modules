@@ -11,25 +11,19 @@
 # 
 # Author(s):
 #  Jeremy MOUNIER <jmo@digital-forensic.org>
+import apsw
+from datetime import datetime 
 
 from PyQt4.QtCore import QVariant, SIGNAL, QThread, Qt, QFile, QIODevice, QStringList, QRect, SLOT, QEvent, QString, QSignalMapper, pyqtSignal, pyqtSlot, SLOT
 from PyQt4.QtGui import QWidget, QTreeWidgetItem, QIcon, QTableWidgetItem, QColor, QTableWidget, QAbstractItemView, QHeaderView, QMenu, QFileDialog
 
 from dff.api.module.manager import ModuleProcessusManager
-from dff.api.vfs.vfs import vfs
-from dff.api.filters.libfilters import Filter
-from dff.api.events.libevents import EventHandler
-
-import apsw
-
-import time
-from datetime import *
 
 from dff.ui.gui.resources.ui_sqlitemanager import Ui_SQLiteManager
 
 TABINDEX = ['BROWSE', 'CUSTOM', 'SCHEMA']
  
-class Manager(Ui_SQLiteManager, QWidget, EventHandler):
+class Manager(Ui_SQLiteManager, QWidget):
     def __init__(self):
         QWidget.__init__(self)
         self.setupUi(self)
@@ -52,7 +46,6 @@ class Manager(Ui_SQLiteManager, QWidget, EventHandler):
         self.searchForDatabases()
         self.currentDB = None
         self.queryMessage.setTextColor(Qt.red)
-
 
     def resetColumn(self):
         table = self.currentTable()
@@ -201,7 +194,7 @@ class Manager(Ui_SQLiteManager, QWidget, EventHandler):
     def populateTree(self):
         for db in self.databases:
             item = DatabaseTreeItem(self.databaseTree, db)
-            item.setText(0, QString.fromUtf8(db.name()))
+            item.setText(0, QString.fromUtf8(db.name() + " (" + db.path() + ")"))
             item.setIcon(0, QIcon(":database"))
             cursor = self.proc.executeFrom(db, 'SELECT tbl_name FROM sqlite_master where type="table";')
             for c in cursor:
@@ -215,11 +208,16 @@ class Manager(Ui_SQLiteManager, QWidget, EventHandler):
 
     def searchForDatabases(self):
         if len(self.proc.databases):
-            self.databases = []
-            for base, node in self.proc.databases.iteritems():
-                self.databases.append(node)
-                self.selectDatabase.addItem(QString.fromUtf8(node.name()))
-            self.populateTree()
+          self.databases = []
+          for base, node in self.proc.databases.iteritems():
+            already = 0
+            for n in self.databases:
+              if node.absolute() == n.absolute():
+                already = 1       
+            if not already:
+              self.databases.append(node)
+              self.selectDatabase.addItem(QString.fromUtf8(node.name()))
+          self.populateTree()
 
 class DatabaseTableItem(QTableWidgetItem):
     def __init__(self, data):
@@ -319,49 +317,3 @@ class TableResult(QTableWidget):
         menu.addAction(self.manager.actionReset_column)
         menu.popup(event.globalPos())
 
-
-# class SearchDatabase(QThread, EventHandler):
-#     def __init__(self):
-#         EventHandler.__init__(self)
-#         QThread.__init__(self)
-#         self.vfs = vfs()
-#         self.root = self.vfs.getnode("/")
-#         self.__filter = Filter("sqlite")
-#         self.__filter.connection(self)
-#         self.init()
-
-#     def init(self):
-#         self.__nodesToProcess = 0
-#         self.__processedNodes = 0
-#         self.percent = 0
-
-#     def run(self):
-#         self.searchProcess()
-
-#     def searchProcess(self):
-#         self.__filter.compile('magic matches "SQLite"')
-#         self.__filter.process(self.root, True)
-        
-#     def Event(self, ev):
-#         try:
-#             if not ev:
-#                 return
-#             if ev.type == Filter.TotalNodesToProcess:
-#                 self.__nodesToProcess = ev.value.value()
-#             elif ev.type == Filter.ProcessedNodes:
-#                 if not (ev.value.value() > self.__nodesToProcess):
-#                     self.__processedNodes += 1
-#             elif ev.type == Filter.NodeMatched:
-#                 pass
-#             elif ev.type == Filter.EndOfProcessing:
-#                 bases = self.__filter.matchedNodes()
-#                 self.emit(SIGNAL("searchDone"), bases) 
-#             pc = self.__processedNodes * 100 / self.__nodesToProcess
-#             try:
-#                 if pc > self.percent:
-#                     self.percent = pc
-#                     self.emit(SIGNAL("searchCount"), self.percent)
-#             except:
-#                 self.percent = 0
-#         except:
-#             print "Unknown Exception"

@@ -57,6 +57,8 @@ void		Fatfs::__setContext(std::map<std::string, Variant_p > args) throw (std::st
     this->__parent = it->second->value<Node*>();
   else
     throw(std::string("Fatfs module: no file provided"));
+  if (this->__parent == NULL)
+    throw(std::string("Fatfs module: Error NULL node provided"));
   if ((it = args.find("fat_to_use")) != args.end())
     {
       if ((this->__fat_to_use = it->second->value<uint16_t>()) > 255)

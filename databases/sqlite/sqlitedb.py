@@ -1,3 +1,17 @@
+# DFF -- An Open Source Digital Forensics Framework
+# Copyright (C) 2009-2013 ArxSys
+# This program is free software, distributed under the terms of
+# the GNU General Public License Version 2. See the LICENSE file
+# at the top of the source tree.
+#  
+# See http://www.digital-forensic.org for more information about this
+# project. Please do not directly contact any of the maintainers of
+# DFF for assistance; the project provides a web site, mailing lists
+# and IRC channels for your use.
+# 
+# Author(s):
+#  Solal Jacob <sja@digital-forensic.org>
+
 __dff_module_testapsw_version__ = "1.0.0"
 
 import apsw
@@ -20,7 +34,7 @@ class SqliteDB(Script):
         self.name = "SqliteDB"
 
     def start(self, args):     
-       self.node = args["node"].value()
+       self.node = args["file"].value()
        avfs = apswvfs.apswVFS()
        self.db = apsw.Connection(self.node.absolute(), vfs = avfs.vfsname)
 
@@ -28,18 +42,17 @@ class SqliteDB(Script):
         c = self.db.cursor()
         c.execute("PRAGMA locking_mode=EXCLUSIVE;")
         try:
-            c.execute(cmd)
-            return c
+          c.execute(cmd)
+          return c
         except:
-            return c
-
+          return c
 
 class sqlitedb(Module):
     """Allows to query sqlite database trough the VFS"""
     def __init__(self):
         Module.__init__(self, "sqlitedb", SqliteDB) 
         self.conf.addArgument({"input": Argument.Optional|Argument.Single|typeId.Node,
-                               "name": "node",
+                               "name": "file",
                                "description": "sqlite base wrapper."
                                })
 	self.conf.addConstant({"name": "mime-type", 

@@ -22,6 +22,6 @@ add_subdirectory(bindiff)
 add_subdirectory(timeline)
 add_subdirectory(web)
 add_subdirectory(media)
-add_subdirectory(sqlitemanager)
+add_subdirectory(sqliteviewer)
 add_subdirectory(pdf)
 
