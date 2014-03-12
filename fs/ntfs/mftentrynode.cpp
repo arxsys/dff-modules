@@ -36,15 +36,18 @@ MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* fsNode, uint64_t offset, std::strin
 
   if (vfile->seek(this->offset()) != this->offset())
   {
-    vfile->close();
+          //vfile->close();
+    delete vfile;
     throw std::string("Can't seek to MFT entry structure");
   }
   if  (vfile->read((void *) (this->__MFTEntry), sizeof(MFTEntry)) != sizeof(MFTEntry))
   {
-    vfile->close();
+//    vfile->close();
+    delete vfile;
     throw std::string("Can't read MFT Entry structure");
   }
-  vfile->close();
+  delete vfile;
+  //vfile->close();
 
   this->__state++;
 

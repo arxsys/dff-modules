@@ -48,7 +48,7 @@ FileName::FileName(MFTAttribute* mftAttribute) : MFTAttributeContent(mftAttribut
  
   if (vfile->read((void*)&(this->__fileName), sizeof(FileName_s)) != sizeof(FileName_s))
   {
-    vfile->close();
+    delete vfile;
     throw vfsError("Can't read attribute $FILE_NAME");
   }
   //std::cout << "FileName::FileName new uint16_t * " << this->nameLength() << std::endl;
@@ -57,10 +57,10 @@ FileName::FileName(MFTAttribute* mftAttribute) : MFTAttributeContent(mftAttribut
   if (vfile->read((void*)this->__name, this->nameLength() * sizeof(uint16_t)) != (int32_t)(this->nameLength() *sizeof(uint16_t)))
   {
     printf("name legnth %d\n", this->nameLength());
-    vfile->close();
+    delete vfile;
     throw vfsError("Can't read attribute $FILE_NAME.name of length ");
   }
-  vfile->close();
+  delete vfile;
 }
 
 MFTAttributeContent*	FileName::create(MFTAttribute*	mftAttribute)
@@ -73,7 +73,7 @@ FileName::~FileName()
 {
   if (this->__name != NULL)
   {
-    delete this->__name;
+    delete[] this->__name;
     this->__name = NULL;
   }
 //deallocate filename? 

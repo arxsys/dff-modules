@@ -22,10 +22,8 @@
 
 #include <iostream>
 
-NTFS::NTFS() : mfso("NTFS")
+NTFS::NTFS() : __opt(NULL), __rootDirectoryNode(new Node("NTFS")), __bootSectorNode(NULL), mfso("NTFS")
 {
-  this->__bootSectorNode = NULL;
-  this->__rootDirectoryNode = new Node("NTFS");
 }
 
 NTFS::~NTFS()
@@ -58,10 +56,10 @@ void 		NTFS::start(Attributes args)
   printf("sizeof MFTEntryNode %d\n", sizeof(MFTEntryNode));
   while (i * 1024 < mftNode->size())
   {
-     std::ostringstream cMFTStream;
-     cMFTStream << "Parsing " << i << "/" << nMFT << endl;
-     std::cout << cMFTStream.str() << std::endl;
-     this->setStateInfo(cMFTStream.str());
+          //std::ostringstream cMFTStream;
+     //cMFTStream << "Parsing " << i << "/" << nMFT << endl;
+     //std::cout << cMFTStream.str() << std::endl;
+     //this->setStateInfo(cMFTStream.str());
      MFTNode* currentMFTNode = new MFTNode(this, mftNode, this->rootDirectoryNode(), i * 1024);
      i += 1;
   }

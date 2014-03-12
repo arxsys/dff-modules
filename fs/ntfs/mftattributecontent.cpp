@@ -48,9 +48,10 @@ void		MFTAttributeContent::fileMapping(FileMapping* fm)
     RunListInfo	runListInfo;
 
     VFile* runList = this->__mftAttribute->mftEntryNode()->open();  
+    
     if (runList->seek(this->__mftAttribute->offset() + this->__mftAttribute->runListOffset()) != (this->__mftAttribute->offset() + this->__mftAttribute->runListOffset()))
     {
-      runList->close();
+      delete runList;
       return ;
     }
 
@@ -68,6 +69,11 @@ void		MFTAttributeContent::fileMapping(FileMapping* fm)
       {
         int64_t toffset = -1;
 
+        if (runListInfo.info.offsetSize > 8) //XXX the bug was here memcopy will overwrite stack struct
+        {
+          printf("runListInfo.info.offsetSize %d\n", runListInfo.info.offsetSize);
+          break;
+        }
         memcpy(&toffset, &runOffset, runListInfo.info.offsetSize);
         runOffset = toffset;
       }
@@ -80,7 +86,7 @@ void		MFTAttributeContent::fileMapping(FileMapping* fm)
       fm->push(totalSize, runLength * clusterSize, fsNode, runPreviousOffset * clusterSize);
       totalSize += runLength * clusterSize;  
     }
-    runList->close();
+    delete runList;
   }
 }
 

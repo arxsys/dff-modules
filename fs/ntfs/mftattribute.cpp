@@ -32,22 +32,21 @@ MFTAttribute::MFTAttribute(MFTEntryNode* mftEntryNode, uint64_t offset)
 
   //std::cout << "MFTAttribute::MFTAttribute mftEntryNode->open()" << std::endl;
   VFile*  vfile = mftEntryNode->open();
-
   //std::cout << "MFTAttribute::MFTAttribute mftEntryNode->vfile->seek()" << std::endl;
   if (vfile->seek(offset) != offset)
   {
-    vfile->close();
+    delete vfile;
     throw std::string("MFT Attribute can't seek to attribute offset");
   }
   //std::cout << "MFTAttribute::MFTAttribute mftEntryNode->vfile->read()" << std::endl;
   if (vfile->read((void*) this->__mftAttribute, sizeof(MFTAttribute_s)) != sizeof(MFTAttribute_s))
   {
-    vfile->close();
+    delete vfile;
     throw std::string("MFT Attribute can't read enough data");
   }
   if (this->typeID() == 0xffffffff)
   {
-    vfile->close();
+    delete vfile;
     throw std::string("End of attribute");
   }
 
@@ -57,7 +56,7 @@ MFTAttribute::MFTAttribute(MFTEntryNode* mftEntryNode, uint64_t offset)
     this->__residentAttribute = new MFTResidentAttribute;
     if (vfile->read((void*) this->__residentAttribute, sizeof(MFTResidentAttribute)) != sizeof(MFTResidentAttribute))
     {
-      vfile->close();
+      delete vfile;
       throw std::string("MFT can't read resident attribute");
     }
   }
@@ -67,11 +66,11 @@ MFTAttribute::MFTAttribute(MFTEntryNode* mftEntryNode, uint64_t offset)
     this->__nonResidentAttribute = new MFTNonResidentAttribute;
     if (vfile->read((void*) this->__nonResidentAttribute, sizeof(MFTNonResidentAttribute)) != sizeof(MFTNonResidentAttribute))
       {
-	vfile->close();
+        delete vfile;
         throw std::string("MFT can't read resident attribute");
       }
   }
-  vfile->close();
+  delete vfile;
 }
 
 MFTAttribute::~MFTAttribute()

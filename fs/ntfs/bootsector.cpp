@@ -29,7 +29,7 @@ BootSectorNode::BootSectorNode(NTFS* ntfs) : Node(std::string("$Boot"), 512, ntf
   VFile* vfile = this->open();
   vfile->seek(0);
   uint64_t readed = vfile->read((void*) (this->__bootSector), sizeof(BootSector));
-  vfile->close();
+  delete vfile;
 
   if (readed != sizeof(BootSector))
     throw vfsError(std::string("Can't read start of boot sector"));

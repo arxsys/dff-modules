@@ -13,18 +13,11 @@
 # Author(s):
 #  Solal Jacob <sja@digital-forensic.org>
 
-FIND_PACKAGE(SWIG REQUIRED)
-INCLUDE(${SWIG_USE_FILE})
-
-include_directories(${PYTHON_INCLUDE_PATH})
-
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${CMAKE_HOME_DIRECTORY}/dff/api/include)
 include_directories(${ICU_INCLUDE_DIRS})
 
 
-set(ntfs_srcs
-  ntfs.cpp
+dff_cpp_module(ntfs
+  CPP_FILES ntfs.cpp
   ntfsopt.cpp
   bootsector.cpp
   mftentrynode.cpp
@@ -33,24 +26,7 @@ set(ntfs_srcs
   mftnode.cpp
   standardinformation.cpp
   filename.cpp
+  SWIG_FILE ntfs.i
+  INCLUDE_DIRS ${ICU_INCLUDE_DIRS}
+  LINK_LIBRARIES ${ICU_LIBRARIES} exceptions types vfs
 )
-
-SET_SOURCE_FILES_PROPERTIES(ntfs.i PROPERTIES CPLUSPLUS ON)
-SWIG_ADD_MODULE(ntfs python ntfs.i ${ntfs_srcs})
-SWIG_LINK_LIBRARIES(ntfs ${PYTHON_LIBRARIES} ${ICU_LIBRARIES} _libexceptions _libtypes _libvfs icui18n)
-
-if ( CMAKE_GENERATOR MATCHES "Visual Studio")
-set_target_properties (${SWIG_MODULE_ntfs_REAL_NAME} PROPERTIES
-  SUFFIX ".pyd"
-  RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_BINARY_DIR}"
-  RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_CURRENT_BINARY_DIR}"
-  RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_CURRENT_BINARY_DIR}"
-)
-endif ( CMAKE_GENERATOR MATCHES "Visual Studio")
-
-set(ntfs_files
-  ntfs.py
-)
-
-install_lib(${SWIG_MODULE_ntfs_REAL_NAME})
-install_file(ntfs ${ntfs_files})

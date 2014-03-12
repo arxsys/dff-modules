@@ -38,8 +38,7 @@ PACK_S FileName_s
   uint32_t		reparseValue;
   uint8_t		nameLength;
   uint8_t		nameSpace;
-;
- } PACK;
+} PACK;
 
 class FileName : public MFTAttributeContent
 {

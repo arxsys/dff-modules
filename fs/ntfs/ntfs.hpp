@@ -17,8 +17,6 @@
 #ifndef __NTFS_HH__
 #define __NTFS_HH__
 
-using namespace std;
-
 #include "ntfs_common.hpp"
 
 class NTFSOpt;

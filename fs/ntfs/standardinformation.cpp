@@ -45,10 +45,12 @@ StandardInformation::StandardInformation(MFTAttribute* mftAttribute) : MFTAttrib
  
   if (vfile->read((void*)&(this->__standardInformation), sizeof(StandardInformation_s)) != sizeof(StandardInformation_s))
   {
-    vfile->close();
+          //vfile->close();
+    delete vfile;
     throw vfsError("Can't read attribute Standard Informations");
   }
-  vfile->close();
+  delete vfile;
+  //vfile->close();
 }
 
 MFTAttributeContent*	StandardInformation::create(MFTAttribute* mftAttribute)
