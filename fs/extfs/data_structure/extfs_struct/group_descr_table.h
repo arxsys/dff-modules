@@ -1,6 +1,6 @@
 /* 
  * DFF -- An Open Source Digital Forensics Framework
- * Copyright (C) 2009-2011 ArxSys
+ * Copyright (C) 2009-2013 ArxSys
  * 
  * This program is free software, distributed under the terms of
  * the GNU General Public License Version 2. See the LICENSE file
@@ -19,16 +19,9 @@
 #ifndef __GROUP_DESCR_TABLE_H__
 #define __GROUP_DESCR_TABLE_H__
 
-#ifdef WIN32
-#define PACK
-#else
-#define PACK __attribute__ ((packed))
-#endif
+#include "export.hpp"
 
-#ifdef WIN32
-#pragma pack(1)
-#endif
-
+PACK_START
 typedef struct	__group_descr_table_s
 {
   uint32	block_bitmap_addr;
@@ -38,7 +31,7 @@ typedef struct	__group_descr_table_s
   uint16	unallocated_inodes_nbr;
   uint16	dir_nbr;
   uchar		unused[14];
-}PACK		group_descr_table_t;
-
+}		group_descr_table_t;
+PACK_END
 
 #endif

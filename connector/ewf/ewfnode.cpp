@@ -1,6 +1,6 @@
 /*
  * DFF -- An Open Source Digital Forensics Framework
- * Copyright (C) 2009-2011 ArxSys
+ * Copyright (C) 2009-2013 ArxSys
  * This program is free software, distributed under the terms of
  * the GNU General Public License Version 2. See the LICENSE file
  * at the top of the source tree.
@@ -28,7 +28,7 @@ std::string	EWFNode::__getHashIdentifier(uint32_t index) throw()
       id = new uint8_t[id_size];
       if (libewf_handle_get_hash_value_identifier(this->ewfso->ewf_ghandle, index, id, id_size, NULL) == 1)
 	identifier = std::string((char*)id);
-      delete id;
+      delete[] id;
     }
   return identifier;
 }
@@ -45,7 +45,7 @@ std::string	EWFNode::__getHashValue(std::string identifier) throw ()
       val = new uint8_t[val_size];
       if (libewf_handle_get_utf8_hash_value(this->ewfso->ewf_ghandle, (uint8_t*)identifier.c_str(), identifier.size(), val, val_size, NULL) == 1)
 	value = std::string((char*)val);
-      delete val;
+      delete[] val;
     }
   return value;
 }
@@ -62,7 +62,7 @@ std::string	EWFNode::__getIdentifier(uint32_t index) throw ()
       id = new uint8_t[id_size];
       if (libewf_handle_get_header_value_identifier(this->ewfso->ewf_ghandle, index, id, id_size, NULL) == 1)
 	identifier = std::string((char*)id);
-      delete id;
+      delete[] id;
     }
   return identifier;
 }
@@ -79,7 +79,7 @@ std::string		EWFNode::__getValue(std::string identifier) throw ()
       val = new uint8_t[val_size];
       if (libewf_handle_get_utf8_header_value(this->ewfso->ewf_ghandle, (uint8_t*)identifier.c_str(), identifier.size(), val, val_size, NULL) == 1)
 	value = std::string((char*)val);
-      delete val;
+      delete[] val;
     }
   return value;
 }

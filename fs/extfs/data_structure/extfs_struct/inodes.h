@@ -1,6 +1,6 @@
 /*
  * DFF -- An Open Source Digital Forensics Framework
- * Copyright (C) 2009-2011 ArxSys
+ * Copyright (C) 2009-2013 ArxSys
  *
  * This program is free software, distributed under the terms of
  * the GNU General Public License Version 2. See the LICENSE file
@@ -19,15 +19,7 @@
 #ifndef __INODES__H__
 #define __INODES__H__
 
-#ifdef WIN32
-#define PACK
-#else
-#define PACK __attribute__ ((packed))
-#endif
-
-#ifdef WIN32
-#pragma pack(1)
-#endif
+#include "export.hpp"
 
 /* permissions bits: */
 #define _ISUID  0x0004000
@@ -67,6 +59,7 @@
 #define _ISLNK(mode)    __ISTYPE((mode), __IFLNK)
 #define _ISSOCK(mode)   __ISTYPE((mode), __IFSOCK)
 
+PACK_START
 typedef struct	inodes_s
 {
   uint16	file_mode;
@@ -95,6 +88,7 @@ typedef struct	inodes_s
   uint16	upper_uid;
   uint16	upper_gid;
   uint32	unused3;
-}PACK	    inodes_t;
+}	    inodes_t;
+PACK_END
 
 #endif

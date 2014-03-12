@@ -1,5 +1,5 @@
 # DFF -- An Open Source Digital Forensics Framework
-# Copyright (C) 2009-2011 ArxSys
+# Copyright (C) 2009-2013 ArxSys
 # This program is free software, distributed under the terms of
 # the GNU General Public License Version 2. See the LICENSE file
 # at the top of the source tree.
@@ -13,7 +13,7 @@
 #  Frederic Baguelin <fba@digital-forensic.org>
 
 dff_cpp_module(FATFS
-  CPP_FILES fatfs.cpp bootsector.cpp fat.cpp fattree.cpp fatnodes.cpp entries.cpp
+  CPP_FILES fatfs.cpp bootsector.cpp fat.cpp fattree.cpp entries.cpp
   SWIG_FILE fatfs.i
   LINK_LIBRARIES ${ICU_LIBRARIES} exceptions types vfs tree
   INCLUDE_DIRS ${ICU_INCLUDE_DIRS} ${CMAKE_HOME_DIRECTORY}/dff/api/tree

@@ -1,6 +1,6 @@
 /*
  * DFF -- An Open Source Digital Forensics Framework
- * Copyright (C) 2009-2011 ArxSys
+ * Copyright (C) 2009-2013 ArxSys
  * This program is free software, distributed under the terms of
  * the GNU General Public License Version 2. See the LICENSE file
  * at the top of the source tree.
@@ -17,10 +17,16 @@
 #ifndef __BOOTSECTOR_HPP__
 #define __BOOTSECTOR_HPP__
 
-#include "vfile.hpp"
-#include "fatfs.hpp"
 #include <list>
 #include <string>
+#include <stdint.h>
+
+#include "vfile.hpp"
+#include "fso.hpp"
+#include "node.hpp"
+#include "filemapping.hpp"
+#include "variant.hpp"
+#include "datatype.hpp"
 
 typedef struct
 {
@@ -124,20 +130,18 @@ typedef struct
 
 #define ERRFATTYPEMASK	0x7F
 
+
 class BootSector: public fsctx
 {
 private:
   uint8_t	err;
   std::string	errlog;
-  bootsector	bs;
-  Node*		origin;
-  VFile*	vfile;
-  class Fatfs*	fs;
+  bootsector	__bs;
+  Attributes	__attrs;
 
   void		fillSectorSize();
   void		fillClusterSize();
   void		fillTotalSector();
-  void		fillTotalSize();
   void		fillReserved();
   void		fillSectorPerFat();
   void		fillNumberOfFat();
@@ -151,8 +155,56 @@ private:
 public:
   BootSector();
   ~BootSector();
-  void			process(Node* node, class Fatfs* fs);
-  void			addResults();
+  void		process(Node* node, fso* fsobj) throw (std::string);
+};
+
+
+class BootSectorNode : public Node
+{
+private:
+  Attributes	__attrs;
+  uint64_t	__offset;
+  Node*		__origin;
+public:
+  BootSectorNode(std::string name, uint64_t size, Node* parent, fso* fsobj);
+  ~BootSectorNode();
+  void			setContext(Node* origin, Attributes attrs, uint64_t offset);
+  virtual void		fileMapping(FileMapping* fm);
+  virtual Attributes	_attributes();
+  virtual Attributes	dataType();
+};
+
+
+class ReservedSectors: public Node
+{
+private:
+  fso*	__fsobj;
+  uint64_t	__sreserved;
+  uint64_t	__ssize;
+  Node*		__origin;
+public:
+  ReservedSectors(std::string name, uint64_t size, Node* parent, fso* fsobj);
+  ~ReservedSectors();
+  void				setContext(uint64_t reserved, uint64_t ssize, Node* origin);
+  virtual void			fileMapping(FileMapping* fm);
+  virtual Attributes		_attributes(void);
+  virtual Attributes		dataType();
+};
+
+
+class FileSystemSlack: public Node
+{
+private:
+  uint64_t __totalsize;
+  uint16_t __ssize;
+  Node*	   __origin;
+public:
+  FileSystemSlack(std::string name, uint64_t size, Node* parent, fso* fs);
+  ~FileSystemSlack();
+  void				setContext(uint64_t totalsize, uint16_t ssize, Node* origin);
+  virtual void			fileMapping(FileMapping* fm);
+  virtual Attributes		_attributes(void);
+  virtual Attributes		dataType();
 };
 
 #endif

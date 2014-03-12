@@ -1,6 +1,6 @@
 /*
  * DFF -- An Open Source Digital Forensics Framework
- * Copyright (C) 2009-2011 ArxSys
+ * Copyright (C) 2009-2013 ArxSys
  * This program is free software, distributed under the terms of
  * the GNU General Public License Version 2. See the LICENSE file
  * at the top of the source tree.
@@ -86,40 +86,34 @@ Attributes PffNodeEMail::allAttributes(libpff_item_t*	item)
 Attributes PffNodeEMail::_attributes()
 {
   Attributes		attr;
-  libpff_item_t*	item = NULL;
+  Item*	                item = NULL;
 
-  if (this->pff_item == NULL)
-  {
-    if (libpff_file_get_item_by_identifier(*(this->pff_file), this->identifier, &item, this->pff_error) != 1)
-       return attr;
-  }
-  else 
-    item = *(this->pff_item);
+  if ((item = this->__itemInfo->item(this->__pff()->pff_file())) == NULL)
+    return attr;
 
-  attr = this->allAttributes(item);
-
-  if (this->pff_item == NULL)
-    libpff_item_free(&item, this->pff_error);
+  attr = this->allAttributes(item->pff_item());
+  delete item;
 
   return attr;
 }
 
 void PffNodeEMail::splitTextToAttributes(std::string text, Attributes* attr)
 {
-
  size_t 	splitter = 0;
  size_t		next_splitter = 0;
  size_t 	eol = 0;
  size_t 	next_eol = 0;
+ size_t         line = 0;
  size_t 	buff_size = text.length();
  std::string	key;
  std::string 	value;
 
- while (splitter < buff_size || next_eol + 3 < buff_size)
+ while (splitter < buff_size && next_eol + 3 < buff_size && line != std::string::npos)
  {
    splitter = text.find(": ", splitter);
    if (splitter == std::string::npos)
      return ;
+
    eol = text.rfind("\n", splitter); 
    if (eol == std::string::npos)
    {
@@ -136,7 +130,7 @@ void PffNodeEMail::splitTextToAttributes(std::string text, Attributes* attr)
    if (next_eol == buff_size - 1)
      next_eol -= 2;
 
-   size_t line = text.find("\n", splitter + 1);
+   line = text.find("\n", splitter + 1);
    if (next_splitter < line)
    {
      next_splitter = text.find(": ", line);
@@ -145,7 +139,9 @@ void PffNodeEMail::splitTextToAttributes(std::string text, Attributes* attr)
  
      next_eol = text.rfind("\n", next_splitter);
      if (next_eol == std::string::npos)
+     {
        next_eol = buff_size;
+     }
    }
    value = text.substr(splitter + 2,  next_eol - splitter - 3); 
 
@@ -161,32 +157,37 @@ void PffNodeEMail::splitTextToAttributes(std::string text, Attributes* attr)
 
 int PffNodeEMail::attributesTransportHeaders(Attributes* attr, libpff_item_t* item)
 {
-  size_t message_transport_headers_size  = 0; 
-  uint8_t *entry_string = NULL;
+  size_t          message_transport_headers_size  = 0; 
+  libpff_error_t* pff_error                       = NULL;
+  uint8_t*        entry_string                    = NULL;
 
   if (libpff_message_get_utf8_transport_headers_size(item, &message_transport_headers_size,
-	          				     this->pff_error) != 1)
+	          				     &pff_error) != 1)
+  {
+    check_error(pff_error)
     return (0);
-
+  }
   if (message_transport_headers_size <= 0)
     return (0);
 
   entry_string =  new uint8_t [message_transport_headers_size];
 
-  if (libpff_message_get_utf8_transport_headers(item, entry_string, message_transport_headers_size, this->pff_error ) != 1 )
+  if (libpff_message_get_utf8_transport_headers(item, entry_string, message_transport_headers_size, &pff_error) != 1 )
   {
-    delete entry_string;
+    check_error(pff_error)
+    delete[] entry_string;
     return (0);
   }
   this->splitTextToAttributes(std::string((char *)entry_string), attr);
 
-  delete entry_string;
+  delete[] entry_string;
   return (1);
 }
 
 
 int PffNodeEMail::attributesRecipients(Attributes* attr, libpff_item_t* item)
 {
+  libpff_error_t*        pff_error                      = NULL;
   libpff_item_t*	recipients			= NULL;
   uint8_t*		entry_value_string          	= NULL;
   int			number_of_recipients		= 0;
@@ -195,36 +196,49 @@ int PffNodeEMail::attributesRecipients(Attributes* attr, libpff_item_t* item)
   uint32_t 		entry_value_32bit		= 0;
   int 			recipient_iterator		= 0;
 
-  if (libpff_message_get_recipients(item, &recipients, this->pff_error) == 1)
+  if (libpff_message_get_recipients(item, &recipients, &pff_error) == 1)
   {
-     if (libpff_item_get_number_of_sets(recipients, (uint32_t*) &number_of_recipients, this->pff_error) != 1)
-      return (0); 
+     if (libpff_item_get_number_of_sets(recipients, (uint32_t*) &number_of_recipients, &pff_error) != 1)
+     {
+        check_error(pff_error)
+        if (libpff_item_free(&recipients, &pff_error) != 1)
+           check_error(pff_error)
+        return (0); 
+     }
      if (number_of_recipients > 0)
      {
         for (recipient_iterator = 0; recipient_iterator < number_of_recipients; recipient_iterator++)
 	{
-	   if (libpff_item_get_entry_value_utf8_string_size(recipients, recipient_iterator, LIBPFF_ENTRY_TYPE_DISPLAY_NAME, &entry_value_string_size, 0, NULL) == 1)
+	   if (libpff_item_get_entry_value_utf8_string_size(recipients, recipient_iterator, LIBPFF_ENTRY_TYPE_DISPLAY_NAME, &entry_value_string_size, 0, &pff_error) == 1)
 	   {
 	     if (entry_value_string_size > maximum_entry_value_string_size)
 	     {
 		maximum_entry_value_string_size = entry_value_string_size;
 	     }
   	   }
-	   if (libpff_recipients_get_utf8_display_name_size(recipients, recipient_iterator, &entry_value_string_size, NULL) == 1)
+           else
+             check_error(pff_error)
+	   if (libpff_recipients_get_utf8_display_name_size(recipients, recipient_iterator, &entry_value_string_size, &pff_error) == 1)
 	   {
 	      if (entry_value_string_size > maximum_entry_value_string_size)
 		maximum_entry_value_string_size = entry_value_string_size;
 	   }
-	   if (libpff_item_get_entry_value_utf8_string_size(recipients, recipient_iterator, LIBPFF_ENTRY_TYPE_ADDRESS_TYPE, &entry_value_string_size, 0, NULL) == 1)
+           else
+             check_error(pff_error)
+	   if (libpff_item_get_entry_value_utf8_string_size(recipients, recipient_iterator, LIBPFF_ENTRY_TYPE_ADDRESS_TYPE, &entry_value_string_size, 0, &pff_error) == 1)
 	   {
 	      if (entry_value_string_size > maximum_entry_value_string_size)
 		maximum_entry_value_string_size = entry_value_string_size;
 	   }
-           if (libpff_item_get_entry_value_utf8_string_size(recipients, recipient_iterator, LIBPFF_ENTRY_TYPE_EMAIL_ADDRESS, &entry_value_string_size, 0, NULL) == 1)
+           else
+             check_error(pff_error)
+           if (libpff_item_get_entry_value_utf8_string_size(recipients, recipient_iterator, LIBPFF_ENTRY_TYPE_EMAIL_ADDRESS, &entry_value_string_size, 0, &pff_error) == 1)
 	   {	
 	      if (entry_value_string_size > maximum_entry_value_string_size)
 		maximum_entry_value_string_size = entry_value_string_size;
            }
+           else
+             check_error(pff_error)
 	   if ((maximum_entry_value_string_size == 0))
 		continue ;
 
@@ -232,19 +246,25 @@ int PffNodeEMail::attributesRecipients(Attributes* attr, libpff_item_t* item)
 
 	   entry_value_string = (uint8_t*) new uint8_t[maximum_entry_value_string_size];
 
-	   if (libpff_item_get_entry_value_utf8_string(recipients, recipient_iterator, LIBPFF_ENTRY_TYPE_DISPLAY_NAME, entry_value_string, maximum_entry_value_string_size, 0, NULL) == 1)
+	   if (libpff_item_get_entry_value_utf8_string(recipients, recipient_iterator, LIBPFF_ENTRY_TYPE_DISPLAY_NAME, entry_value_string, maximum_entry_value_string_size, 0, &pff_error) == 1)
 	    attrRecipient["Display Name"] = new Variant(std::string((char *)entry_value_string));
+           else
+             check_error(pff_error)
 
-	   if (libpff_recipients_get_utf8_display_name(recipients, recipient_iterator, entry_value_string, maximum_entry_value_string_size, NULL) == 1)
+	   if (libpff_recipients_get_utf8_display_name(recipients, recipient_iterator, entry_value_string, maximum_entry_value_string_size, &pff_error) == 1)
 	     attrRecipient["Recipient display name"] = new Variant(std::string((char*)entry_value_string));
-
-	   if (libpff_item_get_entry_value_utf8_string(recipients, recipient_iterator, LIBPFF_ENTRY_TYPE_ADDRESS_TYPE, entry_value_string, maximum_entry_value_string_size, 0, NULL) == 1)
+           else
+             check_error(pff_error)
+              
+	   if (libpff_item_get_entry_value_utf8_string(recipients, recipient_iterator, LIBPFF_ENTRY_TYPE_ADDRESS_TYPE, entry_value_string, maximum_entry_value_string_size, 0, &pff_error) == 1)
 	     attrRecipient["Address type"] = new Variant((char*) entry_value_string);
-
-	   if (libpff_item_get_entry_value_utf8_string(recipients, recipient_iterator, LIBPFF_ENTRY_TYPE_EMAIL_ADDRESS, entry_value_string, maximum_entry_value_string_size, 0, NULL) == 1)
+            else
+               check_error(pff_error)
+	   if (libpff_item_get_entry_value_utf8_string(recipients, recipient_iterator, LIBPFF_ENTRY_TYPE_EMAIL_ADDRESS, entry_value_string, maximum_entry_value_string_size, 0, &pff_error) == 1)
 	     attrRecipient["Email address"] = new Variant((char*)entry_value_string);
-
-	   if (libpff_recipients_get_type(recipients, recipient_iterator, &entry_value_32bit, NULL) == 1)
+           else
+             check_error(pff_error)
+	   if (libpff_recipients_get_type(recipients, recipient_iterator, &entry_value_32bit, &pff_error) == 1)
 	   {
 	      for (uint32_t n = 0; n < 5; n++)
 	      {
@@ -259,23 +279,37 @@ int PffNodeEMail::attributesRecipients(Attributes* attr, libpff_item_t* item)
 		 }
 	      }
 	   }
+           else
+             check_error(pff_error)
+                
 	   std::ostringstream keyRecipient;
 
 	   keyRecipient << "Recipient " << recipient_iterator + 1;
 	   (*attr)[keyRecipient.str()] = new Variant(attrRecipient);
-	   delete entry_value_string;
+	   delete[] entry_value_string;
 	}	
      }
      else
+     {
+       if (libpff_item_free(&recipients, &pff_error) != 1)
+         check_error(pff_error)
        return (0);
+     }
   }
   else 
+  {
+    check_error(pff_error)
     return (0);
+  }
+
+  if (libpff_item_free(&recipients, &pff_error) != 1)
+    check_error(pff_error)
   return (1);   
 }
 
 int PffNodeEMail::attributesMessageConversationIndex(Attributes* attr, libpff_item_t* item)
 {
+  libpff_error_t* pff_error             = NULL;
   uint8_t*	entry_value 		= NULL;
   uint32_t	entry_value_index	= 0;
   size_t   	entry_value_size 	= 0;
@@ -284,16 +318,20 @@ int PffNodeEMail::attributesMessageConversationIndex(Attributes* attr, libpff_it
   int		list_iterator		= 0;
   int		result			= 0;
 
-  result = libpff_message_get_conversation_index_size(item, &entry_value_size, this->pff_error);
+  result = libpff_message_get_conversation_index_size(item, &entry_value_size, &pff_error);
   if (result == -1 || result == 0 || entry_value_size == 0)
+  {
+    check_error(pff_error)
     return (0);
- 
+  }
   entry_value = (uint8_t *)malloc(sizeof(uint8_t) * entry_value_size);
   if (entry_value == NULL)
     return (0);
-  result = libpff_message_get_conversation_index(item, entry_value, entry_value_size, this->pff_error);
+  result = libpff_message_get_conversation_index(item, entry_value, entry_value_size, &pff_error);
   if ((result != 1) || (entry_value_size < 22) || (entry_value[0] != 0x01))
   {
+    if (result != 1)
+      check_error(pff_error)
     free(entry_value);
     return (0);
   }
@@ -348,6 +386,7 @@ int PffNodeEMail::attributesMessageConversationIndex(Attributes* attr, libpff_it
 int PffNodeEMail::attributesMessageHeader(Attributes* attr, libpff_item_t* item)
 {
   std::ostringstream		flags;
+  libpff_error_t*               pff_error                       = NULL;
   char*				entry_value_string 		= NULL;
   size_t			entry_value_string_size 	= 0;
   size_t 			maximum_entry_value_string_size	= 0;
@@ -373,7 +412,7 @@ int PffNodeEMail::attributesMessageHeader(Attributes* attr, libpff_item_t* item)
   value_time_to_attribute(libpff_message_get_modification_time, "Modification time")
   value_uint32_to_attribute(libpff_message_get_size, "Message size")  
 
-  if (libpff_message_get_flags(item, &entry_value_32bit, NULL) == 1)
+  if (libpff_message_get_flags(item, &entry_value_32bit, &pff_error) == 1)
   {
      if ((entry_value_32bit & LIBPFF_MESSAGE_FLAG_READ) == LIBPFF_MESSAGE_FLAG_READ)
        (*attr)["Is readed"] = new Variant(std::string("Yes"));
@@ -391,6 +430,8 @@ int PffNodeEMail::attributesMessageHeader(Attributes* attr, libpff_item_t* item)
      if (flags.str().size())
 	  (*attr)["Flags"] = new Variant(flags.str());
   }
+  else
+    check_error(pff_error)
 
   value_string_to_attribute(libpff_item_get_utf8_display_name, "Display name")
   value_string_to_attribute(libpff_message_get_utf8_conversation_topic, "Conversation topic") 
@@ -398,7 +439,7 @@ int PffNodeEMail::attributesMessageHeader(Attributes* attr, libpff_item_t* item)
   value_string_to_attribute(libpff_message_get_utf8_sender_name, "Sender name")
   value_string_to_attribute(libpff_message_get_utf8_sender_email_address, "Sender email address")
 
-  if (libpff_message_get_importance(item, &entry_value_32bit, NULL) == 1)
+  if (libpff_message_get_importance(item, &entry_value_32bit, &pff_error) == 1)
   {
      for (uint32_t n = 0; n < 3; n++)
        if (entry_value_32bit == LIBPFF_MESSAGE_IMPORTANCE_TYPE[n].type)
@@ -407,8 +448,10 @@ int PffNodeEMail::attributesMessageHeader(Attributes* attr, libpff_item_t* item)
 	 break;
        }
   }
+  else
+    check_error(pff_error)
 
-  if (libpff_message_get_priority(item, &entry_value_32bit, NULL) == 1)
+  if (libpff_message_get_priority(item, &entry_value_32bit, &pff_error) == 1)
   {
      for (uint32_t n = 0; n < 3; n++)
        if (entry_value_32bit == LIBPFF_MESSAGE_PRIORITY_TYPE[n].type)
@@ -417,8 +460,10 @@ int PffNodeEMail::attributesMessageHeader(Attributes* attr, libpff_item_t* item)
 	 break;
        }
   }
+  else
+    check_error(pff_error)
 
-  if (libpff_message_get_sensitivity(item, &entry_value_32bit, NULL) == 1)
+  if (libpff_message_get_sensitivity(item, &entry_value_32bit, &pff_error) == 1)
   {
      for (uint32_t n = 0; n < 4; n++)
        if (entry_value_32bit == LIBPFF_MESSAGE_SENSITIVITY_TYPE[n].type)
@@ -427,26 +472,32 @@ int PffNodeEMail::attributesMessageHeader(Attributes* attr, libpff_item_t* item)
 	 break;
        }
   }
+  else
+    check_error(pff_error)
 
-  if (libpff_message_get_is_reminder(item, &entry_value_boolean, NULL) == 1)
+  if (libpff_message_get_is_reminder(item, &entry_value_boolean, &pff_error) == 1)
   {
     if (!(entry_value_boolean))
       (*attr)["Is a reminder"] = new Variant(std::string("no"));
     else
       (*attr)["Is a reminder"] = new Variant(std::string("yes"));
   }
+  else
+    check_error(pff_error)
   
   value_time_to_attribute(libpff_message_get_reminder_time, "Reminder time")
   value_time_to_attribute(libpff_message_get_reminder_signal_time, "Reminder signal time")
 
-  if (libpff_message_get_is_private(item, &entry_value_boolean, NULL) == 1)
+  if (libpff_message_get_is_private(item, &entry_value_boolean, &pff_error) == 1)
   {
     if (!(entry_value_boolean))
       (*attr)["Is private"] = new Variant(std::string("no"));
     else
       (*attr)["Is private"] = new Variant(std::string("yes"));	 
   }
+  else
+    check_error(pff_error)
 
-  delete entry_value_string;
+  delete[] entry_value_string;
   return (1);
 }

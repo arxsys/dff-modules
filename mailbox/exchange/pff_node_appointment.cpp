@@ -1,6 +1,6 @@
 /*
  * DFF -- An Open Source Digital Forensics Framework
- * Copyright (C) 2009-2011 ArxSys
+ * Copyright (C) 2009-2013 ArxSys
  * This program is free software, distributed under the terms of
  * the GNU General Public License Version 2. See the LICENSE file
  * at the top of the source tree.
@@ -16,29 +16,9 @@
 
 #include "pff.hpp"
 
-//Appointment as attachment can't be cloned ! So we copy the item and didn't free it
-PffNodeAppointment::PffNodeAppointment(std::string name, Node* parent, fso* fsobj, libpff_item_t* appointment, libpff_error_t** error, libpff_file_t** file, bool clone) : PffNodeEMail(name, parent, fsobj, error)
+PffNodeAppointment::PffNodeAppointment(std::string name, Node* parent, pff* fsobj, ItemInfo* itemInfo) : PffNodeEMail(name, parent, fsobj, itemInfo)
 {
-  int result;
-
-  this->pff_item = NULL;
-  if (clone == 0)
-  {
-    result = libpff_item_get_identifier(appointment, &(this->identifier), error);
-    if (result == 0 || result == -1)
-    {
-      this->pff_item = new libpff_item_t*;
-      *(this->pff_item) = appointment;
-    }
-  }
-  else
-  {
-    this->pff_item = new libpff_item_t*;
-    *(this->pff_item) = appointment;
-  }
   this->setFile();
-  this->pff_file = file;
-  this->pff_error = error;
 }
 
 std::string PffNodeAppointment::icon(void)
@@ -48,7 +28,7 @@ std::string PffNodeAppointment::icon(void)
 
 void  PffNodeAppointment::attributesAppointment(Attributes* attr, libpff_item_t* item)
 {
-
+  libpff_error_t* pff_error                     = NULL;
   char*		entry_value_string 		= NULL;
   size_t	entry_value_string_size         = 0;
   size_t	maximum_entry_value_string_size	= 1;
@@ -75,31 +55,24 @@ void  PffNodeAppointment::attributesAppointment(Attributes* attr, libpff_item_t*
   value_uint32_to_attribute(libpff_appointment_get_busy_status, "Busy status")
 
   free(entry_value_string);
-
 }
 
 
 Attributes PffNodeAppointment::_attributes()
 {
   Attributes		attr;
-  libpff_item_t*	item = NULL;
+  Item*	                item = NULL;
 
-  if (this->pff_item == NULL)
-  {
-    if (libpff_file_get_item_by_identifier(*(this->pff_file), this->identifier, &item, this->pff_error) != 1)
-      return attr;
-  }
-  else 
-    item = *(this->pff_item);
+  if ((item = this->__itemInfo->item(this->__pff()->pff_file())) == NULL)
+    return attr;
 
-  attr = this->allAttributes(item);
+  attr = this->allAttributes(item->pff_item());
+
   Attributes	appointment;
-
-  this->attributesAppointment(&appointment, item); 
+  this->attributesAppointment(&appointment, item->pff_item()); 
   attr[std::string("Appointment")] = new Variant(appointment);
 
-  if (this->pff_item == NULL)
-    libpff_item_free(&item, this->pff_error);
+  delete item;
 
   return attr;
 }

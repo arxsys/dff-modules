@@ -1,5 +1,5 @@
 # DFF -- An Open Source Digital Forensics Framework
-# Copyright (C) 2009 ArxSys
+# Copyright (C) 2009-2013 ArxSys
 # 
 # This program is free software, distributed under the terms of
 # the GNU General Public License Version 2. See the LICENSE file
@@ -68,7 +68,6 @@ class wHex(QWidget):
 
     def offsetToValue(self, offset):
         if self.isLFMOD():
-#            print (self.maxint * offset) / self.heditor.filesize
             return ((self.maxint * offset) / self.heditor.filesize)
         else:
             return (offset / self.heditor.bytesPerLine)
@@ -202,12 +201,12 @@ class hexView(QGraphicsView):
             self.move(self.heditor.pageSize / self.heditor.bytesPerLine, 1)
         elif keyEvent.matches(QKeySequence.MoveToPreviousPage):
             self.move(self.heditor.pageSize / self.heditor.bytesPerLine, 0)
-        elif keyEvent.matches(QKeySequence.MoveToNextWord):
-            print "Next Word"
-        elif keyEvent.matches(QKeySequence.MoveToPreviousWord):
-            print "Previous word"
-        elif keyEvent.matches(QKeySequence.MoveToNextLine):
-            print "Next Line"
-        elif keyEvent.matches(QKeySequence.MoveToPreviousLine):
-            print "Previous Line"
+        #elif keyEvent.matches(QKeySequence.MoveToNextWord):
+            #print "Next Word"
+        #elif keyEvent.matches(QKeySequence.MoveToPreviousWord):
+            #print "Previous word"
+        #elif keyEvent.matches(QKeySequence.MoveToNextLine):
+            #print "Next Line"
+        #elif keyEvent.matches(QKeySequence.MoveToPreviousLine):
+            #print "Previous Line"
 

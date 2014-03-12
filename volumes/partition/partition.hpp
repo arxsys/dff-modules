@@ -1,6 +1,6 @@
 /*
  * DFF -- An Open Source Digital Forensics Framework
- * Copyright (C) 2009-2011 ArxSys
+ * Copyright (C) 2009-2013 ArxSys
  * This program is free software, distributed under the terms of
  * the GNU General Public License Version 2. See the LICENSE file
  * at the top of the source tree.
@@ -22,6 +22,7 @@
 #include "mfso.hpp"
 #include "vfile.hpp"
 
+#include "gpt.hpp"
 #include "dos.hpp"
 
 #include <iostream>
@@ -31,30 +32,25 @@
 class Partition : public mfso
 {
 private:
-  std::ostringstream		Result;
-  Node				*parent;
-  class DosPartition*			dos;
-//   int				SetResult();
-//   int				getParts();
-//   Node				*createPart(Node *parent, unsigned int sector_start, unsigned int size);
-//   void				readMbr();
-//   void				readExtended(Node *parent, unsigned int start, unsigned int next_lba);
-//   bool				isExtended(char type);
-//   string			hexilify(char type);
-
+  Node*				__parent;
+  Node*				__root;
+  DosPartition*			__dos;
+  GptPartition*			__gpt;  
 public:
   Partition();
   ~Partition();
-  Node			*root;
   virtual void		start(std::map<std::string, Variant_p > args);
 };
 
 class PartitionsNode : public Node
 {
+private:
+  Partition*	__part;
 public:
-  			PartitionsNode(mfso* fsobj);
-			~PartitionsNode();
+  PartitionsNode(Partition* fsobj);
+  ~PartitionsNode();
   virtual std::string 	icon();
+  virtual Attributes	_attributes();
 };
 
 #endif

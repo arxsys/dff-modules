@@ -1,5 +1,5 @@
 # DFF -- An Open Source Digital Forensics Framework
-# Copyright (C) 2009-2011 ArxSys
+# Copyright (C) 2009-2013 ArxSys
 # This program is free software, distributed under the terms of
 # the GNU General Public License Version 2. See the LICENSE file
 # at the top of the source tree.
@@ -39,12 +39,19 @@ class Heditor(QWidget):
         self.vfs = vfs.vfs()
        
     def closeEvent(self, event):
-        self.file.close()
+       try:
+         self.file.close()
+       except AttributeError:
+         pass
  
     def init(self, node, preview = False):
         self.node = node
  	self.preview = preview
-        self.file = node.open()
+        try:
+          self.file = node.open()
+        except IOError as e:
+          print e
+        
         self.filesize = self.node.size()
 
         self.initInfos()

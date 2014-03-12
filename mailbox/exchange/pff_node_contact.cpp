@@ -1,6 +1,6 @@
 /*
  * DFF -- An Open Source Digital Forensics Framework
- * Copyright (C) 2009-2011 ArxSys
+ * Copyright (C) 2009-2013 ArxSys
  * This program is free software, distributed under the terms of
  * the GNU General Public License Version 2. See the LICENSE file
  * at the top of the source tree.
@@ -16,7 +16,7 @@
 
 #include "pff.hpp"
 
-PffNodeContact::PffNodeContact(std::string name, Node* parent, fso* fsobj, libpff_item_t* contact, libpff_error_t** error, libpff_file_t** file, bool clone) : PffNodeEmailMessageText(name, parent, fsobj, contact, error, file, clone)
+PffNodeContact::PffNodeContact(std::string name, Node* parent, pff* fsobj, ItemInfo* itemInfo) : PffNodeEmailMessageText(name, parent, fsobj, itemInfo)
 {
 }
 
@@ -28,30 +28,25 @@ std::string PffNodeContact::icon(void)
 Attributes	PffNodeContact::_attributes(void)
 {
   Attributes		attr;
-  libpff_item_t*	item = NULL;
+  Item*	                item = NULL;
 
-  if (this->pff_item == NULL)
-  {
-    if (libpff_file_get_item_by_identifier(*(this->pff_file), this->identifier, &item, this->pff_error) != 1)
-      return attr;
-  }
-  else 
-    item = *(this->pff_item);
+  if ((item = this->__itemInfo->item(this->__pff()->pff_file())) == NULL)
+    return attr;
  
-  attr = this->allAttributes(item); 
+  attr = this->allAttributes(item->pff_item()); 
 
   Attributes	contact;
-  this->attributesContact(&contact, item);
+  this->attributesContact(&contact, item->pff_item());
   attr[std::string("Contact")] = new Variant(contact);
 
-  if (this->pff_item == NULL)
-    libpff_item_free(&item, this->pff_error);
+  delete item;
 
   return (attr);
 }
 
 void		PffNodeContact::attributesContact(Attributes* attr, libpff_item_t* item)
 {
+  libpff_error_t* pff_error                     = NULL;
   char*		entry_value_string		= 0;
   size_t	entry_value_string_size 	= 0;
   size_t	maximum_entry_value_string_size	= 1;

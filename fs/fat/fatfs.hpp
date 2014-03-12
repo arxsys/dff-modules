@@ -1,6 +1,6 @@
 /*
  * DFF -- An Open Source Digital Forensics Framework
- * Copyright (C) 2009-2011 ArxSys
+ * Copyright (C) 2009-2013 ArxSys
  * This program is free software, distributed under the terms of
  * the GNU General Public License Version 2. See the LICENSE file
  * at the top of the source tree.
@@ -18,29 +18,28 @@
 #define __FATFS_HPP__
 
 #include <map>
+
 #include "variant.hpp"
 #include "mfso.hpp"
+#include "node.hpp"
+
 #include "bootsector.hpp"
 #include "fat.hpp"
 #include "fattree.hpp"
-#include "node.hpp"
 
 class Fatfs : public mfso
 {
+private:
+  uint8_t	__fat_to_use;
+  bool		__metacarve;
+  bool		__checkslack;
+  void		__process() throw (std::string);
+  void		__setContext(std::map<std::string, Variant_p > args) throw (std::string);
+  Node*		__parent;
 public:
   Fatfs();
   ~Fatfs();
-  Node*			root;
-  Node*			parent;
-  bool			carveunalloc;
-  bool			checkslack;
-  class FatTree*	tree;
-  class BootSector*	bs;
-  class FileAllocationTable*	fat;
-  VFile*		vfile;
-  virtual void		start(std::map<std::string, Variant_p > args);
-  void			setContext(std::map<std::string, Variant_p > args) throw (std::string);
-  void			process();
+  virtual void	start(std::map<std::string, Variant_p > args);
 };
 
 #endif

@@ -1,6 +1,6 @@
 /*
  * DFF -- An Open Source Digital Forensics Framework
- * Copyright (C) 2009-2011 ArxSys
+ * Copyright (C) 2009-2013 ArxSys
  * This program is free software, distributed under the terms of
  * the GNU General Public License Version 2. See the LICENSE file
  * at the top of the source tree.
@@ -16,39 +16,27 @@
 
 #include "pff.hpp"
 
-PffNodeData::PffNodeData(std::string name, Node* parent, fso* fsobj, libpff_error_t** error) : Node(name, 0, parent, fsobj)
-  
+PffNodeData::PffNodeData(std::string name, Node* parent, pff* fsobj) : Node(name, 0, parent, fsobj)
 {
+  this->__itemInfo = NULL;
   this->setFile();
-  this->pff_error = error;
 }
 
 
-PffNodeData::PffNodeData(std::string name, Node* parent, fso* fsobj, libpff_item_t *item_data, libpff_error_t** error, libpff_file_t** file, bool clone) : Node(name, 0, parent, fsobj)
-  
+PffNodeData::PffNodeData(std::string name, Node* parent, pff* fsobj, ItemInfo* itemInfo) : Node(name, 0, parent, fsobj)
 {
-  int result;
-
-  this->pff_item = NULL;
-  if (clone == 0)
-  {
-    result = libpff_item_get_identifier(item_data, &(this->identifier), error);
-    if (result == 0 || result == -1)
-    {
-      this->pff_item = new libpff_item_t*;
-      *(this->pff_item) = NULL;
-      libpff_item_clone(this->pff_item, item_data, error);
-    }
-  }
-  else
-  {
-    this->pff_item = new libpff_item_t*;
-    *(this->pff_item) = NULL;
-    libpff_item_clone(this->pff_item, item_data, error);
-  }
+  this->__itemInfo = new ItemInfo(itemInfo);
   this->setFile();
-  this->pff_file = file;
-  this->pff_error = error;
+}
+
+PffNodeData::~PffNodeData()
+{
+  delete this->__itemInfo;
+}
+
+pff*    PffNodeData::__pff(void)
+{
+  return (static_cast<pff* >(this->fsobj()));
 }
 
 fdinfo* PffNodeData::vopen(void)
@@ -70,5 +58,3 @@ uint64_t PffNodeData::vseek(fdinfo* fd, uint64_t offset, int whence)
 {
   return (0);
 }
-
-

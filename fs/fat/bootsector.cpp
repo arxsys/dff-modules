@@ -1,6 +1,6 @@
 /*
  * DFF -- An Open Source Digital Forensics Framework
- * Copyright (C) 2009-2011 ArxSys
+ * Copyright (C) 2009-2013 ArxSys
  * This program is free software, distributed under the terms of
  * the GNU General Public License Version 2. See the LICENSE file
  * at the top of the source tree.
@@ -26,29 +26,53 @@ BootSector::~BootSector()
 {
 }
 
-void	BootSector::process(Node *origin, class Fatfs* fs)
+void	BootSector::process(Node *origin, fso* fsobj) throw (std::string)
 {
-  this->fs = fs;
-  this->origin = origin;
+  uint32_t		bread;
+  BootSectorNode*	bsnode;
+  ReservedSectors*	reserved;
+  FileSystemSlack*	fsslack;
+  VFile*		vfile;
+
+  if (origin == NULL || fsobj == NULL)
+    return;
   try
     {
-      this->vfile = this->origin->open();
-      if (this->vfile->read(&(this->bs), sizeof(bootsector)) == 512)
-	this->fillCtx();
-      else
-	throw(std::string("cannot read boot sector"));
-      this->vfile->close();	
+      vfile = origin->open();
+      bread = vfile->read(&(this->__bs), sizeof(bootsector));
+      vfile->close();
     }
   catch(...)
     {
-      this->vfile->close();	
-      throw("err");
+      vfile->close();
+      throw(std::string("BootSector: Error while reading file"));
     }
+  if (bread == 512)
+    {
+      this->fillCtx();
+      bsnode = new BootSectorNode("MBR", 512, NULL, fsobj);
+      bsnode->setContext(origin, this->__attrs, 0);
+      fsobj->registerTree(origin, bsnode);
+      if (this->reserved != 0)
+	{
+	  reserved = new ReservedSectors("reserved sectors", (uint64_t)(this->reserved) * (uint64_t)this->ssize, NULL, fsobj);
+	  reserved->setContext((uint64_t)this->reserved, (uint64_t)this->ssize, origin);
+	  fsobj->registerTree(origin, reserved);
+	}
+      if (this->totalsize < origin->size())
+	{
+	  fsslack = new FileSystemSlack("file system slack", origin->size() - this->totalsize, NULL, fsobj);
+	  fsslack->setContext(totalsize, ssize, origin);
+	  fsobj->registerTree(origin, fsslack);
+	}
+    }
+  else
+    throw(std::string("Not enough bytes read to decode boot sector"));
 }
 
 void	BootSector::fillSectorSize()
 {
-  this->ssize = *((uint16_t*)this->bs.ssize);
+  this->ssize = *((uint16_t*)this->__bs.ssize);
   if ((this->ssize != 512) &&
       (this->ssize != 1024) &&
       (this->ssize != 2048) &&
@@ -61,7 +85,7 @@ void	BootSector::fillSectorSize()
 
 void	BootSector::fillClusterSize()
 {
-  this->csize = this->bs.csize;
+  this->csize = this->__bs.csize;
   if ((this->csize != 0x01) &&
       (this->csize != 0x02) &&
       (this->csize != 0x04) &&
@@ -81,8 +105,8 @@ void   BootSector::fillTotalSector()
   uint16_t	sectors16;
   uint32_t	sectors32;
 
-  sectors16 = *((uint16_t*)this->bs.sectors16);
-  sectors32 = *((uint32_t*)this->bs.sectors32);
+  sectors16 = *((uint16_t*)this->__bs.sectors16);
+  sectors32 = *((uint32_t*)this->__bs.sectors32);
   if (sectors16 != 0)
     this->totalsector = (uint32_t)sectors16;
   else if (sectors32 != 0)
@@ -96,25 +120,9 @@ void   BootSector::fillTotalSector()
 //     this->warnlog.push_back("total sector size ");
 }
 
-void	BootSector::fillTotalSize()
-{
-  // uint32_t	missingsect;
-
-  // missingsect = 0;
-  if (((this->err & BADTOTALSECTOR) != BADTOTALSECTOR) && ((this->err & BADSSIZE) != BADSSIZE))
-    {
-      this->totalsize = (uint64_t)this->totalsector * (uint64_t)this->ssize;
-      if (this->totalsize > this->origin->size())
-	{
-	  //missingsect = (this->totalsize - this->origin->size()) / (uint64_t)this->ssize;
-	  this->errlog += "total size exceeds node size\n";
-	}
-    }
-}
-
 void	BootSector::fillReserved()
 {
-  this->reserved = *((uint16_t*)this->bs.reserved);
+  this->reserved = *((uint16_t*)this->__bs.reserved);
   if (((this->err & BADTOTALSECTOR) != BADTOTALSECTOR) && (this->reserved > this->totalsector))
     {
       this->errlog += "number of reserved sector(s) exceeds total number of sectors\n";
@@ -129,8 +137,8 @@ void	BootSector::fillSectorPerFat()
   uint32_t	sectperfat32;
 
   this->sectperfat = 0;
-  sectperfat16 = *((uint16_t*)this->bs.sectperfat16);
-  sectperfat32 = *((uint32_t*)this->bs.a.f32.sectperfat32);
+  sectperfat16 = *((uint16_t*)this->__bs.sectperfat16);
+  sectperfat32 = *((uint32_t*)this->__bs.a.f32.sectperfat32);
   if (sectperfat16 != 0)
     this->sectperfat = (uint32_t)sectperfat16;
   else if (sectperfat32 != 0)
@@ -149,7 +157,7 @@ void	BootSector::fillSectorPerFat()
 
 void	BootSector::fillNumberOfFat()
 {
-  this->numfat = this->bs.numfat;
+  this->numfat = this->__bs.numfat;
   if (this->numfat == 0)
     {
       this->errlog += "number of fat not defined\n";
@@ -166,17 +174,7 @@ void	BootSector::fillNumberOfFat()
 
 void	BootSector::fillNumRoot()
 {
-  this->numroot = *((uint16_t*)this->bs.numroot);
-//   if (((this->fattype == 12) || (this->fattype == 16)) && (this->numroot < 2)) // . and .. entries
-//     {
-//       this->err |= BADNUMROOT;
-//       this->errlog += "total number of entries in root directory less than 2 (. and .. entries)\n";
-//     }
-//   else if (((this->numroot * 32) / this->ssize) > this->totalsector)
-//     {
-//       this->err |= BADNUMROOT;
-//       this->errlog += "total number of entries in root directory exceeds total number of sector\n";
-//     }
+  this->numroot = *((uint16_t*)this->__bs.numroot);
 }
 
 void		BootSector::fillFatType()
@@ -202,23 +200,23 @@ void	BootSector::fillExtended()
   this->totaldatasize = (uint64_t)this->totaldatasector * this->ssize;
   if (this->fattype == 32)
     {
-      this->vol_id = *((uint32_t*)this->bs.a.f32.vol_id);
-      memcpy(this->vol_lab, this->bs.a.f32.vol_lab, 11);
-      memcpy(this->fs_type, this->bs.a.f32.fs_type, 8);
-      this->rootclust = *((uint32_t*)this->bs.a.f32.rootclust);
-      this->ext_flag = *((uint16_t*)this->bs.a.f32.ext_flag);
-      this->fs_ver = *((uint16_t*)this->bs.a.f32.fs_ver);
-      this->fsinfo = *((uint16_t*)this->bs.a.f32.fsinfo);
-      this->bs_backup = *((uint16_t*)this->bs.a.f32.bs_backup);
-      this->drvnum = this->bs.a.f32.drvnum;
+      this->vol_id = *((uint32_t*)this->__bs.a.f32.vol_id);
+      memcpy(this->vol_lab, this->__bs.a.f32.vol_lab, 11);
+      memcpy(this->fs_type, this->__bs.a.f32.fs_type, 8);
+      this->rootclust = *((uint32_t*)this->__bs.a.f32.rootclust);
+      this->ext_flag = *((uint16_t*)this->__bs.a.f32.ext_flag);
+      this->fs_ver = *((uint16_t*)this->__bs.a.f32.fs_ver);
+      this->fsinfo = *((uint16_t*)this->__bs.a.f32.fsinfo);
+      this->bs_backup = *((uint16_t*)this->__bs.a.f32.bs_backup);
+      this->drvnum = this->__bs.a.f32.drvnum;
       this->rootdiroffset = ((this->rootclust - 2) * this->csize) + this->datasector * this->ssize;
       this->dataoffset = this->reserved * this->ssize + this->fatsize * this->numfat;
     }
   else
     {
-      this->vol_id = *((uint32_t*)this->bs.a.f16.vol_id);
-      memcpy(this->vol_lab, this->bs.a.f16.vol_lab, 11);
-      memcpy(this->fs_type, this->bs.a.f16.fs_type, 8);
+      this->vol_id = *((uint32_t*)this->__bs.a.f16.vol_id);
+      memcpy(this->vol_lab, this->__bs.a.f16.vol_lab, 11);
+      memcpy(this->fs_type, this->__bs.a.f16.fs_type, 8);
       this->rootdiroffset = this->firstfatoffset + this->fatsize * this->numfat;
       this->dataoffset = this->firstfatoffset + this->fatsize * this->numfat + rootdirsector * this->ssize;
     }
@@ -226,7 +224,7 @@ void	BootSector::fillExtended()
 
 void	BootSector::fillCtx()
 {
-  memcpy(this->oemname, this->bs.oemname, 8);
+  memcpy(this->oemname, this->__bs.oemname, 8);
   this->fillSectorSize();
   this->fillClusterSize();
   this->fillTotalSector();
@@ -234,60 +232,163 @@ void	BootSector::fillCtx()
   this->fillSectorPerFat();
   this->fillNumberOfFat();
   this->fillNumRoot();
-  this->prevsect = *((uint32_t*)this->bs.prevsect);
+  this->prevsect = *((uint32_t*)this->__bs.prevsect);
   if (this->err != 0)
     {
-      //std::cout << "error: " << this->errlog << std::endl;
-      throw("bad bootsector");
+      throw(std::string("bad bootsector"));
     }
   else
     {
       this->fatsize = this->sectperfat * this->ssize;
       this->fillFatType();
       this->fillExtended();
-      this->fs->res["fat type"] = Variant_p(new Variant(this->fattype));
-      this->fs->res["oemname"] = Variant_p(new Variant(this->oemname));
-      this->fs->res["sector size"] = Variant_p(new Variant(this->ssize));
-      this->fs->res["sectors per cluster"] = Variant_p(new Variant(this->csize));
-      this->fs->res["reserved cluster"] = Variant_p(new Variant(this->reserved));
-      this->fs->res["number of fat"] = Variant_p(new Variant(this->numfat));
-      this->fs->res["number of entries in root directory"] = Variant_p(new Variant(this->numroot));
-      this->fs->res["number of sectors before FS partition"] = Variant_p(new Variant(this->prevsect));
-      this->fs->res["volume id"] = Variant_p(new Variant(this->vol_id));
-      this->fs->res["volume label"] = Variant_p(new Variant(this->vol_lab));
-      this->fs->res["FS type"] = Variant_p(new Variant(this->fs_type));
-      this->fs->res["root cluster"] = Variant_p(new Variant(this->rootclust));
-      this->fs->res["total sectors for data"] = Variant_p(new Variant(this->totaldatasector));
-      this->fs->res["total sectors"] = Variant_p(new Variant(this->totalsector));
-      this->fs->res["sectors per fat"] = Variant_p(new Variant(this->sectperfat));
-      this->fs->res["total clusters"] = Variant_p(new Variant(this->totalcluster));
-      this->fs->res["first sector of root directory"] = Variant_p(new Variant(this->rootdirsector));
-      this->fs->res["offset of first fat"] = Variant_p(new Variant(this->firstfatoffset));
-      this->fs->res["offset of root directory"] = Variant_p(new Variant(this->rootdiroffset));
-      this->fs->res["size of root directory"] = Variant_p(new Variant(this->rootdirsize));
-      this->fs->res["start offset of data"] = Variant_p(new Variant(this->dataoffset));
-      this->fs->res["first sector of data"] = Variant_p(new Variant(this->datasector));
-      this->fs->res["size of fat"] = Variant_p(new Variant(this->fatsize));
-      this->fs->res["total size"] = Variant_p(new Variant(this->totalsize));
-      this->fs->res["total data size"] = Variant_p(new Variant(this->totaldatasize));
+      this->__attrs["fat type"] = Variant_p(new Variant(this->fattype));
+      this->__attrs["oemname"] = Variant_p(new Variant(this->oemname));
+      this->__attrs["sector size"] = Variant_p(new Variant(this->ssize));
+      this->__attrs["sectors per cluster"] = Variant_p(new Variant(this->csize));
+      this->__attrs["reserved cluster"] = Variant_p(new Variant(this->reserved));
+      this->__attrs["number of fat"] = Variant_p(new Variant(this->numfat));
+      this->__attrs["number of entries in root directory"] = Variant_p(new Variant(this->numroot));
+      this->__attrs["number of sectors before FS partition"] = Variant_p(new Variant(this->prevsect));
+      this->__attrs["volume id"] = Variant_p(new Variant(this->vol_id));
+      this->__attrs["volume label"] = Variant_p(new Variant(this->vol_lab));
+      this->__attrs["FS type"] = Variant_p(new Variant(this->fs_type));
+      this->__attrs["root cluster"] = Variant_p(new Variant(this->rootclust));
+      this->__attrs["total sectors for data"] = Variant_p(new Variant(this->totaldatasector));
+      this->__attrs["total sectors"] = Variant_p(new Variant(this->totalsector));
+      this->__attrs["sectors per fat"] = Variant_p(new Variant(this->sectperfat));
+      this->__attrs["total clusters"] = Variant_p(new Variant(this->totalcluster));
+      this->__attrs["first sector of root directory"] = Variant_p(new Variant(this->rootdirsector));
+      this->__attrs["offset of first fat"] = Variant_p(new Variant(this->firstfatoffset));
+      this->__attrs["offset of root directory"] = Variant_p(new Variant(this->rootdiroffset));
+      this->__attrs["size of root directory"] = Variant_p(new Variant(this->rootdirsize));
+      this->__attrs["start offset of data"] = Variant_p(new Variant(this->dataoffset));
+      this->__attrs["first sector of data"] = Variant_p(new Variant(this->datasector));
+      this->__attrs["size of fat"] = Variant_p(new Variant(this->fatsize));
+      this->__attrs["total size"] = Variant_p(new Variant(this->totalsize));
+      this->__attrs["total data size"] = Variant_p(new Variant(this->totaldatasize));
     }
 }
 
-//Further implementation:
-// - create translation based on endianness
-// void	BootSector::createCtx()
-// {
-//    uint32_t	rootdirsector;
+BootSectorNode::BootSectorNode(std::string name, uint64_t size, Node* parent, fso* fsobj)  : Node(name, size, parent, fsobj)
+{
+}
 
 
-// }
+BootSectorNode::~BootSectorNode()
+{
+}
 
-// bool	bootSector::DetermineFatType()
-// {
+void	BootSectorNode::setContext(Node* origin, Attributes attrs, uint64_t offset)
+{
+  this->__origin = origin;
+  this->__attrs = attrs;
+  this->__offset = offset;
+}
 
-// }
+void	BootSectorNode::fileMapping(FileMapping* fm)
+{
+  fm->push(0, 512, this->__origin, this->__offset);
+}
 
-// bsctx*		bootSector::getBootSectorContext()
-// {
-//   return (this->ctx);
-// }
+Attributes	BootSectorNode::_attributes()
+{
+  return this->__attrs;
+}
+
+Attributes	BootSectorNode::dataType()
+{
+  Attributes	dtype;
+
+  dtype["fatfs"] = Variant_p(new Variant(std::string("boot sector")));
+  return dtype;
+}
+
+
+ReservedSectors::ReservedSectors(std::string name, uint64_t size, Node* parent, fso* fsobj) : Node(name, size, parent, fsobj)
+{
+}
+
+ReservedSectors::~ReservedSectors()
+{
+}
+
+void		ReservedSectors::setContext(uint64_t reserved, uint64_t ssize, Node* origin)
+{
+  this->__sreserved = reserved;
+  this->__ssize = ssize;
+  this->__origin = origin;
+}
+
+Attributes	ReservedSectors::dataType()
+{
+  Attributes	dtype;
+
+  dtype["fatfs"] = Variant_p(new Variant(std::string("reserved sectors")));
+  return dtype;
+}
+
+void		ReservedSectors::fileMapping(FileMapping* fm)
+{
+  fm->push(0, this->__sreserved * this->__ssize, this->__origin, 0);
+}
+
+Attributes	ReservedSectors::_attributes(void)
+{
+  Attributes	attrs;
+
+  attrs["starting sector"] = Variant_p(new Variant(1));
+  attrs["total sectors"] = Variant_p(new Variant(this->__sreserved));
+  return attrs;
+}
+
+
+FileSystemSlack::FileSystemSlack(std::string name, uint64_t size, Node* parent, fso* fsobj) : Node(name, size, parent, fsobj)
+{
+}
+
+FileSystemSlack::~FileSystemSlack()
+{
+}
+
+void		FileSystemSlack::setContext(uint64_t totalsize, uint16_t ssize, Node* origin)
+{
+  this->__totalsize = totalsize;
+  this->__ssize = ssize;
+  this->__origin = origin;
+}
+
+void		FileSystemSlack::fileMapping(FileMapping* fm)
+{
+  uint64_t	offset;
+  uint64_t	size;
+
+  offset = this->__totalsize;
+  size = this->__origin->size() - offset;
+  fm->push(0, size, this->__origin, offset);
+}
+
+Attributes	FileSystemSlack::_attributes(void)
+{
+  Attributes	attrs;
+  uint64_t	esect;
+  uint64_t	tsect;
+  uint64_t	ssect;
+  
+  esect = this->__origin->size() / this->__ssize;
+  tsect = (this->__origin->size() - this->__totalsize) / this->__ssize;
+  ssect = esect - tsect;
+  attrs["ending sector"] = Variant_p(new Variant(esect));
+  attrs["total sectors"] = Variant_p(new Variant(tsect));
+  attrs["starting sector"] = Variant_p(new Variant(ssect));
+  return attrs;
+}
+
+
+Attributes	FileSystemSlack::dataType()
+{
+  Attributes	dtype;
+  
+  dtype["fatfs"] = Variant_p(new Variant(std::string("file system slack")));
+  return dtype;
+}

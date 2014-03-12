@@ -1,6 +1,6 @@
 /*
  * DFF -- An Open Source Digital Forensics Framework
- * Copyright (C) 2009-2011 ArxSys
+ * Copyright (C) 2009-2013 ArxSys
  * This program is free software, distributed under the terms of
  * the GNU General Public License Version 2. See the LICENSE file
  * at the top of the source tree.
@@ -16,45 +16,47 @@
 
 #include "pff.hpp"
 
-PffNodeEmailTransportHeaders::PffNodeEmailTransportHeaders(std::string name, Node* parent, fso* fsobj, libpff_item_t *mail, libpff_error_t** error, libpff_file_t** file, bool clone) : PffNodeEMail(name, parent, fsobj, mail, error, file, clone)
+PffNodeEmailTransportHeaders::PffNodeEmailTransportHeaders(std::string name, Node* parent, pff* fsobj, ItemInfo* itemInfo) : PffNodeEMail(name, parent, fsobj, itemInfo)
 {
-  size_t 	headers_size  = 0; 
+  size_t 	 headers_size = 0; 
+  Item*           item        = NULL;
+  libpff_error_t* pff_error   = NULL;
 
-  if (libpff_message_get_utf8_transport_headers_size(mail, &headers_size, this->pff_error) == 1)
+  if ((item = this->__itemInfo->item(this->__pff()->pff_file())) == NULL)
+    return ; 
+
+  if (libpff_message_get_utf8_transport_headers_size(item->pff_item(), &headers_size, &pff_error) == 1)
   {
     if (headers_size > 0)
        this->setSize(headers_size); 
   }
+  else
+    check_error(pff_error)
+
+  delete item;
 }
 
 uint8_t*	PffNodeEmailTransportHeaders::dataBuffer(void)
 {
   uint8_t*		entry_string = NULL;
-  libpff_item_t*	item = NULL;
+  Item*	                item         = NULL;
+  libpff_error_t*       pff_error    = NULL;
 
   if (this->size() <= 0)
     return (NULL);
 
-  if (this->pff_item == NULL)
-  {
-    if (libpff_file_get_item_by_identifier(*(this->pff_file), this->identifier, &item, this->pff_error) != 1)
-    {
-      return (NULL);
-    }
-  }
-  else
-    item = *(this->pff_item);	
+  if ((item = this->__itemInfo->item(this->__pff()->pff_file())) == NULL)
+    return (NULL);
+
   entry_string =  new uint8_t [this->size()];
-  if (libpff_message_get_utf8_transport_headers(item, entry_string, this->size(), this->pff_error ) != 1 )
+  if (libpff_message_get_utf8_transport_headers(item->pff_item(), entry_string, this->size(), &pff_error ) != 1)
   {
-    if (this->pff_item == NULL)
-      libpff_item_free(&item, this->pff_error);
-    delete entry_string;
+    check_error(pff_error)
+    delete item;
+    delete[] entry_string;
     return (NULL);
   }
- 
-  if (this->pff_item == NULL)
-    libpff_item_free(&item, this->pff_error);
+  delete item; 
+
   return (entry_string);
 }
-

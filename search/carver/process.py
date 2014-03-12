@@ -1,5 +1,5 @@
 # DFF -- An Open Source Digital Forensics Framework
-# Copyright (C) 2009-2011 ArxSys
+# Copyright (C) 2009-2013 ArxSys
 # This program is free software, distributed under the terms of
 # the GNU General Public License Version 2. See the LICENSE file
 # at the top of the source tree.
@@ -31,8 +31,8 @@ class CarvingProcess(QWidget, EventHandler):
     def __init__(self, selector, vnode):
         QWidget.__init__(self)
         EventHandler.__init__(self)
-        self.vnode = vnode
-        self.filesize = vnode.value().size()
+        self.vnode = vnode.value()
+        self.filesize = self.vnode.size()
         self.tm = TaskManager()
         self.selector = selector
         self.setLayout(QVBoxLayout())

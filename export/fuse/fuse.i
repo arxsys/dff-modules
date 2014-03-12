@@ -1,6 +1,6 @@
 /*
  * DFF -- An Open Source Digital Forensics Framework
- * Copyright (C) 2009-2011 ArxSys
+ * Copyright (C) 2009-2013 ArxSys
  * This program is free software, distributed under the terms of
  * the GNU General Public License Version 2. See the LICENSE file
  * at the top of the source tree.
@@ -51,5 +51,11 @@ class FUSE(Module):
     self.conf.addArgument({"input": Argument.Required|Argument.Single|typeId.Path,
                            "name": "path",
                            "description":"Path where to mount DFF VFS in your OS VFS."})
+    self.conf.addArgument({"input": Argument.Optional|Argument.Single|typeId.String,
+                           "name": "mount_options",
+	                    "description": """Specify fuse mount options. By default allow_other is set but be sure to 
+                            have user_allow_other in /etc/fuse.conf If you want other to be able to browse the mount point.
+                            By setting this argument your options will be used and though allow_other will be disable.
+                           """})
     self.tags = "Export"
 %}

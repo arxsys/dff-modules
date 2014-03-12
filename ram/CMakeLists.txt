@@ -16,4 +16,5 @@ install_file(
   __init__.py
 )
 
-add_subdirectory (volatility)
+add_subdirectory (addrspace)
+add_subdirectory (windows)

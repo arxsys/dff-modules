@@ -1,6 +1,6 @@
 /*
  * DFF -- An Open Source Digital Forensics Framework
- * Copyright (C) 2009-2011 ArxSys
+ * Copyright (C) 2009-2013 ArxSys
  * This program is free software, distributed under the terms of
  * the GNU General Public License Version 2. See the LICENSE file
  * at the top of the source tree.
@@ -17,7 +17,7 @@
 #include "pff.hpp"
 
 
-PffNodeFolder::PffNodeFolder(std::string name, Node* parent, fso* nfsobj) : Node(name, 0, parent, nfsobj)
+PffNodeFolder::PffNodeFolder(std::string name, Node* parent, pff* nfsobj) : Node(name, 0, parent, nfsobj)
 {
   this->setDir();
 }

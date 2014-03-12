@@ -1,5 +1,5 @@
 # DFF -- An Open Source Digital Forensics Framework
-# Copyright (C) 2009-2011 ArxSys
+# Copyright (C) 2009-2013 ArxSys
 # This program is free software, distributed under the terms of
 # the GNU General Public License Version 2. See the LICENSE file
 # at the top of the source tree.
@@ -20,8 +20,23 @@ class SqliteManager(ModuleProcessusHandler):
     ModuleProcessusHandler.__init__(self, name)
     self.databases = {}
 
+  def processus(self):
+     return self.databases
+
+  def childrenOf(self, mountpoint):
+    dbs = []
+    for proc, node in self.databases.iteritems():
+       if node.absolute().find(mountpoint.absolute()) == 0:
+         dbs.append(proc)
+    return dbs
+
   def update(self, processus):
     self.databases[processus] = processus.node
+
+  def executeFrom(self, src, cmd):
+    for base, node in self.databases.iteritems():
+      if node == src:
+        return base.execute(cmd)
 
   def execute(self, basename, cmd, root):
     responses = []
@@ -35,7 +50,7 @@ class SqliteManager(ModuleProcessusHandler):
 class Cursor:
   def __init__(self, source, cursor):
     self._cursor = cursor
-    setattr(self, "source", source)
+    self.source =  source
 
   def __iter__(self):
     return iter(self._cursor)

@@ -1,6 +1,6 @@
 /*
  * DFF -- An Open Source Digital Forensics Framework
- * Copyright (C) 2009-2011 ArxSys
+ * Copyright (C) 2009-2013 ArxSys
  * This program is free software, distributed under the terms of
  * the GNU General Public License Version 2. See the LICENSE file
  * at the top of the source tree.
@@ -16,27 +16,10 @@
 
 #include "pff.hpp"
 
-//When an attachment is attached to an attachment we need to clone the last object,
-//for 'normal' attachment we must get it from identifier and iterator first and then get the object.
-PffNodeAttachment::PffNodeAttachment(std::string name, Node* parent, fso* fsobj, libpff_item_t *item, libpff_error_t** error, size64_t size, libpff_file_t**  file, int attachment_iterator, bool clone) : PffNodeEMail(name, parent, fsobj, error)
+PffNodeAttachment::PffNodeAttachment(std::string name, Node* parent, pff* fsobj, ItemInfo* itemInfo, size64_t size, int attachment_iterator) : PffNodeEMail(name, parent, fsobj, itemInfo)
 {
-  int result;
-
-  this->setSize(size); 
   this->attachment_iterator = attachment_iterator;
-  this->pff_file = file;  
-  this->pff_item = NULL;
-
-  if (clone == 0)
-  {
-    result = libpff_item_get_identifier(item, &(this->identifier), error);
-    if (result != 0 && result != -1)
-      return ;
-  }
-  this->pff_item = new libpff_item_t*;
-  *(this->pff_item) = NULL;
-  result = libpff_message_get_attachment(item, attachment_iterator, (this->pff_item), this->pff_error);
- 
+  this->setSize(size);
 }
 
 
@@ -48,48 +31,45 @@ std::string	PffNodeAttachment::icon(void)
 uint8_t*	PffNodeAttachment::dataBuffer(void)
 {
   uint8_t*		buff = NULL;
-  libpff_item_t*	item = NULL;
+  Item*	                item = NULL;
   libpff_item_t* 	attachment = NULL;
-  int			result = 0;
+  libpff_error_t*       pff_error = NULL;
 
   if (this->size() <= 0)
     return (NULL);
+ 
+  if ((item = this->__itemInfo->item(this->__pff()->pff_file())) == NULL) 
+     return (NULL);
 
-  if (this->pff_item == NULL)
+  if (libpff_message_get_attachment(item->pff_item(), attachment_iterator, &attachment, &pff_error) != 1)
   {
-     result = libpff_file_get_item_by_identifier(*(this->pff_file), this->identifier, &item, this->pff_error);
-    if (result == 0 || result == -1)
-    {
-       return (NULL);
-    }
-    result = libpff_message_get_attachment(item, attachment_iterator, &attachment, this->pff_error);
-    if (result == 0 || result == -1)
-    {
-      return (NULL);
-    }
+    check_error(pff_error)
+    delete item; 
+
+    return (NULL);
   }
-  else
-  {
-    attachment = *(this->pff_item);
-  }
-  buff =  new uint8_t[this->size()];
+
+  buff = new uint8_t[this->size()];
   
   ssize_t read_count                         = 0;
 
-  if (libpff_attachment_data_seek_offset(attachment, 0, SEEK_SET, this->pff_error) != 0)
+  if (libpff_attachment_data_seek_offset(attachment, 0, SEEK_SET, &pff_error) != 0)
   {
-    if (this->pff_item == NULL)
-    {
-      libpff_item_free(&attachment, this->pff_error);
-      libpff_item_free(&item, this->pff_error);
-    }
+    check_error(pff_error) 
+    if (libpff_item_free(&attachment, &pff_error) != 1)
+      check_error(pff_error) 
+    delete item;
+    delete[] buff;
+
     return (NULL);
   }
-  read_count = libpff_attachment_data_read_buffer(attachment, (uint8_t*)buff , this->size(), this->pff_error);
-  if (this->pff_item == NULL)
-  {
-    libpff_item_free(&attachment, this->pff_error);
-    libpff_item_free(&item, this->pff_error);
-  }
-  return buff;
+
+  read_count = libpff_attachment_data_read_buffer(attachment, (uint8_t*)buff , this->size(), &pff_error);
+  if (read_count != (ssize_t)this->size())
+    check_error(pff_error) 
+  if (libpff_item_free(&attachment, &pff_error) != 1)
+    check_error(pff_error) 
+  delete item;
+
+  return (buff);
 }

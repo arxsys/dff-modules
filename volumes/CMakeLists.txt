@@ -1,5 +1,5 @@
 # DFF -- An Open Source Digital Forensics Framework
-# Copyright (C) 2009-2011 ArxSys
+# Copyright (C) 2009-2013 ArxSys
 # This program is free software, distributed under the terms of
 # the GNU General Public License Version 2. See the LICENSE file
 # at the top of the source tree.
@@ -14,6 +14,13 @@
 
 add_subdirectory(partition)
 add_subdirectory(vmware)
+
+if(VSHADOW_FOUND AND BFIO_FOUND)
+  add_subdirectory (vshadow)
+else(VSHADOW_FOUND AND BFIO_FOUND)
+  message(STATUS "VSHADOW or BFIO library not found. Vshadow module will not be built.")
+endif(VSHADOW_FOUND AND BFIO_FOUND)
+
 
 install_file(
   __init__.py

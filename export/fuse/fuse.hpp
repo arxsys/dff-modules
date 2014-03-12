@@ -1,6 +1,6 @@
 /*
  * DFF -- An Open Source Digital Forensics Framework
- * Copyright (C) 2009-2011 ArxSys
+ * Copyright (C) 2009-2013 ArxSys
  * This program is free software, distributed under the terms of
  * the GNU General Public License Version 2. See the LICENSE file
  * at the top of the source tree.
@@ -45,10 +45,17 @@
 
 class fuse : public mfso
 {
+private:
+  struct fuse_args	__arguments;
+  struct fuse_chan*	__channel;
+  struct fuse*		__handle;
+  std::string		__mnt;
+  void			__cleanContext();
+  void			__addArgument(std::string arg) throw (std::string);
 public:
   fuse();
   ~fuse();
-  virtual	void		start(std::map<std::string, Variant_p > args);
+  virtual void		start(std::map<std::string, Variant_p > args);
 };
 
 #endif 

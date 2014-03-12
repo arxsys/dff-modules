@@ -1,6 +1,6 @@
 /*
  * DFF -- An Open Source Digital Forensics Framework
- * Copyright (C) 2009-2011 ArxSys
+ * Copyright (C) 2009-2013 ArxSys
  * This program is free software, distributed under the terms of
  * the GNU General Public License Version 2. See the LICENSE file
  * at the top of the source tree.
@@ -16,11 +16,11 @@
 
 #include "pff.hpp"
 
-PffNodeEMail::PffNodeEMail(std::string name, Node* parent, fso* fsobj, libpff_error_t** error) :PffNodeData(name, parent, fsobj, error)
+PffNodeEMail::PffNodeEMail(std::string name, Node* parent, pff* fsobj) : PffNodeData(name, parent, fsobj)
 {
 }
 
-PffNodeEMail::PffNodeEMail(std::string name, Node* parent, fso* fsobj, libpff_item_t *item, libpff_error_t** error, libpff_file_t** file, bool clone) : PffNodeData(name, parent, fsobj, item, error, file, clone)
+PffNodeEMail::PffNodeEMail(std::string name, Node* parent, pff* fsobj, ItemInfo* itemInfo) : PffNodeData(name, parent, fsobj, itemInfo)
 {
 }
 
@@ -41,8 +41,7 @@ fdinfo* PffNodeEMail::vopen(void)
    uint8_t*	buff;
 
    fi = new fdinfo;
-   buff = this->dataBuffer();
-   if (buff == NULL)
+   if ((buff = this->dataBuffer()) == NULL)
      return (NULL);
 
    fi->id = new Variant((void*)buff);
@@ -65,7 +64,7 @@ int32_t  PffNodeEMail::vread(fdinfo* fi, void *buff, unsigned int size)
   if ((fi)->offset + size > this->size())
     size = this->size() - fi->offset;
   memcpy(buff, rbuff + (uint32_t)fi->offset, size);
-  fi->offset += size; 
+  fi->offset += size;
  
   return (size);
 }

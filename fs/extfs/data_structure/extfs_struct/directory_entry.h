@@ -1,6 +1,6 @@
 /* 
  * DFF -- An Open Source Digital Forensics Framework
- * Copyright (C) 2009-2011 ArxSys
+ * Copyright (C) 2009-2013 ArxSys
  * 
  * This program is free software, distributed under the terms of
  * the GNU General Public License Version 2. See the LICENSE file
@@ -21,29 +21,25 @@
 
 //#include "types.h"
 
-#ifdef WIN32
-#define PACK
-#else
-#define PACK __attribute__ ((packed))
-#endif
+#include "export.hpp"
 
-#ifdef WIN32
-#pragma pack(1)
-#endif
-
+PACK_START
 typedef	struct	__directory_entry_original_s
 {
   uint32	inode_value;
   uint16	entry_length;
   uint16	name_length;
-}PACK		dir_entry_v1;
+}		dir_entry_v1;
+PACK_END
 
+PACK_START
 typedef	struct	__directory_entry_2nd_version_s
 {
   uint32	inode_value;
   uint16	entry_length;
   uchar		name_length;
   uchar		file_type;
-}PACK		dir_entry_v2;
+}		dir_entry_v2;
+PACK_END
 
 #endif
