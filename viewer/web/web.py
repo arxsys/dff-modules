@@ -1,5 +1,5 @@
 # DFF -- An Open Source Digital Forensics Framework
-# Copyright (C) 2009-2013 ArxSys
+# Copyright (C) 2009-2014 ArxSys
 # This program is free software, distributed under the terms of
 # the GNU General Public License Version 2. See the LICENSE file
 # at the top of the source tree.
@@ -20,6 +20,7 @@ from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 from PyQt4.QtWebKit import *
+from PyQt4.QtNetwork import QNetworkAccessManager
 
 from dff.api.vfs import *
 from dff.api.module.module import *
@@ -33,8 +34,17 @@ class WebView(QWebView):
     s = self.page().settings()
     s.setAttribute(s.JavascriptEnabled, False)
     s.setAttribute(s.PrivateBrowsingEnabled, True)
+    # Work offline
+    self.page().networkAccessManager().setNetworkAccessible(QNetworkAccessManager.NotAccessible)
     self.page().setLinkDelegationPolicy(QWebPage.DelegateExternalLinks)
 
+  def changeMode(self):
+    self.page().settings().clearMemoryCaches()
+    if self.page().networkAccessManager().networkAccessible() == QNetworkAccessManager.NotAccessible:
+      self.page().networkAccessManager().setNetworkAccessible(1)
+    else:
+      self.page().networkAccessManager().setNetworkAccessible(0)
+    
   def replaceImageElements(self):
     imgs = self.page().currentFrame().findAllElements("img")
     for img in imgs:
@@ -191,21 +201,33 @@ class WEB(QWidget, Script):
 
     self.webv.replaceImageElements()
     self.webv.replaceCSSElements(self.webv.getCSSElements())
-
     self.vfile.close()
 
   def updateWidget(self):
 	pass
 
   def initShape(self):
-    self.hbox = QHBoxLayout()
-    self.hbox.setContentsMargins(0, 0, 0, 0)
-
+    self.vbox = QVBoxLayout()
+    
+    self.vbox.setContentsMargins(0, 0, 0, 0)
     self.webv = WebView(self)
 
-    self.hbox.addWidget(self.webv)
+    self.mode = QComboBox()
+    self.mode.addItem(QString("offline mode"))
+    self.mode.addItem(QString("online mode"))
+    
+    self.connect(self.mode, SIGNAL("currentIndexChanged(int)"), self.changeMode)
 
-    self.setLayout(self.hbox)
+    self.vbox.addWidget(self.mode)
+    self.vbox.addWidget(self.webv)
+
+    self.setLayout(self.vbox)
+
+  def changeMode(self):
+    self.webv.changeMode()
+    self.webv.setContent(self.html)
+    self.webv.replaceImageElements()
+    self.webv.replaceCSSElements(self.webv.getCSSElements())
 
 class web(Module):
   """Interpret Web pages"""
