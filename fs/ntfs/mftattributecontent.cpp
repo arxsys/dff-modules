@@ -62,6 +62,8 @@ void		MFTAttributeContent::fileMapping(FileMapping* fm)
       runLength = 0;
   
       runList->read(&(runListInfo.byte), sizeof(uint8_t));
+      if (runListInfo.info.offsetSize > 8) 
+          break;
       runList->read(&runLength, runListInfo.info.lengthSize);
       runList->read(&runOffset, runListInfo.info.offsetSize);
  
@@ -69,11 +71,8 @@ void		MFTAttributeContent::fileMapping(FileMapping* fm)
       {
         int64_t toffset = -1;
 
-        if (runListInfo.info.offsetSize > 8) //XXX the bug was here memcopy will overwrite stack struct
-        {
-          printf("runListInfo.info.offsetSize %d\n", runListInfo.info.offsetSize);
+        if (runListInfo.info.offsetSize > 8) 
           break;
-        }
         memcpy(&toffset, &runOffset, runListInfo.info.offsetSize);
         runOffset = toffset;
       }
