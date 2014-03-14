@@ -29,6 +29,8 @@ PACK_S	MFTResidentAttribute
   uint16_t	contentOffset;
 } PACK;
 
+//faire un union entre nonresident et resident evite de gerer 2 struct
+
 PACK_S	MFTNonResidentAttribute
 {
   uint64_t	VNCStart;
@@ -36,9 +38,9 @@ PACK_S	MFTNonResidentAttribute
   uint16_t	runListOffset;
   uint16_t	compressionUnitSize;
   uint32_t	unused1;
-  uint64_t	contentAllocatedSize;
-  uint64_t	contentActualSize;
-  uint64_t	contentInitializedSize;
+  uint64_t	contentAllocatedSize; //size round up to cluster size if compressed multi[ple of compression blocksize
+  uint64_t	contentActualSize;   //uncompressed size if compressed
+  uint64_t	contentInitializedSize; //compressed size if compressed else actual/real size !
 } PACK;
 
 PACK_S  MFTAttribute_s
@@ -48,8 +50,8 @@ PACK_S  MFTAttribute_s
   uint8_t	nonResidentFlag;
   uint8_t	nameLength;
   uint16_t	nameOffset;
-  uint16_t	flags;
-  uint16_t	ID;
+  uint16_t	flags;  //compressed flags
+  uint16_t	ID; //union en dessous
 } PACK;
 
 class MFTAttribute

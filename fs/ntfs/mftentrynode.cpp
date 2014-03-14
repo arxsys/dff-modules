@@ -31,23 +31,20 @@ MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* fsNode, uint64_t offset, std::strin
   //std::cout << "MFTEntryNode::MFTEntryNode new MFTEntry" << std::endl;
   this->__MFTEntry = new MFTEntry; 
   this->__state = 0;
-//XXX
+
   vfile = this->fsNode()->open();
 
   if (vfile->seek(this->offset()) != this->offset())
   {
-          //vfile->close();
     delete vfile;
     throw std::string("Can't seek to MFT entry structure");
   }
   if  (vfile->read((void *) (this->__MFTEntry), sizeof(MFTEntry)) != sizeof(MFTEntry))
   {
-//    vfile->close();
     delete vfile;
     throw std::string("Can't read MFT Entry structure");
   }
   delete vfile;
-  //vfile->close();
 
   this->__state++;
 
@@ -122,14 +119,12 @@ MFTAttribute*			MFTEntryNode::__MFTAttribute(uint16_t offset) // VFile ?
 
 uint64_t	MFTEntryNode::_attributesState(void)
 {
-//XXX don't virtual function in constructor
 //std::cout << "MFTEntryNode::_attributesState " << std::endl;
   return this->__state;
 }
 
 uint64_t	MFTEntryNode::fileMappingState(void)
 {
-//XXX don't virtual function in constructor
 //std::cout << "MFTEntryNode::_fileMappingState " << std::endl;
   return this->__state;
 }
@@ -157,7 +152,6 @@ void		MFTEntryNode::fileMapping(FileMapping *fm)
     }
   }
 }
-
 
 
 Attributes		MFTEntryNode::_attributes(void)

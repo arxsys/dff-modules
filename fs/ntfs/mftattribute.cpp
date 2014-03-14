@@ -27,18 +27,15 @@ MFTAttribute::MFTAttribute(MFTEntryNode* mftEntryNode, uint64_t offset)
   this->__mftEntryNode = mftEntryNode;
   this->__nonResidentAttribute = NULL;
   this->__residentAttribute = NULL;
-  //std::cout << "MFTAttribute::MFTAttribute new MFTAttribute_s" << std::endl;
   this->__mftAttribute = new MFTAttribute_s(); 
 
-  //std::cout << "MFTAttribute::MFTAttribute mftEntryNode->open()" << std::endl;
   VFile*  vfile = mftEntryNode->open();
-  //std::cout << "MFTAttribute::MFTAttribute mftEntryNode->vfile->seek()" << std::endl;
   if (vfile->seek(offset) != offset)
   {
     delete vfile;
     throw std::string("MFT Attribute can't seek to attribute offset");
   }
-  //std::cout << "MFTAttribute::MFTAttribute mftEntryNode->vfile->read()" << std::endl;
+
   if (vfile->read((void*) this->__mftAttribute, sizeof(MFTAttribute_s)) != sizeof(MFTAttribute_s))
   {
     delete vfile;
@@ -52,7 +49,6 @@ MFTAttribute::MFTAttribute(MFTEntryNode* mftEntryNode, uint64_t offset)
 
   if (this->isResident())
   {
-	  //std::cout << "MFTAttribute::MFTAttribute new MFTResidentAttriubte" << std::endl;
     this->__residentAttribute = new MFTResidentAttribute;
     if (vfile->read((void*) this->__residentAttribute, sizeof(MFTResidentAttribute)) != sizeof(MFTResidentAttribute))
     {
@@ -62,7 +58,6 @@ MFTAttribute::MFTAttribute(MFTEntryNode* mftEntryNode, uint64_t offset)
   }
   else
   {
-	  //std::cout << "MFTAttribute::MFTAttribute new MFTNonResidentAttribute" << std::endl;
     this->__nonResidentAttribute = new MFTNonResidentAttribute;
     if (vfile->read((void*) this->__nonResidentAttribute, sizeof(MFTNonResidentAttribute)) != sizeof(MFTNonResidentAttribute))
       {
@@ -110,9 +105,13 @@ MFTAttributeContent*	MFTAttribute::content(void)
 
 uint64_t 		MFTAttribute::contentSize(void)
 {
+
   if (this->isResident())
     return (this->__residentAttribute->contentSize);
-  return (this->__nonResidentAttribute->contentActualSize);
+
+  if (this->__nonResidentAttribute->contentInitializedSize > this->__nonResidentAttribute->contentAllocatedSize)
+      return (this->__nonResidentAttribute->contentActualSize);
+  return (this->__nonResidentAttribute->contentInitializedSize);
 }	
 
 uint64_t		MFTAttribute::contentOffset(void)

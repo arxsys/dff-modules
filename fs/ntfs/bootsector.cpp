@@ -71,19 +71,19 @@ BootSectorNode::~BootSectorNode()
 
 uint64_t	BootSectorNode::fileMappingState(void)
 {
-	//printf("bootsector filemapping update %d\n", this->__state);
+  //printf("bootsector filemapping update %d\n", this->__state);
   return (this->__state);
 }
 
 void 		BootSectorNode::fileMapping(FileMapping *fm)
 {
-	//printf("BootSectoreNode::FileMapping %llu\n", this->size());
+  //printf("BootSectoreNode::FileMapping %llu\n", this->size());
   fm->push(0, this->size(), this->__ntfs->fsNode(), 0);
 }
 
 uint64_t	BootSectorNode::_attributesState(void)
 {
-	//printf("bootsector attributes update %d\n", this->__state);
+  //printf("bootsector attributes update %d\n", this->__state);
   return (this->__state);
 }
 
