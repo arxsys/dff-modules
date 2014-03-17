@@ -14,7 +14,7 @@
  *  Frederic Baguelin <fba@digital-forensic.org>
  */
 
-#ifndef __VHSADOW_HPP__
+#ifndef __VSHADOW_HPP__
 #define __VSHADOW_HPP__
 
 #include "vshadow_common.hpp"

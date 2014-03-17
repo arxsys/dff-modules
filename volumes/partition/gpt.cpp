@@ -113,6 +113,8 @@ Attributes	GptPartition::entryAttributes(uint64_t entry, uint8_t type)
   std::map<uint64_t, uint64_t>::iterator	unalloc;
   std::stringstream	ostr;
   Attributes		vmap;
+  Attributes		flags_attr;
+  uint64_t		flags;
 
   if ((type == UNALLOCATED) && ((unalloc = this->__unallocated.find(entry)) != this->__unallocated.end()))
     {
@@ -131,6 +133,14 @@ Attributes	GptPartition::entryAttributes(uint64_t entry, uint8_t type)
       vmap["type guid"] = new Variant(alloc->second->entry->typeGuid());
       vmap["partition type"] = new Variant(this->__guidMapping(alloc->second->entry->typeGuid()));
       vmap["partition guid"] = new Variant(alloc->second->entry->partGuid());
+      memcpy(&flags, alloc->second->entry->_flags, sizeof(uint64_t));
+      flags_attr["System"] = new Variant(bool(flags & SYSTEM));
+      flags_attr["Ignored by EFI firmware"] = new Variant(bool(flags & EFI_IGNORE));
+      //flags_attr["Bootable"] = new Variant(bool(flags & GPT_BOOTABLE));
+      flags_attr["Read only"] = new Variant(bool(flags & GPT_RDONLY));
+      flags_attr["Hidden"] = new Variant(bool(flags & GPT_HIDDEN));
+      flags_attr["Do not automount (do not assign drive letter)"] = new Variant(bool(flags & NOAUTOMNT));
+      vmap["flags"] = new Variant(flags_attr);
     }
   return vmap;
 }

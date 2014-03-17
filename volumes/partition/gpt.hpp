@@ -29,6 +29,13 @@
 
 #define GPT_MAGIC	0x4546492050415254L //EFI PART
 
+#define SYSTEM		1ULL
+#define EFI_IGNORE	2ULL
+#define GPT_BOOTABLE	4ULL
+#define GPT_RDONLY	1ULL << 60
+#define GPT_HIDDEN	1ULL << 62
+#define NOAUTOMNT	1ULL << 63
+
 PACK_START
 typedef struct
 {

@@ -119,32 +119,84 @@ extern "C"
 }
 
 
-void fuse::start(std::map<std::string, Variant_p > args)
+void	fuse::__addArgument(std::string arg) throw (std::string)
 {
-  std::map<std::string, Variant_p >::iterator	argit;
+  if(fuse_opt_add_arg(&this->__arguments, arg.c_str()) != 0)
+    throw(std::string("Errror while adding argument"));
+}
 
-  Path		*tpath;
-  char		**argv;
 
-  tpath = args["path"]->value<Path*>();
- 
-  if (!tpath)
-	return ; 
+void	fuse::__cleanContext()
+{
+  if (this->__handle != NULL)
+    fuse_destroy(this->__handle);
+  fuse_opt_free_args(&this->__arguments);
+}
+
+
+void	fuse::start(std::map<std::string, Variant_p > args)
+{
+  std::map<std::string, Variant_p >::iterator	it;
+  Path			*tpath;
+  std::string		mntopt;
   
-  argv = (char **)malloc(sizeof(char*) * 4); 
-  *argv = (char *)"dff-fuse";
-  *(argv + 1) = (char *)tpath->path.c_str();
-  *(argv + 2) = (char *)"-s";
-  *(argv + 3) = (char *)"-f";
-
-  fuse_main(4, argv, &f_opers, 0); 
-  return ;
+  if ((it = args.find("path")) != args.end())
+    {
+      tpath = it->second->value<Path*>();
+      this->__mnt = tpath->path;
+    }
+  else
+    {
+      this->res["error"] = new Variant(std::string("Path not provided"));
+      return;
+    }
+  if ((it = args.find("mount_options")) != args.end())
+    mntopt = it->second->value<std::string>();
+  try
+    {
+      this->__addArgument("-s");
+      this->__addArgument("-o");
+      if (! mntopt.empty())
+	this->__addArgument(mntopt);
+      else
+	this->__addArgument("allow_other");
+    }
+  catch (std::string err)
+    {
+      this->res["error"] = new Variant(err);
+      return;
+    }
+  if ((this->__channel = fuse_mount(this->__mnt.c_str(), &this->__arguments)) == NULL)
+    {
+      this->res["error"] = new Variant(std::string("Error while creating fuse channel"));
+      this->__cleanContext();
+      return;
+    }
+  if ((this->__handle = fuse_new(this->__channel, &this->__arguments, &f_opers, sizeof(struct fuse_operations), this->__handle)) == NULL)
+    {
+      this->res["error"] = new Variant(std::string("Error while creating handle"));
+      this->__cleanContext();
+      return;
+    }
+  if (fuse_loop(this->__handle) != 0)
+    {
+      this->res["error"] = new Variant(std::string("Error while running fuse loop"));
+      this->__cleanContext();
+      return;
+    }
+  this->__cleanContext();
+  return;
 }
 
 fuse::fuse() : mfso("fuse")
 {
+  this->__arguments.argc = 0;
+  this->__arguments.argv = NULL;
+  this->__channel = NULL;
+  this->__handle = NULL;
 }
 
 fuse::~fuse()
 {
+  fuse_unmount(this->__mnt.c_str(), this->__channel);
 }
