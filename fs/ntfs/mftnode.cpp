@@ -44,6 +44,13 @@ MFTNode::~MFTNode(void)
 
 void	MFTNode::init(void)
 {
+  if (!this->__mftEntryNode->isUsed()) //not sufficient need $BITMAP ? check & compare
+    this->setDeleted();
+  //if (this->__mftEntryNode->isDirectory)
+    //this->setDirectory();
+  //else
+    //this->setFile();
+
   uint8_t fileNameID = FILENAME_NAMESPACE_DOS_WIN32;
  
   if (this->__mftEntryNode != NULL)
@@ -85,8 +92,9 @@ void	MFTNode::init(void)
 
 Attributes	MFTNode::_attributes(void)
 {
+  std::cout << "Get attribute of : " << this->__name << std::endl;
   if (this->__mftEntryNode != NULL)
-    return this->__mftEntryNode->_attributes();
+    return (this->__mftEntryNode->_attributes());
   Attributes attr;
   return attr; //throw error ?
 }

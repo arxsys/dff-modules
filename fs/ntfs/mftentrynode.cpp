@@ -20,19 +20,19 @@
 #include "mftattribute.hpp"
 #include "mftattributecontent.hpp"
 
-MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* fsNode, uint64_t offset, std::string name, Node* parent = NULL) : Node(name, 1024, parent, ntfs)
+MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::string name, Node* parent = NULL) : Node(name, 1024, parent, ntfs)
 {
   VFile*	vfile = NULL;
 
   //this->__ntfs->setStateInfo("Parsing MFT "); //+ this->name() ? 
-  this->__fsNode = fsNode;
+  this->__mftNode = mftNode;
   this->__ntfs = ntfs;
   this->__offset = offset;
   //std::cout << "MFTEntryNode::MFTEntryNode new MFTEntry" << std::endl;
   this->__MFTEntry = new MFTEntry; 
   this->__state = 0;
 
-  vfile = this->fsNode()->open();
+  vfile = this->__mftNode->open();
 
   if (vfile->seek(this->offset()) != this->offset())
   {
@@ -65,6 +65,22 @@ MFTEntryNode::~MFTEntryNode()
   }
 }
 
+//XXX caller must deltte !!
+std::vector<MFTAttribute*>	MFTEntryNode::MFTAttributesType(uint32_t typeID)
+{
+  std::vector<MFTAttribute* >		mftAttributes;
+  std::vector<MFTAttribute* >		mftAttributesType;
+  std::vector<MFTAttribute* >::iterator	mftAttribute;
+
+  mftAttributes = this->MFTAttributes();
+  mftAttribute = mftAttributes.begin();
+  for (; mftAttribute != mftAttributes.end(); mftAttribute++)
+     if ((*mftAttribute)->typeID() == typeID)
+       mftAttributesType.push_back(*mftAttribute);
+     else
+       delete *mftAttribute;
+  return (mftAttributesType);
+}
 
 std::vector<MFTAttribute*>	MFTEntryNode::MFTAttributes(void)
 {
@@ -89,23 +105,6 @@ std::vector<MFTAttribute*>	MFTEntryNode::MFTAttributes(void)
   return (mftAttributes);
 }
 
-//XXX caller must deltte !!
-std::vector<MFTAttribute*>	MFTEntryNode::MFTAttributesType(uint32_t typeID)
-{
-  std::vector<MFTAttribute* >		mftAttributes;
-  std::vector<MFTAttribute* >		mftAttributesType;
-  std::vector<MFTAttribute* >::iterator	mftAttribute;
-
-  mftAttributes = this->MFTAttributes();
-  mftAttribute = mftAttributes.begin();
-  for (; mftAttribute != mftAttributes.end(); mftAttribute++)
-     if ((*mftAttribute)->typeID() == typeID)
-       mftAttributesType.push_back(*mftAttribute);
-     else
-       delete *mftAttribute;
-  return (mftAttributesType);
-}
-
 // return new must be delete by caller
 MFTAttribute*			MFTEntryNode::__MFTAttribute(uint16_t offset) // VFile ? 
 {
@@ -117,49 +116,47 @@ MFTAttribute*			MFTEntryNode::__MFTAttribute(uint16_t offset) // VFile ?
   return (mftAttribute);
 }
 
-uint64_t	MFTEntryNode::_attributesState(void)
-{
-//std::cout << "MFTEntryNode::_attributesState " << std::endl;
-  return this->__state;
-}
-
-uint64_t	MFTEntryNode::fileMappingState(void)
-{
-//std::cout << "MFTEntryNode::_fileMappingState " << std::endl;
-  return this->__state;
-}
-
 void		MFTEntryNode::fileMapping(FileMapping *fm)
 {
   uint64_t offset = 0;
   uint16_t sectorSize = this->__ntfs->bootSectorNode()->bytesPerSector();
-  while (offset < this->size()) //create filemapping util size
+
+  while (offset < this->size())
   {
-    if (this->size() - offset >= sectorSize) //
+    if (this->size() - offset >= sectorSize)
     {
-      fm->push(offset, sectorSize - sizeof(uint16_t), this->fsNode(), this->offset() + offset);
+      fm->push(offset, sectorSize - sizeof(uint16_t), this->__mftNode, this->offset() + offset);
       offset += sectorSize - sizeof(uint16_t);
-      fm->push(offset, 
-	       sizeof(uint16_t), 
-	       this->__ntfs->fsNode(), 
-	       this->offset() + this->fixupArrayOffset() + sizeof(uint16_t) + (sizeof(uint16_t) * (offset / sectorSize)));
-      offset += sizeof(uint16_t); 
+      fm->push(offset,
+             sizeof(uint16_t),
+             this->__mftNode,
+	     this->offset() + this->fixupArrayOffset() + sizeof(uint16_t) + (sizeof(uint16_t) * (offset / sectorSize)));          
+      offset += sizeof(uint16_t);
     }
     else
     {
-      fm->push(offset, this->size() - offset, this->fsNode(), this->offset() + offset);
+      fm->push(offset, this->size() - offset, this->__mftNode, this->offset() + offset);
       offset += this->size() - offset;
     }
   }
 }
 
+uint64_t	MFTEntryNode::_attributesState(void)
+{
+  return (this->__state);
+}
+
+uint64_t	MFTEntryNode::fileMappingState(void)
+{
+  return (this->__state);
+}
 
 Attributes		MFTEntryNode::_attributes(void)
 {
   Attributes	attrs;
 
   //MAP_ATTR("Sector number", this->sectorNumber())
-//MAP_ATTR("Entry number") 
+  //MAP_ATTR("Entry number") 
   MAP_ATTR("Offset", this->offset())
   MAP_ATTR("Signature", this->signature())
   MAP_ATTR("Used size", this->usedSize())
@@ -179,10 +176,11 @@ Attributes		MFTEntryNode::_attributes(void)
     }
     catch (vfsError e)
     {
-	cout << e.error << endl;
+	std::cout << "MFTEntryNode::_attributes error: " << e.error << std::endl;
     }
   }
   //delete  attribute map;
+
   return (attrs);
 }
 
@@ -198,9 +196,9 @@ NTFS*		MFTEntryNode::ntfs(void)
   return (this->__ntfs);
 }
 
-Node*		MFTEntryNode::fsNode(void)
+Node*		MFTEntryNode::mftNode(void)
 {
-  return (this->__fsNode);
+  return (this->__mftNode);
 }
 /*
 uint64_t	MFTEntryNode::sectorNumber(void)
@@ -260,4 +258,18 @@ uint16_t	MFTEntryNode::fixupArrayEntryCount(void)
   if (this->__MFTEntry != NULL) 
     return (this->__MFTEntry->fixupArrayEntryCount - 1);
   throw vfsError(std::string("ntfs::MFTEntryNode::fixupArratEntryCount no MFTEntry."));
+}
+
+bool            MFTEntryNode::isUsed(void)
+{
+  if (this->__MFTEntry != NULL)
+    return (this->__MFTEntry->flags & 0x1);
+  throw vfsError(std::string("ntfs::MFTEntryNode::isUsed no MFTEntry.")); 
+}
+
+bool            MFTEntryNode::isDirectory(void)
+{
+  if (this->__MFTEntry != NULL)
+    return (this->__MFTEntry->flags & 0x2);
+  throw vfsError(std::string("ntfs::MFTEntryNode::isDirectory no MFTEntry.")); 
 }

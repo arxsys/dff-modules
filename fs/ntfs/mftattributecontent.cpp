@@ -21,14 +21,12 @@
 #include "ntfs.hpp"
 #include "bootsector.hpp"
 
-MFTAttributeContent::MFTAttributeContent(MFTAttribute* mftAttribute) : Node("Unknown", (uint64_t)mftAttribute->contentSize(), NULL,  mftAttribute->ntfs())
+MFTAttributeContent::MFTAttributeContent(MFTAttribute* mftAttribute) : Node("Unknown", (uint64_t)mftAttribute->contentSize(), NULL,  mftAttribute->ntfs()), __mftAttribute(mftAttribute)
 {
-  this->__mftAttribute = mftAttribute;
 }
 
 MFTAttributeContent::~MFTAttributeContent()
 {
-
 }
 
 void		MFTAttributeContent::fileMapping(FileMapping* fm)
@@ -48,7 +46,7 @@ void		MFTAttributeContent::fileMapping(FileMapping* fm)
     RunListInfo	runListInfo;
 
     VFile* runList = this->__mftAttribute->mftEntryNode()->open();  
-    
+   
     if (runList->seek(this->__mftAttribute->offset() + this->__mftAttribute->runListOffset()) != (this->__mftAttribute->offset() + this->__mftAttribute->runListOffset()))
     {
       delete runList;
@@ -60,26 +58,31 @@ void		MFTAttributeContent::fileMapping(FileMapping* fm)
       runListInfo.byte = 0;
       runOffset = 0;
       runLength = 0;
-  
+
       runList->read(&(runListInfo.byte), sizeof(uint8_t));
+
+      //if (runListInfo.info.offsetSize == 0)
+      //std::cout << "offset size is 0 => sparse" << std::endl;
       if (runListInfo.info.offsetSize > 8) 
           break;
+     
       runList->read(&runLength, runListInfo.info.lengthSize);
       runList->read(&runOffset, runListInfo.info.offsetSize);
- 
-      if ((int8_t)(runOffset >> 8 * (runListInfo.info.offsetSize-1)) < 0) 
+
+      if ((int8_t)(runOffset >> (8 * (runListInfo.info.offsetSize - 1))) < 0) 
       {
         int64_t toffset = -1;
 
-        if (runListInfo.info.offsetSize > 8) 
-          break;
         memcpy(&toffset, &runOffset, runListInfo.info.offsetSize);
         runOffset = toffset;
       }
-   
+ 
+      //if (runOffset == 0 || runOffset == -1)
+      //std::cout << "runOsset is sparse" << std::endl; 
+     
       if (runLength == 0)
 	break;
-      
+ 
       runPreviousOffset += runOffset;
  
       fm->push(totalSize, runLength * clusterSize, fsNode, runPreviousOffset * clusterSize);

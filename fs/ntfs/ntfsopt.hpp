@@ -23,7 +23,7 @@ class NTFSOpt
 {
 private:
   Node* __fsNode;
-  bool __validateBootSector;
+  bool  __validateBootSector;
 public:
         NTFSOpt(Attributes args);
         ~NTFSOpt();

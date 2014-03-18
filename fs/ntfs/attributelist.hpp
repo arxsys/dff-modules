@@ -14,26 +14,27 @@
  *  Solal Jacob <sja@digital-forensic.org>
  */
 
-#ifndef __NTFS_MFT_HH__
-#define __NTFS_MFT_HH__
+#ifndef __ATTRIBUTE_LIST_HH__
+#define __ATTRIBUTE_LIST_HH__
 
 #include "ntfs_common.hpp"
-#include "mftentrynode.hpp"
+#include "mftattributecontent.hpp"
 
-class NTFS;
-class MFTEntryNode;
+//PACK_S FileName_s 
+//{
+//uint8_t		nameSpace;
+//} PACK;
 
-class MFTNode : public Node
+class AttributeList : public MFTAttributeContent
 {
 private:
- MFTEntryNode*	__mftEntryNode;
+  //FileName_s		__fileName;
 public:
-  MFTNode(NTFS*	ntfs, Node* mftFsNode, Node* parent, uint64_t sectorNumber);
-  MFTNode(NTFS* ntfs, Node* parent, MFTEntryNode* mftEntryNode);
-  ~MFTNode();
-  void		init(void);
-  Attributes	_attributes(void);
-  void		fileMapping(FileMapping* fm);
+		        AttributeList(MFTAttribute* mftAttribute);
+			~AttributeList();
+  Attributes		_attributes(void);
+  std::string		typeName(void);
+  static MFTAttributeContent*	create(MFTAttribute* mftAttribute);
 };
 
 #endif

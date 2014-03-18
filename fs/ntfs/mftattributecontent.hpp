@@ -21,7 +21,6 @@
 
 class MFTAttribute;
 
-
 struct RunListInfo 
 {
   union 
@@ -36,8 +35,6 @@ struct RunListInfo
 
 class MFTAttributeContent : public Node
 {
-private:
-  MFTAttribute*	__mftAttribute;
 public:
   			MFTAttributeContent(MFTAttribute* mftAttribute);
 	 		~MFTAttributeContent();
@@ -47,6 +44,8 @@ public:
   uint16_t		typeID(void);
   std::string		attributeName(void);
   virtual std::string	typeName(void);
+private:
+  MFTAttribute*	        __mftAttribute;
 };
 
 #endif

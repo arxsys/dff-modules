@@ -33,9 +33,8 @@ PACK_S BPB
   uint64_t	totalSectors;
   uint64_t	MFTLogicalClusterNumber;
   uint64_t	MFTMirrorLogicalClusterNumber;
-//  int8_t	clustersPerMFTRecord;
+//int8_t	clustersPerMFTRecord;
   uint8_t	clustersPerMFTRecord;//XXX seem to work better like that or get neg value 
-
   uint8_t	reserved3[3];
   int8_t	clustersPerIndexBuffer;  
   uint8_t	reserved4[3];

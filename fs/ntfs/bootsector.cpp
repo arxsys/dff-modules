@@ -40,7 +40,6 @@ BootSectorNode::BootSectorNode(NTFS* ntfs) : Node(std::string("$Boot"), 512, ntf
     this->setSize(this->bytesPerSector() * 16);
   else 
     throw vfsError(std::string("Can't read full boot sector"));
-  printf("bootsesctotsiz%d\n", this->size());
 } 
 
 void	BootSectorNode::validate()
@@ -69,16 +68,16 @@ BootSectorNode::~BootSectorNode()
   this->__bootSector = NULL;
 }
 
-uint64_t	BootSectorNode::fileMappingState(void)
-{
-  //printf("bootsector filemapping update %d\n", this->__state);
-  return (this->__state);
-}
-
 void 		BootSectorNode::fileMapping(FileMapping *fm)
 {
   //printf("BootSectoreNode::FileMapping %llu\n", this->size());
   fm->push(0, this->size(), this->__ntfs->fsNode(), 0);
+}
+
+uint64_t	BootSectorNode::fileMappingState(void)
+{
+  //printf("bootsector filemapping update %d\n", this->__state);
+  return (this->__state);
 }
 
 uint64_t	BootSectorNode::_attributesState(void)
@@ -115,8 +114,7 @@ Attributes	BootSectorNode::dataType(void)
   Attributes    attrs;
 
   attrs["ntfs"] = Variant_p(new Variant(std::string("ntfs bootsector")));
-
-  return attrs;
+  return (attrs);
 }
 
 uint64_t 	BootSectorNode::OEMDID(void)
@@ -174,7 +172,7 @@ uint32_t	BootSectorNode::MFTRecordSize(void)
   uint32_t mftrecordSize = this->__bootSector->bpb.clustersPerMFTRecord * this->__bootSector->bpb.sectorsPerCluster * this->__bootSector->bpb.bytesPerSector;
 
   //printf("mftrecordsize ret %u\n", mftrecordSize);
-  return  mftrecordSize;
+  return  (mftrecordSize);
   //return (this->__bootSector->bpb.clustersPerMFTRecord * this->__bootSector->bpb.sectorsPerCluster * this->__bootSector->bpb.bytesPerSector);
 };
 

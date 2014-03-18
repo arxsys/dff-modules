@@ -45,7 +45,7 @@ class MFTEntryNode : public Node
 {
 private:
   NTFS*			__ntfs; 
-  Node*			__fsNode;
+  Node*			__mftNode;
   MFTEntry*		__MFTEntry;
   //uint32_t		__sectorNumber;
   uint64_t		__offset;
@@ -55,7 +55,7 @@ public:
 			MFTEntryNode(NTFS* ntfs, Node* fsNode, uint64_t offset, std::string name, Node* parent);
 			~MFTEntryNode();
   NTFS*			ntfs(void);
-  Node*			fsNode(void);
+  Node*			mftNode(void);
   virtual uint64_t	fileMappingState(void);
   virtual void		fileMapping(FileMapping* fm);
   virtual uint64_t	_attributesState(void);
@@ -71,6 +71,8 @@ public:
   uint16_t		fixupArrayEntryCount(void);
 //  uint16_t		fixupArraySignature(void); 
 //  uint16_t*		fixupArrayBuffer(void);  
+  bool                  isUsed(void);
+  bool                  isDirectory(void);
   std::vector<MFTAttribute* >	MFTAttributes();
   std::vector<MFTAttribute* >	MFTAttributesType(uint32_t typeID);
 };

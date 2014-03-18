@@ -21,10 +21,8 @@
 
 #include "mftattributecontenttype.hpp"
 
-MFTAttribute::MFTAttribute(MFTEntryNode* mftEntryNode, uint64_t offset)
+MFTAttribute::MFTAttribute(MFTEntryNode* mftEntryNode, uint64_t offset) : __offset(offset), __mftEntryNode(mftEntryNode)
 {
-  this->__offset = offset;
-  this->__mftEntryNode = mftEntryNode;
   this->__nonResidentAttribute = NULL;
   this->__residentAttribute = NULL;
   this->__mftAttribute = new MFTAttribute_s(); 
@@ -41,6 +39,7 @@ MFTAttribute::MFTAttribute(MFTEntryNode* mftEntryNode, uint64_t offset)
     delete vfile;
     throw std::string("MFT Attribute can't read enough data");
   }
+
   if (this->typeID() == 0xffffffff)
   {
     delete vfile;
@@ -96,11 +95,11 @@ MFTEntryNode*		MFTAttribute::mftEntryNode(void)
 // factory ...
 MFTAttributeContent*	MFTAttribute::content(void)
 {
-  for (uint8_t	i = 0; ContentTypes[i].object != NULL; i++)
+  for (uint8_t	i = 0; ContentTypes[i].newObject != NULL; i++)
      if (ContentTypes[i].ID == this->typeID())
-	return ContentTypes[i].object(this);
-  //cout << "MFTAttribute::mftEntryNode new MFTAttributeContent" << std::endl;
-  return new MFTAttributeContent(this);
+	return (ContentTypes[i].newObject(this));
+    
+  return (new MFTAttributeContent(this));
 }
 
 uint64_t 		MFTAttribute::contentSize(void)
@@ -189,3 +188,29 @@ uint16_t MFTAttribute::ID(void)
 {
   return (this->__mftAttribute->ID);
 }
+
+uint64_t MFTAttribute::VNCStart(void)
+{
+  return (this->__nonResidentAttribute->VNCStart);
+}
+
+uint64_t MFTAttribute::VNCEnd(void)
+{
+  return (this->__nonResidentAttribute->VNCEnd);
+}
+
+bool    MFTAttribute::isCompressed(void)
+{
+  return ((this->__mftAttribute->flags & 0x0001) == 0x0001);
+}
+
+bool    MFTAttribute::isEncrypted(void)
+{
+  return ((this->__mftAttribute->flags & 0x4000) == 0x4000);
+}
+
+bool    MFTAttribute::isSparse(void)
+{
+  return ((this->__mftAttribute->flags & 0x8000) == 0x8000);
+}
+

@@ -21,9 +21,11 @@
 #include "mftattributecontent.hpp"
 #include "standardinformation.hpp"
 #include "filename.hpp"
+#include "attributelist.hpp"
 
 #define $STANDARD_INFORMATION   16	
 #define $FILE_NAME		48
+#define $ATTRIBUTE_LIST         32 
 #define $DATA			128
 
 typedef MFTAttributeContent* (*ContentObject)(MFTAttribute*);
@@ -31,13 +33,14 @@ typedef MFTAttributeContent* (*ContentObject)(MFTAttribute*);
 struct ContentType
 {
  uint32_t	ID;
- ContentObject	object;
+ ContentObject	newObject;
 };
 
 ContentType const ContentTypes[] =
 {
   { $STANDARD_INFORMATION, &StandardInformation::create },
   { $FILE_NAME, &FileName::create },
+  { $ATTRIBUTE_LIST, &AttributeList::create },
   { 0, NULL },
 };
  

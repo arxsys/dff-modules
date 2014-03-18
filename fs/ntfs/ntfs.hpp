@@ -18,14 +18,15 @@
 #define __NTFS_HH__
 
 #include "ntfs_common.hpp"
+#include "ntfsopt.hpp"
 
-class NTFSOpt;
+//class NTFSOpt;
 class BootSectorNode;
 
 class NTFS : public mfso
 {
 private:
-  NTFSOpt*			__opt;
+  NTFSOpt*                      __opt;
   Node*				__rootDirectoryNode;
   BootSectorNode*       	__bootSectorNode;
 public:

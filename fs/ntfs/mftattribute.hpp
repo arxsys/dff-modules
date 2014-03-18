@@ -30,7 +30,6 @@ PACK_S	MFTResidentAttribute
 } PACK;
 
 //faire un union entre nonresident et resident evite de gerer 2 struct
-
 PACK_S	MFTNonResidentAttribute
 {
   uint64_t	VNCStart;
@@ -81,6 +80,11 @@ public:
   uint64_t		contentOffset(void);
   uint64_t		contentSize(void);
   uint16_t		runListOffset(void);
+  uint64_t              VNCStart(void);
+  uint64_t              VNCEnd(void);
+  bool                  isCompressed(void);
+  bool                  isSparse(void);
+  bool                  isEncrypted(void);
 };
 
 #endif

@@ -22,7 +22,7 @@
 
 #include <iostream>
 
-NTFS::NTFS() : __opt(NULL), __rootDirectoryNode(new Node("NTFS")), __bootSectorNode(NULL), mfso("NTFS")
+NTFS::NTFS() : mfso("NTFS"), __opt(NULL), __rootDirectoryNode(new Node("NTFS")), __bootSectorNode(NULL)
 {
 }
 
@@ -43,7 +43,6 @@ void 		NTFS::start(Attributes args)
     this->__bootSectorNode->validate();
 
   this->setStateInfo("Reading main MFT");
-  printf("size of MFTNode %d\n", sizeof(MFTNode)); 
   MFTNode* mftNode = new MFTNode(this, this->fsNode(), this->rootDirectoryNode(),  this->__bootSectorNode->MFTLogicalClusterNumber() * this->__bootSectorNode->clusterSize());
 
   uint64_t i = 0;
@@ -53,7 +52,6 @@ void 		NTFS::start(Attributes args)
   nMFTStream  << std::string("Found ") << nMFT <<  std::string(" MFT entry") << endl;
   this->setStateInfo(nMFTStream.str());
 
-  printf("sizeof MFTEntryNode %d\n", sizeof(MFTEntryNode));
   while (i * 1024 < mftNode->size())
   {
      if (i % 1000 == 0)
@@ -63,7 +61,15 @@ void 		NTFS::start(Attributes args)
        //std::cout << cMFTStream.str() << std::endl;
        this->setStateInfo(cMFTStream.str());
      }
-     MFTNode* currentMFTNode = new MFTNode(this, mftNode, this->rootDirectoryNode(), i * 1024);
+     try {
+             //MFTNode* currentMFTNode = new MFTNode(this, mftNode, this->rootDirectoryNode(), i * 1024);
+       MFTNode* currentMFTNode = new MFTNode(this, mftNode, NULL, i * 1024);
+       this->rootDirectoryNode()->addChild(currentMFTNode);
+     }
+     catch (std::string error)
+     {
+       std::cout << "Can't create MFTNode" << i << " error: " << error << std::endl;
+     }
      i += 1;
   }
   this->registerTree(this->opt()->fsNode(), this->rootDirectoryNode());
