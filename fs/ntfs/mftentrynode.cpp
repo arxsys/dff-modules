@@ -28,7 +28,6 @@ MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::stri
   this->__mftNode = mftNode;
   this->__ntfs = ntfs;
   this->__offset = offset;
-  //std::cout << "MFTEntryNode::MFTEntryNode new MFTEntry" << std::endl;
   this->__MFTEntry = new MFTEntry; 
   this->__state = 0;
 
@@ -48,12 +47,25 @@ MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::stri
 
   this->__state++;
 
+//XXX test only ou sert a cququchose ? (permet de savoir si la node va fail plus tard ? */
   std::vector<MFTAttribute* > mftAttributes = this->MFTAttributes();
   std::vector<MFTAttribute* >::iterator	mftAttribute;
   mftAttribute = mftAttributes.begin();
   for (; mftAttribute != mftAttributes.end(); mftAttribute++)
-     if (*mftAttribute != NULL)
-       delete *mftAttribute;    
+  {
+    try 
+    {
+      MFTAttributeContent* mftAttributeContent = (*mftAttribute)->content();	//test content
+      Attributes attr = mftAttributeContent->_attributes(); //test call attrib
+      delete mftAttributeContent;
+      if (*mftAttribute != NULL)
+        delete (*mftAttribute);
+    }
+    catch (vfsError e)
+    {
+            //std::cout << "MFTEntryNode::_attributes error: " << e.error << std::endl;
+    }
+  }
 }
 
 MFTEntryNode::~MFTEntryNode()

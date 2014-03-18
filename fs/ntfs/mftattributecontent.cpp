@@ -118,7 +118,7 @@ std::string	MFTAttributeContent::attributeName(void)
   return (this->typeName());
 }
 
-std::string	MFTAttributeContent::typeName(void)
+const std::string	MFTAttributeContent::typeName(void) const
 {
   return (std::string("Unknown type"));
 }

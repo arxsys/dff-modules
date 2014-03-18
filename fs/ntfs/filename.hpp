@@ -59,10 +59,10 @@ public:
   uint32_t		reparseValue(void);
   uint8_t		nameLength(void);
   uint8_t		nameSpaceID(void);
-  std::string		nameSpace(void);
+  const std::string     nameSpace(void) const;
   std::string		name(void); //utf 16 ? namespace
   Attributes		_attributes(void);
-  std::string		typeName(void);
+  const std::string     typeName(void) const;
   static MFTAttributeContent*	create(MFTAttribute* mftAttribute);
 };
 

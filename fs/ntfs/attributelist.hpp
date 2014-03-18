@@ -20,20 +20,15 @@
 #include "ntfs_common.hpp"
 #include "mftattributecontent.hpp"
 
-//PACK_S FileName_s 
-//{
-//uint8_t		nameSpace;
-//} PACK;
+//XXX code me
 
 class AttributeList : public MFTAttributeContent
 {
-private:
-  //FileName_s		__fileName;
 public:
 		        AttributeList(MFTAttribute* mftAttribute);
 			~AttributeList();
   Attributes		_attributes(void);
-  std::string		typeName(void);
+  const std::string    typeName(void) const;
   static MFTAttributeContent*	create(MFTAttribute* mftAttribute);
 };
 

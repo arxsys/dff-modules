@@ -39,9 +39,7 @@
 
 StandardInformation::StandardInformation(MFTAttribute* mftAttribute) : MFTAttributeContent(mftAttribute)
 {
-  VFile*	vfile = NULL;
-  
-  vfile = this->open();
+  VFile* vfile = this->open();
  
   if (vfile->read((void*)&(this->__standardInformation), sizeof(StandardInformation_s)) != sizeof(StandardInformation_s))
   {
@@ -60,7 +58,7 @@ StandardInformation::~StandardInformation()
 {
 }
 
-std::string	StandardInformation::typeName(void)
+const std::string StandardInformation::typeName(void) const
 {
   return (std::string("$STANDARD_INFORMATION"));
 }
@@ -73,7 +71,7 @@ Attributes	StandardInformation::_attributes(void)
   MAP_ATTR("Accessed time", this->accessedTime())
   MAP_ATTR("Altered time", this->alteredTime())
   MAP_ATTR("MFT altered time", this->mftAlteredTime())
-  MAP_ATTR("flags", this->flags()) 
+  MAP_ATTR("Flags", this->flags()) 
   MAP_ATTR("Max versions number", this->versionsMaximumNumber()) 
   MAP_ATTR("Version number", this->versionNumber())
   MAP_ATTR("Class ID", this->classID())

@@ -22,10 +22,13 @@
 #include "standardinformation.hpp"
 #include "filename.hpp"
 #include "attributelist.hpp"
+#include "volume.hpp"
 
 #define $STANDARD_INFORMATION   16	
 #define $FILE_NAME		48
-#define $ATTRIBUTE_LIST         32 
+#define $ATTRIBUTE_LIST         32
+#define $VOLUME_NAME            96 
+#define $VOLUME_INFORMATION     112 
 #define $DATA			128
 
 typedef MFTAttributeContent* (*ContentObject)(MFTAttribute*);
@@ -41,6 +44,8 @@ ContentType const ContentTypes[] =
   { $STANDARD_INFORMATION, &StandardInformation::create },
   { $FILE_NAME, &FileName::create },
   { $ATTRIBUTE_LIST, &AttributeList::create },
+  { $VOLUME_NAME, &VolumeName::create },
+  { $VOLUME_INFORMATION, &VolumeInformation::create },
   { 0, NULL },
 };
  

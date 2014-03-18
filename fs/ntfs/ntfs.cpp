@@ -57,12 +57,11 @@ void 		NTFS::start(Attributes args)
      if (i % 1000 == 0)
      {
        std::ostringstream cMFTStream;
-       cMFTStream << "Parsing " << i << "/" << nMFT << endl;
-       //std::cout << cMFTStream.str() << std::endl;
+       cMFTStream << "Parsing " << i << "/" << nMFT;
        this->setStateInfo(cMFTStream.str());
      }
-     try {
-             //MFTNode* currentMFTNode = new MFTNode(this, mftNode, this->rootDirectoryNode(), i * 1024);
+     try 
+     {
        MFTNode* currentMFTNode = new MFTNode(this, mftNode, NULL, i * 1024);
        this->rootDirectoryNode()->addChild(currentMFTNode);
      }

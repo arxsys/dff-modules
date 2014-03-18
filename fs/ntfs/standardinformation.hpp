@@ -56,7 +56,7 @@ public:
   uint64_t		quotaCharged(void);
   uint64_t		USN(void);
   Attributes		_attributes(void);
-  std::string		typeName(void);
+  const std::string	typeName(void) const;
   static MFTAttributeContent*	create(MFTAttribute* mftAttribute);
 };
 

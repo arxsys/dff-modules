@@ -43,7 +43,7 @@ public:
   uint8_t*		data();
   uint16_t		typeID(void);
   std::string		attributeName(void);
-  virtual std::string	typeName(void);
+  virtual const std::string	typeName(void) const;
 private:
   MFTAttribute*	        __mftAttribute;
 };

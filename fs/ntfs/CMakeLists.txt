@@ -27,6 +27,7 @@ dff_cpp_module(ntfs
   standardinformation.cpp
   filename.cpp
   attributelist.cpp
+  volume.cpp
   SWIG_FILE ntfs.i
   INCLUDE_DIRS ${ICU_INCLUDE_DIRS}
   LINK_LIBRARIES ${ICU_LIBRARIES} exceptions types vfs

@@ -25,9 +25,9 @@
 AttributeList::AttributeList(MFTAttribute* mftAttribute) : MFTAttributeContent(mftAttribute)
 {
   if (mftAttribute->mftEntryNode())
-    std::cout << "creating attribute List for " << mftAttribute->mftEntryNode()->name() <<  std::endl;
+    std::cout << "Foud Attribute_list attribute in : " << mftAttribute->mftEntryNode()->name() <<  std::endl;
   else
-    std::cout << "creating attribute List for mftattribute-EntryNode not found" <<  std::endl;
+    std::cout << "Found Attribute_list " <<  std::endl;
 }
 
 MFTAttributeContent*	AttributeList::create(MFTAttribute* mftAttribute)
@@ -47,7 +47,7 @@ Attributes	AttributeList::_attributes(void)
   return (attrs);
 }
 
-std::string	AttributeList::typeName(void)
+const std::string	AttributeList::typeName(void) const
 {
   return (std::string("$ATTRIBUTE_LIST"));
 }

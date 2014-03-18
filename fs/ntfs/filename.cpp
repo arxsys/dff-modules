@@ -40,19 +40,14 @@
 
 FileName::FileName(MFTAttribute* mftAttribute) : MFTAttributeContent(mftAttribute)
 {
-  VFile*	vfile = NULL;
-  		
   this->__name = NULL;
-
-  vfile = this->open();
+  VFile* vfile = this->open();
  
   if (vfile->read((void*)&(this->__fileName), sizeof(FileName_s)) != sizeof(FileName_s))
   {
     delete vfile;
     throw vfsError("Can't read attribute $FILE_NAME");
   }
-  //std::cout << "FileName::FileName new uint16_t * " << this->nameLength() << std::endl;
-  //printf("FileName::FileName new uint16_t * %d\n", this->nameLength());
   this->__name = new uint16_t[this->nameLength()];
   if (vfile->read((void*)this->__name, this->nameLength() * sizeof(uint16_t)) != (int32_t)(this->nameLength() *sizeof(uint16_t)))
   {
@@ -65,17 +60,13 @@ FileName::FileName(MFTAttribute* mftAttribute) : MFTAttributeContent(mftAttribut
 
 MFTAttributeContent*	FileName::create(MFTAttribute*	mftAttribute)
 {
-  //std::cout << "FileName::create new FileName/MFTAttributeContent" << std::endl;
   return (new FileName(mftAttribute));
 }
 
 FileName::~FileName()
 {
-  if (this->__name != NULL)
-  {
-    delete[] this->__name;
-    this->__name = NULL;
-  }
+  delete[] this->__name;
+  this->__name = NULL;
 //deallocate filename? 
 }
 
@@ -108,7 +99,7 @@ std::string	FileName::name(void)
   return name;
 }
 
-std::string	FileName::typeName(void)
+const std::string	FileName::typeName(void) const
 {
   return (std::string("$FILE_NAME_" + this->nameSpace()));
 }
@@ -158,7 +149,7 @@ uint8_t		FileName::nameLength(void)
   return (this->__fileName.nameLength);
 }
 
-std::string	FileName::nameSpace(void)
+const std::string	FileName::nameSpace(void) const
 {
   if (this->__fileName.nameSpace == FILENAME_NAMESPACE_POSIX)
     return std::string("Posix");
