@@ -65,6 +65,7 @@ MFTAttribute::MFTAttribute(MFTEntryNode* mftEntryNode, uint64_t offset) : __offs
       }
   }
   delete vfile;
+  mftEntryNode->updateState();
 }
 
 MFTAttribute::~MFTAttribute()
@@ -104,7 +105,6 @@ MFTAttributeContent*	MFTAttribute::content(void)
 
 uint64_t 		MFTAttribute::contentSize(void)
 {
-
   if (this->isResident())
     return (this->__residentAttribute->contentSize);
 

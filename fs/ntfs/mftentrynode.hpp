@@ -73,6 +73,7 @@ public:
 //  uint16_t*		fixupArrayBuffer(void);  
   bool                  isUsed(void);
   bool                  isDirectory(void);
+  void                  updateState();
   std::vector<MFTAttribute* >	MFTAttributes();
   std::vector<MFTAttribute* >	MFTAttributesType(uint32_t typeID);
 };

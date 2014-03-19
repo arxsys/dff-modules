@@ -33,7 +33,7 @@ public:
                         	NTFS();
                         	~NTFS();
   virtual void  		start(Attributes args);
-  	  void			setStateInfo(const std::string);
+  	  void			setStateInfo(const std::string&);
 	  NTFSOpt*		opt(void);
 	  Node*			fsNode(void);
 	  Node*			rootDirectoryNode(void);

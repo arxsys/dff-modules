@@ -21,7 +21,7 @@
 #include "ntfs.hpp"
 #include "bootsector.hpp"
 
-MFTAttributeContent::MFTAttributeContent(MFTAttribute* mftAttribute) : Node("Unknown", (uint64_t)mftAttribute->contentSize(), NULL,  mftAttribute->ntfs()), __mftAttribute(mftAttribute)
+MFTAttributeContent::MFTAttributeContent(MFTAttribute* mftAttribute) : Node("MFTAC", (uint64_t)mftAttribute->contentSize(), NULL,  mftAttribute->ntfs()), __mftAttribute(mftAttribute)
 {
 }
 

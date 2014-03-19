@@ -26,8 +26,6 @@
  *  Volume name
  */
 
-//XXX couille 1 fois sur 2 ... sur ntfskw research
-
 VolumeName::VolumeName(MFTAttribute* mftAttribute) : MFTAttributeContent(mftAttribute)
 {
   this->__volumeName = NULL;

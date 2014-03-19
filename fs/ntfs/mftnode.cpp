@@ -22,16 +22,15 @@
 
 MFTNode::MFTNode(NTFS* ntfs, Node* mftFsNode, Node* parent, uint64_t offset) : Node("Unknown", 0, parent, ntfs)
 {
+ //this->__name = "MFTNode" + std::string(offset);
   this->__mftEntryNode = new MFTEntryNode(ntfs, mftFsNode, offset, std::string("MFTEntry"), NULL);
-  						//MFT_0xSectorNumber
   this->init();
-  //std::cout << this->__name << std::endl;
 }
 
 MFTNode::MFTNode(NTFS* ntfs, Node* parent, MFTEntryNode* mftEntryNode) : Node("Unknown", 0, parent, ntfs)
 {
- this->__mftEntryNode = mftEntryNode;
- this->init();
+  this->__mftEntryNode = mftEntryNode;
+  this->init();
 }
 
 MFTNode::~MFTNode(void)
@@ -61,7 +60,7 @@ void	MFTNode::init(void)
       std::vector<MFTAttribute* > fileNames = this->__mftEntryNode->MFTAttributesType($FILE_NAME);
       std::vector<MFTAttribute* >::iterator currentFileName = fileNames.begin();
 
-      for (; currentFileName != fileNames.end(); currentFileName++)
+      for (; currentFileName != fileNames.end(); ++currentFileName)
       {
         FileName*	fileName = static_cast<FileName* >((*currentFileName)->content());
         if (fileName->nameSpaceID() <= fileNameID) 
@@ -73,12 +72,10 @@ void	MFTNode::init(void)
         delete (*currentFileName);
       }
     }
-    catch (vfsError e)
+    catch (vfsError& e)
     {
        std::cout << e.error << std::endl;
     }
-    //this->setSize(__mftEntryNode->dataCotentn()->size()
-    //SET SIZE !!! XXX warning ADS & non-data 
     std::vector<MFTAttribute* > datas = this->__mftEntryNode->MFTAttributesType($DATA);
     std::vector<MFTAttribute* >::iterator mftAttribute = datas.begin();
 
@@ -86,14 +83,13 @@ void	MFTNode::init(void)
     {
       this->setSize(datas[0]->contentSize());
     }
-    for (; mftAttribute != datas.end(); mftAttribute++)
+    for (; mftAttribute != datas.end(); ++mftAttribute)
       delete (*mftAttribute);
   }
 }
 
 Attributes	MFTNode::_attributes(void)
 {
-  std::cout << "Get attribute of : " << this->__name << std::endl;
   if (this->__mftEntryNode != NULL)
     return (this->__mftEntryNode->_attributes());
   Attributes attr;
@@ -112,7 +108,7 @@ void		MFTNode::fileMapping(FileMapping* fm)
 
       mftAttributeContent->fileMapping(fm);
       delete mftAttributeContent;
-      for (mftAttribute = datas.begin(); mftAttribute != datas.end(); mftAttribute++)
+      for (mftAttribute = datas.begin(); mftAttribute != datas.end(); ++mftAttribute)
 	delete (*mftAttribute);
     }
     else

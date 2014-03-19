@@ -54,22 +54,22 @@ void 		NTFS::start(Attributes args)
 
   while (i * 1024 < mftNode->size())
   {
-     if (i % 1000 == 0)
-     {
-       std::ostringstream cMFTStream;
-       cMFTStream << "Parsing " << i << "/" << nMFT;
-       this->setStateInfo(cMFTStream.str());
-     }
-     try 
-     {
-       MFTNode* currentMFTNode = new MFTNode(this, mftNode, NULL, i * 1024);
-       this->rootDirectoryNode()->addChild(currentMFTNode);
-     }
-     catch (std::string error)
-     {
-       std::cout << "Can't create MFTNode" << i << " error: " << error << std::endl;
-     }
-     i += 1;
+    if (i % 1000 == 0)
+    {
+      std::ostringstream cMFTStream;
+      cMFTStream << "Parsing " << i << "/" << nMFT;
+      this->setStateInfo(cMFTStream.str());
+    }
+    try 
+    {
+      MFTNode* currentMFTNode = new MFTNode(this, mftNode, NULL, i * 1024);
+      this->rootDirectoryNode()->addChild(currentMFTNode);
+    }
+    catch (std::string& error)
+    {
+      std::cout << "Can't create MFTNode" << i << " error: " << error << std::endl;
+    }
+    i += 1;
   }
   this->registerTree(this->opt()->fsNode(), this->rootDirectoryNode());
 
@@ -87,7 +87,7 @@ Node*		NTFS::fsNode(void)
   return (this->__opt->fsNode());
 }
 
-void 		NTFS::setStateInfo(const std::string info)
+void 		NTFS::setStateInfo(const std::string& info)
 {
   this->stateinfo = info;
 }

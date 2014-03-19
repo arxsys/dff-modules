@@ -45,27 +45,31 @@ MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::stri
   }
   delete vfile;
 
-  this->__state++;
-
 //XXX test only ou sert a cququchose ? (permet de savoir si la node va fail plus tard ? */
   std::vector<MFTAttribute* > mftAttributes = this->MFTAttributes();
   std::vector<MFTAttribute* >::iterator	mftAttribute;
   mftAttribute = mftAttributes.begin();
-  for (; mftAttribute != mftAttributes.end(); mftAttribute++)
+  for (; mftAttribute != mftAttributes.end(); ++mftAttribute)
   {
     try 
     {
       MFTAttributeContent* mftAttributeContent = (*mftAttribute)->content();	//test content
-      Attributes attr = mftAttributeContent->_attributes(); //test call attrib
+      mftAttributeContent->_attributes(); //test call attrib
       delete mftAttributeContent;
       if (*mftAttribute != NULL)
         delete (*mftAttribute);
     }
-    catch (vfsError e)
+    catch (vfsError& e)
     {
-            //std::cout << "MFTEntryNode::_attributes error: " << e.error << std::endl;
+      std::cout << "MFTEntryNode::_attributes error: " << e.error << std::endl;
     }
   }
+  this->__state++;
+}
+
+void MFTEntryNode::updateState(void)
+{
+  this->__state++;
 }
 
 MFTEntryNode::~MFTEntryNode()
@@ -86,7 +90,7 @@ std::vector<MFTAttribute*>	MFTEntryNode::MFTAttributesType(uint32_t typeID)
 
   mftAttributes = this->MFTAttributes();
   mftAttribute = mftAttributes.begin();
-  for (; mftAttribute != mftAttributes.end(); mftAttribute++)
+  for (; mftAttribute != mftAttributes.end(); ++mftAttribute)
      if ((*mftAttribute)->typeID() == typeID)
        mftAttributesType.push_back(*mftAttribute);
      else
@@ -111,7 +115,7 @@ std::vector<MFTAttribute*>	MFTEntryNode::MFTAttributes(void)
        offset += mftAttr->length(); //take care could be invalid
     }
   }
-  catch(std::string error)
+  catch(std::string& error)
   {
   }
   return (mftAttributes);
@@ -120,12 +124,7 @@ std::vector<MFTAttribute*>	MFTEntryNode::MFTAttributes(void)
 // return new must be delete by caller
 MFTAttribute*			MFTEntryNode::__MFTAttribute(uint16_t offset) // VFile ? 
 {
-  MFTAttribute*	mftAttribute = NULL;  
-
-  //std::cout << "MFTEntryNode::__MFTAttribute create new MFTAttribute" << std::endl;
-  mftAttribute = new MFTAttribute(this, offset);
-
-  return (mftAttribute);
+  return (new MFTAttribute(this, offset));
 }
 
 void		MFTEntryNode::fileMapping(FileMapping *fm)
@@ -163,7 +162,7 @@ uint64_t	MFTEntryNode::fileMappingState(void)
   return (this->__state);
 }
 
-Attributes		MFTEntryNode::_attributes(void)
+Attributes	MFTEntryNode::_attributes(void)
 {
   Attributes	attrs;
 
@@ -177,7 +176,7 @@ Attributes		MFTEntryNode::_attributes(void)
 
   std::vector<MFTAttribute*>		mftAttributes = this->MFTAttributes();
   std::vector<MFTAttribute*>::iterator  mftAttribute = mftAttributes.begin();
-  for (; mftAttribute != mftAttributes.end(); mftAttribute++)
+  for (; mftAttribute != mftAttributes.end(); ++mftAttribute)
   {
     try 
     {
@@ -186,7 +185,7 @@ Attributes		MFTEntryNode::_attributes(void)
       delete mftAttributeContent;
       delete (*mftAttribute);
     }
-    catch (vfsError e)
+    catch (vfsError& e)
     {
 	std::cout << "MFTEntryNode::_attributes error: " << e.error << std::endl;
     }

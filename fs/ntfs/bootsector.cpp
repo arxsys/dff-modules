@@ -70,19 +70,16 @@ BootSectorNode::~BootSectorNode()
 
 void 		BootSectorNode::fileMapping(FileMapping *fm)
 {
-  //printf("BootSectoreNode::FileMapping %llu\n", this->size());
   fm->push(0, this->size(), this->__ntfs->fsNode(), 0);
 }
 
 uint64_t	BootSectorNode::fileMappingState(void)
 {
-  //printf("bootsector filemapping update %d\n", this->__state);
   return (this->__state);
 }
 
 uint64_t	BootSectorNode::_attributesState(void)
 {
-  //printf("bootsector attributes update %d\n", this->__state);
   return (this->__state);
 }
 
@@ -168,10 +165,8 @@ uint32_t	BootSectorNode::MFTRecordSize(void)
 //printf("BootSectorNode::MFTRecordSize cluperstersPerMFTRecord %d\n", this->__bootSector->bpb.clustersPerMFTRecord);
 //printf("sectoers per cluster %u\n", this->__bootSector->bpb.sectorsPerCluster);
 //printf("bytes per sector %u\n", this->__bootSector->bpb.bytesPerSector);
-
   uint32_t mftrecordSize = this->__bootSector->bpb.clustersPerMFTRecord * this->__bootSector->bpb.sectorsPerCluster * this->__bootSector->bpb.bytesPerSector;
 
-  //printf("mftrecordsize ret %u\n", mftrecordSize);
   return  (mftrecordSize);
   //return (this->__bootSector->bpb.clustersPerMFTRecord * this->__bootSector->bpb.sectorsPerCluster * this->__bootSector->bpb.bytesPerSector);
 };
