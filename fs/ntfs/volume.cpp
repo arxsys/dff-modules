@@ -35,7 +35,7 @@ VolumeName::VolumeName(MFTAttribute* mftAttribute) : MFTAttributeContent(mftAttr
   this->__volumeName = new uint8_t[this->size()];
   VFile* vfile = this->open();
 
-  if (vfile->read((void*)this->__volumeName, this->size()) != this->size())
+  if ((uint64_t)vfile->read((void*)this->__volumeName, this->size()) != this->size())
   {
     delete[] vfile;
     delete this->__volumeName;

@@ -23,11 +23,11 @@
 MFTNode::MFTNode(NTFS* ntfs, Node* mftFsNode, Node* parent, uint64_t offset) : Node("Unknown", 0, parent, ntfs)
 {
  //this->__name = "MFTNode" + std::string(offset);
-  this->__mftEntryNode = new class MFTEntryNode(ntfs, mftFsNode, offset, std::string("MFTEntry"), NULL);
+  this->__mftEntryNode = new MFTEntryNode(ntfs, mftFsNode, offset, std::string("MFTEntry"), NULL);
   this->init();
 }
 
-MFTNode::MFTNode(NTFS* ntfs, Node* parent, class MFTEntryNode* mftEntryNode) : Node("Unknown", 0, parent, ntfs)
+MFTNode::MFTNode(NTFS* ntfs, Node* parent, MFTEntryNode* mftEntryNode) : Node("Unknown", 0, parent, ntfs)
 {
   this->__mftEntryNode = mftEntryNode;
   this->init();
@@ -40,11 +40,6 @@ MFTNode::~MFTNode(void)
      delete this->__mftEntryNode;
      this->__mftEntryNode = NULL;
   }
-}
-
-MFTEntryNode* MFTNode::MFTEntryNode(void)
-{
-  return (this->__mftEntryNode);
 }
 
 void	MFTNode::init(void)

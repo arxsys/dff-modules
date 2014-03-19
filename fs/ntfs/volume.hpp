@@ -20,8 +20,6 @@
 #include "ntfs_common.hpp"
 #include "mftattributecontent.hpp"
 
-//XXX code me
-
 class VolumeName : public MFTAttributeContent
 {
 public:

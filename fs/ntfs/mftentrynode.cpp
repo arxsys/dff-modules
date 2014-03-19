@@ -63,6 +63,10 @@ MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::stri
     {
       std::cout << "MFTEntryNode::_attributes error: " << e.error << std::endl;
     }
+    catch (std::string& e)
+    {
+      std::cout << "MFTEntryNode::_attributes error: " << e << std::endl;
+    }
   }
   this->__state++;
 }
@@ -188,6 +192,10 @@ Attributes	MFTEntryNode::_attributes(void)
     catch (vfsError& e)
     {
 	std::cout << "MFTEntryNode::_attributes error: " << e.error << std::endl;
+    }
+    catch (std::string& e)
+    {
+        std::cout << "MFTEntryNode::_attributes error: " << e  << std::endl;
     }
   }
   //delete  attribute map;

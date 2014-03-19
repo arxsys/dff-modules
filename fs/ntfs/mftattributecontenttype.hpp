@@ -23,10 +23,12 @@
 #include "filename.hpp"
 #include "attributelist.hpp"
 #include "volume.hpp"
+#include "objectid.hpp"
 
 #define $STANDARD_INFORMATION   16	
 #define $FILE_NAME		48
 #define $ATTRIBUTE_LIST         32
+#define $OBJECT_ID              64
 #define $VOLUME_NAME            96 
 #define $VOLUME_INFORMATION     112 
 #define $DATA			128
@@ -43,6 +45,7 @@ ContentType const ContentTypes[] =
 {
   { $STANDARD_INFORMATION, &StandardInformation::create },
   { $FILE_NAME, &FileName::create },
+  { $OBJECT_ID, &ObjectId::create },
   { $ATTRIBUTE_LIST, &AttributeList::create },
   { $VOLUME_NAME, &VolumeName::create },
   { $VOLUME_INFORMATION, &VolumeInformation::create },
