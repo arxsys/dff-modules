@@ -60,15 +60,18 @@ void		MFTAttributeContent::fileMapping(FileMapping* fm)
       runOffset = 0;
       runLength = 0;
 
-      runList->read(&(runListInfo.byte), sizeof(uint8_t));
+      if (runList->read(&(runListInfo.byte), sizeof(uint8_t)) != sizeof(uint8_t))
+        break;
 
       //if (runListInfo.info.offsetSize == 0)
       //std::cout << "offset size is 0 => sparse" << std::endl;
       if (runListInfo.info.offsetSize > 8) 
-          break;
+        break;
      
-      runList->read(&runLength, runListInfo.info.lengthSize);
-      runList->read(&runOffset, runListInfo.info.offsetSize);
+      if (runList->read(&runLength, runListInfo.info.lengthSize) != runListInfo.info.lengthSize)
+        break;
+      if (runList->read(&runOffset, runListInfo.info.offsetSize) != runListInfo.info.offsetSize)
+        break;
 
       if ((int8_t)(runOffset >> (8 * (runListInfo.info.offsetSize - 1))) < 0) 
       {
@@ -79,13 +82,11 @@ void		MFTAttributeContent::fileMapping(FileMapping* fm)
       }
  
       //if (runOffset == 0 || runOffset == -1)
-      //std::cout << "runOsset is sparse" << std::endl; 
-     
+        //std::cout << "run s sparse" << std::endl; 
       if (runLength == 0)
 	break;
- 
+
       runPreviousOffset += runOffset;
- 
       fm->push(totalSize, runLength * clusterSize, fsNode, runPreviousOffset * clusterSize);
       totalSize += runLength * clusterSize;  
     }
@@ -121,5 +122,10 @@ std::string	MFTAttributeContent::attributeName(void)
 
 const std::string	MFTAttributeContent::typeName(void) const
 {
-  return (std::string("Unknown type"));
+  std::ostringstream  idStream;
+
+  if (this->__mftAttribute)
+    idStream << "Unknown MFT attribute (" << this->__mftAttribute->typeID() << ")";
+
+  return (idStream.str());
 }

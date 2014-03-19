@@ -18,16 +18,19 @@
 #include "attributelist.hpp"
 #include "mftattributecontent.hpp"
 #include "mftattribute.hpp"
-
-
 #include "mftentrynode.hpp"
 
 AttributeList::AttributeList(MFTAttribute* mftAttribute) : MFTAttributeContent(mftAttribute)
 {
-  if (mftAttribute->mftEntryNode())
-    std::cout << "Foud Attribute_list attribute in : " << mftAttribute->mftEntryNode()->name() <<  std::endl;
-  else
-    std::cout << "Found Attribute_list " <<  std::endl;
+  std::cout << "Foud Attribute_list attribute in : " << mftAttribute->mftEntryNode()->name() <<  " size " << this->size() << std::endl;
+  VFile* vfile = this->open();
+
+  if (vfile->read((void*)&this->__attributeList, sizeof(__attributeList)) != sizeof(__attributeList))
+  {
+    delete vfile;
+    throw std::string("$ATTRIBUTE_LIST can't read AttributeList_s");
+  }
+  delete vfile;
 }
 
 MFTAttributeContent*	AttributeList::create(MFTAttribute* mftAttribute)

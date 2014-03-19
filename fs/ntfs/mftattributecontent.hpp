@@ -17,6 +17,8 @@
 #ifndef __MFT_ATTRIBUTE_CONTENT_HH__
 #define __MFT_ATTRIBUTE_CONTENT_HH__
 
+#include <iostream>
+
 #include "ntfs_common.hpp"
 
 class MFTAttribute;
@@ -36,13 +38,12 @@ struct RunListInfo
 class MFTAttributeContent : public Node
 {
 public:
-  			MFTAttributeContent(MFTAttribute* mftAttribute);
-	 		~MFTAttributeContent();
-  Attributes		_attributes();
-  void			fileMapping(FileMapping* fm);
-  uint8_t*		data();
-  uint16_t		typeID(void);
-  std::string		attributeName(void);
+  			        MFTAttributeContent(MFTAttribute* mftAttribute);
+	 		        ~MFTAttributeContent();
+  Attributes		        _attributes();
+  void			        fileMapping(FileMapping* fm);
+  uint8_t*		        data();
+  std::string		        attributeName(void);
   virtual const std::string	typeName(void) const;
 private:
   MFTAttribute*	        __mftAttribute;

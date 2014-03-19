@@ -24,7 +24,6 @@ MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::stri
 {
   VFile*	vfile = NULL;
 
-  //this->__ntfs->setStateInfo("Parsing MFT "); //+ this->name() ? 
   this->__mftNode = mftNode;
   this->__ntfs = ntfs;
   this->__offset = offset;
@@ -45,7 +44,7 @@ MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::stri
   }
   delete vfile;
 
-//XXX test only ou sert a cququchose ? (permet de savoir si la node va fail plus tard ? */
+  //test at launch could be removed later
   std::vector<MFTAttribute* > mftAttributes = this->MFTAttributes();
   std::vector<MFTAttribute* >::iterator	mftAttribute;
   mftAttribute = mftAttributes.begin();
@@ -184,7 +183,9 @@ Attributes	MFTEntryNode::_attributes(void)
   {
     try 
     {
-      MFTAttributeContent* mftAttributeContent = (*mftAttribute)->content();	
+      if ((*mftAttribute)->typeID() == 128) //Special case a $DATA as no attribute 
+        continue; 
+      MFTAttributeContent* mftAttributeContent = (*mftAttribute)->content();
       MAP_ATTR(mftAttributeContent->typeName(), mftAttributeContent->_attributes());
       delete mftAttributeContent;
       delete (*mftAttribute);

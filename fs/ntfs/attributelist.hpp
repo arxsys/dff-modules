@@ -20,14 +20,26 @@
 #include "ntfs_common.hpp"
 #include "mftattributecontent.hpp"
 
-//XXX code me
+PACK_S AttributeList_s 
+{
+  uint32_t      attributeType;
+  uint16_t      recordLength;
+  uint8_t       nameLength;
+  uint8_t       offsetToName;
+  uint64_t      startingVCN;
+  uint64_t      baseFileReference;
+  uint16_t      attributeId;
+//name in unicode if name > 0 ? y a l offset de toute ?? 
+} PACK;
 
 class AttributeList : public MFTAttributeContent
 {
+private:
+  AttributeList_s      __attributeList;
 public:
-		        AttributeList(MFTAttribute* mftAttribute);
-			~AttributeList();
-  Attributes		_attributes(void);
+		       AttributeList(MFTAttribute* mftAttribute);
+		       ~AttributeList();
+  Attributes           _attributes(void);
   const std::string    typeName(void) const;
   static MFTAttributeContent*	create(MFTAttribute* mftAttribute);
 };
