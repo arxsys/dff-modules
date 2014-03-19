@@ -23,6 +23,7 @@
 
 MFTAttributeContent::MFTAttributeContent(MFTAttribute* mftAttribute) : Node("MFTAC", (uint64_t)mftAttribute->contentSize(), NULL,  mftAttribute->ntfs()), __mftAttribute(mftAttribute)
 {
+  this->__mftAttribute->mftEntryNode()->updateState();
 }
 
 MFTAttributeContent::~MFTAttributeContent()

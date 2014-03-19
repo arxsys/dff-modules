@@ -32,6 +32,7 @@ public:
   MFTNode(NTFS* ntfs, Node* parent, MFTEntryNode* mftEntryNode);
   ~MFTNode();
   void		init(void);
+  MFTEntryNode* MFTEntryNode(void);
   Attributes	_attributes(void);
   void		fileMapping(FileMapping* fm);
 };

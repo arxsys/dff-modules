@@ -65,7 +65,6 @@ MFTAttribute::MFTAttribute(MFTEntryNode* mftEntryNode, uint64_t offset) : __offs
       }
   }
   delete vfile;
-  mftEntryNode->updateState();
 }
 
 MFTAttribute::~MFTAttribute()
@@ -99,7 +98,6 @@ MFTAttributeContent*	MFTAttribute::content(void)
   for (uint8_t	i = 0; ContentTypes[i].newObject != NULL; i++)
      if (ContentTypes[i].ID == this->typeID())
 	return (ContentTypes[i].newObject(this));
-    
   return (new MFTAttributeContent(this));
 }
 
