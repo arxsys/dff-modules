@@ -40,8 +40,24 @@
 StandardInformation::StandardInformation(MFTAttribute* mftAttribute) : MFTAttributeContent(mftAttribute)
 {
   VFile* vfile = this->open();
- 
-  if (vfile->read((void*)&(this->__standardInformation), sizeof(StandardInformation_s)) != sizeof(StandardInformation_s))
+
+  if (this->size() == 48)
+  {
+    if (vfile->read((void*)&(this->__standardInformation), 48) != 48)
+    {
+      delete vfile;
+      throw vfsError("Can't read attribute Standard Informations");
+    }
+  }
+  else if(this->size() == 72)
+  {
+    if (vfile->read((void*)&(this->__standardInformation), sizeof(StandardInformation_s)) != sizeof(StandardInformation_s))
+    {
+      delete vfile;
+      throw vfsError("Can't read attribute Standard Informations");
+    }
+  }
+  else
   {
     delete vfile;
     throw vfsError("Can't read attribute Standard Informations");
@@ -75,10 +91,13 @@ Attributes	StandardInformation::_attributes(void)
   MAP_ATTR("Max versions number", this->versionsMaximumNumber()) 
   MAP_ATTR("Version number", this->versionNumber())
   MAP_ATTR("Class ID", this->classID())
-  MAP_ATTR("Owner ID", this->ownerID())
-  MAP_ATTR("Security ID", this->securityID())
-  MAP_ATTR("Quota charged", this->quotaCharged())
-  MAP_ATTR("Update Sequence Number", this->USN())
+  if (this->size() == 72)
+  {
+    MAP_ATTR("Owner ID", this->ownerID())
+    MAP_ATTR("Security ID", this->securityID())
+    MAP_ATTR("Quota charged", this->quotaCharged())
+    MAP_ATTR("Update Sequence Number", this->USN())
+  }
 
   return (attrs);
 }

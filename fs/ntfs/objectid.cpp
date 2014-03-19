@@ -57,8 +57,7 @@ const std::string ObjectId::__objectIdToString(uint64_t* id)
 
   idStream << *id; 
   idStream << *(id+1);
-
-  return idStream.str();
+  return (idStream.str());
 }
 
 const std::string ObjectId::objectId(void)
