@@ -108,7 +108,9 @@ void	MFTNode::init(void)
       {
          if ((*attr)->typeID() == $DATA)
          {
-           this->setSize((*attr)->contentSize());
+           this->setSize((*attr)->contentSize()); //ca a pas l air d etre la bonne size :)
+           //XXX ok pour celui la mais check si pas ads etc... 
+
            break;
          }
       }
@@ -128,8 +130,12 @@ Attributes	MFTNode::_attributes(void)
 
 void		MFTNode::fileMapping(FileMapping* fm)
 {
+ int flag = 0; 
   if (this->__mftEntryNode)
   {
+//file can have multi filemapping please remember that 
+//could be possible to filemap 2 times ? :) :) :)
+
     std::vector<MFTAttribute* > datas = this->__mftEntryNode->MFTAttributesType($DATA);
     std::vector<MFTAttribute* >::iterator mftAttribute;
     if (datas.size() > 0) //XXX choose the right in init because of ads ... 
@@ -149,22 +155,27 @@ void		MFTNode::fileMapping(FileMapping* fm)
       AttributeList* attributeList = static_cast<AttributeList* >((*attributesList)->content());
       std::vector<MFTAttribute* > attrs = attributeList->MFTAttributes();
       std::vector<MFTAttribute* >::iterator attr = attrs.begin();
-       
+      
       for (; attr != attrs.end(); ++attr)
       {
          if ((*attr)->typeID() == $DATA)
          {
           MFTAttributeContent* mftAttributeContent = (*attr)->content();
-          mftAttributeContent->fileMapping(fm);
+          //if (flag == 1)
+          mftAttributeContent->fileMapping(fm); //add offset already pushed !
+          flag += 1;
+          //XXX delete et check filemapping pour attributeList & ntfs normal car editeur hexa boucle a l infi surcertains fichier ! 
           //delete mftAttributeContent;
           //for (mftAttribute = datas.begin(); mftAttribute != datas.end(); ++mftAttribute)
           //delete (*mftAttribute);
-          break;
+          //return ;
         }
       }
     }
     //for (; attributesList != attributesLists.end(); ++attributesList)
     //delete (*attributesList);
+  std::cout << this->name() << " number of $DATA: " << flag << std::endl; 
+  if (flag == 0)
+    this->__mftEntryNode->fileMapping(fm);//setSize to mftSize by default is not set !
   }
-  this->__mftEntryNode->fileMapping(fm);//setSize to mftSize by default is not set !
 }

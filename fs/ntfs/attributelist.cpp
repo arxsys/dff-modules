@@ -22,6 +22,10 @@
 #include "mftattribute.hpp"
 #include "mftentrynode.hpp"
 
+/*
+ *  AttributeListItems
+ */
+
 AttributeListItems::AttributeListItems(VFile* vfile)
 {
   int32_t offset = vfile->read((void*)&this->__attributeList, sizeof(__attributeList)); 
@@ -88,12 +92,16 @@ uint16_t AttributeListItems::attributeId(void) const
   return (this->__attributeList.attributeId);
 }
 
+/*
+ *   AttributeList
+ */
+
 AttributeList::AttributeList(MFTAttribute* mftAttribute) : MFTAttributeContent(mftAttribute)
 {
   VFile* vfile = this->open();
 
   while (vfile->tell() < this->size()) //&& vfile->tell() - this->size() >> sizeof(AttributeList_s) 
-  {
+  {  //XXX check presvious == curent pour eviter loop inifi
     try
     {
       AttributeListItems attrib(vfile);
@@ -128,6 +136,7 @@ std::vector<MFTAttribute*> AttributeList::MFTAttributes(void)
       }
     }
   }
+ //XXX delete useless
   return (found);
 }
 

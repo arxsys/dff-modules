@@ -35,19 +35,21 @@ MFTAttribute* MFTAttributeContent::mftAttribute(void)
   return (this->__mftAttribute);
 }
 
+//default for $DATA -> DATA specialization ?
 void		MFTAttributeContent::fileMapping(FileMapping* fm)
 {
-//default for $DATA -> DATA specialization ?
   if (this->__mftAttribute->isResident())
   {
      fm->push(0, this->__mftAttribute->contentSize(), this->__mftAttribute->mftEntryNode(), this->__mftAttribute->contentOffset());
   }
   else
   {
+    // if fileMaping->startVCN ! et get size car contentSize et pas bon du coup :) 
+    //fileMapping
     uint64_t	runPreviousOffset = 0;
     int64_t	runOffset;
     uint64_t	runLength;
-    uint64_t	totalSize = 0;
+    uint64_t	totalSize = this->__mftAttribute->VNCStart() * 512;
     uint32_t	clusterSize = this->__mftAttribute->ntfs()->bootSectorNode()->clusterSize();
     Node*	fsNode = this->__mftAttribute->ntfs()->fsNode();
     RunListInfo	runListInfo;
@@ -60,7 +62,8 @@ void		MFTAttributeContent::fileMapping(FileMapping* fm)
       return ;
     }
 
-    while (totalSize < this->__mftAttribute->contentSize())
+    //XXX because no size in second $DATA -> get it or find an other way to exit or if contentSize == 0 else
+    while (true) //totalSize < this->__mftAttribute->contentSize()) //XXX multi data !
     { 
       runListInfo.byte = 0;
       runOffset = 0;
@@ -69,15 +72,15 @@ void		MFTAttributeContent::fileMapping(FileMapping* fm)
       if (runList->read(&(runListInfo.byte), sizeof(uint8_t)) != sizeof(uint8_t))
         break;
 
-      //if (runListInfo.info.offsetSize == 0)
-      //std::cout << "offset size is 0 => sparse" << std::endl;
       if (runListInfo.info.offsetSize > 8) 
         break;
      
       if (runList->read(&runLength, runListInfo.info.lengthSize) != runListInfo.info.lengthSize)
         break;
-      if (runList->read(&runOffset, runListInfo.info.offsetSize) != runListInfo.info.offsetSize)
-        break;
+
+      if (runListInfo.info.offsetSize)
+        if (runList->read(&runOffset, runListInfo.info.offsetSize) != runListInfo.info.offsetSize)
+           break;
 
       if ((int8_t)(runOffset >> (8 * (runListInfo.info.offsetSize - 1))) < 0) 
       {
@@ -87,13 +90,14 @@ void		MFTAttributeContent::fileMapping(FileMapping* fm)
         runOffset = toffset;
       }
  
-      //if (runOffset == 0 || runOffset == -1)
-        //std::cout << "run s sparse" << std::endl; 
       if (runLength == 0)
 	break;
-
       runPreviousOffset += runOffset;
-      fm->push(totalSize, runLength * clusterSize, fsNode, runPreviousOffset * clusterSize);
+
+      if (runOffset == 0) //Sparse || runOffset == -1) ?? pas possible car on rad pas donc check offsetSize plutot ?
+        fm->push(totalSize, runLength * clusterSize, NULL, 0);
+      else 
+        fm->push(totalSize, runLength * clusterSize, fsNode, runPreviousOffset * clusterSize);
       totalSize += runLength * clusterSize;  
     }
     delete runList;
