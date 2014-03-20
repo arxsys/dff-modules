@@ -62,7 +62,7 @@ private:
   MFTNonResidentAttribute*	__nonResidentAttribute; // cast buff offset
   MFTResidentAttribute*		__residentAttribute;//  cast buff offset
 public:
-		        MFTAttribute(MFTEntryNode* ntfsNode, uint64_t offset);
+		        MFTAttribute(MFTEntryNode* mftEntryNode, uint64_t offset);
 		        ~MFTAttribute(void);
   MFTEntryNode*		mftEntryNode(void);
   uint64_t		offset(void);

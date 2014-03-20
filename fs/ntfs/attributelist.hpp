@@ -17,29 +17,50 @@
 #ifndef __ATTRIBUTE_LIST_HH__
 #define __ATTRIBUTE_LIST_HH__
 
+#include  <vector>
+
 #include "ntfs_common.hpp"
 #include "mftattributecontent.hpp"
 
-PACK_S AttributeList_s 
+PACK_S AttributeList_s
 {
-  uint32_t      attributeType;
-  uint16_t      recordLength;
-  uint8_t       nameLength;
-  uint8_t       offsetToName;
-  uint64_t      startingVCN;
-  uint64_t      baseFileReference;
+  uint32_t      typeId;
+  uint16_t      size;
+  uint8_t       nameSize;
+  uint8_t       nameOffset;
+  uint64_t      VCNStart;
+  uint8_t       mftEntryId[6];
+  uint8_t       sequence[2];
   uint16_t      attributeId;
-//name in unicode if name > 0 ? y a l offset de toute ?? 
 } PACK;
+
+class AttributeListItems
+{
+private:
+  std::string       __name;
+  AttributeList_s   __attributeList;
+public:
+                    AttributeListItems(VFile*);
+                    AttributeListItems(const AttributeListItems& copy);
+                    ~AttributeListItems();
+  uint32_t          typeId(void) const;
+  uint16_t          size(void) const;
+  const std::string name(void) const;
+  uint64_t          VCNStart(void) const;
+  uint64_t          mftEntryId(void) const;
+  uint16_t          sequence(void) const;
+  uint16_t          attributeId(void) const;
+};
 
 class AttributeList : public MFTAttributeContent
 {
 private:
-  AttributeList_s      __attributeList;
+  std::vector<AttributeListItems> __attributes;
 public:
 		       AttributeList(MFTAttribute* mftAttribute);
 		       ~AttributeList();
   Attributes           _attributes(void);
+  std::vector<MFTAttribute*> MFTAttributes(void);
   const std::string    typeName(void) const;
   static MFTAttributeContent*	create(MFTAttribute* mftAttribute);
 };

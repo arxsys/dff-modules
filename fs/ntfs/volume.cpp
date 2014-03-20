@@ -130,14 +130,22 @@ uint8_t VolumeInformation::minor(void) const
 const std::string VolumeInformation::version(void) const
 {
   std::ostringstream version;
-  version << (uint32_t)this->major() << "." << (uint32_t)this->minor();
+  uint32_t major = this->major();
+  uint32_t minor = this->minor();
 
-  if (version.str() == "3.1")
-    version << " (Windows XP)";
-  else if (version.str() == "1.2")
-    version << " (Windows NT)";
-  else if (version.str() == "3.0")
+  version << major << "." << minor;
+
+/*
+ * NTFS version 3.1 is used by Windows XP, 2003 and Vista.
+ */
+  if (major == 1 && (minor == 1 || minor == 2))
+    version << " (Windows NT4)";
+  else if (major == 2)
+    version << " (Windows 2000 Beta)"; 
+  else if (major == 3 && minor == 0)
     version << " (Windows 2000)"; 
+  if (major == 3 && minor == 1)
+    version << " (Windows XP, 2003, Vista)";
   return (version.str());
 }
 

@@ -20,11 +20,10 @@
 #include "mftattribute.hpp"
 #include "mftattributecontent.hpp"
 
-MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::string name, Node* parent = NULL) : Node(name, 1024, parent, ntfs)
+MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::string name, Node* parent = NULL) : Node(name, 1024, parent, ntfs), __mftNode(mftNode)
 {
   VFile*	vfile = NULL;
 
-  this->__mftNode = mftNode;
   this->__ntfs = ntfs;
   this->__offset = offset;
   this->__MFTEntry = new MFTEntry; 
@@ -184,7 +183,9 @@ Attributes	MFTEntryNode::_attributes(void)
     try 
     {
       if ((*mftAttribute)->typeID() == 128) //Special case a $DATA as no attribute 
-        continue; 
+        continue;
+      //if ((*mftAttribute)->typeID() == 32) //Special case a $ATTRIBUTE_LIST 
+        //continue;  //for i in mftattribute.MFTAttribute() MAP_ATTR
       MFTAttributeContent* mftAttributeContent = (*mftAttribute)->content();
       MAP_ATTR(mftAttributeContent->typeName(), mftAttributeContent->_attributes());
       delete mftAttributeContent;

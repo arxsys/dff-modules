@@ -52,7 +52,7 @@ private:
   uint64_t		__state;
   class MFTAttribute*	__MFTAttribute(uint16_t offset);
 public:
-			MFTEntryNode(NTFS* ntfs, Node* fsNode, uint64_t offset, std::string name, Node* parent);
+			MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::string name, Node* parent);
 			~MFTEntryNode();
   NTFS*			ntfs(void);
   Node*			mftNode(void);

@@ -51,8 +51,10 @@ void	MFTNode::init(void)
   //else
     //this->setFile();
 
+  /*
+   *  Search for name attribute to set node name
+   */
   uint8_t fileNameID = FILENAME_NAMESPACE_DOS_WIN32;
- 
   if (this->__mftEntryNode != NULL)
   {
     try 
@@ -76,15 +78,43 @@ void	MFTNode::init(void)
     {
        std::cout << e.error << std::endl;
     }
+
+    /*
+     *  search $DATA in attribute to set node size
+     */
     std::vector<MFTAttribute* > datas = this->__mftEntryNode->MFTAttributesType($DATA);
     std::vector<MFTAttribute* >::iterator mftAttribute = datas.begin();
-
-    if (datas.size() > 0) //XXX choose the right in init() because of ads ...
+    if (datas.size() > 0) //XXX add ADS in new node 
     {
       this->setSize(datas[0]->contentSize());
     }
     for (; mftAttribute != datas.end(); ++mftAttribute)
       delete (*mftAttribute);
+
+    /*
+     *  search for $DATA in attributeList to set node size
+     */
+    //search for sub attribut in mftattributestype ? 
+    std::vector<MFTAttribute* > attributesLists = this->__mftEntryNode->MFTAttributesType($ATTRIBUTE_LIST);
+    std::vector<MFTAttribute* >::iterator attributesList = attributesLists.begin();
+    //XXX test on only one attribute list -> maybe can have other ?
+    if (attributesLists.size() > 0) //XXX add ADS in new node 
+    {
+      AttributeList* attributeList = static_cast<AttributeList* >((*attributesList)->content());
+      std::vector<MFTAttribute* > attrs = attributeList->MFTAttributes();
+      std::vector<MFTAttribute* >::iterator attr = attrs.begin();
+       
+      for (; attr != attrs.end(); ++attr)
+      {
+         if ((*attr)->typeID() == $DATA)
+         {
+           this->setSize((*attr)->contentSize());
+           break;
+         }
+      }
+    }
+    for (; attributesList != attributesLists.end(); ++attributesList)
+      delete (*attributesList);
   }
 }
 
@@ -93,7 +123,7 @@ Attributes	MFTNode::_attributes(void)
   if (this->__mftEntryNode != NULL)
     return (this->__mftEntryNode->_attributes());
   Attributes attr;
-  return attr; //throw error ?
+  return attr;
 }
 
 void		MFTNode::fileMapping(FileMapping* fm)
@@ -105,15 +135,36 @@ void		MFTNode::fileMapping(FileMapping* fm)
     if (datas.size() > 0) //XXX choose the right in init because of ads ... 
     {
       MFTAttributeContent* mftAttributeContent = datas[0]->content();
-
       mftAttributeContent->fileMapping(fm);
       delete mftAttributeContent;
       for (mftAttribute = datas.begin(); mftAttribute != datas.end(); ++mftAttribute)
 	delete (*mftAttribute);
+      return ;
     }
-    else
+
+    std::vector<MFTAttribute* > attributesLists = this->__mftEntryNode->MFTAttributesType($ATTRIBUTE_LIST);
+    std::vector<MFTAttribute* >::iterator attributesList = attributesLists.begin();
+    if (attributesLists.size() > 0) 
     {
-      this->__mftEntryNode->fileMapping(fm);
+      AttributeList* attributeList = static_cast<AttributeList* >((*attributesList)->content());
+      std::vector<MFTAttribute* > attrs = attributeList->MFTAttributes();
+      std::vector<MFTAttribute* >::iterator attr = attrs.begin();
+       
+      for (; attr != attrs.end(); ++attr)
+      {
+         if ((*attr)->typeID() == $DATA)
+         {
+          MFTAttributeContent* mftAttributeContent = (*attr)->content();
+          mftAttributeContent->fileMapping(fm);
+          //delete mftAttributeContent;
+          //for (mftAttribute = datas.begin(); mftAttribute != datas.end(); ++mftAttribute)
+          //delete (*mftAttribute);
+          break;
+        }
+      }
     }
-  }  
+    //for (; attributesList != attributesLists.end(); ++attributesList)
+    //delete (*attributesList);
+  }
+  this->__mftEntryNode->fileMapping(fm);//setSize to mftSize by default is not set !
 }

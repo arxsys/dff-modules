@@ -30,8 +30,14 @@ MFTAttributeContent::~MFTAttributeContent()
 {
 }
 
+MFTAttribute* MFTAttributeContent::mftAttribute(void)
+{
+  return (this->__mftAttribute);
+}
+
 void		MFTAttributeContent::fileMapping(FileMapping* fm)
 {
+//default for $DATA -> DATA specialization ?
   if (this->__mftAttribute->isResident())
   {
      fm->push(0, this->__mftAttribute->contentSize(), this->__mftAttribute->mftEntryNode(), this->__mftAttribute->contentOffset());

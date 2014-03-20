@@ -96,8 +96,8 @@ MFTEntryNode*		MFTAttribute::mftEntryNode(void)
 MFTAttributeContent*	MFTAttribute::content(void)
 {
   for (uint8_t	i = 0; ContentTypes[i].newObject != NULL; i++)
-     if (ContentTypes[i].ID == this->typeID())
-	return (ContentTypes[i].newObject(this));
+    if (ContentTypes[i].ID == this->typeID())
+      return (ContentTypes[i].newObject(this));
   return (new MFTAttributeContent(this));
 }
 
@@ -189,12 +189,16 @@ uint16_t MFTAttribute::ID(void)
 
 uint64_t MFTAttribute::VNCStart(void)
 {
-  return (this->__nonResidentAttribute->VNCStart);
+  if (this->__nonResidentAttribute)
+    return (this->__nonResidentAttribute->VNCStart);
+  throw std::string("No VNCStart in resident attribute");
 }
 
 uint64_t MFTAttribute::VNCEnd(void)
 {
-  return (this->__nonResidentAttribute->VNCEnd);
+  if (this->__nonResidentAttribute)
+    return (this->__nonResidentAttribute->VNCEnd);
+  throw std::string("No VNCEnd in resident attribute");
 }
 
 bool    MFTAttribute::isCompressed(void)

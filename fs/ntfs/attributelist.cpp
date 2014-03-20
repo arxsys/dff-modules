@@ -15,22 +15,120 @@
  */
 
 #include <list>
+#include <unicode/unistr.h>
+
 #include "attributelist.hpp"
 #include "mftattributecontent.hpp"
 #include "mftattribute.hpp"
 #include "mftentrynode.hpp"
 
+AttributeListItems::AttributeListItems(VFile* vfile)
+{
+  int32_t offset = vfile->read((void*)&this->__attributeList, sizeof(__attributeList)); 
+  if (offset != sizeof(__attributeList))
+    throw std::string("$ATTRIBUTE_LIST can't read AttributeList_s");
+  
+  if (this->__attributeList.nameSize > 0)
+  {
+    uint16_t* name = new uint16_t[this->__attributeList.nameSize];
+    offset += vfile->read((void*)name, this->__attributeList.nameSize * sizeof(uint16_t));
+    UnicodeString((char*)name, __attributeList.nameSize * sizeof(uint16_t), "UTF16-LE").toUTF8String(this->__name);
+  }
+
+  int32_t nextOffset = this->size() - offset;
+  if (nextOffset > 0)
+    vfile->seek(vfile->tell() + nextOffset); 
+}
+
+AttributeListItems::AttributeListItems(const AttributeListItems& copy) : __name(copy.__name), __attributeList(copy.__attributeList)
+{
+}
+
+AttributeListItems::~AttributeListItems()
+{
+}
+
+const std::string AttributeListItems::name(void) const
+{
+  return (this->__name);
+}
+
+uint32_t AttributeListItems::typeId(void) const
+{
+  return (this->__attributeList.typeId);
+}
+
+uint16_t AttributeListItems::size(void) const
+{
+  return (this->__attributeList.size);
+}
+
+uint64_t AttributeListItems::VCNStart(void) const
+{
+  return (this->__attributeList.VCNStart);
+}
+
+uint64_t AttributeListItems::mftEntryId(void) const
+{
+ uint64_t mftEntryId = 0;
+  
+ mftEntryId = *((uint32_t*)&this->__attributeList.mftEntryId);
+ *((uint32_t*)&mftEntryId + 1) = *((uint16_t*)&this->__attributeList.mftEntryId + 2);
+
+ return (mftEntryId);
+}
+
+uint16_t AttributeListItems::sequence(void) const
+{
+ return (*((uint16_t*)&this->__attributeList.sequence));
+}
+
+uint16_t AttributeListItems::attributeId(void) const
+{
+  return (this->__attributeList.attributeId);
+}
+
 AttributeList::AttributeList(MFTAttribute* mftAttribute) : MFTAttributeContent(mftAttribute)
 {
-  std::cout << "Foud Attribute_list attribute in : " << mftAttribute->mftEntryNode()->name() <<  " size " << this->size() << std::endl;
   VFile* vfile = this->open();
 
-  if (vfile->read((void*)&this->__attributeList, sizeof(__attributeList)) != sizeof(__attributeList))
+  while (vfile->tell() < this->size()) //&& vfile->tell() - this->size() >> sizeof(AttributeList_s) 
   {
-    delete vfile;
-    throw std::string("$ATTRIBUTE_LIST can't read AttributeList_s");
+    try
+    {
+      AttributeListItems attrib(vfile);
+      this->__attributes.push_back(attrib);
+    }
+    catch (const std::string& error)
+    {
+    }
   }
   delete vfile;
+}
+
+std::vector<MFTAttribute*> AttributeList::MFTAttributes(void)
+{
+  std::vector<AttributeListItems>::iterator item = this->__attributes.begin();
+  std::vector<MFTAttribute*> found;
+  for (; item != this->__attributes.end(); ++item)
+  {
+    MFTEntryNode* mftEntryNode = this->mftAttribute()->mftEntryNode();
+    if (mftEntryNode->offset() == item->mftEntryId() * 1024) 
+      continue;
+    MFTEntryNode* mft = new MFTEntryNode(mftEntryNode->ntfs(), mftEntryNode->mftNode(), item->mftEntryId() * 1024, "", NULL);    
+    std::vector<MFTAttribute*> attributes = mft->MFTAttributes(); 
+    std::vector<MFTAttribute*>::iterator attribute = attributes.begin();
+    //mft->updateState(); //? 
+    //mftEntryNode->updateState();
+    for (; attribute != attributes.end(); ++attribute)
+    {
+      if (((*attribute)->VNCStart() == item->VCNStart()) && ((*attribute)->typeID() == item->typeId()))
+      {
+        found.push_back(*attribute);
+      }
+    }
+  }
+  return (found);
 }
 
 MFTAttributeContent*	AttributeList::create(MFTAttribute* mftAttribute)
@@ -46,7 +144,7 @@ Attributes	AttributeList::_attributes(void)
 {
   Attributes	attrs;
 
-  //MAP_ATTR("Parent directory reference", this->parentDirectoryReference());
+  //for attributes in MFTAttributes()
   return (attrs);
 }
 
