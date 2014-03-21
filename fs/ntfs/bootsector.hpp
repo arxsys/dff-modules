@@ -33,10 +33,9 @@ PACK_S BPB
   uint64_t	totalSectors;
   uint64_t	MFTLogicalClusterNumber;
   uint64_t	MFTMirrorLogicalClusterNumber;
-//int8_t	clustersPerMFTRecord;
-  uint8_t	clustersPerMFTRecord;//XXX seem to work better like that or get neg value 
+  int8_t	clustersPerMFTRecord;
   uint8_t	reserved3[3];
-  int8_t	clustersPerIndexBuffer;  
+  int8_t	clustersPerIndexRecord;  
   uint8_t	reserved4[3];
   uint64_t	volumeSerialNumber;
   uint32_t	reserved5;
@@ -71,20 +70,21 @@ public:
   virtual uint64_t	_attributesState(void);
   virtual Attributes 	_attributes(void);
   virtual Attributes 	dataType(void);
-  uint64_t		OEMDID(void);
-  uint16_t		bytesPerSector(void);
-  uint8_t		sectorsPerCluster(void);
-  uint32_t		clusterSize(void);
-  uint8_t		mediaDescriptor(void);
-  uint64_t		totalSectors(void);
-  uint64_t		MFTLogicalClusterNumber(void);
-  uint64_t		MFTMirrorLogicalClusterNumber(void);
-  int8_t		clustersPerMFTRecord(void);
-  uint32_t		MFTRecordSize(void);
-  int8_t		clustersPerIndexBuffer(void);  
-  uint64_t		volumeSerialNumber(void);
-  uint16_t		endOfSector(void);
-  void			validate(void);
+  uint64_t		OEMDID(void) const;
+  uint16_t		bytesPerSector(void) const;
+  uint8_t		sectorsPerCluster(void) const;
+  uint32_t		clusterSize(void) const;
+  uint8_t		mediaDescriptor(void) const;
+  uint64_t		totalSectors(void) const;
+  uint64_t		MFTLogicalClusterNumber(void) const;
+  uint64_t		MFTMirrorLogicalClusterNumber(void) const;
+  int8_t		clustersPerMFTRecord(void) const;
+  uint32_t		MFTRecordSize(void) const;
+  int8_t		clustersPerIndexRecord(void) const;  
+  uint32_t              indexRecordSize(void) const;
+  uint64_t		volumeSerialNumber(void) const;
+  uint16_t		endOfSector(void) const;
+  void			validate(void) const;
 };
 
 #endif

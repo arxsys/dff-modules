@@ -45,12 +45,11 @@ void		MFTAttributeContent::fileMapping(FileMapping* fm)
   else
   {
     // if fileMaping->startVCN ! et get size car contentSize et pas bon du coup :) 
-    //fileMapping
     uint64_t	runPreviousOffset = 0;
     int64_t	runOffset;
     uint64_t	runLength;
-    uint64_t	totalSize = this->__mftAttribute->VNCStart() * 512;
     uint32_t	clusterSize = this->__mftAttribute->ntfs()->bootSectorNode()->clusterSize();
+    uint64_t	totalSize = this->__mftAttribute->VNCStart() * clusterSize;
     Node*	fsNode = this->__mftAttribute->ntfs()->fsNode();
     RunListInfo	runListInfo;
 
@@ -104,30 +103,56 @@ void		MFTAttributeContent::fileMapping(FileMapping* fm)
   }
 }
 
-uint8_t*	MFTAttributeContent::data(void)
-{
-/*  if (this->__mftAttribute->isResident())
-  {
-     this->__mftAttribute->ntfs->vfile->read bla bla bla
-  }
-  else
-    throw std::string("Can't use data on this mft attribute content");*/
-  return NULL;
-}
+//uint8_t*	MFTAttributeContent::data(void)
+//{
+  ////this->open()->read uncompress 
+///*  if (this->__mftAttribute->isResident())
+     //this->__mftAttribute->ntfs->vfile->read 
+  //else
+    //throw std::string("Can't use data on this mft attribute content");*/
+  //return NULL;
+//}
 
+/*
+ *  Return MFTAttribute attributes
+ */ 
 Attributes	MFTAttributeContent::_attributes(void)
 {
   Attributes	attrs;
 
+  if (this->__mftAttribute == NULL)
+    return attrs;
+
+  MAP_ATTR("type id", this->__mftAttribute->typeId())
+  MAP_ATTR("length", this->__mftAttribute->length())
+  if (this->__mftAttribute->nameSize())
+    MAP_ATTR("name", this->attributeName())
+  MAP_ATTR("flags", this->__mftAttribute->flags()) //XXX
+  MAP_ATTR("id", this->__mftAttribute->id())
+  if (this->__mftAttribute->isResident())
+  {
+    MAP_ATTR("Content size", this->__mftAttribute->contentSize());
+    MAP_ATTR("Content offset", this->__mftAttribute->contentOffset());
+  }
+  else
+  {
+    MAP_ATTR("VNC start", this->__mftAttribute->VNCStart())
+    MAP_ATTR("VNC end", this->__mftAttribute->VNCEnd())
+    MAP_ATTR("Run list offset", this->__mftAttribute->runListOffset())
+    MAP_ATTR("Compression unit size", this->__mftAttribute->compressionUnitSize())
+    MAP_ATTR("Content allocated size", this->__mftAttribute->contentAllocatedSize())
+    MAP_ATTR("Content actual size", this->__mftAttribute->contentActualSize())
+    MAP_ATTR("Content initialized size", this->__mftAttribute->contentInitializedSize())
+  }
+
   return attrs;
 }
 
-//There could be multiple content of same id they must have diferent name because DFF::Attributes are a map otherwise map entry would be overwirtten
-std::string	MFTAttributeContent::attributeName(void)
+std::string	MFTAttributeContent::attributeName(void) const
 {
- if (this->__mftAttribute->nameLength())
-    return (std::string("attribute name found in self"));
-  return (this->typeName());
+  if (this->__mftAttribute->nameSize())
+    return (this->__mftAttribute->name());
+  return ("");
 }
 
 const std::string	MFTAttributeContent::typeName(void) const
@@ -135,7 +160,7 @@ const std::string	MFTAttributeContent::typeName(void) const
   std::ostringstream  idStream;
 
   if (this->__mftAttribute)
-    idStream << "Unknown MFT attribute (" << this->__mftAttribute->typeID() << ")";
+    idStream << "Unknown MFT attribute (" << this->__mftAttribute->typeId() << ")";
 
   return (idStream.str());
 }

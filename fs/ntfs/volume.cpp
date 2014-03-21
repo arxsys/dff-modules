@@ -25,7 +25,6 @@
 /*
  *  Volume name
  */
-
 VolumeName::VolumeName(MFTAttribute* mftAttribute) : MFTAttributeContent(mftAttribute)
 {
   this->__volumeName = NULL;
@@ -44,7 +43,7 @@ VolumeName::VolumeName(MFTAttribute* mftAttribute) : MFTAttributeContent(mftAttr
   delete vfile;
 }
 
-const std::string VolumeName::volumeName(void) 
+const std::string VolumeName::volumeName(void)
 {
   std::string	volumeName;
   UnicodeString((char*)this->__volumeName, this->size(), "UTF16-LE").toUTF8String(volumeName);
@@ -63,17 +62,18 @@ VolumeName::~VolumeName()
   this->__volumeName = NULL;
 }
 
+const std::string	VolumeName::typeName(void) const
+{
+  return (std::string("$VOLUME_NAME"));
+}
+
 Attributes	VolumeName::_attributes(void)
 {
   Attributes	attrs;
 
+  MAP_ATTR("Attributes", MFTAttributeContent::_attributes());
   MAP_ATTR("Volume name", this->volumeName())
   return (attrs);
-}
-
-const std::string	VolumeName::typeName(void) const
-{
-  return (std::string("$VOLUME_NAME"));
 }
 
 /*
@@ -135,17 +135,15 @@ const std::string VolumeInformation::version(void) const
 
   version << major << "." << minor;
 
-/*
- * NTFS version 3.1 is used by Windows XP, 2003 and Vista.
- */
   if (major == 1 && (minor == 1 || minor == 2))
     version << " (Windows NT4)";
   else if (major == 2)
     version << " (Windows 2000 Beta)"; 
   else if (major == 3 && minor == 0)
     version << " (Windows 2000)"; 
-  if (major == 3 && minor == 1)
+  else if (major == 3 && minor == 1)
     version << " (Windows XP, 2003, Vista)";
+
   return (version.str());
 }
 
@@ -168,6 +166,7 @@ Attributes	VolumeInformation::_attributes(void)
 {
   Attributes	attrs;
 
+  MAP_ATTR("Attributes", MFTAttributeContent::_attributes());
   MAP_ATTR("Flags", this->flags())
   MAP_ATTR("Version", this->version())
   return (attrs);

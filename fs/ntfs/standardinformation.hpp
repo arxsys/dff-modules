@@ -43,20 +43,20 @@ private:
 public:
 		        StandardInformation(MFTAttribute* mftAttribute);
 			~StandardInformation();
-  vtime*		creationTime(void);
-  vtime*		alteredTime(void);
-  vtime*		mftAlteredTime(void);
-  vtime*		accessedTime(void);
-  std::list<Variant_p>	flags(void);
-  uint32_t		versionsMaximumNumber(void);
-  uint32_t		versionNumber(void);
-  uint32_t		classID(void);
-  uint32_t		ownerID(void);
-  uint32_t		securityID(void);
-  uint64_t		quotaCharged(void);
-  uint64_t		USN(void);
-  Attributes		_attributes(void);
+  vtime*		creationTime(void) const;
+  vtime*		alteredTime(void) const;
+  vtime*		mftAlteredTime(void) const;
+  vtime*		accessedTime(void) const;
+  std::list<Variant_p>	flags(void) const;
+  uint32_t		versionsMaximumNumber(void) const;
+  uint32_t		versionNumber(void) const;
+  uint32_t		classID(void) const;
+  uint32_t		ownerID(void) const;
+  uint32_t		securityID(void) const;
+  uint64_t		quotaCharged(void) const;
+  uint64_t		USN(void) const;
   const std::string	typeName(void) const;
+  Attributes		_attributes(void);
   static MFTAttributeContent*	create(MFTAttribute* mftAttribute);
 };
 

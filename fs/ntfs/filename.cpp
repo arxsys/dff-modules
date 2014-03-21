@@ -40,20 +40,22 @@
 
 FileName::FileName(MFTAttribute* mftAttribute) : MFTAttributeContent(mftAttribute)
 {
-  this->__name = NULL;
   VFile* vfile = this->open();
  
   if (vfile->read((void*)&(this->__fileName), sizeof(FileName_s)) != sizeof(FileName_s))
   {
     delete vfile;
-    throw vfsError("Can't read attribute $FILE_NAME");
+    throw vfsError("$FILE_NAME can't read FileName_s.");
   }
-  this->__name = new uint16_t[this->nameLength()];
-  if (vfile->read((void*)this->__name, this->nameLength() * sizeof(uint16_t)) != (int32_t)(this->nameLength() *sizeof(uint16_t)))
+  uint16_t* name = new uint16_t[this->nameLength()];
+  if (vfile->read((void*)name, this->nameLength() * sizeof(uint16_t)) != (int32_t)(this->nameLength() *sizeof(uint16_t)))
   {
+    delete[] name;
     delete vfile;
-    throw vfsError("Can't read attribute $FILE_NAME.name");
+    throw vfsError("$FILE_NAME can't read name.");
   }
+  UnicodeString((char*)name, this->nameLength() * sizeof(uint16_t), "UTF16-LE").toUTF8String(this->__name);
+  delete[] name;
   delete vfile;
 }
 
@@ -64,14 +66,13 @@ MFTAttributeContent*	FileName::create(MFTAttribute*	mftAttribute)
 
 FileName::~FileName()
 {
-  delete[] this->__name;
-  this->__name = NULL;
-//deallocate filename? 
 }
 
 Attributes	FileName::_attributes(void)
 {
   Attributes	attrs;
+
+  MAP_ATTR("Attributes", MFTAttributeContent::_attributes());
 
   MAP_ATTR("Parent directory reference", this->parentDirectoryReference());
   MAP_ATTR("Creation time", this->creationTime())
@@ -88,62 +89,57 @@ Attributes	FileName::_attributes(void)
   return (attrs);
 }
 
-std::string	FileName::name(void)
+const std::string  FileName::name(void) const
 {
-  std::string	name;
-//XXX if this->nameSpace() == :
-//     elif elif
-  UnicodeString((char*)this->__name, this->nameLength() * sizeof(uint16_t), "UTF16-LE").toUTF8String(name);
-
-  return name;
+  return (this->__name);
 }
 
-const std::string	FileName::typeName(void) const
+const std::string  FileName::typeName(void) const
 {
   return (std::string("$FILE_NAME_" + this->nameSpace()));
 }
 
-uint64_t	FileName::parentDirectoryReference(void)
+uint64_t	FileName::parentDirectoryReference(void) const
 {
   return (this->__fileName.parentDirectoryReference);
 }
 
-vtime*		FileName::creationTime(void)
+vtime*  FileName::creationTime(void) const
 {
   return (new vtime(this->__fileName.creationTime, TIME_MS_64));
 }
 
-vtime*		FileName::modificationTime(void)
+vtime*  FileName::modificationTime(void) const
 {
   return (new vtime(this->__fileName.modificationTime, TIME_MS_64));
 }
 
-vtime*		FileName::mftModificationTime(void)
+vtime*  FileName::mftModificationTime(void) const
 {
   return (new vtime(this->__fileName.mftModificationTime, TIME_MS_64));
 }
 
-vtime*		FileName::accessedTime(void)
+vtime*   FileName::accessedTime(void) const
 {
   return (new vtime(this->__fileName.accessedTime, TIME_MS_64));
 }
 
-uint64_t	FileName::allocatedSize(void)
+uint64_t	FileName::allocatedSize(void) const
 {
   return (this->__fileName.allocatedSize);
 }
 
-uint64_t	FileName::realSize(void)
+uint64_t	FileName::realSize(void) const
 {
   return (this->__fileName.realSize);
 }
 
-uint32_t	FileName::reparseValue(void)
+uint32_t	FileName::reparseValue(void) const
 {
   return (this->__fileName.reparseValue);
 }
 
-uint8_t		FileName::nameLength(void)
+uint8_t		FileName::nameLength(void) const
 {
   return (this->__fileName.nameLength);
 }
@@ -161,12 +157,12 @@ const std::string	FileName::nameSpace(void) const
   return std::string("Unknown");
 }
 
-uint8_t	FileName::nameSpaceID(void)
+uint8_t	FileName::nameSpaceID(void) const
 {
   return (this->__fileName.nameSpace);
 }
 
-std::list<Variant_p>	FileName::flags(void)
+std::list<Variant_p>	FileName::flags(void) const
 {
   std::list<Variant_p > flagsList;
 

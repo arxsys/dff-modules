@@ -28,7 +28,7 @@ ObjectId::ObjectId(MFTAttribute* mftAttribute) : MFTAttributeContent(mftAttribut
     if (vfile->read((void*)&this->__objectId, 16) != 16)
     {
       delete vfile;
-      throw std::string("$ObjectId can't read ObjectId_s");
+      throw std::string("$ObjectId can't read ObjectId_s.");
     }
   }
   else if (this->size() == 128)
@@ -36,13 +36,13 @@ ObjectId::ObjectId(MFTAttribute* mftAttribute) : MFTAttributeContent(mftAttribut
     if (vfile->read((void*)&this->__objectId, sizeof(ObjectId_s)) != sizeof(ObjectId_s))
     {
       delete vfile;
-      throw std::string("$ObjectId can't read ObjectId_s");
+      throw std::string("$ObjectId can't read ObjectId_s.");
     }
   }
   else 
   {
     delete vfile;
-    throw std::string("$ObjectId can't read ObjectId_s");
+    throw std::string("$ObjectId can't read ObjectId_s.");
   }
   delete vfile;
 }
@@ -51,7 +51,7 @@ ObjectId::~ObjectId()
 {
 }
 
-const std::string ObjectId::__objectIdToString(uint64_t* id)
+const std::string ObjectId::__objectIdToString(const uint64_t* id) const
 {
   std::ostringstream  idStream;
 
@@ -60,22 +60,22 @@ const std::string ObjectId::__objectIdToString(uint64_t* id)
   return (idStream.str());
 }
 
-const std::string ObjectId::objectId(void)
+const std::string ObjectId::objectId(void) const
 {
   return (this->__objectIdToString(this->__objectId.objectId));
 }
 
-const std::string ObjectId::birthVolumeId(void)
+const std::string ObjectId::birthVolumeId(void) const
 {
   return (this->__objectIdToString(this->__objectId.birthVolumeId));
 }
 
-const std::string ObjectId::birthObjectId(void)
+const std::string ObjectId::birthObjectId(void) const
 {
   return (this->__objectIdToString(this->__objectId.birthObjectId));
 }
 
-const std::string ObjectId::birthDomainId(void)
+const std::string ObjectId::birthDomainId(void) const
 {
   return (this->__objectIdToString(this->__objectId.birthDomainId));
 }
@@ -84,6 +84,7 @@ Attributes	ObjectId::_attributes(void)
 {
   Attributes	attrs;
 
+  MAP_ATTR("Attributes", MFTAttributeContent::_attributes());
   MAP_ATTR("ObjectId", this->objectId());
   if (this->size() == 128)
   {

@@ -65,7 +65,7 @@ StandardInformation::StandardInformation(MFTAttribute* mftAttribute) : MFTAttrib
   delete vfile;
 }
 
-MFTAttributeContent*	StandardInformation::create(MFTAttribute* mftAttribute)
+MFTAttributeContent*	StandardInformation::create(MFTAttribute* mftAttribute) 
 {
   return (new StandardInformation(mftAttribute));
 }
@@ -82,6 +82,8 @@ const std::string StandardInformation::typeName(void) const
 Attributes	StandardInformation::_attributes(void)
 {
   Attributes	attrs;
+
+  MAP_ATTR("Attributes", MFTAttributeContent::_attributes());
 
   MAP_ATTR("Creation time", this->creationTime())
   MAP_ATTR("Accessed time", this->accessedTime())
@@ -102,27 +104,27 @@ Attributes	StandardInformation::_attributes(void)
   return (attrs);
 }
 
-vtime*		StandardInformation::creationTime(void)
+vtime*		StandardInformation::creationTime(void) const
 {
   return (new vtime(this->__standardInformation.creationTime, TIME_MS_64));
 }
 
-vtime*		StandardInformation::alteredTime(void)
+vtime*		StandardInformation::alteredTime(void) const
 {
   return (new vtime(this->__standardInformation.alteredTime, TIME_MS_64));
 }
 
-vtime*		StandardInformation::mftAlteredTime(void)
+vtime*		StandardInformation::mftAlteredTime(void) const
 {
   return (new vtime(this->__standardInformation.mftAlteredTime, TIME_MS_64));
 }
 
-vtime*		StandardInformation::accessedTime(void)
+vtime*		StandardInformation::accessedTime(void) const
 {
   return (new vtime(this->__standardInformation.accessedTime, TIME_MS_64));
 }
 
-std::list<Variant_p>	StandardInformation::flags(void)
+std::list<Variant_p>	StandardInformation::flags(void) const
 {
   std::list<Variant_p > flagsList;
 
@@ -143,37 +145,37 @@ std::list<Variant_p>	StandardInformation::flags(void)
   return (flagsList);
 }
 
-uint32_t	StandardInformation::versionsMaximumNumber(void)
+uint32_t	StandardInformation::versionsMaximumNumber(void) const
 {
   return (this->__standardInformation.versionsMaximumNumber);
 }
 
-uint32_t	StandardInformation::versionNumber(void)
+uint32_t	StandardInformation::versionNumber(void) const
 {
   return (this->__standardInformation.versionNumber); 
 }
 
-uint32_t	StandardInformation::classID(void)
+uint32_t	StandardInformation::classID(void) const
 {
   return (this->__standardInformation.classID); 
 }
 
-uint32_t	StandardInformation::ownerID(void)
+uint32_t	StandardInformation::ownerID(void) const
 {
   return (this->__standardInformation.ownerID); 
 }
 
-uint32_t	StandardInformation::securityID(void)
+uint32_t	StandardInformation::securityID(void) const
 {
   return (this->__standardInformation.securityID); 
 }
 
-uint64_t	StandardInformation::quotaCharged(void)
+uint64_t	StandardInformation::quotaCharged(void) const
 {
   return (this->__standardInformation.quotaCharged);
 }
 
-uint64_t	StandardInformation::USN(void)
+uint64_t	StandardInformation::USN(void) const
 {
   return (this->__standardInformation.USN); 
 }

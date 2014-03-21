@@ -14,17 +14,16 @@
  *  Solal Jacob <sja@digital-forensic.org>
  */
 
+#include <unicode/unistr.h>
+
 #include "ntfs_common.hpp"
 #include "ntfs.hpp"
 #include "mftentrynode.hpp"
 #include "filename.hpp"
-
 #include "mftattributecontenttype.hpp"
 
-MFTAttribute::MFTAttribute(MFTEntryNode* mftEntryNode, uint64_t offset) : __offset(offset), __mftEntryNode(mftEntryNode)
+MFTAttribute::MFTAttribute(MFTEntryNode* mftEntryNode, uint64_t offset) : __offset(offset), __mftEntryNode(mftEntryNode), __residentAttribute(NULL), __nonResidentAttribute(NULL)
 {
-  this->__nonResidentAttribute = NULL;
-  this->__residentAttribute = NULL;
   this->__mftAttribute = new MFTAttribute_s(); 
 
   VFile*  vfile = mftEntryNode->open();
@@ -40,7 +39,7 @@ MFTAttribute::MFTAttribute(MFTEntryNode* mftEntryNode, uint64_t offset) : __offs
     throw std::string("MFT Attribute can't read enough data");
   }
 
-  if (this->typeID() == 0xffffffff)
+  if (this->typeId() == 0xffffffff)
   {
     delete vfile;
     throw std::string("End of attribute");
@@ -59,11 +58,28 @@ MFTAttribute::MFTAttribute(MFTEntryNode* mftEntryNode, uint64_t offset) : __offs
   {
     this->__nonResidentAttribute = new MFTNonResidentAttribute;
     if (vfile->read((void*) this->__nonResidentAttribute, sizeof(MFTNonResidentAttribute)) != sizeof(MFTNonResidentAttribute))
-      {
-        delete vfile;
-        throw std::string("MFT can't read resident attribute");
-      }
+    {
+      delete vfile;
+      throw std::string("MFT can't read non-resident attribute");
+    }
   }
+  if (this->__mftAttribute->nameSize > 0) 
+  {
+    if (vfile->seek(offset + this->__mftAttribute->nameOffset) != (offset + this->__mftAttribute->nameOffset))
+    {
+      delete vfile;
+      throw std::string("MFT can't seek to name offset");
+    }
+    uint16_t* name = new uint16_t[this->__mftAttribute->nameSize];
+    if (vfile->read((void*)name, this->__mftAttribute->nameSize * sizeof(uint16_t)) != (int32_t)(this->__mftAttribute->nameSize * sizeof(uint16_t)))
+    {
+      delete vfile;
+      throw std::string("MFT can't read attribute name");
+    }
+    UnicodeString((char*)name, this->__mftAttribute->nameSize * sizeof(uint16_t), "UTF16-LE").toUTF8String(this->__name);
+    delete[] name;
+  }
+ 
   delete vfile;
 }
 
@@ -86,22 +102,23 @@ MFTAttribute::~MFTAttribute()
   }
 }
 
-MFTEntryNode*		MFTAttribute::mftEntryNode(void)
+MFTEntryNode*		MFTAttribute::mftEntryNode(void) const
 {
   return (this->__mftEntryNode);
 }
 
-//caller must delete AttributeCOntent !
-// factory ...
+/*
+ * Caller must delete returned MFTAttributeContent
+ */
 MFTAttributeContent*	MFTAttribute::content(void)
 {
   for (uint8_t	i = 0; ContentTypes[i].newObject != NULL; i++)
-    if (ContentTypes[i].ID == this->typeID())
+    if (ContentTypes[i].Id == this->typeId())
       return (ContentTypes[i].newObject(this));
   return (new MFTAttributeContent(this));
 }
 
-uint64_t 		MFTAttribute::contentSize(void)
+uint64_t 		MFTAttribute::contentSize(void) const
 {
   if (this->isResident())
     return (this->__residentAttribute->contentSize);
@@ -111,108 +128,123 @@ uint64_t 		MFTAttribute::contentSize(void)
   return (this->__nonResidentAttribute->contentInitializedSize);
 }	
 
-uint64_t		MFTAttribute::contentOffset(void)
+uint64_t		MFTAttribute::contentOffset(void) const
 {
   if (this->isResident())
     return (this->__offset + this->__residentAttribute->contentOffset);
   return (0);
 }
 
-uint16_t		MFTAttribute::runListOffset(void)
+uint16_t		MFTAttribute::runListOffset(void) const
 {
   if (!this->isResident())
     return (this->__nonResidentAttribute->runListOffset);
   throw std::string("Try to access non resident attribute on a resident attribute");
 }
-/*
-std::string 		MFTAttribute::name()
+
+const std::string       MFTAttribute::name(void) const
 {
-  if (this->nameLength())
-    return (std::string("attribute name found in self"));
-  for (uint8_t	i = 0; ContentTypes[i].object != NULL; i++)
-     if (ContentTypes[i].ID == this->typeID())
-     {
-	return ContentTypes[i].name;
-     }
-  return std::string("Unknown");
+  if (this->nameSize())
+    return (this->__name);
+  return std::string("");
 }
-*/
-uint64_t MFTAttribute::offset(void)
+
+uint64_t MFTAttribute::offset(void) const
 {
   return (this->__offset);
 }
 
-bool	MFTAttribute::isResident(void)
+bool	MFTAttribute::isResident(void) const
 {
   return (!this->nonResidentFlag());
 }
 
-NTFS*	MFTAttribute::ntfs(void)
+NTFS*	MFTAttribute::ntfs(void) const
 {
   return (this->__mftEntryNode->ntfs());
 }
 
-uint32_t MFTAttribute::typeID(void)
+uint32_t MFTAttribute::typeId(void) const
 {
-  return (this->__mftAttribute->typeID);
+  return (this->__mftAttribute->typeId);
 }
 
-uint32_t MFTAttribute::length(void)
+uint32_t MFTAttribute::length(void) const
 {
   return (this->__mftAttribute->length);
 }
 
-uint8_t	MFTAttribute::nonResidentFlag(void)
+uint8_t	MFTAttribute::nonResidentFlag(void) const
 {
   return (this->__mftAttribute->nonResidentFlag);
 }
 
-uint8_t	MFTAttribute::nameLength(void)
+uint8_t	MFTAttribute::nameSize(void) const
 {
-  return (this->__mftAttribute->nameLength);
+  return (this->__mftAttribute->nameSize);
 }
 
-uint16_t MFTAttribute::nameOffset(void)
+uint16_t MFTAttribute::nameOffset(void) const
 {
   return (this->__mftAttribute->nameOffset);
 }
 
-uint16_t MFTAttribute::flags(void)
+///XXX flags() 
+uint16_t MFTAttribute::flags(void) const
 {
   return (this->__mftAttribute->flags);
 }
 
-uint16_t MFTAttribute::ID(void)
+uint16_t MFTAttribute::id(void) const
 {
-  return (this->__mftAttribute->ID);
+  return (this->__mftAttribute->id);
 }
 
-uint64_t MFTAttribute::VNCStart(void)
+uint64_t MFTAttribute::VNCStart(void) const
 {
   if (this->__nonResidentAttribute)
     return (this->__nonResidentAttribute->VNCStart);
-  throw std::string("No VNCStart in resident attribute");
+  throw std::string("No VNC start in resident attribute");
 }
 
-uint64_t MFTAttribute::VNCEnd(void)
+uint64_t MFTAttribute::VNCEnd(void) const
 {
   if (this->__nonResidentAttribute)
     return (this->__nonResidentAttribute->VNCEnd);
-  throw std::string("No VNCEnd in resident attribute");
+  throw std::string("No VNC end in resident attribute");
 }
 
-bool    MFTAttribute::isCompressed(void)
+bool    MFTAttribute::isCompressed(void) const
 {
   return ((this->__mftAttribute->flags & 0x0001) == 0x0001);
 }
 
-bool    MFTAttribute::isEncrypted(void)
+bool    MFTAttribute::isEncrypted(void) const
 {
   return ((this->__mftAttribute->flags & 0x4000) == 0x4000);
 }
 
-bool    MFTAttribute::isSparse(void)
+bool    MFTAttribute::isSparse(void) const
 {
   return ((this->__mftAttribute->flags & 0x8000) == 0x8000);
 }
 
+uint16_t MFTAttribute::compressionUnitSize(void) const
+{
+  return (this->__nonResidentAttribute->compressionUnitSize);
+}
+
+uint64_t MFTAttribute::contentAllocatedSize(void) const
+{
+  return (this->__nonResidentAttribute->contentAllocatedSize);
+}
+
+uint64_t MFTAttribute::contentActualSize(void) const
+{
+  return (this->__nonResidentAttribute->contentActualSize);
+}
+
+uint64_t MFTAttribute::contentInitializedSize(void) const
+{
+  return (this->__nonResidentAttribute->contentInitializedSize);
+}

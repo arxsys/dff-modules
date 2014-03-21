@@ -46,14 +46,15 @@ void	MFTNode::init(void)
 {
   if (!this->__mftEntryNode->isUsed()) //not sufficient need $BITMAP ? check & compare
     this->setDeleted();
-  //if (this->__mftEntryNode->isDirectory)
-    //this->setDirectory();
-  //else
-    //this->setFile();
+  if (this->__mftEntryNode->isDirectory())
+    this->setDir();
+  else
+    this->setFile();
 
   /*
    *  Search for name attribute to set node name
    */
+  ///XXX 
   uint8_t fileNameID = FILENAME_NAMESPACE_DOS_WIN32;
   if (this->__mftEntryNode != NULL)
   {
@@ -106,7 +107,7 @@ void	MFTNode::init(void)
        
       for (; attr != attrs.end(); ++attr)
       {
-         if ((*attr)->typeID() == $DATA)
+         if ((*attr)->typeId() == $DATA)
          {
            this->setSize((*attr)->contentSize()); //ca a pas l air d etre la bonne size :)
            //XXX ok pour celui la mais check si pas ads etc... 
@@ -134,8 +135,6 @@ void		MFTNode::fileMapping(FileMapping* fm)
   if (this->__mftEntryNode)
   {
 //file can have multi filemapping please remember that 
-//could be possible to filemap 2 times ? :) :) :)
-
     std::vector<MFTAttribute* > datas = this->__mftEntryNode->MFTAttributesType($DATA);
     std::vector<MFTAttribute* >::iterator mftAttribute;
     if (datas.size() > 0) //XXX choose the right in init because of ads ... 
@@ -158,7 +157,7 @@ void		MFTNode::fileMapping(FileMapping* fm)
       
       for (; attr != attrs.end(); ++attr)
       {
-         if ((*attr)->typeID() == $DATA)
+         if ((*attr)->typeId() == $DATA)
          {
           MFTAttributeContent* mftAttributeContent = (*attr)->content();
           //if (flag == 1)
@@ -174,8 +173,7 @@ void		MFTNode::fileMapping(FileMapping* fm)
     }
     //for (; attributesList != attributesLists.end(); ++attributesList)
     //delete (*attributesList);
-  std::cout << this->name() << " number of $DATA: " << flag << std::endl; 
-  if (flag == 0)
-    this->__mftEntryNode->fileMapping(fm);//setSize to mftSize by default is not set !
+    if (flag == 0)
+      this->__mftEntryNode->fileMapping(fm);//setSize to mftSize by default is not set !
   }
 }

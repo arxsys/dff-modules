@@ -13,14 +13,13 @@
  * Author(s):
  *  Solal Jacob <sja@digital-forensic.org>
  */
+#include <iostream>
 
 #include "ntfs.hpp"
 #include "ntfsopt.hpp"
 #include "bootsector.hpp"
 #include "mftentrynode.hpp"
 #include "mftnode.hpp"
-
-#include <iostream>
 
 NTFS::NTFS() : mfso("NTFS"), __opt(NULL), __rootDirectoryNode(new Node("NTFS")), __bootSectorNode(NULL)
 {
@@ -46,13 +45,13 @@ void 		NTFS::start(Attributes args)
   MFTNode* mftNode = new MFTNode(this, this->fsNode(), this->rootDirectoryNode(),  this->__bootSectorNode->MFTLogicalClusterNumber() * this->__bootSectorNode->clusterSize());
 
   uint64_t i = 0;
-  uint64_t nMFT = mftNode->size() / 1024;
+  uint64_t nMFT = mftNode->size() / this->bootSectorNode()->MFTRecordSize();
 
   std::ostringstream nMFTStream;
   nMFTStream  << std::string("Found ") << nMFT <<  std::string(" MFT entry") << endl;
   this->setStateInfo(nMFTStream.str());
 
-  while (i * 1024 < mftNode->size())
+  while (i * this->bootSectorNode()->MFTRecordSize() < mftNode->size())
   {
     if (i % 1000 == 0)
     {
@@ -62,7 +61,7 @@ void 		NTFS::start(Attributes args)
     }
     try 
     {
-      MFTNode* currentMFTNode = new MFTNode(this, mftNode, NULL, i * 1024);
+      MFTNode* currentMFTNode = new MFTNode(this, mftNode, NULL, i * this->bootSectorNode()->MFTRecordSize());
       this->rootDirectoryNode()->addChild(currentMFTNode);
     }
     catch (std::string& error)
@@ -77,27 +76,27 @@ void 		NTFS::start(Attributes args)
   this->res["Result"] = Variant_p(new Variant(std::string("NTFS parsed successfully.")));
 }
 
-NTFSOpt*	NTFS::opt(void)
+NTFSOpt*	NTFS::opt(void) const
 {
   return (this->__opt);
 }
 
-Node*		NTFS::fsNode(void)
+Node*		NTFS::fsNode(void) const
 {
   return (this->__opt->fsNode());
 }
 
 void 		NTFS::setStateInfo(const std::string& info)
 {
-  this->stateinfo = info;
+  this->stateinfo = std::string(info);
 }
 
-Node*		NTFS::rootDirectoryNode(void)
+Node*		NTFS::rootDirectoryNode(void) const
 {
   return (this->__rootDirectoryNode);
 }
 
-BootSectorNode*	NTFS::bootSectorNode(void)
+BootSectorNode*	NTFS::bootSectorNode(void) const
 {
   return (this->__bootSectorNode);
 }

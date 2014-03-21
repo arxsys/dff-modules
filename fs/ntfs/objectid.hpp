@@ -33,15 +33,15 @@ class ObjectId : public MFTAttributeContent
 public:
 		        ObjectId(MFTAttribute* mftAttribute);
 			~ObjectId();
-  const std::string     objectId(void);
-  const std::string     birthVolumeId(void);
-  const std::string     birthObjectId(void);
-  const std::string     birthDomainId(void);
-  Attributes		_attributes(void);
+  const std::string     objectId(void) const;
+  const std::string     birthVolumeId(void) const;
+  const std::string     birthObjectId(void) const;
+  const std::string     birthDomainId(void) const;
   const std::string     typeName(void) const;
+  Attributes		_attributes(void);
   static MFTAttributeContent*	create(MFTAttribute* mftAttribute);
 private:
-  const std::string      __objectIdToString(uint64_t* id);
+  const std::string      __objectIdToString(const uint64_t* id) const;
   ObjectId_s             __objectId;
 };
 

@@ -17,6 +17,8 @@
 #include <list>
 #include <unicode/unistr.h>
 
+#include "bootsector.hpp"
+#include "ntfs.hpp"
 #include "attributelist.hpp"
 #include "mftattributecontent.hpp"
 #include "mftattribute.hpp"
@@ -74,12 +76,12 @@ uint64_t AttributeListItems::VCNStart(void) const
 
 uint64_t AttributeListItems::mftEntryId(void) const
 {
- uint64_t mftEntryId = 0;
+  uint64_t mftEntryId = 0;
   
- mftEntryId = *((uint32_t*)&this->__attributeList.mftEntryId);
- *((uint32_t*)&mftEntryId + 1) = *((uint16_t*)&this->__attributeList.mftEntryId + 2);
+  mftEntryId = *((uint32_t*)&this->__attributeList.mftEntryId);
+  *((uint32_t*)&mftEntryId + 1) = *((uint16_t*)&this->__attributeList.mftEntryId + 2);
 
- return (mftEntryId);
+  return (mftEntryId);
 }
 
 uint16_t AttributeListItems::sequence(void) const
@@ -118,19 +120,25 @@ std::vector<MFTAttribute*> AttributeList::MFTAttributes(void)
 {
   std::vector<AttributeListItems>::iterator item = this->__attributes.begin();
   std::vector<MFTAttribute*> found;
+  uint32_t MFTEntrySize = this->mftAttribute()->mftEntryNode()->ntfs()->bootSectorNode()->MFTRecordSize();
   for (; item != this->__attributes.end(); ++item)
   {
     MFTEntryNode* mftEntryNode = this->mftAttribute()->mftEntryNode();
-    if (mftEntryNode->offset() == item->mftEntryId() * 1024) 
+    if (mftEntryNode->offset() == item->mftEntryId() * MFTEntrySize) 
       continue;
-    MFTEntryNode* mft = new MFTEntryNode(mftEntryNode->ntfs(), mftEntryNode->mftNode(), item->mftEntryId() * 1024, "", NULL);    
+    MFTEntryNode* mft = new MFTEntryNode(mftEntryNode->ntfs(), mftEntryNode->mftNode(), item->mftEntryId() * MFTEntrySize, "", NULL);    
     std::vector<MFTAttribute*> attributes = mft->MFTAttributes(); 
     std::vector<MFTAttribute*>::iterator attribute = attributes.begin();
     //mft->updateState(); //? 
     //mftEntryNode->updateState();
     for (; attribute != attributes.end(); ++attribute)
     {
-      if (((*attribute)->VNCStart() == item->VCNStart()) && ((*attribute)->typeID() == item->typeId()))
+      if ((*attribute)->isResident())
+      {
+         //XXX
+         std::cout << "create a resident attribute ? " << (*attribute)->typeId() << " " << item->typeId() << std::endl;
+      }
+      else if (((*attribute)->VNCStart() == item->VCNStart()) && ((*attribute)->typeId() == item->typeId()))
       {
         found.push_back(*attribute);
       }
@@ -153,6 +161,10 @@ Attributes	AttributeList::_attributes(void)
 {
   Attributes	attrs;
 
+  MAP_ATTR("Attributes", MFTAttributeContent::_attributes());
+  //XXX list attr fist ? defaultattr 
+ 
+  //MAP_ATTR("Creation time", this->creationTime())
   //for attributes in MFTAttributes()
   return (attrs);
 }

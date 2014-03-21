@@ -29,7 +29,7 @@ PACK_S	MFTResidentAttribute
   uint16_t	contentOffset;
 } PACK;
 
-//faire un union entre nonresident et resident evite de gerer 2 struct
+//can use an union between the two struct ?
 PACK_S	MFTNonResidentAttribute
 {
   uint64_t	VNCStart;
@@ -44,47 +44,52 @@ PACK_S	MFTNonResidentAttribute
 
 PACK_S  MFTAttribute_s
 {
-  uint32_t	typeID;
+  uint32_t	typeId;
   uint32_t	length;
   uint8_t	nonResidentFlag;
-  uint8_t	nameLength;
+  uint8_t	nameSize;
   uint16_t	nameOffset;
-  uint16_t	flags;  //compressed flags
-  uint16_t	ID; //union en dessous
+  uint16_t	flags;  //compressed flags //XXX
+  uint16_t	id;
 } PACK;
 
 class MFTAttribute
 {
 private:
+  std::string                   __name;
   uint64_t			__offset;
   MFTEntryNode*			__mftEntryNode;
   MFTAttribute_s*		__mftAttribute;
-  MFTNonResidentAttribute*	__nonResidentAttribute; // cast buff offset
-  MFTResidentAttribute*		__residentAttribute;//  cast buff offset
+  MFTResidentAttribute*		__residentAttribute;
+  MFTNonResidentAttribute*	__nonResidentAttribute;
 public:
 		        MFTAttribute(MFTEntryNode* mftEntryNode, uint64_t offset);
 		        ~MFTAttribute(void);
-  MFTEntryNode*		mftEntryNode(void);
-  uint64_t		offset(void);
-  uint32_t		typeID(void);
-  uint32_t		length(void);
-  bool			isResident(void);
-  uint8_t		nonResidentFlag(void);
- //std::string		name(void); 
-  uint8_t		nameLength(void);
-  uint16_t		nameOffset(void);
-  uint16_t		flags(void); 
-  uint16_t		ID(void);
-  NTFS*			ntfs();
+  MFTEntryNode*		mftEntryNode(void) const;
+  uint64_t		offset(void) const;
+  uint32_t		typeId(void) const;
+  uint32_t		length(void) const;
+  bool			isResident(void) const;
+  uint8_t		nonResidentFlag(void) const;
+  const std::string     name(void) const; 
+  uint8_t		nameSize(void) const;
+  uint16_t		nameOffset(void) const;
+  uint16_t		flags(void) const; 
+  uint16_t		id(void) const;
+  NTFS*			ntfs(void) const;
+  uint64_t		contentOffset(void) const;
+  uint64_t		contentSize(void) const;
+  uint16_t		runListOffset(void) const;
+  uint64_t              VNCStart(void) const;
+  uint64_t              VNCEnd(void) const;
+  bool                  isCompressed(void) const;
+  bool                  isSparse(void) const;
+  bool                  isEncrypted(void) const;
+  uint16_t              compressionUnitSize(void) const;
+  uint64_t              contentAllocatedSize(void) const;
+  uint64_t              contentActualSize(void) const;
+  uint64_t              contentInitializedSize(void) const;
   MFTAttributeContent*  content(void);
-  uint64_t		contentOffset(void);
-  uint64_t		contentSize(void);
-  uint16_t		runListOffset(void);
-  uint64_t              VNCStart(void);
-  uint64_t              VNCEnd(void);
-  bool                  isCompressed(void);
-  bool                  isSparse(void);
-  bool                  isEncrypted(void);
 };
 
 #endif

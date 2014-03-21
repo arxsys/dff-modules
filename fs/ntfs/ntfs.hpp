@@ -18,26 +18,25 @@
 #define __NTFS_HH__
 
 #include "ntfs_common.hpp"
-#include "ntfsopt.hpp"
 
-//class NTFSOpt;
+class NTFSOpt;
 class BootSectorNode;
 
 class NTFS : public mfso
 {
 private:
-  NTFSOpt*                      __opt;
-  Node*				__rootDirectoryNode;
-  BootSectorNode*       	__bootSectorNode;
+  NTFSOpt*              __opt;
+  Node*                 __rootDirectoryNode;
+  BootSectorNode*       __bootSectorNode;
 public:
-                        	NTFS();
-                        	~NTFS();
-  virtual void  		start(Attributes args);
-  	  void			setStateInfo(const std::string&);
-	  NTFSOpt*		opt(void);
-	  Node*			fsNode(void);
-	  Node*			rootDirectoryNode(void);
-	  BootSectorNode*	bootSectorNode(void);		
+                        NTFS();
+                        ~NTFS();
+  virtual void          start(Attributes args);
+  void                  setStateInfo(const std::string&);
+  NTFSOpt*              opt(void) const;
+  Node*                 fsNode(void) const;
+  Node*                 rootDirectoryNode(void) const;
+  BootSectorNode*       bootSectorNode(void) const;		
 };
 
 #endif

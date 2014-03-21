@@ -23,15 +23,14 @@
 class VolumeName : public MFTAttributeContent
 {
 public:
-		        VolumeName(MFTAttribute* mftAttribute);
-			~VolumeName();
-  Attributes		_attributes(void);
-  const std::string     volumeName(void);
-  const std::string     typeName(void) const;
-
+		                VolumeName(MFTAttribute* mftAttribute);
+			        ~VolumeName();
+  Attributes		        _attributes(void);
+  const std::string             volumeName(void);
+  const std::string             typeName(void) const;
   static MFTAttributeContent*	create(MFTAttribute* mftAttribute);
 private:
-  uint8_t*              __volumeName;
+  uint8_t*                      __volumeName;
 };
 
 
@@ -46,17 +45,17 @@ PACK_S VolumeInformation_s
 class VolumeInformation : public MFTAttributeContent
 {
 public:
-		        VolumeInformation(MFTAttribute* mftAttribute);
-			~VolumeInformation();
-  uint8_t               major(void) const;
-  uint8_t               minor(void) const;
-  std::list<Variant_p>  flags(void) const;
-  const std::string     version(void) const;
-  Attributes		_attributes(void);
-  const std::string     typeName(void) const;
+		                VolumeInformation(MFTAttribute* mftAttribute);
+			        ~VolumeInformation();
+  uint8_t                       major(void) const;
+  uint8_t                       minor(void) const;
+  std::list<Variant_p>          flags(void) const;
+  const std::string             version(void) const;
+  const std::string             typeName(void) const;
+  Attributes		        _attributes(void);
   static MFTAttributeContent*	create(MFTAttribute* mftAttribute);
 private:
-  VolumeInformation_s   __volumeInformation;
+  VolumeInformation_s           __volumeInformation;
 };
 
 #endif

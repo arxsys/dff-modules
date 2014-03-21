@@ -43,26 +43,26 @@ PACK_S FileName_s
 class FileName : public MFTAttributeContent
 {
 private:
-  uint16_t*		__name;
+  std::string		__name;
   FileName_s		__fileName;
 public:
 		        FileName(MFTAttribute* mftAttribute);
 			~FileName();
-  uint64_t		parentDirectoryReference(void);
-  vtime*		creationTime(void);
-  vtime*		modificationTime(void);
-  vtime*		mftModificationTime(void);
-  vtime*		accessedTime(void);
-  uint64_t		allocatedSize(void);
-  uint64_t		realSize(void);
-  std::list<Variant_p>	flags(void);
-  uint32_t		reparseValue(void);
-  uint8_t		nameLength(void);
-  uint8_t		nameSpaceID(void);
+  uint64_t		parentDirectoryReference(void) const;
+  vtime*		creationTime(void) const;
+  vtime*		modificationTime(void) const;
+  vtime*		mftModificationTime(void) const;
+  vtime*		accessedTime(void) const;
+  uint64_t		allocatedSize(void) const;
+  uint64_t		realSize(void) const;
+  std::list<Variant_p>	flags(void) const;
+  uint32_t		reparseValue(void) const;
+  uint8_t		nameLength(void) const;
+  uint8_t		nameSpaceID(void) const;
   const std::string     nameSpace(void) const;
-  std::string		name(void); //utf 16 ? namespace
-  Attributes		_attributes(void);
+  const std::string	name(void) const; //utf 16 ? namespace
   const std::string     typeName(void) const;
+  Attributes		_attributes(void);
   static MFTAttributeContent*	create(MFTAttribute* mftAttribute);
 };
 

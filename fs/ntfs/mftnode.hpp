@@ -23,7 +23,7 @@
 class NTFS;
 class MFTEntryNode;
 
-class MFTNode : public Node
+class MFTNode : public Node //ntfsnode
 {
 private:
  MFTEntryNode*	__mftEntryNode;

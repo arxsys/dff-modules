@@ -18,14 +18,12 @@
 #include "ntfs.hpp"
 #include "ntfsopt.hpp"
 
-BootSectorNode::BootSectorNode(NTFS* ntfs) : Node(std::string("$Boot"), 512, ntfs->rootDirectoryNode(), ntfs)
+BootSectorNode::BootSectorNode(NTFS* ntfs) : Node(std::string("$Boot"), 512, ntfs->rootDirectoryNode(), ntfs), __ntfs(ntfs), __state(0)
 {
-//  this->__ntfs->setStateInfo(std::string("Parsing NTFS boot sector"));
-  this->__ntfs = ntfs;
-  this->__bootSector = new BootSector; //XNEW 
-  this->__state = 0;
+  this->__ntfs->setStateInfo(std::string("Parsing NTFS boot sectors"));
+  this->__bootSector = new BootSector; //new ?
 
-//1) This trigger MFSO CACHE !!! and set the size to 512 ! 
+  //this make cache ourselves with a size of 512
   VFile* vfile = this->open();
   vfile->seek(0);
   uint64_t readed = vfile->read((void*) (this->__bootSector), sizeof(BootSector));
@@ -34,15 +32,20 @@ BootSectorNode::BootSectorNode(NTFS* ntfs) : Node(std::string("$Boot"), 512, ntf
   if (readed != sizeof(BootSector))
     throw vfsError(std::string("Can't read start of boot sector"));
 
-  this->__state = 1;
-//2) Change state of mfso cache because we change size
+  this->__state = 1; //we change state because we modify our own size
   if (ntfs->fsNode()->size() > this->bytesPerSector() * 16)
     this->setSize(this->bytesPerSector() * 16);
   else 
     throw vfsError(std::string("Can't read full boot sector"));
 } 
 
-void	BootSectorNode::validate()
+BootSectorNode::~BootSectorNode()
+{
+  delete this->__bootSector;
+  this->__bootSector = NULL;
+}
+
+void	BootSectorNode::validate(void) const
 {
   this->__ntfs->setStateInfo("Validating NTFS boot sector");
   if (this->endOfSector() != 0xAA55)
@@ -57,15 +60,9 @@ void	BootSectorNode::validate()
     throw vfsError(std::string("Boot sector can't resolve a valid MTF cluster"));
   if (this->clustersPerMFTRecord() == 0)
     throw vfsError(std::string("Boot sector as an invalid cluster per MFT record value"));
-  if (this->clustersPerIndexBuffer() == 0)
+  if (this->clustersPerIndexRecord() == 0)
     throw vfsError(std::string("Boot sector as an invalid cluster per index buffer value"));
   this->__ntfs->setStateInfo("NTFS boot sector is valid");
-}
-
-BootSectorNode::~BootSectorNode()
-{
-  delete this->__bootSector;
-  this->__bootSector = NULL;
 }
 
 void 		BootSectorNode::fileMapping(FileMapping *fm)
@@ -87,21 +84,20 @@ Attributes      BootSectorNode::_attributes(void)
 {
   Attributes    attrs;
 
-  attrs["OEM ID"] = Variant_p(new Variant(this->OEMDID()));
-  attrs["Bytes per sector"] = Variant_p(new Variant(this->bytesPerSector()));
-  attrs["Sectors per cluster"] = Variant_p(new Variant(this->sectorsPerCluster()));
-  attrs["Cluster size"] = Variant_p(new Variant(this->clusterSize()));
-//XXX if string ..
-  attrs["Media descriptor"] = Variant_p(new Variant(this->mediaDescriptor()));
-
-  attrs["Total sectors"] = Variant_p(new Variant(this->totalSectors()));
-  attrs["MFT logical cluster number"] = Variant_p(new Variant(this->MFTLogicalClusterNumber()));
-  attrs["MFT mirror logical cluster number"] = Variant_p(new Variant(this->MFTMirrorLogicalClusterNumber()));
-  attrs["Clusters per MFT record"] = Variant_p(new Variant(this->clustersPerMFTRecord()));
-  attrs["MFT entry size"] = Variant_p(new Variant(this->MFTRecordSize())); //MFT Record Size ? 
-  attrs["Clusters per index buffer"] = Variant_p(new Variant(this->clustersPerIndexBuffer()));
-  attrs["Volume serial number"] = Variant_p(new Variant(this->volumeSerialNumber()));
-  attrs["End of sector"] = Variant_p(new Variant(this->endOfSector()));
+  MAP_ATTR("OEM ID", this->OEMDID())
+  MAP_ATTR("Bytes per sector", this->bytesPerSector())
+  MAP_ATTR("Sectors per cluster", this->sectorsPerCluster())
+  MAP_ATTR("Cluster size", this->clusterSize())
+  MAP_ATTR("Media descriptor", this->mediaDescriptor())
+  MAP_ATTR("Total sectors", this->totalSectors())
+  MAP_ATTR("MFT logical cluster number", this->MFTLogicalClusterNumber())
+  MAP_ATTR("MFT mirror logical cluster number", this->MFTMirrorLogicalClusterNumber())
+  MAP_ATTR("Clusters per MFT record", this->clustersPerMFTRecord())
+  MAP_ATTR("MFT entry size", this->MFTRecordSize())
+  MAP_ATTR("Clusters per index record", this->clustersPerIndexRecord())
+  MAP_ATTR("Index record size", this->indexRecordSize());
+  MAP_ATTR("Volume serial number", this->volumeSerialNumber())
+  MAP_ATTR("End of sector", this->endOfSector())
  
   return attrs;
 }
@@ -110,78 +106,82 @@ Attributes	BootSectorNode::dataType(void)
 {
   Attributes    attrs;
 
-  attrs["ntfs"] = Variant_p(new Variant(std::string("ntfs bootsector")));
+  MAP_ATTR("ntfs", std::string("ntfs bootsector"))
   return (attrs);
 }
 
-uint64_t 	BootSectorNode::OEMDID(void)
+uint64_t 	BootSectorNode::OEMDID(void) const
 {
   return (this->__bootSector->OEMID);
-};
+}
 
-uint16_t 	BootSectorNode::bytesPerSector(void) //sectorSize ...
+uint16_t 	BootSectorNode::bytesPerSector(void) const
 {
   return (this->__bootSector->bpb.bytesPerSector);
-};
+}
 
-uint8_t		BootSectorNode::sectorsPerCluster(void)
+uint8_t		BootSectorNode::sectorsPerCluster(void) const
 {
   return (this->__bootSector->bpb.sectorsPerCluster);
-};
+}
 
-uint32_t	BootSectorNode::clusterSize(void)
+uint32_t	BootSectorNode::clusterSize(void) const
 {
  return (this->__bootSector->bpb.sectorsPerCluster * this->__bootSector->bpb.bytesPerSector);
 }
 
-uint8_t		BootSectorNode::mediaDescriptor(void)
+uint8_t		BootSectorNode::mediaDescriptor(void) const
 {
   return (this->__bootSector->bpb.mediaDescriptor);
-};
-uint64_t	BootSectorNode::totalSectors(void)
+}
+
+uint64_t	BootSectorNode::totalSectors(void) const
 {
   return (this->__bootSector->bpb.totalSectors);
-};
+}
 
-uint64_t BootSectorNode::MFTLogicalClusterNumber(void)
+uint64_t BootSectorNode::MFTLogicalClusterNumber(void) const
 {
   return (this->__bootSector->bpb.MFTLogicalClusterNumber);
-};
+}
 
-uint64_t	BootSectorNode::MFTMirrorLogicalClusterNumber(void)
+uint64_t	BootSectorNode::MFTMirrorLogicalClusterNumber(void) const
 {
   return (this->__bootSector->bpb.MFTMirrorLogicalClusterNumber);
-};
+}
 
-int8_t		BootSectorNode::clustersPerMFTRecord(void)
+int8_t		BootSectorNode::clustersPerMFTRecord(void) const
 {
   return (this->__bootSector->bpb.clustersPerMFTRecord);
-};
+}
 
-uint32_t	BootSectorNode::MFTRecordSize(void)
+uint32_t	BootSectorNode::MFTRecordSize(void) const
 {
-//XXX DS VALIDATE CHECK IF -1
-
-//printf("BootSectorNode::MFTRecordSize cluperstersPerMFTRecord %d\n", this->__bootSector->bpb.clustersPerMFTRecord);
-//printf("sectoers per cluster %u\n", this->__bootSector->bpb.sectorsPerCluster);
-//printf("bytes per sector %u\n", this->__bootSector->bpb.bytesPerSector);
-  uint32_t mftrecordSize = this->__bootSector->bpb.clustersPerMFTRecord * this->__bootSector->bpb.sectorsPerCluster * this->__bootSector->bpb.bytesPerSector;
-
-  return  (mftrecordSize);
-  //return (this->__bootSector->bpb.clustersPerMFTRecord * this->__bootSector->bpb.sectorsPerCluster * this->__bootSector->bpb.bytesPerSector);
+  if (this->__bootSector->bpb.clustersPerMFTRecord > 0)
+    return (this->__bootSector->bpb.clustersPerMFTRecord * this->__bootSector->bpb.sectorsPerCluster * this->__bootSector->bpb.bytesPerSector);
+  else
+    return (1 << (this->__bootSector->bpb.clustersPerMFTRecord * -1));
 };
 
-int8_t		BootSectorNode::clustersPerIndexBuffer(void)
+int8_t		BootSectorNode::clustersPerIndexRecord(void) const
 {
-  return (this->__bootSector->bpb.clustersPerIndexBuffer);
-};
+  return (this->__bootSector->bpb.clustersPerIndexRecord);
+}
 
-uint64_t	BootSectorNode::volumeSerialNumber(void)
+uint32_t        BootSectorNode::indexRecordSize(void) const
+{
+  if (this->__bootSector->bpb.clustersPerIndexRecord > 0)
+    return (this->__bootSector->bpb.clustersPerIndexRecord * this->__bootSector->bpb.sectorsPerCluster * this->__bootSector->bpb.bytesPerSector);
+  else
+    return (1 << (this->__bootSector->bpb.clustersPerIndexRecord * -1));
+}
+
+uint64_t	BootSectorNode::volumeSerialNumber(void) const
 {
   return (this->__bootSector->bpb.volumeSerialNumber);
-};
+}
 
-uint16_t	BootSectorNode::endOfSector(void)
+uint16_t	BootSectorNode::endOfSector(void) const
 {
   return (this->__bootSector->endOfSector);
-};
+}

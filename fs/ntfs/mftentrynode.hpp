@@ -34,7 +34,7 @@ PACK_S	MFTEntry
   uint16_t	sequenceValue;
   uint16_t	linkCount;
   uint16_t	firstAttributeOffset;
-  uint16_t	flags;  //in use & directory  
+  uint16_t	flags;
   uint32_t	usedSize;
   uint32_t	allocatedSize;
   uint64_t	fileReferenceToBaseRecord;
@@ -47,7 +47,6 @@ private:
   NTFS*			__ntfs; 
   Node*			__mftNode;
   MFTEntry*		__MFTEntry;
-  //uint32_t		__sectorNumber;
   uint64_t		__offset;
   uint64_t		__state;
   class MFTAttribute*	__MFTAttribute(uint16_t offset);
@@ -60,22 +59,20 @@ public:
   virtual void		fileMapping(FileMapping* fm);
   virtual uint64_t	_attributesState(void);
   virtual Attributes 	_attributes(void);
-  uint64_t		offset(void);
-  //uint64_t		sectorNumber(void);
-  uint32_t		signature(void);
-  uint32_t		usedSize(void);
-  uint32_t		allocatedSize(void);
-  void			validate(void);
-  uint16_t		firstAttributeOffset(void);
-  uint16_t		fixupArrayOffset(void);
-  uint16_t		fixupArrayEntryCount(void);
-//  uint16_t		fixupArraySignature(void); 
-//  uint16_t*		fixupArrayBuffer(void);  
-  bool                  isUsed(void);
-  bool                  isDirectory(void);
-  void                  updateState();
+  void                  updateState(void);
+  uint64_t		offset(void) const;
+  uint32_t		signature(void) const;
+  uint32_t		usedSize(void) const;
+  uint32_t		allocatedSize(void) const;
+  void			validate(void) const;
+  uint16_t		firstAttributeOffset(void) const;
+  uint16_t		fixupArrayOffset(void) const;
+  uint16_t		fixupArrayEntryCount(void) const;
+  uint16_t		fixupArraySignature(void) const;
+  bool                  isUsed(void) const;
+  bool                  isDirectory(void) const;
   std::vector<MFTAttribute* >	MFTAttributes();
-  std::vector<MFTAttribute* >	MFTAttributesType(uint32_t typeID);
+  std::vector<MFTAttribute* >	MFTAttributesType(uint32_t typeId);
 };
 
 #endif

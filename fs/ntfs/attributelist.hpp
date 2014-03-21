@@ -57,11 +57,11 @@ class AttributeList : public MFTAttributeContent
 private:
   std::vector<AttributeListItems> __attributes;
 public:
-		       AttributeList(MFTAttribute* mftAttribute);
-		       ~AttributeList();
-  Attributes           _attributes(void);
-  std::vector<MFTAttribute*> MFTAttributes(void);
-  const std::string    typeName(void) const;
+                                AttributeList(MFTAttribute* mftAttribute);
+		                ~AttributeList();
+  Attributes                    _attributes(void);
+  std::vector<MFTAttribute*>    MFTAttributes(void);
+  const std::string             typeName(void) const;
   static MFTAttributeContent*	create(MFTAttribute* mftAttribute);
 };
 

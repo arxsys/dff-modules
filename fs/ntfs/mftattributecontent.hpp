@@ -43,8 +43,8 @@ public:
   Attributes		        _attributes();
   MFTAttribute*                 mftAttribute(void);
   void			        fileMapping(FileMapping* fm);
-  uint8_t*		        data();
-  std::string		        attributeName(void);
+  //uint8_t*		        data();
+  std::string		        attributeName(void) const;
   virtual const std::string	typeName(void) const;
 private:
   MFTAttribute*	                __mftAttribute;

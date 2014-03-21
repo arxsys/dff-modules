@@ -46,7 +46,7 @@ typedef MFTAttributeContent* (*ContentObject)(MFTAttribute*);
 
 struct ContentType
 {
- uint32_t	ID;
+ uint32_t	Id;
  ContentObject	newObject;
 };
 
