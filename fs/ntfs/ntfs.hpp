@@ -36,7 +36,12 @@ public:
   NTFSOpt*              opt(void) const;
   Node*                 fsNode(void) const;
   Node*                 rootDirectoryNode(void) const;
-  BootSectorNode*       bootSectorNode(void) const;		
+  BootSectorNode*       bootSectorNode(void) const;
+
+  /*
+   *  Need file mapping && bufer read for decompression
+   */
+  int32_t 	        vread(int fd, void *buff, unsigned int size);
 };
 
 #endif

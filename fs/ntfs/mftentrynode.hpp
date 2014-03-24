@@ -71,6 +71,7 @@ public:
   uint16_t		fixupArraySignature(void) const;
   bool                  isUsed(void) const;
   bool                  isDirectory(void) const;
+  bool                  isCompressed(void) const;
   std::vector<MFTAttribute* >	MFTAttributes();
   std::vector<MFTAttribute* >	MFTAttributesType(uint32_t typeId);
 };

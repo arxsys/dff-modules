@@ -17,6 +17,7 @@
 #include <vector>
 #include "mftnode.hpp"
 #include "ntfs.hpp"
+#include "mftattributecontent.hpp"
 #include "mftattributecontenttype.hpp"
 #include "mftentrynode.hpp"
 
@@ -40,6 +41,11 @@ MFTNode::~MFTNode(void)
      delete this->__mftEntryNode;
      this->__mftEntryNode = NULL;
   }
+}
+
+MFTEntryNode* MFTNode::mftEntryNode(void)
+{
+  return (this->__mftEntryNode);
 }
 
 void	MFTNode::init(void)
@@ -129,9 +135,10 @@ Attributes	MFTNode::_attributes(void)
   return attr;
 }
 
-void		MFTNode::fileMapping(FileMapping* fm)
+std::vector<MFTAttributeContent*>      MFTNode::data(void)
 {
- int flag = 0; 
+  std::vector<MFTAttributeContent*> dataAttributes;
+
   if (this->__mftEntryNode)
   {
 //file can have multi filemapping please remember that 
@@ -140,11 +147,11 @@ void		MFTNode::fileMapping(FileMapping* fm)
     if (datas.size() > 0) //XXX choose the right in init because of ads ... 
     {
       MFTAttributeContent* mftAttributeContent = datas[0]->content();
-      mftAttributeContent->fileMapping(fm);
-      delete mftAttributeContent;
-      for (mftAttribute = datas.begin(); mftAttribute != datas.end(); ++mftAttribute)
-	delete (*mftAttribute);
-      return ;
+      dataAttributes.push_back(mftAttributeContent);
+      //delete mftAttributeContent;
+      //for (mftAttribute = datas.begin(); mftAttribute != datas.end(); ++mftAttribute)
+      //delete (*mftAttribute);
+      return dataAttributes;
     }
 
     std::vector<MFTAttribute* > attributesLists = this->__mftEntryNode->MFTAttributesType($ATTRIBUTE_LIST);
@@ -160,10 +167,7 @@ void		MFTNode::fileMapping(FileMapping* fm)
          if ((*attr)->typeId() == $DATA)
          {
           MFTAttributeContent* mftAttributeContent = (*attr)->content();
-          //if (flag == 1)
-          mftAttributeContent->fileMapping(fm); //add offset already pushed !
-          flag += 1;
-          //XXX delete et check filemapping pour attributeList & ntfs normal car editeur hexa boucle a l infi surcertains fichier ! 
+          dataAttributes.push_back(mftAttributeContent);
           //delete mftAttributeContent;
           //for (mftAttribute = datas.begin(); mftAttribute != datas.end(); ++mftAttribute)
           //delete (*mftAttribute);
@@ -173,7 +177,22 @@ void		MFTNode::fileMapping(FileMapping* fm)
     }
     //for (; attributesList != attributesLists.end(); ++attributesList)
     //delete (*attributesList);
-    if (flag == 0)
-      this->__mftEntryNode->fileMapping(fm);//setSize to mftSize by default is not set !
+  }
+  return dataAttributes;
+}
+
+void		MFTNode::fileMapping(FileMapping* fm)
+{
+  std::vector<MFTAttributeContent* >  datas = this->data();
+
+  if (datas.size() == 0)
+  {
+    this->__mftEntryNode->fileMapping(fm);//setSize to mftSize by default is not set !
+    return ;
+  }
+  std::vector<MFTAttributeContent*>::iterator data = datas.begin();
+  for (; data != datas.end(); ++data)
+  {
+    (*data)->fileMapping(fm);
   }
 }
