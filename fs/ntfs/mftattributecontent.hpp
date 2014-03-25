@@ -71,8 +71,8 @@ public:
   std::string		        attributeName(void) const;
   virtual const std::string	typeName(void) const;
   std::vector<RunList>          runList(void); //private & store for speed ? 
-  uint64_t                      uncompress(uint64_t offset, uint8_t* buff, uint64_t size);
-  uint64_t                      uncompressBlock(VFile* fs, RunList run, char** data, CompressionInfo* comp, uint64_t* lastValidOffset);
+  uint64_t                      uncompress(uint64_t offset, uint8_t* buff, uint64_t size, uint32_t compressionBlockSize);
+  uint64_t                      uncompressBlock(VFile* fs, RunList run, char** data, CompressionInfo* comp, uint64_t* lastValidOffset, uint32_t compressionBlockSize);
   void                          uncompressUnit(CompressionInfo* comp); 
 private:
   MFTAttribute*	                __mftAttribute;

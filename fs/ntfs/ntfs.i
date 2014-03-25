@@ -24,9 +24,9 @@
 %include "std_vector.i"
 %include "windows.i"
 
-%ignore NTFS::fsNode();
-%ignore NTFS::bootSectorNode();
-%ignore NTFS::rootDirectoryNode();
+%ignore NTFS::fsNode;
+%ignore NTFS::bootSectorNode;
+%ignore NTFS::rootDirectoryNode;
 
 %{
 #include "variant.hpp"
@@ -40,7 +40,6 @@
 %}
 
 %import "../../../api/vfs/libvfs.i"
-
 %include "ntfs.hpp"
 
 %pythoncode

@@ -229,9 +229,9 @@ bool    MFTAttribute::isSparse(void) const
   return ((this->__mftAttribute->flags & 0x8000) == 0x8000);
 }
 
-uint16_t MFTAttribute::compressionUnitSize(void) const
+uint32_t MFTAttribute::compressionBlockSize(void) const
 {
-  return (this->__nonResidentAttribute->compressionUnitSize);
+  return (1 << this->__nonResidentAttribute->compressionBlockSize);
 }
 
 uint64_t MFTAttribute::contentAllocatedSize(void) const

@@ -115,9 +115,7 @@ void	MFTNode::init(void)
       {
          if ((*attr)->typeId() == $DATA)
          {
-           this->setSize((*attr)->contentSize()); //ca a pas l air d etre la bonne size :)
-           //XXX ok pour celui la mais check si pas ads etc... 
-
+           this->setSize((*attr)->contentSize());
            break;
          }
       }
@@ -141,17 +139,16 @@ std::vector<MFTAttributeContent*>      MFTNode::data(void)
 
   if (this->__mftEntryNode)
   {
-//file can have multi filemapping please remember that 
     std::vector<MFTAttribute* > datas = this->__mftEntryNode->MFTAttributesType($DATA);
-    std::vector<MFTAttribute* >::iterator mftAttribute;
-    if (datas.size() > 0) //XXX choose the right in init because of ads ... 
+    std::vector<MFTAttribute* >::iterator mftAttribute = datas.begin();
+    if (datas.size() > 0) //XXX choose the right one because of ADS 
     {
       MFTAttributeContent* mftAttributeContent = datas[0]->content();
       dataAttributes.push_back(mftAttributeContent);
-      //delete mftAttributeContent;
-      //for (mftAttribute = datas.begin(); mftAttribute != datas.end(); ++mftAttribute)
-      //delete (*mftAttribute);
-      return dataAttributes;
+
+      for (++mftAttribute; mftAttribute != datas.end(); ++mftAttribute)
+        delete (*mftAttribute);
+      return (dataAttributes); //attribute is not deleted != attributeContent 
     }
 
     std::vector<MFTAttribute* > attributesLists = this->__mftEntryNode->MFTAttributesType($ATTRIBUTE_LIST);
@@ -167,16 +164,12 @@ std::vector<MFTAttributeContent*>      MFTNode::data(void)
          if ((*attr)->typeId() == $DATA)
          {
           MFTAttributeContent* mftAttributeContent = (*attr)->content();
-          dataAttributes.push_back(mftAttributeContent);
-          //delete mftAttributeContent;
-          //for (mftAttribute = datas.begin(); mftAttribute != datas.end(); ++mftAttribute)
-          //delete (*mftAttribute);
-          //return ;
+          dataAttributes.push_back(mftAttributeContent); //if mftAttributeContent is deleted must delete parent attribute !
         }
+        else
+          delete (*attr);
       }
     }
-    //for (; attributesList != attributesLists.end(); ++attributesList)
-    //delete (*attributesList);
   }
   return dataAttributes;
 }

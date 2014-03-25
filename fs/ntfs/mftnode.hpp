@@ -34,7 +34,7 @@ public:
   Attributes	                       _attributes(void);
   void		                       fileMapping(FileMapping* fm);
   MFTEntryNode*                        mftEntryNode();
-  std::vector<MFTAttributeContent*>    data();  
+  std::vector<MFTAttributeContent*>    data();
 private:
   MFTEntryNode*	                       __mftEntryNode;
 };

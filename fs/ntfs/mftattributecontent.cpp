@@ -27,6 +27,8 @@ MFTAttributeContent::MFTAttributeContent(MFTAttribute* mftAttribute) : Node("MFT
 
 MFTAttributeContent::~MFTAttributeContent()
 {
+//  delete (this->__mftAttribute); //?? MFTAttribute can generate many content
+//  this->__mftAttribuet = NULL;
 }
 
 MFTAttribute* MFTAttributeContent::mftAttribute(void)
@@ -52,7 +54,7 @@ CompressionInfo::~CompressionInfo(void)
 }
 
 void MFTAttributeContent::uncompressUnit(CompressionInfo* comp)
-{
+{ //code from sleuthkit 4.0.x
   comp->uncomp_idx = 0;
   for (size_t cl_index = 0; cl_index + 1 < comp->comp_len;) 
   {
@@ -142,54 +144,56 @@ void MFTAttributeContent::uncompressUnit(CompressionInfo* comp)
   }
 }
 
-uint64_t MFTAttributeContent::uncompressBlock(VFile* fs, RunList run, char** data, CompressionInfo* comp, uint64_t* lastValidOffset)
+uint64_t MFTAttributeContent::uncompressBlock(VFile* fs, RunList run, char** data, CompressionInfo* comp, uint64_t* lastValidOffset, uint32_t compressionBlockSize)
 {
   uint32_t clusterSize = this->__mftAttribute->ntfs()->bootSectorNode()->clusterSize();
-  uint64_t blockSize = clusterSize * 16;
+  uint64_t blockSize = clusterSize * compressionBlockSize;
   uint64_t runLength = run.length; 
+  uint64_t runRoundedBlock = (runLength / compressionBlockSize) * compressionBlockSize;
+  uint64_t runRoundedSize = runRoundedBlock * clusterSize;
   uint64_t runOffset = run.offset;
   uint64_t total = 0;
 
-  if (run.length > 16)
-    *data = (char*)malloc(clusterSize * ((runLength / 16) + 1) * 16);
+  if (run.length > compressionBlockSize)
+    *data = (char*)malloc(clusterSize * ((runLength / compressionBlockSize) + 1) * compressionBlockSize); //roundedBlockSize + 1
   else
-    *data = (char*)malloc(blockSize);
+    *data = (char*)malloc(blockSize); //malloc before then free
    
-  if (runLength >= 16) //not compressed
+  if (runLength >= compressionBlockSize) //not compressed
   {
     comp->uncomp_idx = 0;
     if (runOffset == 0)
     {
-      memset(*data, 0, ((runLength / 16) * 16) * clusterSize);
-      total += ((run.length / 16) * 16) * clusterSize;
+      memset(*data, 0, runRoundedSize);
+      total += runRoundedSize;
       return (total); //even if there is still data a compressed run will follow
     }
     else
     {
       fs->seek(runOffset * clusterSize);
-      fs->read(*data, ((runLength / 16) * 16) * clusterSize);
-      runOffset += (runLength / 16) * 16;
-      comp->uncomp_idx += clusterSize * ((run.length / 16) * 16);
+      fs->read(*data, runRoundedSize);
+      runOffset += runRoundedBlock;
+      comp->uncomp_idx += runRoundedSize;
       *lastValidOffset = runOffset;
     }
-    total += ((run.length / 16) * 16) * clusterSize;
-    runLength = runLength % 16;
+    total += runRoundedSize;
+    runLength = runLength % compressionBlockSize;
     if (runLength == 0)
       return total;
   }
-  if (runOffset && runLength < 16)
+  if (runOffset && runLength < compressionBlockSize)
   {
     if (fs->seek(runOffset * clusterSize) != (runOffset * clusterSize))
       throw std::string("Can't seek to data on fs node");
-    if (fs->read(&(comp->comp_buf[comp->comp_len]), clusterSize * runLength) != clusterSize * runLength)
+    if (fs->read(&(comp->comp_buf[comp->comp_len]), clusterSize * runLength) != (int32_t)(clusterSize * runLength))
       throw std::string("Can't read data on fs node");
     comp->comp_len += clusterSize * runLength; //increment buffer size
     *lastValidOffset += runLength;
     
     this->uncompressUnit(comp);
 
-    if (run.length > 16)
-      memcpy(*data + ((run.length / 16) * 16) * clusterSize, comp->uncomp_buf, blockSize);
+    if (run.length > compressionBlockSize)
+      memcpy(*data + runRoundedSize, comp->uncomp_buf, blockSize);
     else
       memcpy(*data, comp->uncomp_buf, blockSize);
     total += blockSize;
@@ -198,16 +202,9 @@ uint64_t MFTAttributeContent::uncompressBlock(VFile* fs, RunList run, char** dat
   return (total);
 }
 
-uint64_t        MFTAttributeContent::uncompress(uint64_t offset, uint8_t* buff, uint64_t size)
+//data specialization to fast read branchment with filemapping ?
+uint64_t        MFTAttributeContent::uncompress(uint64_t offset, uint8_t* buff, uint64_t size, uint32_t compressionBlockSize)
 {
-  if (this->__mftAttribute->compressionUnitSize() == 0 && this->__mftAttribute->VNCStart() == 0)
-    return (0);
-  
-  if (this->__mftAttribute->compressionUnitSize() == 0)
-  {
-   //pass block size as arg ? comme ca on a le premier c bon 
-    //fstream.seekp(this->__mftAttribute->VNCStart() * 512);
-  }
   uint64_t lastValidOffset = 0;
   uint32_t clusterSize = this->__mftAttribute->ntfs()->bootSectorNode()->clusterSize();
   std::vector<RunList>  runList = this->runList(); //runList
@@ -223,28 +220,38 @@ uint64_t        MFTAttributeContent::uncompress(uint64_t offset, uint8_t* buff, 
     try
     {
       int64_t runSize = (*run).length;
-      if (runSize < 16)
-        runSize = 16 * clusterSize;
+      if (runSize < compressionBlockSize)
+        runSize = compressionBlockSize * clusterSize;
       else
         runSize = runSize * clusterSize;
       CompressionInfo comp(runSize);
 
       if ((*run).offset != 0)
         lastValidOffset = (*run).offset; //keep track of last offset
-      
-      //if (offset >= (*run).offset) //presque ca :) sauf que runOffset et relative au debut de la mft / pffset du fs mois je veux le totalOffset de chque run read d aboord :)
-      uint64_t dataSize = this->uncompressBlock(fs, *run, &data, &comp, &lastValidOffset);
-      if (dataSize == 0) //sparse for end of compression block
+     
+      /*calculate next block run size */ 
+      uint64_t uncompressBlockSize = 0;
+      uint64_t currentLength = (*run).length;
+      if (currentLength > compressionBlockSize)
+      {
+        uint64_t rounded = (currentLength / compressionBlockSize ) * compressionBlockSize;
+        uncompressBlockSize += rounded * clusterSize;
+        currentLength -= rounded;
+      }
+      if ((*run).offset && (currentLength < compressionBlockSize))
+        uncompressBlockSize += clusterSize * compressionBlockSize;
+
+      if (uncompressBlockSize == 0) //sparse for end of compression block
       {
         free(data);
         continue;
       }
       uint64_t currentOffset = totalRead + startOffset;
       uint64_t nextOffset = offset + readed;
-      uint64_t maxOffset = totalRead  + startOffset +dataSize;
+      uint64_t maxOffset = totalRead  + startOffset + uncompressBlockSize;
       if ((currentOffset <= nextOffset) && (nextOffset <= maxOffset)) //in range 
       {
-        //copy data of range 
+        uint64_t dataSize = this->uncompressBlock(fs, *run, &data, &comp, &lastValidOffset, compressionBlockSize);
         if (dataSize <= 0)
         {
           free(data);
@@ -252,36 +259,34 @@ uint64_t        MFTAttributeContent::uncompress(uint64_t offset, uint8_t* buff, 
           return (readed);
         }
         uint64_t dataOff = nextOffset - currentOffset;
-        uint64_t toRead = size - readed;
-        uint64_t readMax = maxOffset - nextOffset;
-        if (toRead > readMax)
-          toRead = readMax;
-        if (!toRead)
+        uint64_t toCopy = size - readed;
+        uint64_t copyMax = maxOffset - nextOffset;
+        if (toCopy > copyMax)
+          toCopy = copyMax;
+        if (!toCopy)
         {
           free(data);
           totalRead += dataSize;
           continue ; //block boundary 
         }
-        if (readed + dataSize > size)
+        if (readed + dataSize >= size)
         {
-          memcpy(buff + readed, data + dataOff, toRead);
+          memcpy(buff + readed, data + dataOff, toCopy);
           free(data);
           delete fs;
-          return (toRead);
+          return (size);
         }
         memcpy(buff + readed, data + dataOff, dataSize - dataOff);
         readed += dataSize - dataOff;
       }
-      free(data); 
-      totalRead += dataSize;
+      free(data);
+      totalRead += uncompressBlockSize;
     }
     catch(std::string const& error)
     {
       free(data); 
-      std::cout << "NTFS uncompression error : " << error << std::endl;
       break;
     } 
-    //totalSize += (*run).length * clusterSize;  
   }
   delete fs;
   return readed;
@@ -291,12 +296,9 @@ uint64_t        MFTAttributeContent::uncompress(uint64_t offset, uint8_t* buff, 
 void		MFTAttributeContent::fileMapping(FileMapping* fm)
 {
   if (this->__mftAttribute->isResident())
-  {
      fm->push(0, this->__mftAttribute->contentSize(), this->__mftAttribute->mftEntryNode(), this->__mftAttribute->contentOffset());
-  }
   else
   {
-    // if fileMaping->startVCN ! et get size car contentSize et pas bon du coup :) 
     uint32_t	clusterSize = this->__mftAttribute->ntfs()->bootSectorNode()->clusterSize();
     uint64_t	totalSize = this->__mftAttribute->VNCStart() * clusterSize;
     Node*	fsNode = this->__mftAttribute->ntfs()->fsNode();
@@ -309,7 +311,6 @@ void		MFTAttributeContent::fileMapping(FileMapping* fm)
         fm->push(totalSize, (*run).length * clusterSize, NULL, 0);
       else 
         fm->push(totalSize, (*run).length * clusterSize, fsNode, (*run).offset * clusterSize);
-                                                            //check push slack %clustersize
       totalSize += (*run).length * clusterSize;  
     }
   }
@@ -317,36 +318,29 @@ void		MFTAttributeContent::fileMapping(FileMapping* fm)
 
 std::vector<RunList>    MFTAttributeContent::runList(void)
 {
+  uint64_t	         runPreviousOffset = 0;
   std::vector<RunList>   runLists;
 
-  uint64_t	runPreviousOffset = 0;
-  int64_t	runOffset;
-  uint64_t	runLength;
-
   VFile* runList = this->__mftAttribute->mftEntryNode()->open();  
-   
   if (runList->seek(this->__mftAttribute->offset() + this->__mftAttribute->runListOffset()) != (this->__mftAttribute->offset() + this->__mftAttribute->runListOffset()))
   {
     delete runList;
     return (runLists);
   }
-
-  while (true) //totalSize < this->__mftAttribute->contentSize()) //XXX multi data !
+  
+  while (true)
   { 
+    int64_t  runOffset = 0;
+    uint64_t runLength = 0;
     RunListInfo	runListInfo;
     runListInfo.byte = 0;
-    runOffset = 0;
-    runLength = 0;
 
     if (runList->read(&(runListInfo.byte), sizeof(uint8_t)) != sizeof(uint8_t))
       break;
-
     if (runListInfo.info.offsetSize > 8) 
       break;
-     
     if (runList->read(&runLength, runListInfo.info.lengthSize) != runListInfo.info.lengthSize)
       break;
-
     if (runListInfo.info.offsetSize)
       if (runList->read(&runOffset, runListInfo.info.offsetSize) != runListInfo.info.offsetSize)
         break;
@@ -358,7 +352,6 @@ std::vector<RunList>    MFTAttributeContent::runList(void)
       memcpy(&toffset, &runOffset, runListInfo.info.offsetSize);
       runOffset = toffset;
     }
- 
     if (runLength == 0)
       break;
     runPreviousOffset += runOffset;
@@ -374,7 +367,6 @@ std::vector<RunList>    MFTAttributeContent::runList(void)
   delete runList;
   return (runLists);
 }
-
 
 /*
  *  Return MFTAttribute attributes
@@ -402,7 +394,7 @@ Attributes	MFTAttributeContent::_attributes(void)
     MAP_ATTR("VNC start", this->__mftAttribute->VNCStart())
     MAP_ATTR("VNC end", this->__mftAttribute->VNCEnd())
     MAP_ATTR("Run list offset", this->__mftAttribute->runListOffset())
-    MAP_ATTR("Compression unit size", this->__mftAttribute->compressionUnitSize())
+    MAP_ATTR("Compression unit size", this->__mftAttribute->compressionBlockSize())
     MAP_ATTR("Content allocated size", this->__mftAttribute->contentAllocatedSize())
     MAP_ATTR("Content actual size", this->__mftAttribute->contentActualSize())
     MAP_ATTR("Content initialized size", this->__mftAttribute->contentInitializedSize())

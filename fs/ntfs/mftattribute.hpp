@@ -35,7 +35,7 @@ PACK_S	MFTNonResidentAttribute
   uint64_t	VNCStart;
   uint64_t	VNCEnd;
   uint16_t	runListOffset;
-  uint16_t	compressionUnitSize;
+  uint16_t	compressionBlockSize;
   uint32_t	unused1;
   uint64_t	contentAllocatedSize; //size round up to cluster size if compressed multi[ple of compression blocksize
   uint64_t	contentActualSize;   //uncompressed size if compressed
@@ -85,7 +85,7 @@ public:
   bool                  isCompressed(void) const;
   bool                  isSparse(void) const;
   bool                  isEncrypted(void) const;
-  uint16_t              compressionUnitSize(void) const;
+  uint32_t              compressionBlockSize(void) const;
   uint64_t              contentAllocatedSize(void) const;
   uint64_t              contentActualSize(void) const;
   uint64_t              contentInitializedSize(void) const;

@@ -105,52 +105,10 @@ BootSectorNode*	NTFS::bootSectorNode(void) const
 
 int32_t  NTFS::vread(int fd, void *buff, unsigned int size)
 {
+  fdinfo* fi = NULL;
   try
   {
-    fdinfo* fi = this->__fdmanager->get(fd);
-    MFTNode* mftNode = dynamic_cast<MFTNode* >(fi->node);
-    if (mftNode == NULL)
-      return (mfso::vread(fd, buff, size));
-  
-    std::vector<MFTAttributeContent*> datas = mftNode->data();
-    if (!datas.size())
-      return (0); 
-    if (!datas[0]->mftAttribute()->isCompressed())
-      return (mfso::vread(fd, buff, size));
-    //data is compressed 
-    std::vector<MFTAttributeContent*>::iterator data = datas.begin();
-    uint32_t readed = 0;
-    try
-    {
-      int32_t attributecount = 0;
-      for (; (readed < size) && (data != datas.end()); ++data)
-      {
-        uint64_t start = (*data)->mftAttribute()->VNCStart() * this->bootSectorNode()->clusterSize();
-        uint64_t end = (*data)->mftAttribute()->VNCEnd() * this->bootSectorNode()->clusterSize();
-        if ((start <= fi->offset) && (fi->offset < end))
-        {
-          int32_t read = (*data)->uncompress(fi->offset, (uint8_t*)buff + readed, size - readed);
-          if (read  <= 0)
-            return (readed);
-          
-          if (fi->offset + read > mftNode->size())
-          {
-            readed += mftNode->size() - fi->offset;
-            fi->offset += mftNode->size();
-            return readed;
-          }
-          fi->offset += read;
-          readed += read;
-        }
-        attributecount++;
-      }
-      return (readed);
-    }
-    catch (std::string const & error)
-    {
-      std::cout << "Error in data attribute : " << error << std::endl;
-    }
-    return (readed);
+    fi = this->__fdmanager->get(fd);
   }
   catch (vfsError& e)
   {
@@ -159,6 +117,61 @@ int32_t  NTFS::vread(int fd, void *buff, unsigned int size)
   catch (std::string const& e)
   {
     return (0);
-  } 
-  return (0);
+  }
+ 
+  MFTNode* mftNode = dynamic_cast<MFTNode* >(fi->node);
+  if (mftNode == NULL)
+    return (mfso::vread(fd, buff, size));
+
+  if (fi->offset > mftNode->size())
+    return (0); //throw error
+
+  std::vector<MFTAttributeContent*> datas = mftNode->data(); //too slow
+  std::vector<MFTAttributeContent*>::iterator data = datas.begin();
+  if (!datas.size())
+    return (0); 
+  if (!datas[0]->mftAttribute()->isCompressed())
+  {
+    for (;data != datas.end(); ++data)
+      delete (*data);
+    return (mfso::vread(fd, buff, size));
+  }
+
+  uint32_t readed = 0;
+  uint32_t compressionBlockSize = 0;
+  try
+  {
+    int32_t attributecount = 0;
+    for (; (readed < size) && (data != datas.end()); ++data)
+    {
+      if (!compressionBlockSize)
+        compressionBlockSize = (*data)->mftAttribute()->compressionBlockSize();
+      uint64_t start = (*data)->mftAttribute()->VNCStart() * this->bootSectorNode()->clusterSize();
+      uint64_t end = (*data)->mftAttribute()->VNCEnd() * this->bootSectorNode()->clusterSize();
+      if ((start <= fi->offset) && (fi->offset < end))
+      {
+        int32_t read = (*data)->uncompress(fi->offset, (uint8_t*)buff + readed, size - readed, compressionBlockSize);
+        if (read  <= 0)
+          break; //can return  
+        if (fi->offset + read > mftNode->size())
+        {
+          readed += mftNode->size() - fi->offset;
+          fi->offset = mftNode->size();
+          break; //cant return
+        }
+        fi->offset += read;
+        readed += read;
+      }
+      attributecount++;
+      delete (*data);
+    }
+    for (;data != datas.end(); ++data)
+      delete (*data);
+  }
+  catch (std::string const & error)
+  {
+    std::cout << "Error in data attribute : " << error << std::endl;
+    //for datas.end() delete
+  }
+  return (readed);
 }
