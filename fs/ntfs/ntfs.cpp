@@ -53,25 +53,32 @@ void 		NTFS::start(Attributes args)
   nMFTStream  << std::string("Found ") << nMFT <<  std::string(" MFT entry") << endl;
   this->setStateInfo(nMFTStream.str());
 
-  while (i * this->bootSectorNode()->MFTRecordSize() < mftNode->size())
-  {
-    if (i % 1000 == 0)
-    {
-      std::ostringstream cMFTStream;
-      cMFTStream << "Parsing " << i << "/" << nMFT;
-      this->setStateInfo(cMFTStream.str());
-    }
-    try 
-    {
-      MFTNode* currentMFTNode = new MFTNode(this, mftNode, NULL, i * this->bootSectorNode()->MFTRecordSize());
-      this->rootDirectoryNode()->addChild(currentMFTNode);
-    }
-    catch (std::string& error)
-    {
-      std::cout << "Can't create MFTNode" << i << " error: " << error << std::endl;
-    }
-    i += 1;
-  }
+
+  MFTNode* rootMFT = new MFTNode(this, mftNode, NULL, 5 * this->bootSectorNode()->MFTRecordSize());
+  this->rootDirectoryNode()->addChild(rootMFT);
+
+  /*
+   *  Create all MFT Entry 
+   */
+  //while (i * this->bootSectorNode()->MFTRecordSize() < mftNode->size())
+  //{
+    //if (i % 1000 == 0)
+    //{
+      //std::ostringstream cMFTStream;
+      //cMFTStream << "Parsing " << i << "/" << nMFT;
+      //this->setStateInfo(cMFTStream.str());
+    //}
+    //try 
+    //{
+      //MFTNode* currentMFTNode = new MFTNode(this, mftNode, NULL, i * this->bootSectorNode()->MFTRecordSize());
+      //this->rootDirectoryNode()->addChild(currentMFTNode);
+    //}
+    //catch (std::string& error)
+    //{
+      //std::cout << "Can't create MFTNode" << i << " error: " << error << std::endl;
+    //}
+    //i += 1;
+  //}
   this->registerTree(this->opt()->fsNode(), this->rootDirectoryNode());
 
   this->setStateInfo("finished successfully");
@@ -124,7 +131,7 @@ int32_t  NTFS::vread(int fd, void *buff, unsigned int size)
     return (mfso::vread(fd, buff, size));
 
   if (fi->offset > mftNode->size())
-    return (0); //throw error
+    return (0);
 
   std::vector<MFTAttributeContent*> datas = mftNode->data(); //too slow
   std::vector<MFTAttributeContent*>::iterator data = datas.begin();
@@ -150,7 +157,9 @@ int32_t  NTFS::vread(int fd, void *buff, unsigned int size)
       uint64_t end = (*data)->mftAttribute()->VNCEnd() * this->bootSectorNode()->clusterSize();
       if ((start <= fi->offset) && (fi->offset < end))
       {
+        std::cout << "Start UNCMPRESSION --- " << std::endl;
         int32_t read = (*data)->uncompress(fi->offset, (uint8_t*)buff + readed, size - readed, compressionBlockSize);
+        std::cout << "UNCOMPRESSION RET : " << read << "---------" << std::endl;
         if (read  <= 0)
           break; //can return  
         if (fi->offset + read > mftNode->size())

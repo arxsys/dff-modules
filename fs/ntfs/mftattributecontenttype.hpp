@@ -24,6 +24,8 @@
 #include "attributelist.hpp"
 #include "volume.hpp"
 #include "objectid.hpp"
+#include "indexroot.hpp"
+#include "indexallocation.hpp"
 
 #define $STANDARD_INFORMATION   16	
 #define $ATTRIBUTE_LIST         32
@@ -33,9 +35,10 @@
 #define $VOLUME_NAME            96 
 #define $VOLUME_INFORMATION     112 
 #define $DATA			128
-//#define $INDEX_ROOT           144 //0x90
-//#define $INDEX_ALLOCATION     160 //0xA)
+#define $INDEX_ROOT             144 //0x90
+#define $INDEX_ALLOCATION       160 //0xA)
 //#define $BITMAP               176 //0xB)
+
 //#define $SYMOBLIC_LINK // REPARSE_POINT 192 // 0xc0
 //#define $EA_INFORMATION       208 // 0xd0
 //#define $EA                   224 //0xe0
@@ -46,8 +49,8 @@ typedef MFTAttributeContent* (*ContentObject)(MFTAttribute*);
 
 struct ContentType
 {
- uint32_t	Id;
- ContentObject	newObject;
+  uint32_t	Id;
+  ContentObject	newObject;
 };
 
 ContentType const ContentTypes[] =
@@ -58,6 +61,9 @@ ContentType const ContentTypes[] =
   { $ATTRIBUTE_LIST, &AttributeList::create },
   { $VOLUME_NAME, &VolumeName::create },
   { $VOLUME_INFORMATION, &VolumeInformation::create },
+//DATA 
+  { $INDEX_ROOT, &IndexRoot::create },
+  { $INDEX_ALLOCATION, &IndexAllocation::create },
   { 0, NULL },
 };
  

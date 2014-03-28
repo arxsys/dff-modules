@@ -123,9 +123,9 @@ uint64_t 		MFTAttribute::contentSize(void) const
   if (this->isResident())
     return (this->__residentAttribute->contentSize);
 
-  if (this->__nonResidentAttribute->contentInitializedSize > this->__nonResidentAttribute->contentAllocatedSize)
-      return (this->__nonResidentAttribute->contentActualSize);
-  return (this->__nonResidentAttribute->contentInitializedSize);
+  if (this->__nonResidentAttribute->contentActualSize > this->__nonResidentAttribute->contentAllocatedSize)
+    return (this->__nonResidentAttribute->contentInitializedSize);
+  return (this->__nonResidentAttribute->contentActualSize);
 }	
 
 uint64_t		MFTAttribute::contentOffset(void) const

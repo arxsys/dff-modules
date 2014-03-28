@@ -72,9 +72,9 @@ Attributes	FileName::_attributes(void)
 {
   Attributes	attrs;
 
-  MAP_ATTR("Attributes", MFTAttributeContent::_attributes());
+  MAP_ATTR("Attributes", MFTAttributeContent::_attributes())
 
-  MAP_ATTR("Parent directory reference", this->parentDirectoryReference());
+  MAP_ATTR("Parent directory reference", this->parentDirectoryReference())
   MAP_ATTR("Creation time", this->creationTime())
   MAP_ATTR("Accessed time", this->accessedTime())
   MAP_ATTR("Modification time", this->modificationTime())
