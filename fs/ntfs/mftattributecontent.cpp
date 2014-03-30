@@ -292,7 +292,7 @@ uint64_t        MFTAttributeContent::uncompress(uint64_t offset, uint8_t* buff, 
           return (readed);
         }
         uint64_t dataOff = nextOffset - currentOffset;
-        if (!totalRead) //fix a l arrache ? 
+        if (!totalRead) //?
           dataOff = 0;
         uint64_t toCopy = size - readed;
         uint64_t copyMax = maxOffset - nextOffset;

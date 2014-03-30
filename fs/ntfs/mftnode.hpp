@@ -19,6 +19,7 @@
 
 #include "ntfs_common.hpp"
 #include "mftentrynode.hpp"
+#include "indexroot.hpp"
 
 class NTFS;
 class MFTEntryNode;
@@ -33,8 +34,10 @@ public:
   void		                       init(void);
   Attributes	                       _attributes(void);
   void		                       fileMapping(FileMapping* fm);
-  MFTEntryNode*                        mftEntryNode();
-  std::vector<MFTAttributeContent*>    data();
+  MFTEntryNode*                        mftEntryNode(void);
+  std::vector<MFTAttributeContent*>    data(void);
+  std::vector<IndexEntry>              indexes(void);
+  void                                 setName(const std::string name);
 private:
   MFTEntryNode*	                       __mftEntryNode;
 };

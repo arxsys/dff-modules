@@ -21,15 +21,14 @@
 
 #include "ntfs_common.hpp"
 
-PACK_S IndexEntry_s//spefici a filetype donc pour les entry ds indexallocation les indexrecord
+PACK_S IndexEntry_s
 {
-  uint8_t       mftEntryId[6]; //file_ref + seq_number ? [6][2]
+  uint8_t       mftEntryId[6];
   uint16_t      sequence; 
-  uint16_t      size;       //length of index entry
-  uint16_t      contentSize; //$FILENAME ATTRIBUTE SIZE  //length of stream
-  uint8_t       flags; //flags
+  uint16_t      size;
+  uint16_t      contentSize;
+  uint8_t       flags;
   uint8_t       unknown[3];
-  //uint8_t       stream; // ?? length of strlen ??
   //int8_t*     content[contentSize]
   //uint64_t    vnc; //-> content[contentSize] - 8
 } PACK;
@@ -38,7 +37,6 @@ class IndexEntry
 {
 private:
   IndexEntry_s                  __indexEntry;
-//int8_t*                       content;
   uint64_t                      __vcn;
 public:
                                 IndexEntry(VFile*);
@@ -48,7 +46,6 @@ public:
   uint32_t                      flags(void) const;
   bool                          isLast(void) const;
   bool                          haveChild(void) const;
-//  uint8_t*                      content(void) const;
   uint64_t                      vcn(void) const;
 };
 
@@ -57,9 +54,10 @@ class IndexEntries
 private:
  std::vector<IndexEntry>        __entries;
 public:
-                IndexEntries(void);
- size_t         readEntries(VFile* vfile, uint32_t entriesStart, uint32_t entriesEnd);
- size_t         count(void) const;
+                                IndexEntries(void);
+ size_t                         readEntries(VFile* vfile, uint32_t entriesStart, uint32_t entriesEnd);
+ size_t                         count(void) const;
+ std::vector<IndexEntry>        entries(void);
 };
 
 #endif

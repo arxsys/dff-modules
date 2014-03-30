@@ -27,18 +27,29 @@ PACK_S IndexRoot_s
 {
   uint32_t              indexType;
   uint32_t              sortType;
-  uint32_t              indexRecordSize; //in bytes
-  uint8_t               indexRecordClusterSize; //numberOfCluster or logarith of size == << * -1 ?
+  uint32_t              indexRecordSize;
+  uint8_t               indexRecordClusterSize;// == << * -1 ?
   uint8_t               unused[3];
 } PACK;
-  //IndexList* 
-PACK_S IndexList_s //Index Entries Info -> class avc method pour pas copier / coller le code ?
+ 
+PACK_S IndexList_s
 {
-  uint32_t              indexEntriesStart; // relative to node header -4 ?
-  uint32_t              indexEntriesEnd; //relative to node header  -2 *4 
-  uint32_t              endOfEntries; //relative to start of node header -3 * 4 ? //alocated size 
+  uint32_t              indexEntriesStart;
+  uint32_t              indexEntriesEnd;
+  uint32_t              endOfEntries;
   uint32_t              flags;   
 } PACK;
+
+class IndexMFTInfo 
+{
+public:
+  IndexMFTInfo(uint64_t id, bool);
+  uint64_t      id(void) const;
+  bool          allocated(void) const;
+private:
+  uint64_t      __id;
+  bool          __allocated;
+};
 
 class IndexRoot : public MFTAttributeContent
 {
@@ -57,21 +68,13 @@ public:
   uint32_t                      indexRecordSize(void);
   uint8_t                       indexRecordClusterSize(void);
 
-  uint32_t                      indexEntriesStart(void) const; // relative to node header -4 ?
-  uint32_t                      indexEntriesEnd(void) const; //relative to node header  -2 *4 
-  uint32_t                      endOfEntries(void) const; //relative to start of node header -3 * 4 ? 
+  uint32_t                      indexEntriesStart(void) const;
+  uint32_t                      indexEntriesEnd(void) const;
+  uint32_t                      endOfEntries(void) const;
   uint32_t                      flags(void) const;  
   bool                          isIndexSmall(void) const;
   bool                          isIndexLarge(void) const;
+  std::vector<IndexEntry>       indexEntries(void);
 };
-
-/*
- *      IndexRoot [entry, entry, entry]
- *                      |  |         IndexAllocation[...]
- *                      |  IndexAloccation [...]
- *                      | 
- *      IndexAllocation [indexrecord, indexrecord, indexrecord,
- */
-
 
 #endif

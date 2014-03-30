@@ -20,17 +20,15 @@ IndexEntry::IndexEntry(VFile *vfile)
 {
   if (vfile->read((void*)&this->__indexEntry, sizeof(IndexEntry_s)) != sizeof(IndexEntry_s))
     throw std::string("Can't read Index entry");
-  vfile->seek(vfile->tell() + this->size());
-  std::cout << "IndexEntry::Entry size " << this->size() << " content size " << contentSize() << std::endl;
-  std::cout << "IndexEntry::Entry mftEntryId " << this->mftEntryId() << std::endl;
-  std::cout << "IndexEntry::offset now " << vfile->tell() << " vfile size " << vfile->node()->size() << std::endl;
-  //decode FileAttribute !
+  uint64_t offset = vfile->tell() + this->size() - sizeof(IndexEntry_s);
+  if (vfile->seek(offset) != offset)
+    throw std::string("Can't seek to offset in IndexEntry");
 }
 
 uint64_t        IndexEntry::mftEntryId(void) const
 {
   uint64_t mftEntryId = 0;
-  
+
   mftEntryId = *((uint32_t*)&this->__indexEntry.mftEntryId);
   *((uint32_t*)&mftEntryId + 1) = *((uint16_t*)&this->__indexEntry.mftEntryId + 2);
 
@@ -59,22 +57,26 @@ uint64_t        IndexEntry::vcn(void) const
 
 bool            IndexEntry::haveChild(void) const
 {
-  return (this->__indexEntry.flags == 0x01);
+  return ((this->__indexEntry.flags & 0x01) == 0x01);
 }
 
 bool            IndexEntry::isLast(void) const
 {
-  return (this->__indexEntry.flags == 0x02);
+  return ((this->__indexEntry.flags & 0x02) == 0x02);
 }
 
 /*
- *  Entries : read and store entry
+ *  IndexEntries : read and store entry
  */
 
 IndexEntries::IndexEntries(void)
 {
 }
 
+std::vector<IndexEntry> IndexEntries::entries(void) 
+{
+  return (this->__entries);
+}
 /*
  *  VFile should be positioned at entries start
  */
@@ -82,33 +84,20 @@ size_t IndexEntries::readEntries(VFile* vfile, uint32_t entriesStart, uint32_t e
 {
   uint64_t lastOffset = vfile->tell() + entriesStart;
   uint64_t currentOffset = lastOffset;
-  vfile->seek(lastOffset); //16 + 16 start at 32 
+  if (vfile->seek(lastOffset) != lastOffset)
+    throw std::string("IndexEntries::readEntries can't seek to entry start");
   while ((currentOffset != entriesStart) && ((currentOffset + sizeof(IndexEntry_s)) < vfile->node()->size()))
   {
-    IndexEntry entry(vfile); //bouffe la data ? read et seek ?          
+    IndexEntry entry(vfile);
     this->__entries.push_back(entry);
 
-    if (entry.haveChild())
-      std::cout << "Entry have child " << std::endl;
     if (entry.isLast())
-    {
-      std::cout << "Root: Entry is last"  << std::endl;
       break;
-    }
-    if (entry.flags() != 1 && entry.flags() != 2)
-    {
-      std::cout << "flags value strange " << entry.flags() << std::endl;
-      break;
-    }
     currentOffset = vfile->tell();
     if (currentOffset == lastOffset)
-    {
-      std::cout << "boucle infinie " << std::endl;
       break;
-    }
     lastOffset = currentOffset;
   }
-  std::cout << "Read entries exit readed : " << this->count() <<  std::endl;
   return (this->__entries.size());
 }
 

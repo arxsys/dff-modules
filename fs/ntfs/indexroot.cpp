@@ -38,20 +38,8 @@ IndexRoot::IndexRoot(MFTAttribute* mftAttribute) : MFTAttributeContent(mftAttrib
     delete vfile;
     throw std::string("$INDEX_ROOT can't read IndexList.");
   } 
-  //read entry list ! ca sera pareille ds l autre donc reutiliser ...
   try
   {
-    std::cout << "IndexRoot: " << std::endl
-              << " attribute type " << this->indexType()
-              << " sort type " << this->sortType()
-              << " index record size " << indexRecordSize() 
-              << " index record cluster size " << indexRecordClusterSize() << std::endl;
-    std::cout << "IndexRoot index list :" << std::endl 
-              << " index Entries start: " << this->indexEntriesStart()
-              << " index Entries end: " << this->indexEntriesEnd() 
-              << " end of entries : " << this->endOfEntries() 
-              << " flags " << this->flags()  << std::endl;
-
     vfile->seek(sizeof(IndexRoot_s));
     this->__indexEntries.readEntries(vfile, this->indexEntriesStart(), this->indexEntriesEnd());
   }
@@ -145,4 +133,12 @@ bool            IndexRoot::isIndexSmall(void) const
 bool            IndexRoot::isIndexLarge(void) const
 {
   return (this->__indexList.flags == 0x01);
+}
+
+std::vector<IndexEntry>     IndexRoot::indexEntries(void)
+{
+  std::vector<IndexEntry> entries;
+  std::vector<IndexEntry> currentEntries = this->__indexEntries.entries();
+  entries.insert(entries.end(), currentEntries.begin(), currentEntries.end());   
+  return (entries);
 }

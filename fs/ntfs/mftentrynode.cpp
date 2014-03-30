@@ -38,29 +38,29 @@ MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::stri
   }
   delete vfile;
 
-  //test at launch could be removed later
-  std::vector<MFTAttribute* > mftAttributes = this->MFTAttributes();
-  std::vector<MFTAttribute* >::iterator	mftAttribute;
-  mftAttribute = mftAttributes.begin();
-  for (; mftAttribute != mftAttributes.end(); ++mftAttribute)
-  {
-    try 
-    {
-      MFTAttributeContent* mftAttributeContent = (*mftAttribute)->content();//test content
-      mftAttributeContent->_attributes();//test call attrib
-      delete mftAttributeContent;
-      if (*mftAttribute != NULL)
-        delete (*mftAttribute);
-    }
-    catch (vfsError& e)
-    {
-      std::cout << "MFTEntryNode::_attributes error: " << e.error << std::endl;
-    }
-    catch (std::string& e)
-    {
-      std::cout << "MFTEntryNode::_attributes error: " << e << std::endl;
-    }
-  }
+  //test : read all attributes of the node 
+  //std::vector<MFTAttribute* > mftAttributes = this->MFTAttributes();
+  //std::vector<MFTAttribute* >::iterator	mftAttribute;
+  //mftAttribute = mftAttributes.begin();
+  //for (; mftAttribute != mftAttributes.end(); ++mftAttribute)
+  //{
+    //try 
+    //{
+      //MFTAttributeContent* mftAttributeContent = (*mftAttribute)->content();//test content
+      //mftAttributeContent->_attributes();//test call attrib
+      //delete mftAttributeContent;
+      //if (*mftAttribute != NULL)
+        //delete (*mftAttribute);
+    //}
+    //catch (vfsError& e)
+    //{
+      //std::cout << "MFTEntryNode::_attributes error: " << e.error << std::endl;
+    //}
+    //catch (std::string& e)
+    //{
+      //std::cout << "MFTEntryNode::_attributes error: " << e << std::endl;
+    //}
+  //}
   this->__state++;
 }
 
@@ -78,7 +78,6 @@ MFTEntryNode::~MFTEntryNode()
   }
 }
 
-//XXX caller must deltte !!
 std::vector<MFTAttribute*>	MFTEntryNode::MFTAttributesType(uint32_t typeId)
 {
   std::vector<MFTAttribute* >		mftAttributes;
@@ -102,7 +101,7 @@ std::vector<MFTAttribute*>	MFTEntryNode::MFTAttributes(void)
 
   try 
   {
-    //XXX XXX XXX this->usedSize() !! attribute List va rencoyer une list qu on parse sauf qu on rajotu ceux des autre $MFT donc pu rien avoir avec $used size il faudrait faire usedSize + usedSize de each mft attribute list ou faier un cas special !!
+    //XXX this->useSize() != add all mft attributelist size 
     while (offset < this->usedSize()) 
     {   
        MFTAttribute* mftAttr = this->__MFTAttribute(offset); //XXX new must delete all
@@ -118,8 +117,7 @@ std::vector<MFTAttribute*>	MFTEntryNode::MFTAttributes(void)
   return (mftAttributes);
 }
 
-// return new must be delete by caller
-MFTAttribute*			MFTEntryNode::__MFTAttribute(uint16_t offset) // VFile ? 
+MFTAttribute*			MFTEntryNode::__MFTAttribute(uint16_t offset)
 {
   return (new MFTAttribute(this, offset));
 }

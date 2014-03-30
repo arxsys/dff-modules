@@ -38,14 +38,19 @@ MFTNode::~MFTNode(void)
 {
   if (this->__mftEntryNode != NULL)
   {
-     delete this->__mftEntryNode;
-     this->__mftEntryNode = NULL;
+    delete this->__mftEntryNode;
+    this->__mftEntryNode = NULL;
   }
 }
 
 MFTEntryNode* MFTNode::mftEntryNode(void)
 {
   return (this->__mftEntryNode);
+}
+
+void MFTNode::setName(const std::string name)
+{
+  this->__name = name;
 }
 
 void	MFTNode::init(void)
@@ -85,6 +90,15 @@ void	MFTNode::init(void)
     {
        std::cout << e.error << std::endl;
     }
+ 
+   //XXX use indexallocation attribute as node data for directory
+    //std::vector<MFTAttribute*> indexAllocation = this->__mftEntryNode->MFTAttributesType($INDEX_ALLOCATION);
+    //if (indexAllocation.size())
+    //{
+      //this->setSize(indexAllocation[0]->content()->size());
+      //return ;
+    //}
+
 
     /*
      *  search $DATA in attribute to set node size
@@ -174,13 +188,51 @@ std::vector<MFTAttributeContent*>      MFTNode::data(void)
   return dataAttributes;
 }
 
+std::vector<IndexEntry> MFTNode::indexes(void)
+{
+  std::vector<IndexEntry> indexes;
+
+  std::vector<MFTAttribute*> indexRootAttribute = this->__mftEntryNode->MFTAttributesType($INDEX_ROOT);
+  if (indexRootAttribute.size()) // add rootAttribute
+  {
+    IndexRoot* indexRoot = dynamic_cast<IndexRoot*>(indexRootAttribute[0]->content());
+    if (indexRoot)
+    {
+      std::vector<IndexEntry> info = indexRoot->indexEntries();
+      indexes.insert(indexes.end(), info.begin(), info.end());    
+    }
+    //delete
+  }
+//delete 
+  std::vector<MFTAttribute*> allocations = this->__mftEntryNode->MFTAttributesType($INDEX_ALLOCATION);
+  std::vector<MFTAttribute*>::iterator  allocation = allocations.begin(); 
+  for (; allocation != allocations.end(); ++allocation)
+  {
+    IndexAllocation* indexAllocation = dynamic_cast<IndexAllocation* >((*allocation)->content());
+    if (indexAllocation)
+    {
+      std::vector<IndexEntry> info = indexAllocation->indexEntries();
+      indexes.insert(indexes.end(), info.begin(), info.end());    
+    }
+  }
+ //delete
+  return (indexes);
+}
+
 void		MFTNode::fileMapping(FileMapping* fm)
 {
-  std::vector<MFTAttributeContent* >  datas = this->data();
+  /* test : indexallocation filemapping */
+  //std::vector<MFTAttribute*> indexAllocation = this->__mftEntryNode->MFTAttributesType($INDEX_ALLOCATION);
+  //if (indexAllocation.size())
+  //{
+    //indexAllocation[0]->content()->fileMapping(fm);
+    //return ;
+  //}
 
+  std::vector<MFTAttributeContent* >  datas = this->data();
   if (datas.size() == 0)
   {
-    this->__mftEntryNode->fileMapping(fm);//setSize to mftSize by default is not set !
+    this->__mftEntryNode->fileMapping(fm);
     return ;
   }
   std::vector<MFTAttributeContent*>::iterator data = datas.begin();

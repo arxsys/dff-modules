@@ -46,26 +46,30 @@ public:
   uint64_t                      sequence(void) const;
   uint64_t                      vcn(void) const;
 
-  uint32_t                      indexEntriesStart(void) const; // relative to node header -4 ?
-  uint32_t                      indexEntriesEnd(void) const; //relative to node header  -2 *4 
-  uint32_t                      endOfEntries(void) const; //relative to start of node header -3 * 4 ? 
+  uint32_t                      indexEntriesStart(void) const;
+  uint32_t                      indexEntriesEnd(void) const;
+  uint32_t                      endOfEntries(void) const;
   uint32_t                      flags(void) const;   
+  void                          readEntries(VFile* vfile);
+  void                          readIndexList(VFile* vfile);
+  IndexEntries                  indexEntries(void);
 };
 
 class IndexAllocation : public MFTAttributeContent
 {
 private:
   std::vector<IndexRecord>      __indexRecords;
+  uint64_t                      __state;
 public:
-  //IndexList* 
-// IndexRecord* indexRecords2;  4096, 8192 
-//  IndexRecords** indexRecord[][]
-//ex: root[0] ->indexRecord[1][1] list 1 entries 2 ? 
 		                IndexAllocation(MFTAttribute* mftAttribute);
 			        ~IndexAllocation();
   const std::string             typeName(void) const;
   Attributes		        _attributes(void);
   static MFTAttributeContent*	create(MFTAttribute* mftAttribute);
+  void		                fileMapping(FileMapping *fm);
+  void                          updateState(void);
+  uint64_t                      fileMappingState(void);
+  std::vector<IndexEntry>       indexEntries(void);
 };
 
 #endif
