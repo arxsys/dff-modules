@@ -54,13 +54,13 @@ IndexRoot::IndexRoot(MFTAttribute* mftAttribute) : MFTAttributeContent(mftAttrib
   delete vfile;
 }
 
+IndexRoot::~IndexRoot()
+{
+}
+
 MFTAttributeContent*	IndexRoot::create(MFTAttribute*	mftAttribute)
 {
   return (new IndexRoot(mftAttribute));
-}
-
-IndexRoot::~IndexRoot()
-{
 }
 
 uint32_t        IndexRoot::indexType(void)

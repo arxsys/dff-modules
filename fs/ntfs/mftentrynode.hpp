@@ -31,13 +31,13 @@ PACK_S	MFTEntry
   uint16_t	fixupArrayOffset;
   uint16_t	fixupArrayEntryCount;
   uint64_t	LSN;
-  uint16_t	sequenceValue;
+  uint16_t	sequence;
   uint16_t	linkCount;
   uint16_t	firstAttributeOffset;
   uint16_t	flags;
   uint32_t	usedSize;
   uint32_t	allocatedSize;
-  uint64_t	fileReferenceToBaseRecord;
+  uint64_t	fileReferenceToBaseRecord; //reference to 1 st mft when is multi-mft based 
   uint16_t	nextAttributeID;
 } PACK;
 
@@ -65,6 +65,7 @@ public:
   uint32_t		usedSize(void) const;
   uint32_t		allocatedSize(void) const;
   void			validate(void) const;
+  uint16_t              sequence(void) const;
   uint16_t		firstAttributeOffset(void) const;
   uint16_t		fixupArrayOffset(void) const;
   uint16_t		fixupArrayEntryCount(void) const;

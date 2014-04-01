@@ -26,6 +26,7 @@
 #include "objectid.hpp"
 #include "indexroot.hpp"
 #include "indexallocation.hpp"
+#include "data.hpp"
 
 #define $STANDARD_INFORMATION   16	
 #define $ATTRIBUTE_LIST         32
@@ -61,7 +62,7 @@ ContentType const ContentTypes[] =
   { $ATTRIBUTE_LIST, &AttributeList::create },
   { $VOLUME_NAME, &VolumeName::create },
   { $VOLUME_INFORMATION, &VolumeInformation::create },
-//DATA 
+  { $DATA, &Data::create },
   { $INDEX_ROOT, &IndexRoot::create },
   { $INDEX_ALLOCATION, &IndexAllocation::create },
   { 0, NULL },

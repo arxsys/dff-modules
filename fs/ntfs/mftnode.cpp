@@ -178,32 +178,44 @@ std::vector<MFTAttributeContent*>      MFTNode::data(void)
          if ((*attr)->typeId() == $DATA)
          {
           MFTAttributeContent* mftAttributeContent = (*attr)->content();
-          dataAttributes.push_back(mftAttributeContent); //if mftAttributeContent is deleted must delete parent attribute !
+          dataAttributes.push_back(mftAttributeContent); //XXX delete if mftAttributeContent is deleted must delete parent attribute !
         }
         else
           delete (*attr);
       }
+      //delete attributeList;
     }
   }
   return dataAttributes;
 }
 
-std::vector<IndexEntry> MFTNode::indexes(void)
+
+//XXX use BITMAP !!!
+std::vector<IndexEntry> MFTNode::indexes(void) //indexesFilename // don't return objectIds, securityDescriptor ...
 {
   std::vector<IndexEntry> indexes;
-
   std::vector<MFTAttribute*> indexRootAttribute = this->__mftEntryNode->MFTAttributesType($INDEX_ROOT);
+
   if (indexRootAttribute.size()) // add rootAttribute
   {
     IndexRoot* indexRoot = dynamic_cast<IndexRoot*>(indexRootAttribute[0]->content());
     if (indexRoot)
     {
       std::vector<IndexEntry> info = indexRoot->indexEntries();
-      indexes.insert(indexes.end(), info.begin(), info.end());    
+      if (indexRoot->indexType() != 48) //IF ROOT IS NOT 48 return !
+      {
+        delete indexRoot;
+        delete indexRootAttribute[0];
+        return (indexes);
+      }
+      indexes.insert(indexes.end(), info.begin(), info.end());
+      delete indexRoot;
     }
-    //delete
+    delete indexRootAttribute[0];
   }
-//delete 
+  else 
+    return (indexes);
+
   std::vector<MFTAttribute*> allocations = this->__mftEntryNode->MFTAttributesType($INDEX_ALLOCATION);
   std::vector<MFTAttribute*>::iterator  allocation = allocations.begin(); 
   for (; allocation != allocations.end(); ++allocation)
@@ -213,9 +225,42 @@ std::vector<IndexEntry> MFTNode::indexes(void)
     {
       std::vector<IndexEntry> info = indexAllocation->indexEntries();
       indexes.insert(indexes.end(), info.begin(), info.end());    
+      delete indexAllocation;
     }
+    delete *allocation;
   }
- //delete
+ 
+  std::vector<MFTAttribute* > attributesLists = this->__mftEntryNode->MFTAttributesType($ATTRIBUTE_LIST);
+  std::vector<MFTAttribute* >::iterator attributesList = attributesLists.begin();
+  if (attributesLists.size() > 0) 
+  {
+    AttributeList* attributeList = static_cast<AttributeList* >((*attributesList)->content());
+    std::vector<MFTAttribute* > attrs = attributeList->MFTAttributes();
+    std::vector<MFTAttribute* >::iterator attr = attrs.begin();
+      
+    for (; attr != attrs.end(); ++attr)
+    {
+      if ((*attr)->typeId() == $INDEX_ALLOCATION)
+      {
+        std::cout << "ALLOCATION IN ATTRIBUTE_LIST FOUND ! " << this->name() << std::endl;
+
+        IndexAllocation* indexAllocation = dynamic_cast<IndexAllocation* >((*attr)->content());
+        if (indexAllocation)
+        {
+          std::vector<IndexEntry> info = indexAllocation->indexEntries();
+          indexes.insert(indexes.end(), info.begin(), info.end());    
+          delete indexAllocation;
+        }
+      }
+      else if ((*attr)->typeId() == $INDEX_ROOT)
+      {
+        std::cout << "ROOT ROOOT W000T INDEX in ATTRIBUTE_LIST found ! " << this->name() << std::endl;
+      }
+      delete (*attr);
+    }
+    delete attributeList;
+  }
+
   return (indexes);
 }
 

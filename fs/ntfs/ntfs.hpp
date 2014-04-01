@@ -22,45 +22,16 @@
 class NTFSOpt;
 class BootSectorNode;
 class MFTNode;
-
-class MFTEntryInfo
-{
-public:
-  uint64_t              id;
-  //unalocated          unallocatedMFT; mft is unalocated
-  std::list<uint64_t>   childrenId;
-  //std::list<uint64_t>   __unallocatedChildrenId; //index unaloted
-  bool                  linked; //node.parent() != null ? 
-  MFTNode*              node;
-};
-
-class MFTEntryManager
-{
-public:
-            MFTEntryManager(void); 
-            //MFTEntryManager(offset, id); //create a master MFT comme ca on peut en gerer plusieurs (MFT MIRROR OU carved MFT) 
-            
-  bool      exist(uint64_t id);  
-  bool      add(uint64_t id, MFTNode* node);
-  bool      add(uint64_t id, uint64_t childId);
-  bool      addChildId(uint64_t nodeId, MFTNode* node);
-  bool      addChild(uint64_t nodeId);
-  void      inChildren(uint64_t nodeId, uint64_t childId);
-  void      childrenSanitaze(void);
-  MFTNode*  node(uint64_t id);
-private:
-  std::map<uint64_t, MFTEntryInfo>              __entries;
-};
+class MFTEntryManager;
 
 class NTFS : public mfso
 {
 private:
-  MFTEntryManager       __mftManager;
-
   NTFSOpt*              __opt;
   Node*                 __rootDirectoryNode;
   Node*                 __orphansNode;
   BootSectorNode*       __bootSectorNode;
+  MFTEntryManager*      __mftManager;
 public:
                         NTFS();
                         ~NTFS();
@@ -70,6 +41,7 @@ public:
   Node*                 fsNode(void) const;
   Node*                 rootDirectoryNode(void) const;
   BootSectorNode*       bootSectorNode(void) const;
+  Node*                 orphansNode(void) const;
   /*
    *  Need file mapping && bufer read for decompression
    */

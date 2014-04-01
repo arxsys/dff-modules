@@ -74,7 +74,8 @@ Attributes	FileName::_attributes(void)
 
   MAP_ATTR("Attributes", MFTAttributeContent::_attributes())
 
-  MAP_ATTR("Parent directory reference", this->parentDirectoryReference())
+  MAP_ATTR("Parent MFT entry id", this->parentMFTEntryId())
+  MAP_ATTR("Parent sequence", this->parentSequence())
   MAP_ATTR("Creation time", this->creationTime())
   MAP_ATTR("Accessed time", this->accessedTime())
   MAP_ATTR("Modification time", this->modificationTime())
@@ -99,27 +100,37 @@ const std::string  FileName::typeName(void) const
   return (std::string("$FILE_NAME_" + this->nameSpace()));
 }
 
-uint64_t	FileName::parentDirectoryReference(void) const
+uint64_t	FileName::parentMFTEntryId(void) const
 {
-  return (this->__fileName.parentDirectoryReference);
+  uint64_t mftEntryId = 0;
+
+  mftEntryId = *((uint32_t*)&this->__fileName.parentMFTEntryId);
+  *((uint32_t*)&mftEntryId + 1) = *((uint16_t*)&this->__fileName.parentMFTEntryId + 2);
+
+  return (mftEntryId);
 }
 
-vtime*  FileName::creationTime(void) const
+uint16_t        FileName::parentSequence(void) const
+{
+  return (this->__fileName.parentSequence);
+}
+
+vtime*          FileName::creationTime(void) const
 {
   return (new vtime(this->__fileName.creationTime, TIME_MS_64));
 }
 
-vtime*  FileName::modificationTime(void) const
+vtime*          FileName::modificationTime(void) const
 {
   return (new vtime(this->__fileName.modificationTime, TIME_MS_64));
 }
 
-vtime*  FileName::mftModificationTime(void) const
+vtime*          FileName::mftModificationTime(void) const
 {
   return (new vtime(this->__fileName.mftModificationTime, TIME_MS_64));
 }
 
-vtime*   FileName::accessedTime(void) const
+vtime*          FileName::accessedTime(void) const
 {
   return (new vtime(this->__fileName.accessedTime, TIME_MS_64));
 }

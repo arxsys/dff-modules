@@ -41,7 +41,7 @@ IndexAllocation::IndexAllocation(MFTAttribute* mftAttribute) : MFTAttributeConte
       indexRecord.readIndexList(vfile);
       this->__indexRecords.push_back(indexRecord);
      
-      this->mftAttribute()->mftEntryNode()->updateState();/
+      this->mftAttribute()->mftEntryNode()->updateState();
       this->updateState(); //update __indexRecords[] used by self filemapping for fixup
  
       indexRecord.readEntries(vfile);

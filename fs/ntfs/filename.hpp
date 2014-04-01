@@ -27,7 +27,8 @@
 
 PACK_S FileName_s 
 {
-  uint64_t		parentDirectoryReference;
+  uint8_t               parentMFTEntryId[6];
+  uint16_t              parentSequence;
   uint64_t		creationTime;
   uint64_t		modificationTime;
   uint64_t		mftModificationTime;
@@ -48,7 +49,8 @@ private:
 public:
 		        FileName(MFTAttribute* mftAttribute);
 			~FileName();
-  uint64_t		parentDirectoryReference(void) const;
+  uint64_t		parentMFTEntryId(void) const;
+  uint16_t              parentSequence(void) const;
   vtime*		creationTime(void) const;
   vtime*		modificationTime(void) const;
   vtime*		mftModificationTime(void) const;

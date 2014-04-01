@@ -200,7 +200,7 @@ Attributes	MFTEntryNode::_attributes(void)
 void		MFTEntryNode::validate(void) const
 {
   if ((this->signature() != MFT_SIGNATURE_FILE) && (this->signature() != MFT_SIGNATURE_BAAD))
-    throw vfsError(std::string("MFT signature is invalid")); 
+    throw std::string("MFT signature is invalid");
   // read & check fixup value  ...
 }
 
@@ -223,42 +223,49 @@ uint32_t	MFTEntryNode::signature(void) const
 {
   if (this->__MFTEntry != NULL)
     return (this->__MFTEntry->signature);
-  throw vfsError(std::string("ntfs::MFTEntryNode::signature no MFTEntry."));
+  throw std::string("ntfs::MFTEntryNode::signature no MFTEntry.");
 }
 
 uint32_t	MFTEntryNode::usedSize(void) const
 {
   if (this->__MFTEntry != NULL)
     return (this->__MFTEntry->usedSize);
-  throw vfsError(std::string("ntfs::MFTEntryNode::useSize no MFTEntry."));
+  throw std::string("ntfs::MFTEntryNode::useSize no MFTEntry.");
 }
 
 uint32_t	MFTEntryNode::allocatedSize(void) const
 {
   if (this->__MFTEntry != NULL)
     return (this->__MFTEntry->allocatedSize);
-  throw vfsError(std::string("ntfs::MFTEntryNode::allocatedSize no MFTEntry."));
+  throw std::string("ntfs::MFTEntryNode::allocatedSize no MFTEntry.");
+}
+
+uint16_t        MFTEntryNode::sequence(void) const
+{
+  if (this->__MFTEntry != NULL)
+    return (this->__MFTEntry->sequence);
+  throw std::string("NTFS::MFTEntryNode no MFT Entry.");
 }
 
 uint16_t	MFTEntryNode::firstAttributeOffset(void) const
 {
   if (this->__MFTEntry != NULL) 
     return (this->__MFTEntry->firstAttributeOffset);
-  throw vfsError(std::string("ntfs::MFTEntryNode::attributeOffset no MFTEntry."));
+  throw std::string("ntfs::MFTEntryNode::attributeOffset no MFTEntry.");
 }
 
 uint16_t	MFTEntryNode::fixupArrayOffset(void) const
 {
   if (this->__MFTEntry != NULL) 
     return (this->__MFTEntry->fixupArrayOffset);
-  throw vfsError(std::string("ntfs::MFTEntryNode::fixupArrayOffset no MFTEntry."));
+  throw std::string("ntfs::MFTEntryNode::fixupArrayOffset no MFTEntry.");
 }
 
 uint16_t        MFTEntryNode::fixupArraySignature(void) const
 {
   if (this->__MFTEntry != NULL)
     return (this->__MFTEntry->signature);
-  throw vfsError(std::string("ntfs::MFTEntryNode::fixupArraySignature no MFTEntry."));
+  throw std::string("ntfs::MFTEntryNode::fixupArraySignature no MFTEntry.");
 }
 
 /* 
@@ -268,19 +275,19 @@ uint16_t	MFTEntryNode::fixupArrayEntryCount(void) const
 {
   if (this->__MFTEntry != NULL) 
     return (this->__MFTEntry->fixupArrayEntryCount - 1);
-  throw vfsError(std::string("ntfs::MFTEntryNode::fixupArratEntryCount no MFTEntry."));
+  throw std::string("ntfs::MFTEntryNode::fixupArratEntryCount no MFTEntry.");
 }
 
 bool            MFTEntryNode::isUsed(void) const
 {
   if (this->__MFTEntry != NULL)
     return (this->__MFTEntry->flags & 0x1);
-  throw vfsError(std::string("ntfs::MFTEntryNode::isUsed no MFTEntry.")); 
+  throw std::string("ntfs::MFTEntryNode::isUsed no MFTEntry."); 
 }
 
 bool            MFTEntryNode::isDirectory(void) const
 {
   if (this->__MFTEntry != NULL)
     return (this->__MFTEntry->flags & 0x2);
-  throw vfsError(std::string("ntfs::MFTEntryNode::isDirectory no MFTEntry.")); 
+  throw std::string("ntfs::MFTEntryNode::isDirectory no MFTEntry."); 
 }
