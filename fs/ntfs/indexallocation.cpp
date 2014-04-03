@@ -29,31 +29,35 @@
 
 IndexAllocation::IndexAllocation(MFTAttribute* mftAttribute) : MFTAttributeContent(mftAttribute)
 {
+  uint64_t indexSize = mftAttribute->ntfs()->bootSectorNode()->indexRecordSize();
   VFile* vfile = this->open();
   try 
   {
-    //indexSize = this->indexRoot->indexRecordSize();  
-    for (uint64_t currentOffset = 0; currentOffset < this->size(); currentOffset += 4096)
+    /* 
+     *  Read struct at start of block and get fixup array info
+     */
+    for (uint64_t currentOffset = 0; currentOffset < this->size(); currentOffset += indexSize)
     {
       if (vfile->seek(currentOffset) != currentOffset)
         break;
       IndexRecord indexRecord(vfile);
-      indexRecord.readIndexList(vfile);
       this->__indexRecords.push_back(indexRecord);
-     
-      this->mftAttribute()->mftEntryNode()->updateState();
-      this->updateState(); //update __indexRecords[] used by self filemapping for fixup
- 
-      indexRecord.readEntries(vfile);
-      this->__indexRecords[this->__indexRecords.size() - 1] = indexRecord;
       if (indexRecord.signature() != *(uint32_t*)&"INDX")
-      {
-        std::cout << "BAD SIGNATURE IN INDX " << std::endl;
         break;
-      }
-      //this->mftAttribute()->mftEntryNode()->updateState();
     }
+
+    /*
+     *  Now index can be read with fixup replaced
+     */
     this->mftAttribute()->mftEntryNode()->updateState();
+    this->updateState();
+    for (uint64_t indexRecordId = 0; indexRecordId < this->__indexRecords.size(); ++indexRecordId)
+    {
+       uint64_t entriesOffset = (indexRecordId * indexSize) + sizeof(IndexRecord_s);
+       if (vfile->seek(entriesOffset) != entriesOffset)
+         break;
+       this->__indexRecords[indexRecordId].readEntries(vfile);
+    }
   }
   catch(std::string const& error)
   {
@@ -92,7 +96,7 @@ Attributes	IndexAllocation::_attributes(void)
   return (attrs);
 }
 
-const std::string  IndexAllocation::typeName(void) const
+const std::string       IndexAllocation::typeName(void) const
 {
   return (std::string("$NDEX_ALLOCATION"));
 }
@@ -128,10 +132,11 @@ void		IndexAllocation::fileMapping(FileMapping* fm)
   uint32_t clusterSize = mftAttribute->ntfs()->bootSectorNode()->clusterSize();
   uint32_t sectorPerCluster = mftAttribute->ntfs()->bootSectorNode()->sectorsPerCluster();
   uint64_t totalSize = mftAttribute->VNCStart() * clusterSize;
+  uint64_t indexSize = mftAttribute->ntfs()->bootSectorNode()->indexRecordSize();
   Node*	fsNode = mftAttribute->ntfs()->fsNode();
   std::vector<RunList> runList = this->runList();
   std::vector<RunList>::iterator run = runList.begin();
- 
+
   uint64_t startOffset = (*run).offset * clusterSize; 
   uint64_t currentFixup = 0; //totalSector
   uint32_t currentIndexRecord = 0;
@@ -148,13 +153,13 @@ void		IndexAllocation::fileMapping(FileMapping* fm)
         uint64_t sectorOffset = 0;//(*run).offset + clusterSize;
         for (uint64_t sector = 0; sector < (*run).length * sectorPerCluster; sector++)
         {
-          uint64_t nextIndexRecordId = (totalSize+ sectorOffset) / 4096; 
+          uint64_t nextIndexRecordId = (totalSize+ sectorOffset) / indexSize; 
           fm->push(totalSize + sectorOffset, sectorSize - sizeof(uint16_t), fsNode, ((*run).offset * clusterSize) + sectorOffset);
           sectorOffset += sectorSize - sizeof(uint16_t);
 
           if (nextIndexRecordId > currentIndexRecord)
           {
-            startOffset = ((*run).offset * clusterSize) +  ((nextIndexRecordId * 4096)  - totalSize);
+            startOffset = ((*run).offset * clusterSize) +  ((nextIndexRecordId * indexSize)  - totalSize);
             currentIndexRecord++;
             currentFixup = 0;
           }
@@ -186,19 +191,12 @@ IndexRecord::IndexRecord(VFile *vfile)
 {
   if (vfile->read((void*)&this->__indexRecord, sizeof(IndexRecord_s)) != sizeof(IndexRecord_s))
     throw std::string("Can't read Index record");
-}
-
-void IndexRecord::readIndexList(VFile* vfile)
-{
   if (vfile->read((void*)&this->__indexList, sizeof(IndexList_s)) != sizeof(IndexList_s))
     throw std::string("Can't read Index record index list");
 }
 
-void IndexRecord::readEntries(VFile* vfile)
+void            IndexRecord::readEntries(VFile* vfile)
 {
-  uint64_t offset = vfile->tell() - sizeof(IndexList_s);
-  if (vfile->seek(offset) != offset)
-    throw std::string("Cant seek to Index record list offset");
   this->__indexEntries.readEntries(vfile, this->indexEntriesStart(), this->indexEntriesEnd());
 }
 
@@ -251,7 +249,7 @@ uint32_t        IndexRecord::flags(void) const
   return (this->__indexList.flags);
 }
 
-IndexEntries   IndexRecord::indexEntries(void)
+IndexEntries    IndexRecord::indexEntries(void)
 {
   return (this->__indexEntries);
 }

@@ -25,6 +25,13 @@ MFTEntryManager::MFTEntryManager(NTFS* ntfs, MFTNode* mftNode) : __ntfs(ntfs), _
   this->initEntries();
 }
 
+MFTEntryManager::~MFTEntryManager()
+{
+  //for i in self :
+  // delete node
+  // unlink orphans & root
+}
+
 uint64_t MFTEntryManager::entryCount(void) const
 {
   return (this->__numberOfEntry);
@@ -58,8 +65,6 @@ bool MFTEntryManager::add(uint64_t id, uint64_t childId)
   if (this->__entries[id].node == NULL)
     std::cout << "Adding to a non-existent entry " << id << " child " << childId << std::endl;
   this->__entries[id].childrenId.push_back(childId);
-  this->__entries[id].childrenId.sort(); //do it every time ?
-  this->__entries[id].childrenId.unique();
 
   return (true);
 }
@@ -86,6 +91,10 @@ bool MFTEntryManager::addChildId(uint64_t nodeId, MFTNode* node)
       continue;
     this->add(nodeId, entryId);
   }
+//XXX delete indexEntry ? XXX have attribute in index entry ? strange
+
+  this->__entries[nodeId].childrenId.sort(); //do it every time ?
+  this->__entries[nodeId].childrenId.unique(); //XXX oplus bas 
   return (true);
 }
 
@@ -95,11 +104,19 @@ bool MFTEntryManager::addChild(uint64_t nodeId)
   
   if (node == NULL) 
   {
-    std::cout << "parent " << nodeId << " not found !" << std::endl;
+          //std::cout << "parent " << nodeId << " not found !" << std::endl;
     return (false);
   }
   std::list<uint64_t> childrenId = this->__entries[nodeId].childrenId;
   std::list<uint64_t>::iterator childId = childrenId.begin();
+//XXX this algo is fucked up avec les unnalocated au moins
+//car si y a un unallocated qui etait link a une liste de fichier
+//il va reclamer c node et comme elle ont pas de parent elle vont etre linker
+//a un parent mais pas relink ds la partie relink donc elle serot linker au movais parent !
+// si non forcer double relinking
+
+
+  //XXX check sequence en + ? 
 
   if (childrenId.size() == 0)
     return (false);
@@ -108,10 +125,10 @@ bool MFTEntryManager::addChild(uint64_t nodeId)
     if (*childId == 0) //end of list
       continue;
     Node* child = this->node(*childId);
-    if (child)
-      node->addChild(child);
-    else
-      std::cout << "Child not ofund !" << std::endl;
+    //if (child)
+    //node->addChild(child);
+    //else
+    //std::cout << "Child not ofund !" << std::endl;
     //this->add(nodeId, entryId);
   }
   return (true);
@@ -125,8 +142,8 @@ void MFTEntryManager::inChildren(uint64_t id, uint64_t childId)
   {
     if (id == *subchild)
     {
-      std::cout << "found a loop (remove it) " << std::endl;
-      std::cout << "id " << id << " child id " << childId << " subchild " <<  *subchild << std::endl;
+            //std::cout << "found a loop (remove it) " << std::endl;
+            //std::cout << "id " << id << " child id " << childId << " subchild " <<  *subchild << std::endl;
       this->__entries[childId].childrenId.remove(*subchild);
       //this->inChildren(id, childId); 
      //break; // remove from iterator ? 
@@ -203,7 +220,8 @@ void MFTEntryManager::linkOrphanEntries(void)
   ///* search for orphan node */
   for(uint64_t id = 0; id < this->__numberOfEntry; ++id)
   {
-    MFTNode* mftNode = this->node(id); 
+    MFTNode* mftNode = this->node(id);
+ 
     if (mftNode && (mftNode->parent() == NULL))
     {
       std::vector<MFTAttribute* > attributes = mftNode->mftEntryNode()->MFTAttributesType($FILE_NAME);  //XXX use filename relocation 
@@ -212,32 +230,33 @@ void MFTEntryManager::linkOrphanEntries(void)
       {
         FileName* fileName = dynamic_cast<FileName*>((*attribute)->content());
         uint64_t parentId = fileName->parentMFTEntryId();
-        
         MFTNode* parent = this->node(parentId);
+
         if (parent)
         {
           if (fileName->parentSequence() != parent->mftEntryNode()->sequence())
           {
-             std::cout << "PARENT " << mftNode->name() << " and parent  " << parent->name() << " Have != seq  " << std::endl;
+                  //std::cout << "PARENT " << mftNode->name() << " and parent  " << parent->name() << " Have != seq  " << std::endl;
              ///XXX also can if check is mftNode.isDirectory() // car si non c bien reecrit c chelou         
              //par ex les images de meg0 rien a voir     
              this->__ntfs->orphansNode()->addChild(mftNode);
+             std::cout << "Seq is different " << mftNode->name() <<  ", " << parent->name() << std::endl;
           }
-          //else
-          //std::cout << "aprent and son sequence ok " << std::endl;
           else 
+          {
+            if (mftNode->name() == "iprop.dll")
+            {
+               std::cout << "orphan iprop found linking to parent " << parent->absolute();
+            }
             parent->addChild(mftNode);
+             //std::cout << "aprent and son sequence ok " << std::endl;
                 //delete fileName /dellte for in *attribute .. continue 
                 //std::cout << "oprhan " << mftNode->name() << " found in existing parent " << parent->name() << std::endl;
-          continue;
+          }
         }
-        else 
-          std::cout << "orphan with parent found but parent not found ! " << parentId << std::endl;
+        //else 
+        //std::cout << "orphan with parent found but parent not found ! " << parentId << std::endl;
        
-        //XXX XX check sequence en + (peut etre lie au meme rep avant avec sequence differente)
-        // XXX checkfilename en + peut etre lie a une mftID mais la mftID est detruit et new rep cree
-        // donc linke a un movais rep !
- 
         delete fileName;
       }
       else

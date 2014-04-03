@@ -15,23 +15,25 @@
  */
 
 #include <vector>
+
 #include "mftnode.hpp"
 #include "ntfs.hpp"
 #include "mftattributecontent.hpp"
 #include "mftattributecontenttype.hpp"
 #include "mftentrynode.hpp"
 
-MFTNode::MFTNode(NTFS* ntfs, Node* mftFsNode, Node* parent, uint64_t offset) : Node("Unknown", 0, parent, ntfs)
+MFTNode::MFTNode(NTFS* ntfs, Node* mftFsNode, Node* parent, uint64_t offset) : Node("", 0, parent, ntfs)
 {
- //this->__name = "MFTNode" + std::string(offset);
   this->__mftEntryNode = new MFTEntryNode(ntfs, mftFsNode, offset, std::string("MFTEntry"), NULL);
+  this->__mftEntryNode->updateState();
   this->init();
-}
 
-MFTNode::MFTNode(NTFS* ntfs, Node* parent, MFTEntryNode* mftEntryNode) : Node("Unknown", 0, parent, ntfs)
-{
-  this->__mftEntryNode = mftEntryNode;
-  this->init();
+  if (this->__name == "")
+  {
+    std::ostringstream name; 
+    name << "Unknown-" << offset;
+    this->__name = name.str();
+  }
 }
 
 MFTNode::~MFTNode(void)
@@ -66,14 +68,25 @@ void	MFTNode::init(void)
    *  Search for name attribute to set node name
    */
   ///XXX 
+  bool debug = false;
+  if (this->__name == "Unknown-3761152")
+  {
+   debug = true;
+   std::cout << "hello " << this->__mftEntryNode << std::endl;
+  }
+
   uint8_t fileNameID = FILENAME_NAMESPACE_DOS_WIN32;
   if (this->__mftEntryNode != NULL)
   {
+    if (debug)
+      std::cout << "getting name " << std::endl;
     try 
     {
       std::vector<MFTAttribute* > fileNames = this->__mftEntryNode->MFTAttributesType($FILE_NAME);
       std::vector<MFTAttribute* >::iterator currentFileName = fileNames.begin();
 
+      if (debug)
+        std::cout << "find " << fileNames.size() << " name " << std::endl;
       for (; currentFileName != fileNames.end(); ++currentFileName)
       {
         FileName*	fileName = static_cast<FileName* >((*currentFileName)->content());
@@ -98,7 +111,6 @@ void	MFTNode::init(void)
       //this->setSize(indexAllocation[0]->content()->size());
       //return ;
     //}
-
 
     /*
      *  search $DATA in attribute to set node size
@@ -132,7 +144,11 @@ void	MFTNode::init(void)
            this->setSize((*attr)->contentSize());
            break;
          }
+         delete (*attr);
       }
+      for (; attr != attrs.end(); ++attr)
+        delete (*attr);
+      delete attributeList;
     }
     for (; attributesList != attributesLists.end(); ++attributesList)
       delete (*attributesList);
@@ -144,12 +160,12 @@ Attributes	MFTNode::_attributes(void)
   if (this->__mftEntryNode != NULL)
     return (this->__mftEntryNode->_attributes());
   Attributes attr;
-  return attr;
+  return (attr);
 }
 
-std::vector<MFTAttributeContent*>      MFTNode::data(void)
+std::vector<MFTAttribute*>      MFTNode::data(void)
 {
-  std::vector<MFTAttributeContent*> dataAttributes;
+  std::vector<MFTAttribute*> dataAttributes;
 
   if (this->__mftEntryNode)
   {
@@ -157,8 +173,8 @@ std::vector<MFTAttributeContent*>      MFTNode::data(void)
     std::vector<MFTAttribute* >::iterator mftAttribute = datas.begin();
     if (datas.size() > 0) //XXX choose the right one because of ADS 
     {
-      MFTAttributeContent* mftAttributeContent = datas[0]->content();
-      dataAttributes.push_back(mftAttributeContent);
+      MFTAttribute* dataAttribute = datas[0];
+      dataAttributes.push_back(dataAttribute);
 
       for (++mftAttribute; mftAttribute != datas.end(); ++mftAttribute)
         delete (*mftAttribute);
@@ -167,26 +183,25 @@ std::vector<MFTAttributeContent*>      MFTNode::data(void)
 
     std::vector<MFTAttribute* > attributesLists = this->__mftEntryNode->MFTAttributesType($ATTRIBUTE_LIST);
     std::vector<MFTAttribute* >::iterator attributesList = attributesLists.begin();
-    if (attributesLists.size() > 0) 
+    if (attributesLists.size() > 0) //XXX handle qu une seul list , peut en avoir plusieurs ?? 
     {
+      if (attributesLists.size() > 1)
+        std::cout << "Found more than one attribute list ! " << std::endl;
       AttributeList* attributeList = static_cast<AttributeList* >((*attributesList)->content());
       std::vector<MFTAttribute* > attrs = attributeList->MFTAttributes();
       std::vector<MFTAttribute* >::iterator attr = attrs.begin();
       
       for (; attr != attrs.end(); ++attr)
       {
-         if ((*attr)->typeId() == $DATA)
-         {
-          MFTAttributeContent* mftAttributeContent = (*attr)->content();
-          dataAttributes.push_back(mftAttributeContent); //XXX delete if mftAttributeContent is deleted must delete parent attribute !
-        }
+        if ((*attr)->typeId() == $DATA)
+          dataAttributes.push_back(*attr);
         else
           delete (*attr);
       }
-      //delete attributeList;
+      delete (*attributesList);
     }
   }
-  return dataAttributes;
+  return (dataAttributes);
 }
 
 
@@ -227,7 +242,7 @@ std::vector<IndexEntry> MFTNode::indexes(void) //indexesFilename // don't return
       indexes.insert(indexes.end(), info.begin(), info.end());    
       delete indexAllocation;
     }
-    delete *allocation;
+    delete (*allocation);
   }
  
   std::vector<MFTAttribute* > attributesLists = this->__mftEntryNode->MFTAttributesType($ATTRIBUTE_LIST);
@@ -237,12 +252,15 @@ std::vector<IndexEntry> MFTNode::indexes(void) //indexesFilename // don't return
     AttributeList* attributeList = static_cast<AttributeList* >((*attributesList)->content());
     std::vector<MFTAttribute* > attrs = attributeList->MFTAttributes();
     std::vector<MFTAttribute* >::iterator attr = attrs.begin();
-      
+     
+    if (attributesLists.size() > 1)
+      std::cout << "MORE THAN ONE LIST FOUND !!! " << std::endl; 
+
     for (; attr != attrs.end(); ++attr)
     {
       if ((*attr)->typeId() == $INDEX_ALLOCATION)
       {
-        std::cout << "ALLOCATION IN ATTRIBUTE_LIST FOUND ! " << this->name() << std::endl;
+              //std::cout << "ALLOCATION IN ATTRIBUTE_LIST FOUND ! " << this->name() << std::endl;
 
         IndexAllocation* indexAllocation = dynamic_cast<IndexAllocation* >((*attr)->content());
         if (indexAllocation)
@@ -274,15 +292,18 @@ void		MFTNode::fileMapping(FileMapping* fm)
     //return ;
   //}
 
-  std::vector<MFTAttributeContent* >  datas = this->data();
+  std::vector<MFTAttribute* >  datas = this->data();
   if (datas.size() == 0)
   {
     this->__mftEntryNode->fileMapping(fm);
-    return ;
+    return;
   }
-  std::vector<MFTAttributeContent*>::iterator data = datas.begin();
+  std::vector<MFTAttribute*>::iterator data = datas.begin();
   for (; data != datas.end(); ++data)
   {
-    (*data)->fileMapping(fm);
+    MFTAttributeContent* dataContent = (*data)->content();
+    dataContent->fileMapping(fm);
+    delete (dataContent);
+    delete (*data);
   }
 }

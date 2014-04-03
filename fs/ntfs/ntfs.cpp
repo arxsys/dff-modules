@@ -43,6 +43,8 @@ NTFS::~NTFS()
 
 void    NTFS::start(Attributes args)
 {
+  std::cout << "SIze of MFTNode " << sizeof(MFTNode) << " mft entry " << sizeof(MFTEntryNode) << std::endl;
+  std::cout << "total = " << sizeof(MFTNode) + sizeof(MFTEntryNode) + sizeof(MFTEntry); 
   this->__opt = new NTFSOpt(args);
   this->__bootSectorNode = new BootSectorNode(this);
   if (this->__opt->validateBootSector())

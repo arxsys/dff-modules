@@ -37,6 +37,7 @@ class MFTEntryManager
 {
 public:
   MFTEntryManager(NTFS* ntfs, MFTNode* mftNode); 
+  ~MFTEntryManager();
   void                                  initEntries(void);
   void                                  linkEntries(void);
   void                                  linkOrphanEntries(void); 

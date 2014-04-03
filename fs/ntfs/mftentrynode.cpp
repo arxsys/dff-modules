@@ -80,8 +80,8 @@ MFTEntryNode::~MFTEntryNode()
 
 std::vector<MFTAttribute*>	MFTEntryNode::MFTAttributesType(uint32_t typeId)
 {
-  std::vector<MFTAttribute* >		mftAttributes;
   std::vector<MFTAttribute* >		mftAttributesType;
+  std::vector<MFTAttribute* >		mftAttributes;
   std::vector<MFTAttribute* >::iterator	mftAttribute;
 
   mftAttributes = this->MFTAttributes();

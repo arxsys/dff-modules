@@ -29,13 +29,12 @@ class MFTNode : public Node //ntfsnode
 {
 public:
   MFTNode(NTFS*	ntfs, Node* mftFsNode, Node* parent, uint64_t sectorNumber);
-  MFTNode(NTFS* ntfs, Node* parent, MFTEntryNode* mftEntryNode);
   ~MFTNode();
   void		                       init(void);
   Attributes	                       _attributes(void);
   void		                       fileMapping(FileMapping* fm);
   MFTEntryNode*                        mftEntryNode(void);
-  std::vector<MFTAttributeContent*>    data(void);
+  std::vector<MFTAttribute*>           data(void);
   std::vector<IndexEntry>              indexes(void);
   void                                 setName(const std::string name);
 private:

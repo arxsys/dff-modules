@@ -27,6 +27,7 @@
 %ignore NTFS::fsNode;
 %ignore NTFS::bootSectorNode;
 %ignore NTFS::rootDirectoryNode;
+%ignore NTFS::orphansNode;
 
 %{
 #include "variant.hpp"

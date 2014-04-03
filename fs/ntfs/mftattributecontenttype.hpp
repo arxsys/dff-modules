@@ -27,6 +27,7 @@
 #include "indexroot.hpp"
 #include "indexallocation.hpp"
 #include "data.hpp"
+#include "bitmap.hpp"
 
 #define $STANDARD_INFORMATION   16	
 #define $ATTRIBUTE_LIST         32
@@ -38,7 +39,7 @@
 #define $DATA			128
 #define $INDEX_ROOT             144 //0x90
 #define $INDEX_ALLOCATION       160 //0xA)
-//#define $BITMAP               176 //0xB)
+#define $BITMAP                 176 //0xB)
 
 //#define $SYMOBLIC_LINK // REPARSE_POINT 192 // 0xc0
 //#define $EA_INFORMATION       208 // 0xd0
@@ -65,6 +66,7 @@ ContentType const ContentTypes[] =
   { $DATA, &Data::create },
   { $INDEX_ROOT, &IndexRoot::create },
   { $INDEX_ALLOCATION, &IndexAllocation::create },
+  { $BITMAP, &Bitmap::create },
   { 0, NULL },
 };
  
