@@ -209,6 +209,8 @@ std::vector<MFTAttribute*>      MFTNode::data(void)
 std::vector<IndexEntry> MFTNode::indexes(void) //indexesFilename // don't return objectIds, securityDescriptor ...
 {
   std::vector<IndexEntry> indexes;
+
+
   std::vector<MFTAttribute*> indexRootAttributes = this->__mftEntryNode->MFTAttributesType($INDEX_ROOT);
   std::vector<MFTAttribute*>::iterator indexRootAttribute = indexRootAttributes.begin(); 
 
@@ -250,6 +252,7 @@ std::vector<IndexEntry> MFTNode::indexes(void) //indexesFilename // don't return
     delete (*allocation);
   }
  
+  return indexes;
   std::vector<MFTAttribute* > attributesLists = this->__mftEntryNode->MFTAttributesType($ATTRIBUTE_LIST);
   std::vector<MFTAttribute* >::iterator attributesList = attributesLists.begin();
   if (attributesLists.size() > 0) 

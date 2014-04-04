@@ -46,7 +46,7 @@ class MFTAttributeContent : public Node
 {
 public:
   			        MFTAttributeContent(MFTAttribute* mftAttribute);
-	 		        ~MFTAttributeContent();
+  virtual                       ~MFTAttributeContent();
   Attributes		        _attributes();
   MFTAttribute*                 mftAttribute(void);
   void			        fileMapping(FileMapping* fm);

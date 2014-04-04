@@ -40,10 +40,10 @@ IndexAllocation::IndexAllocation(MFTAttribute* mftAttribute) : MFTAttributeConte
     {
       if (vfile->seek(currentOffset) != currentOffset)
         break;
-      IndexRecord indexRecord(vfile);
-      this->__indexRecords.push_back(indexRecord);
+      IndexRecord indexRecord(vfile); //XXX large alloc ? 
       if (indexRecord.signature() != *(uint32_t*)&"INDX")
         break;
+      this->__indexRecords.push_back(indexRecord);
     }
 
     /*
@@ -189,10 +189,10 @@ void		IndexAllocation::fileMapping(FileMapping* fm)
 
 IndexRecord::IndexRecord(VFile *vfile)
 {
-  if (vfile->read((void*)&this->__indexRecord, sizeof(IndexRecord_s)) != sizeof(IndexRecord_s))
-    throw std::string("Can't read Index record");
-  if (vfile->read((void*)&this->__indexList, sizeof(IndexList_s)) != sizeof(IndexList_s))
-    throw std::string("Can't read Index record index list");
+   if (vfile->read((void*)&this->__indexRecord, sizeof(IndexRecord_s)) != sizeof(IndexRecord_s))
+     throw std::string("Can't read Index record");
+   if (vfile->read((void*)&this->__indexList, sizeof(IndexList_s)) != sizeof(IndexList_s))
+     throw std::string("Can't read Index record index list");
 }
 
 void            IndexRecord::readEntries(VFile* vfile)
