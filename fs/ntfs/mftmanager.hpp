@@ -25,6 +25,7 @@ class MFTNode;
 class MFTEntryInfo
 {
 public:
+  MFTEntryInfo();
   uint64_t              id;
   std::list<uint64_t>   childrenId;
   bool                  linked; //node.parent() != null ? 
@@ -44,6 +45,7 @@ public:
   void                                  childrenSanitaze(void);
   bool                                  add(uint64_t id, MFTNode* node);
   bool                                  add(uint64_t id, uint64_t childId);
+  MFTNode*                              create(uint64_t id);
   bool                                  addChildId(uint64_t nodeId, MFTNode* node);
   bool                                  addChild(uint64_t nodeId);
   void                                  inChildren(uint64_t nodeId, uint64_t childId);

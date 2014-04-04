@@ -28,10 +28,10 @@ class NTFS : public mfso
 {
 private:
   NTFSOpt*              __opt;
-  Node*                 __rootDirectoryNode;
-  Node*                 __orphansNode;
   BootSectorNode*       __bootSectorNode;
   MFTEntryManager*      __mftManager;
+  Node*                 __rootDirectoryNode;
+  Node*                 __orphansNode;
 public:
                         NTFS();
                         ~NTFS();
@@ -42,6 +42,7 @@ public:
   Node*                 rootDirectoryNode(void) const;
   BootSectorNode*       bootSectorNode(void) const;
   Node*                 orphansNode(void) const;
+  MFTEntryManager*      mftManager(void) const;
   /*
    *  Need file mapping && bufer read for decompression
    */

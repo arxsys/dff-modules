@@ -19,10 +19,24 @@
 #include "bootsector.hpp"
 #include "mftattributecontenttype.hpp"
 
+/*
+ *  MFTEntryInfo
+ */
+
+MFTEntryInfo::MFTEntryInfo() : id(0), linked(false), node(NULL)
+{
+
+}
+
+/*
+ *  MFTEntryManager
+ */
+
 MFTEntryManager::MFTEntryManager(NTFS* ntfs, MFTNode* mftNode) : __ntfs(ntfs), __masterMFTNode(mftNode)
 {
   this->__numberOfEntry = this->__masterMFTNode->size() / this->__ntfs->bootSectorNode()->MFTRecordSize();
-  this->initEntries();
+  //XXX check for mirror !
+  this->add(0, mftNode);
 }
 
 MFTEntryManager::~MFTEntryManager()
@@ -59,7 +73,7 @@ bool    MFTEntryManager::add(uint64_t id, MFTNode* node)
   return (true);
 }
 
-bool MFTEntryManager::add(uint64_t id, uint64_t childId)
+bool    MFTEntryManager::add(uint64_t id, uint64_t childId)
 {
 //sanitaze !
   if (this->__entries[id].node == NULL)
@@ -77,28 +91,31 @@ MFTNode*  MFTEntryManager::node(uint64_t id) const
   return (NULL);
 }
 
-bool MFTEntryManager::addChildId(uint64_t nodeId, MFTNode* node)
+bool    MFTEntryManager::addChildId(uint64_t nodeId, MFTNode* node)
 {
   std::vector<IndexEntry> indexes = node->indexes();
   std::vector<IndexEntry>::iterator index = indexes.begin();
   if (indexes.size() == 0)
+  {
+    indexes.clear();
     return (true);
+  }
+ 
   for (; index != indexes.end(); ++index)
   {
     uint64_t entryId = (*index).mftEntryId();
-
     if (entryId == 0) //end of list
       continue;
     this->add(nodeId, entryId);
   }
 //XXX delete indexEntry ? XXX have attribute in index entry ? strange
-
   this->__entries[nodeId].childrenId.sort(); //do it every time ?
   this->__entries[nodeId].childrenId.unique(); //XXX oplus bas 
+  indexes.clear();
   return (true);
 }
 
-bool MFTEntryManager::addChild(uint64_t nodeId)
+bool    MFTEntryManager::addChild(uint64_t nodeId)
 {
   Node* node = this->node(nodeId);
   
@@ -124,7 +141,7 @@ bool MFTEntryManager::addChild(uint64_t nodeId)
   {
     if (*childId == 0) //end of list
       continue;
-    Node* child = this->node(*childId);
+    //Node* child = this->node(*childId);
     //if (child)
     //node->addChild(child);
     //else
@@ -134,7 +151,7 @@ bool MFTEntryManager::addChild(uint64_t nodeId)
   return (true);
 }
 
-void MFTEntryManager::inChildren(uint64_t id, uint64_t childId)
+void    MFTEntryManager::inChildren(uint64_t id, uint64_t childId)
 {
   std::list<uint64_t> subchildrenId = this->__entries[childId].childrenId;
   std::list<uint64_t>::iterator subchild = subchildrenId.begin();
@@ -152,7 +169,7 @@ void MFTEntryManager::inChildren(uint64_t id, uint64_t childId)
   }
 }
 
-void MFTEntryManager::childrenSanitaze(void)
+void    MFTEntryManager::childrenSanitaze(void)
 {
   //avoid infinit loop in nested directory
   std::map<uint64_t, MFTEntryInfo >::iterator  entry = this->__entries.begin();
@@ -163,7 +180,7 @@ void MFTEntryManager::childrenSanitaze(void)
 /*
  *  Create all MFT Entry 
  */
-void MFTEntryManager::initEntries(void)
+void    MFTEntryManager::initEntries(void)
 {
   std::ostringstream nMFTStream;
   nMFTStream  << std::string("Found ") << this->__numberOfEntry <<  std::string(" MFT entry") << endl;
@@ -181,8 +198,11 @@ void MFTEntryManager::initEntries(void)
     }
     try 
     {
-      MFTNode* currentMFTNode = new MFTNode(this->__ntfs, this->__masterMFTNode, NULL, id * mftRecordSize); 
-      this->add(id, currentMFTNode);
+      if (this->__entries[id].node == NULL)
+      {
+        MFTNode* currentMFTNode = new MFTNode(this->__ntfs, this->__masterMFTNode, NULL, id * mftRecordSize); 
+        this->add(id, currentMFTNode);
+      }
     }
     catch (std::string& error)
     {
@@ -191,10 +211,18 @@ void MFTEntryManager::initEntries(void)
   }
 }
 
+MFTNode*   MFTEntryManager::create(uint64_t id)
+{
+  uint32_t mftRecordSize = this->__ntfs->bootSectorNode()->MFTRecordSize();
+  MFTNode* node = new MFTNode(this->__ntfs, this->__masterMFTNode, NULL, id * mftRecordSize);
+
+  return (node);
+}
+
 /*
  *  Link node to parent
  */  
-void MFTEntryManager::linkEntries(void)
+void    MFTEntryManager::linkEntries(void)
 {
   this->childrenSanitaze();
   for(uint64_t id = 0; id < this->__numberOfEntry; ++id)
@@ -215,7 +243,7 @@ void MFTEntryManager::linkEntries(void)
     std::cout << "No root found" << std::endl;
 }
 
-void MFTEntryManager::linkOrphanEntries(void)
+void    MFTEntryManager::linkOrphanEntries(void)
 {
   ///* search for orphan node */
   for(uint64_t id = 0; id < this->__numberOfEntry; ++id)
@@ -240,7 +268,7 @@ void MFTEntryManager::linkOrphanEntries(void)
              ///XXX also can if check is mftNode.isDirectory() // car si non c bien reecrit c chelou         
              //par ex les images de meg0 rien a voir     
              this->__ntfs->orphansNode()->addChild(mftNode);
-             std::cout << "Seq is different " << mftNode->name() <<  ", " << parent->name() << std::endl;
+             //std::cout << "Seq is different " << mftNode->name() <<  ", " << parent->name() << std::endl;
           }
           else 
           {

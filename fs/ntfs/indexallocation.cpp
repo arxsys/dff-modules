@@ -27,7 +27,7 @@
   if ((this->__fileName.flags & x) == x)\
     flagsList.push_back(NEW_VARIANT(std::string(y)));
 
-IndexAllocation::IndexAllocation(MFTAttribute* mftAttribute) : MFTAttributeContent(mftAttribute)
+IndexAllocation::IndexAllocation(MFTAttribute* mftAttribute) : MFTAttributeContent(mftAttribute), __state(0)
 {
   uint64_t indexSize = mftAttribute->ntfs()->bootSectorNode()->indexRecordSize();
   VFile* vfile = this->open();
@@ -65,7 +65,7 @@ IndexAllocation::IndexAllocation(MFTAttribute* mftAttribute) : MFTAttributeConte
   }
   catch(vfsError const& error)
   {
-    std::cout << "$INDEX_ALLOCATION vfs error " << error.error << std::endl;
+    std::cout << "$INDEX_ALLOCATION vfs error : " << error.error << std::endl;
   }
   delete vfile;
 }

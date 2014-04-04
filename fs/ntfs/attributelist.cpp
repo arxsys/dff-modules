@@ -22,7 +22,9 @@
 #include "attributelist.hpp"
 #include "mftattributecontent.hpp"
 #include "mftattribute.hpp"
+#include "mftnode.hpp"
 #include "mftentrynode.hpp"
+#include "mftmanager.hpp"
 
 /*
  *  AttributeListItems
@@ -39,6 +41,7 @@ AttributeListItems::AttributeListItems(VFile* vfile)
     uint16_t* name = new uint16_t[this->__attributeList.nameSize];
     offset += vfile->read((void*)name, this->__attributeList.nameSize * sizeof(uint16_t));
     UnicodeString((char*)name, __attributeList.nameSize * sizeof(uint16_t), "UTF16-LE").toUTF8String(this->__name);
+    delete[] name;
   }
 
   int32_t nextOffset = this->size() - offset;
@@ -116,35 +119,45 @@ AttributeList::AttributeList(MFTAttribute* mftAttribute) : MFTAttributeContent(m
   delete vfile;
 }
 
+AttributeList::~AttributeList()
+{
+}
+
 std::vector<MFTAttribute*> AttributeList::MFTAttributes(void)
 {
-  std::vector<AttributeListItems>::iterator item = this->__attributes.begin();
   std::vector<MFTAttribute*> found;
+  std::vector<AttributeListItems>::iterator item = this->__attributes.begin();
   uint32_t MFTEntrySize = this->mftAttribute()->mftEntryNode()->ntfs()->bootSectorNode()->MFTRecordSize();
+
   for (; item != this->__attributes.end(); ++item)
   {
     MFTEntryNode* mftEntryNode = this->mftAttribute()->mftEntryNode();
     if (mftEntryNode->offset() == item->mftEntryId() * MFTEntrySize) 
       continue;
-    MFTEntryNode* mft = new MFTEntryNode(mftEntryNode->ntfs(), mftEntryNode->mftNode(), item->mftEntryId() * MFTEntrySize, "", NULL);    
-    std::vector<MFTAttribute*> attributes = mft->MFTAttributes(); 
+
+    MFTEntryManager* mftManager = this->mftAttribute()->ntfs()->mftManager();
+    uint64_t entryId = item->mftEntryId();
+    MFTNode* mftNode  = mftManager->node(entryId);
+    if (mftNode == NULL)
+    {
+      mftNode = mftManager->create(entryId);
+      mftManager->add(entryId, mftNode);
+    } 
+    std::vector<MFTAttribute*> attributes = mftNode->mftEntryNode()->MFTAttributes(); 
     std::vector<MFTAttribute*>::iterator attribute = attributes.begin();
-    //mft->updateState(); //? 
-    //mftEntryNode->updateState();
     for (; attribute != attributes.end(); ++attribute)
     {
       if ((*attribute)->isResident())
       {
-         //XXX
+        delete (*attribute);
          //std::cout << "create a resident attribute ? " << (*attribute)->typeId() << " " << item->typeId() << std::endl;
       }
       else if (((*attribute)->VNCStart() == item->VCNStart()) && ((*attribute)->typeId() == item->typeId()))
-      {
         found.push_back(*attribute);
-      }
+      else
+        delete (*attribute);
     }
   }
- //XXX delete useless
   return (found);
 }
 
@@ -153,9 +166,6 @@ MFTAttributeContent*	AttributeList::create(MFTAttribute* mftAttribute)
   return (new AttributeList(mftAttribute));
 }
 
-AttributeList::~AttributeList()
-{
-}
 
 Attributes	AttributeList::_attributes(void)
 {

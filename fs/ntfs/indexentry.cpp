@@ -85,7 +85,7 @@ size_t IndexEntries::readEntries(VFile* vfile, uint32_t entriesStart, uint32_t e
   uint64_t lastOffset = vfile->tell() + entriesStart;
   uint64_t currentOffset = lastOffset;
   if (vfile->seek(lastOffset) != lastOffset)
-    throw std::string("IndexEntries::readEntries can't seek to entry start");
+    throw std::string("IndexEntries::readEntries() can't seek to entry start");
   while ((currentOffset != entriesStart) && ((currentOffset + sizeof(IndexEntry_s)) < vfile->node()->size()))
   {
     IndexEntry entry(vfile);

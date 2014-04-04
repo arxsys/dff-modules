@@ -116,13 +116,13 @@ void	MFTNode::init(void)
      *  search $DATA in attribute to set node size
      */
     std::vector<MFTAttribute* > datas = this->__mftEntryNode->MFTAttributesType($DATA);
-    std::vector<MFTAttribute* >::iterator mftAttribute = datas.begin();
+    std::vector<MFTAttribute* >::iterator data = datas.begin();
     if (datas.size() > 0) //XXX add ADS in new node 
     {
-      this->setSize(datas[0]->contentSize());
+      this->setSize((*data)->contentSize());
     }
-    for (; mftAttribute != datas.end(); ++mftAttribute)
-      delete (*mftAttribute);
+    for (; data != datas.end(); ++data)
+      delete (*data);
 
     /*
      *  search for $DATA in attributeList to set node size
@@ -209,24 +209,29 @@ std::vector<MFTAttribute*>      MFTNode::data(void)
 std::vector<IndexEntry> MFTNode::indexes(void) //indexesFilename // don't return objectIds, securityDescriptor ...
 {
   std::vector<IndexEntry> indexes;
-  std::vector<MFTAttribute*> indexRootAttribute = this->__mftEntryNode->MFTAttributesType($INDEX_ROOT);
+  std::vector<MFTAttribute*> indexRootAttributes = this->__mftEntryNode->MFTAttributesType($INDEX_ROOT);
+  std::vector<MFTAttribute*>::iterator indexRootAttribute = indexRootAttributes.begin(); 
 
-  if (indexRootAttribute.size()) // add rootAttribute
+  if (indexRootAttributes.size() > 0) // add rootAttribute
   {
-    IndexRoot* indexRoot = dynamic_cast<IndexRoot*>(indexRootAttribute[0]->content());
+    if (indexRootAttributes.size() > 1)
+      std::cout << "HAVE more than one ROOT attribute " << std::endl;
+    IndexRoot* indexRoot = dynamic_cast<IndexRoot*>((*indexRootAttribute)->content());
     if (indexRoot)
     {
       std::vector<IndexEntry> info = indexRoot->indexEntries();
       if (indexRoot->indexType() != 48) //IF ROOT IS NOT 48 return !
       {
         delete indexRoot;
-        delete indexRootAttribute[0];
+        for (;indexRootAttribute != indexRootAttributes.end(); ++indexRootAttribute)
+          delete (*indexRootAttribute);
         return (indexes);
       }
       indexes.insert(indexes.end(), info.begin(), info.end());
       delete indexRoot;
     }
-    delete indexRootAttribute[0];
+    for (;indexRootAttribute != indexRootAttributes.end(); ++indexRootAttribute)
+       delete (*indexRootAttribute);
   }
   else 
     return (indexes);
@@ -260,8 +265,7 @@ std::vector<IndexEntry> MFTNode::indexes(void) //indexesFilename // don't return
     {
       if ((*attr)->typeId() == $INDEX_ALLOCATION)
       {
-              //std::cout << "ALLOCATION IN ATTRIBUTE_LIST FOUND ! " << this->name() << std::endl;
-
+        //std::cout << "ALLOCATION IN ATTRIBUTE_LIST FOUND ! " << this->name() << std::endl;
         IndexAllocation* indexAllocation = dynamic_cast<IndexAllocation* >((*attr)->content());
         if (indexAllocation)
         {
@@ -277,6 +281,8 @@ std::vector<IndexEntry> MFTNode::indexes(void) //indexesFilename // don't return
       delete (*attr);
     }
     delete attributeList;
+    //if multi attr list for ..
+    delete (*attributesList);
   }
 
   return (indexes);

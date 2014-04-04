@@ -36,8 +36,8 @@ VolumeName::VolumeName(MFTAttribute* mftAttribute) : MFTAttributeContent(mftAttr
 
   if ((uint64_t)vfile->read((void*)this->__volumeName, this->size()) != this->size())
   {
-    delete[] vfile;
-    delete this->__volumeName;
+    delete vfile;
+    delete[] this->__volumeName;
     throw std::string("$VolumeName can't read name.");
   }
   delete vfile;

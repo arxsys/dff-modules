@@ -24,42 +24,46 @@
 
 MFTAttribute::MFTAttribute(MFTEntryNode* mftEntryNode, uint64_t offset) : __offset(offset), __mftEntryNode(mftEntryNode), __residentAttribute(NULL), __nonResidentAttribute(NULL)
 {
-  this->__mftAttribute = new MFTAttribute_s(); 
-
+  this->__mftAttribute = new MFTAttribute_s; 
   VFile*  vfile = mftEntryNode->open();
   if (vfile->seek(offset) != offset)
   {
     delete vfile;
+    this->destroy();
     throw std::string("MFT Attribute can't seek to attribute offset");
   }
 
   if (vfile->read((void*) this->__mftAttribute, sizeof(MFTAttribute_s)) != sizeof(MFTAttribute_s))
   {
     delete vfile;
+    this->destroy();
     throw std::string("MFT Attribute can't read enough data");
   }
 
   if (this->typeId() == 0xffffffff)
   {
     delete vfile;
+    this->destroy();
     throw std::string("End of attribute");
   }
 
   if (this->isResident())
   {
-    this->__residentAttribute = new MFTResidentAttribute;
+    this->__residentAttribute = new MFTResidentAttribute();
     if (vfile->read((void*) this->__residentAttribute, sizeof(MFTResidentAttribute)) != sizeof(MFTResidentAttribute))
     {
       delete vfile;
+      this->destroy();
       throw std::string("MFT can't read resident attribute");
     }
   }
   else
   {
-    this->__nonResidentAttribute = new MFTNonResidentAttribute;
+    this->__nonResidentAttribute = new MFTNonResidentAttribute();
     if (vfile->read((void*) this->__nonResidentAttribute, sizeof(MFTNonResidentAttribute)) != sizeof(MFTNonResidentAttribute))
     {
       delete vfile;
+      this->destroy();
       throw std::string("MFT can't read non-resident attribute");
     }
   }
@@ -68,22 +72,24 @@ MFTAttribute::MFTAttribute(MFTEntryNode* mftEntryNode, uint64_t offset) : __offs
     if (vfile->seek(offset + this->__mftAttribute->nameOffset) != (offset + this->__mftAttribute->nameOffset))
     {
       delete vfile;
+      this->destroy();
       throw std::string("MFT can't seek to name offset");
     }
     uint16_t* name = new uint16_t[this->__mftAttribute->nameSize];
     if (vfile->read((void*)name, this->__mftAttribute->nameSize * sizeof(uint16_t)) != (int32_t)(this->__mftAttribute->nameSize * sizeof(uint16_t)))
     {
       delete vfile;
+      delete[] name;
+      this->destroy();
       throw std::string("MFT can't read attribute name");
     }
     UnicodeString((char*)name, this->__mftAttribute->nameSize * sizeof(uint16_t), "UTF16-LE").toUTF8String(this->__name);
     delete[] name;
   }
- 
   delete vfile;
 }
 
-MFTAttribute::~MFTAttribute()
+void MFTAttribute::destroy(void)
 {
   if (this->__mftAttribute != NULL)
   {
@@ -100,6 +106,11 @@ MFTAttribute::~MFTAttribute()
     delete this->__residentAttribute;
     this->__residentAttribute = NULL;
   }
+}
+
+MFTAttribute::~MFTAttribute(void)
+{
+  this->destroy();
 }
 
 MFTEntryNode*		MFTAttribute::mftEntryNode(void) const

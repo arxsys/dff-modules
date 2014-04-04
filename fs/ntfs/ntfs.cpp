@@ -27,7 +27,7 @@
  *  NTFS 
  */
 
-NTFS::NTFS() : mfso("NTFS"), __opt(NULL), __rootDirectoryNode(new Node("NTFS")), __orphansNode(new Node("orphans")), __bootSectorNode(NULL), __mftManager(NULL)
+NTFS::NTFS() : mfso("NTFS"), __opt(NULL), __bootSectorNode(NULL), __mftManager(NULL), __rootDirectoryNode(new Node("NTFS")), __orphansNode(new Node("orphans"))
 {
 }
 
@@ -43,8 +43,6 @@ NTFS::~NTFS()
 
 void    NTFS::start(Attributes args)
 {
-  std::cout << "SIze of MFTNode " << sizeof(MFTNode) << " mft entry " << sizeof(MFTEntryNode) << std::endl;
-  std::cout << "total = " << sizeof(MFTNode) + sizeof(MFTEntryNode) + sizeof(MFTEntry); 
   this->__opt = new NTFSOpt(args);
   this->__bootSectorNode = new BootSectorNode(this);
   if (this->__opt->validateBootSector())
@@ -57,10 +55,15 @@ void    NTFS::start(Attributes args)
   MFTNode* mftNode = new MFTNode(this, this->fsNode(), this->rootDirectoryNode(),  this->__bootSectorNode->MFTLogicalClusterNumber() * this->__bootSectorNode->clusterSize());
 
   this->__mftManager = new MFTEntryManager(this, mftNode);
+  this->__mftManager->initEntries();
   this->__mftManager->linkEntries(); 
   this->__mftManager->linkOrphanEntries();
 
   this->registerTree(this->opt()->fsNode(), this->rootDirectoryNode());
+
+  //std::cout << "Deleting manager " << std::endl;
+  //delete this->__mftManager;
+  //std::cout << "end" << std::endl;
 
   this->setStateInfo("finished successfully");
   this->res["Result"] = Variant_p(new Variant(std::string("NTFS parsed successfully.")));
@@ -69,6 +72,11 @@ void    NTFS::start(Attributes args)
 NTFSOpt*	NTFS::opt(void) const
 {
   return (this->__opt);
+}
+
+MFTEntryManager* NTFS::mftManager(void) const
+{
+  return (this->__mftManager);
 }
 
 Node*		NTFS::fsNode(void) const

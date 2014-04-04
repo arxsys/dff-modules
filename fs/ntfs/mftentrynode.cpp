@@ -23,17 +23,17 @@
 MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::string name, Node* parent = NULL) : Node(name, ntfs->bootSectorNode()->MFTRecordSize(), parent, ntfs), __ntfs(ntfs), __mftNode(mftNode), __offset(offset), __state(0)
 {
   VFile* vfile = NULL;
-  this->__MFTEntry = new MFTEntry; 
-
   vfile = this->__mftNode->open();
   if (vfile->seek(this->offset()) != this->offset())
   {
     delete vfile;
     throw std::string("Can't seek to MFT entry structure");
   }
-  if  (vfile->read((void *) (this->__MFTEntry), sizeof(MFTEntry)) != sizeof(MFTEntry))
+  this->__MFTEntry = new MFTEntry; 
+  if  (vfile->read((void *)this->__MFTEntry, sizeof(MFTEntry)) != sizeof(MFTEntry))
   {
     delete vfile;
+    delete this->__MFTEntry;  
     throw std::string("Can't read MFT Entry structure");
   }
   delete vfile;
@@ -73,8 +73,8 @@ MFTEntryNode::~MFTEntryNode()
 {
   if (this->__MFTEntry != NULL)
   {
-     delete this->__MFTEntry;
-     this->__MFTEntry = NULL;
+    delete this->__MFTEntry;
+    this->__MFTEntry = NULL;
   }
 }
 
@@ -90,7 +90,7 @@ std::vector<MFTAttribute*>	MFTEntryNode::MFTAttributesType(uint32_t typeId)
     if ((*mftAttribute)->typeId() == typeId)
       mftAttributesType.push_back(*mftAttribute);
     else
-      delete *mftAttribute;
+      delete (*mftAttribute);
   return (mftAttributesType);
 }
 
@@ -104,7 +104,7 @@ std::vector<MFTAttribute*>	MFTEntryNode::MFTAttributes(void)
     //XXX this->useSize() != add all mft attributelist size 
     while (offset < this->usedSize()) 
     {   
-       MFTAttribute* mftAttr = this->__MFTAttribute(offset); //XXX new must delete all
+       MFTAttribute* mftAttr = this->__MFTAttribute(offset);
        mftAttributes.push_back(mftAttr); 
        if (mftAttr->length() == 0) //check for other anormal size ? very big?
 	 break;

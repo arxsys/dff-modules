@@ -27,8 +27,6 @@ MFTAttributeContent::MFTAttributeContent(MFTAttribute* mftAttribute) : Node("MFT
 
 MFTAttributeContent::~MFTAttributeContent()
 {
-//  delete (this->__mftAttribute); //?? MFTAttribute can generate many content
-//  this->__mftAttribuet = NULL;
 }
 
 MFTAttribute* MFTAttributeContent::mftAttribute(void)
