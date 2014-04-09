@@ -41,6 +41,9 @@ IndexRoot::IndexRoot(MFTAttribute* mftAttribute) : MFTAttributeContent(mftAttrib
   try
   {
     vfile->seek(sizeof(IndexRoot_s));
+
+    //if (indexEntriesEnd() != endOfEntries())
+    //std::cout << "index ROOT start : " << indexEntriesStart() << " end :"  << indexEntriesEnd() <<  " enfOf " << endOfEntries() << std::endl;  
     this->__indexEntries.readEntries(vfile, this->indexEntriesStart(), this->indexEntriesEnd());
   }
   catch(std::string const& error)

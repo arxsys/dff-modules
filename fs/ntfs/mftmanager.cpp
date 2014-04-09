@@ -19,19 +19,16 @@
 #include "bootsector.hpp"
 #include "mftattributecontenttype.hpp"
 
-/*
+/**
  *  MFTEntryInfo
  */
-
 MFTEntryInfo::MFTEntryInfo() : id(0), linked(false), node(NULL)
 {
-
 }
 
-/*
+/**
  *  MFTEntryManager
  */
-
 MFTEntryManager::MFTEntryManager(NTFS* ntfs, MFTNode* mftNode) : __ntfs(ntfs), __masterMFTNode(mftNode)
 {
   this->__numberOfEntry = this->__masterMFTNode->size() / this->__ntfs->bootSectorNode()->MFTRecordSize();
@@ -46,11 +43,17 @@ MFTEntryManager::~MFTEntryManager()
   // unlink orphans & root
 }
 
+/**
+ *  Number of MFT Entry
+ */ 
 uint64_t MFTEntryManager::entryCount(void) const
 {
   return (this->__numberOfEntry);
 }
 
+/**
+ *  Is MFEntryNode exist for this MFT id
+ */
 bool    MFTEntryManager::exist(uint64_t id) const
 {
   std::map<uint64_t, MFTEntryInfo>::const_iterator entry = this->__entries.find(id);
@@ -63,16 +66,22 @@ bool    MFTEntryManager::exist(uint64_t id) const
   return (false);
 }
 
+/**
+ *  Add a node to an MFTEntry
+ */
 bool    MFTEntryManager::add(uint64_t id, MFTNode* node)
 {
   if (this->exist(id) == false)
   {
     this->__entries[id].node = node;
-    this->addChildId(id, node);
+    //this->addChildId(id, node);
   }
   return (true);
 }
 
+/**
+ *  Add a child ID  
+ */
 bool    MFTEntryManager::add(uint64_t id, uint64_t childId)
 {
 //sanitaze !
@@ -83,6 +92,9 @@ bool    MFTEntryManager::add(uint64_t id, uint64_t childId)
   return (true);
 }
 
+/**
+ *  Return Node corresponding to MFT id or NULL 
+ */
 MFTNode*  MFTEntryManager::node(uint64_t id) const
 {
   std::map<uint64_t, MFTEntryInfo>::const_iterator entry = this->__entries.find(id);
@@ -91,6 +103,9 @@ MFTNode*  MFTEntryManager::node(uint64_t id) const
   return (NULL);
 }
 
+/**
+ * Get all indexes for node and add it to MFT id children list 
+ */
 bool    MFTEntryManager::addChildId(uint64_t nodeId, MFTNode* node)
 {
   std::vector<IndexEntry> indexes = node->indexes();
@@ -108,12 +123,16 @@ bool    MFTEntryManager::addChildId(uint64_t nodeId, MFTNode* node)
       continue;
     this->add(nodeId, entryId);
   }
-//XXX delete indexEntry ? XXX have attribute in index entry ? strange
-  this->__entries[nodeId].childrenId.sort(); //do it every time ?
-  this->__entries[nodeId].childrenId.unique(); //XXX oplus bas 
+
+  this->__entries[nodeId].childrenId.sort();
+  this->__entries[nodeId].childrenId.unique();
   indexes.clear();
   return (true);
 }
+
+/**
+ *  This parse entry id child id and childNode to Node childrens
+ */
 
 bool    MFTEntryManager::addChild(uint64_t nodeId)
 {
@@ -121,9 +140,10 @@ bool    MFTEntryManager::addChild(uint64_t nodeId)
   
   if (node == NULL) 
   {
-          //std::cout << "parent " << nodeId << " not found !" << std::endl;
+    //std::cout << "parent " << nodeId << " not found !" << std::endl;
     return (false);
   }
+                                        //check if null / size d abord ? ou allocate au debut la bonne taille ? 
   std::list<uint64_t> childrenId = this->__entries[nodeId].childrenId;
   std::list<uint64_t>::iterator childId = childrenId.begin();
 //XXX this algo is fucked up avec les unnalocated au moins
@@ -131,8 +151,6 @@ bool    MFTEntryManager::addChild(uint64_t nodeId)
 //il va reclamer c node et comme elle ont pas de parent elle vont etre linker
 //a un parent mais pas relink ds la partie relink donc elle serot linker au movais parent !
 // si non forcer double relinking
-
-
   //XXX check sequence en + ? 
 
   if (childrenId.size() == 0)
@@ -141,16 +159,18 @@ bool    MFTEntryManager::addChild(uint64_t nodeId)
   {
     if (*childId == 0) //end of list
       continue;
-    //Node* child = this->node(*childId);
-    //if (child)
-    //node->addChild(child);
-    //else
-    //std::cout << "Child not ofund !" << std::endl;
-    //this->add(nodeId, entryId);
+    Node* child = this->node(*childId);
+    if (child)
+     node->addChild(child);
+    else
+      std::cout << "Child not ofund !" << std::endl;
   }
   return (true);
 }
 
+/**
+ *  Check for infinite loop inChildren childid with parent id
+ */
 void    MFTEntryManager::inChildren(uint64_t id, uint64_t childId)
 {
   std::list<uint64_t> subchildrenId = this->__entries[childId].childrenId;
@@ -159,19 +179,20 @@ void    MFTEntryManager::inChildren(uint64_t id, uint64_t childId)
   {
     if (id == *subchild)
     {
-            //std::cout << "found a loop (remove it) " << std::endl;
-            //std::cout << "id " << id << " child id " << childId << " subchild " <<  *subchild << std::endl;
+      //std::cout << "found a loop (remove it) " << std::endl;
+      //std::cout << "id " << id << " child id " << childId << " subchild " <<  *subchild << std::endl;
       this->__entries[childId].childrenId.remove(*subchild);
-      //this->inChildren(id, childId); 
-     //break; // remove from iterator ? 
+       //this->inChildren(id, childId); 
+       //break; // remove from iterator ? 
     }
     this->inChildren(id, *subchild);
   }
 }
-
+/**
+ *  Check for infinite directory loop in each entries
+ */ 
 void    MFTEntryManager::childrenSanitaze(void)
 {
-  //avoid infinit loop in nested directory
   std::map<uint64_t, MFTEntryInfo >::iterator  entry = this->__entries.begin();
   for (; entry != this->__entries.end(); entry++)
      this->inChildren(entry->first, entry->first);
@@ -187,9 +208,10 @@ void    MFTEntryManager::initEntries(void)
   this->__ntfs->setStateInfo(nMFTStream.str());
 
   uint32_t mftRecordSize = this->__ntfs->bootSectorNode()->MFTRecordSize();
+
   for(uint64_t id = 0; id < this->__numberOfEntry; ++id)
   {
-    if (id % 1000 == 0)
+    if (id % 10000 == 0)
     {
       std::ostringstream cMFTStream;
       cMFTStream << "Parsing " << id << "/" << this->__numberOfEntry;
@@ -211,6 +233,9 @@ void    MFTEntryManager::initEntries(void)
   }
 }
 
+/**
+ *  Create node from id
+ */
 MFTNode*   MFTEntryManager::create(uint64_t id)
 {
   uint32_t mftRecordSize = this->__ntfs->bootSectorNode()->MFTRecordSize();
@@ -224,6 +249,7 @@ MFTNode*   MFTEntryManager::create(uint64_t id)
  */  
 void    MFTEntryManager::linkEntries(void)
 {
+  std::cout << "linking entries" << std::endl;
   this->childrenSanitaze();
   for(uint64_t id = 0; id < this->__numberOfEntry; ++id)
   {
@@ -243,8 +269,13 @@ void    MFTEntryManager::linkEntries(void)
     std::cout << "No root found" << std::endl;
 }
 
+/**
+ *   Link orphans entries (MFTNode with a NULL parent)
+ */
+
 void    MFTEntryManager::linkOrphanEntries(void)
 {
+  std::cout << "linking orphans" << std::endl;
   ///* search for orphan node */
   for(uint64_t id = 0; id < this->__numberOfEntry; ++id)
   {
@@ -264,26 +295,22 @@ void    MFTEntryManager::linkOrphanEntries(void)
         {
           if (fileName->parentSequence() != parent->mftEntryNode()->sequence())
           {
-                  //std::cout << "PARENT " << mftNode->name() << " and parent  " << parent->name() << " Have != seq  " << std::endl;
-             ///XXX also can if check is mftNode.isDirectory() // car si non c bien reecrit c chelou         
-             //par ex les images de meg0 rien a voir     
+              ////std::cout << "PARENT " << mftNode->name() << " and parent  " << parent->name() << " Have != seq  " << std::endl;
+             /////XXX also can if check is mftNode.isDirectory() // car si non c bien reecrit c chelou         
+             ////par ex les images de meg0 rien a voir     
              this->__ntfs->orphansNode()->addChild(mftNode);
-             //std::cout << "Seq is different " << mftNode->name() <<  ", " << parent->name() << std::endl;
+             ////std::cout << "Seq is different " << mftNode->name() <<  ", " << parent->name() << std::endl;
           }
           else 
           {
-            if (mftNode->name() == "iprop.dll")
-            {
-               std::cout << "orphan iprop found linking to parent " << parent->absolute();
-            }
             parent->addChild(mftNode);
-             //std::cout << "aprent and son sequence ok " << std::endl;
-                //delete fileName /dellte for in *attribute .. continue 
-                //std::cout << "oprhan " << mftNode->name() << " found in existing parent " << parent->name() << std::endl;
+             ////std::cout << "aprent and son sequence ok " << std::endl;
+            ////delete fileName /dellte for in *attribute .. continue 
+            ////std::cout << "oprhan " << mftNode->name() << " found in existing parent " << parent->name() << std::endl;
           }
         }
-        //else 
-        //std::cout << "orphan with parent found but parent not found ! " << parentId << std::endl;
+        ////else 
+        ////std::cout << "orphan with parent found but parent not found ! " << parentId << std::endl;
        
         delete fileName;
       }
@@ -297,3 +324,65 @@ void    MFTEntryManager::linkOrphanEntries(void)
   this->__ntfs->rootDirectoryNode()->addChild(this->__ntfs->orphansNode());
 }
 
+/*
+ *
+ */
+
+void    MFTEntryManager::linkUnallocated(void)
+{
+  std::cout << "linking unallocated " << std::endl;
+  this->__ntfs->rootDirectoryNode()->addChild(new Unallocated(this->__ntfs));
+}
+
+Unallocated::Unallocated(NTFS* ntfs) : Node("FreeSpace", 0, NULL, ntfs), __ntfs(ntfs)
+{
+  std::vector<Range> ranges = this->ranges();
+  std::vector<Range>::const_iterator range = ranges.begin();
+
+  uint64_t size = 0;
+  for (; range != ranges.end(); ++range)
+    size += (1 + (*range).end() - (*range).start()) * this->__ntfs->bootSectorNode()->clusterSize();
+  this->setSize(size);
+}
+
+std::vector<Range> Unallocated::ranges(void)
+{
+  std::vector<Range> ranges;
+  MFTEntryManager* mftManager = this->__ntfs->mftManager();
+  if (mftManager == NULL)
+    throw std::string("MFT Manager is null");
+
+  MFTNode* bitmapNode = mftManager->node(6); //$BITMAP_FILE_ID
+  if (!bitmapNode)
+    return (ranges);
+
+  std::vector<MFTAttribute*> attributes = bitmapNode->mftEntryNode()->MFTAttributesType($DATA);
+  std::vector<MFTAttribute*>::iterator  attribute = attributes.begin();
+
+  MFTAttributeContent* content = (*attribute)->content();
+  if (content) 
+  {
+    Bitmap* bitmap = static_cast<Bitmap*>(content);
+    ranges = bitmap->unallocatedRanges();
+    delete content;
+  }
+  for (; attribute != attributes.end(); ++attribute)
+    delete (*attribute);
+
+  return (ranges);
+}
+
+void    Unallocated::fileMapping(FileMapping* fm)
+{
+  std::vector<Range> ranges = this->ranges();
+  std::vector<Range>::const_iterator range = ranges.begin();
+  uint64_t offset = 0;
+  uint64_t clusterSize = this->__ntfs->bootSectorNode()->clusterSize();
+
+  for (; range != ranges.end(); ++range)
+  {
+    //XXXX XXX  1 - 1 pour cluster de 1 
+    fm->push(offset , (1 + (*range).end() - (*range).start()) * clusterSize, this->__ntfs->fsNode(), (*range).start() * clusterSize);
+    offset += (1 + (*range).end() - (*range).start()) * clusterSize;
+  }
+}

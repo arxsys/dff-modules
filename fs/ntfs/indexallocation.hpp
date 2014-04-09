@@ -49,7 +49,8 @@ public:
   uint32_t                      indexEntriesStart(void) const;
   uint32_t                      indexEntriesEnd(void) const;
   uint32_t                      endOfEntries(void) const;
-  uint32_t                      flags(void) const;   
+  uint32_t                      flags(void) const;
+ 
   void                          readEntries(VFile* vfile);
   void                          readIndexList(VFile* vfile);
   IndexEntries                  indexEntries(void);

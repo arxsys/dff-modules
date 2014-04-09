@@ -18,9 +18,21 @@
 #define __MFT_MANAGER_HH__
 
 #include "ntfs_common.hpp"
+#include "bitmap.hpp"
 
 class NTFS;
 class MFTNode;
+
+class Unallocated : public Node
+{
+public:
+  Unallocated(NTFS* ntfs);
+  void  fileMapping(FileMapping* fm);
+  //Attributes	                       _attributes(void);
+  std::vector<Range>  ranges(void);
+private:
+  NTFS*         __ntfs;
+};
 
 class MFTEntryInfo
 {
@@ -41,7 +53,9 @@ public:
   ~MFTEntryManager();
   void                                  initEntries(void);
   void                                  linkEntries(void);
-  void                                  linkOrphanEntries(void); 
+  void                                  linkOrphanEntries(void);
+  void                                  linkUnallocated(void);
+ 
   void                                  childrenSanitaze(void);
   bool                                  add(uint64_t id, MFTNode* node);
   bool                                  add(uint64_t id, uint64_t childId);

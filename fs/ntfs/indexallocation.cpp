@@ -56,6 +56,7 @@ IndexAllocation::IndexAllocation(MFTAttribute* mftAttribute) : MFTAttributeConte
        uint64_t entriesOffset = (indexRecordId * indexSize) + sizeof(IndexRecord_s);
        if (vfile->seek(entriesOffset) != entriesOffset)
          break;
+
        this->__indexRecords[indexRecordId].readEntries(vfile);
     }
   }

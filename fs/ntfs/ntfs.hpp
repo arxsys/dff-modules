@@ -32,6 +32,7 @@ private:
   MFTEntryManager*      __mftManager;
   Node*                 __rootDirectoryNode;
   Node*                 __orphansNode;
+  Node*                 __unallocatedNode;
 public:
                         NTFS();
                         ~NTFS();
@@ -42,6 +43,7 @@ public:
   Node*                 rootDirectoryNode(void) const;
   BootSectorNode*       bootSectorNode(void) const;
   Node*                 orphansNode(void) const;
+  Node*                 unallocatedNode(void) const;
   MFTEntryManager*      mftManager(void) const;
   /*
    *  Need file mapping && bufer read for decompression

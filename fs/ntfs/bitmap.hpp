@@ -17,17 +17,36 @@
 #ifndef __BITMAP_HH__ 
 #define __BITMAP_HH__
 
+#include <vector>
+
 #include "ntfs_common.hpp"
 #include "mftattributecontent.hpp"
+
+/**
+ *  Store start & end offset in cluster
+ */
+class Range
+{
+public:
+  Range(uint64_t start, uint64_t end);
+  uint64_t      start(void) const;
+  uint64_t      end(void) const;
+private:
+  uint64_t      __start;
+  uint64_t      __end;
+};
 
 class Bitmap : public MFTAttributeContent
 {
 public:
   Bitmap(MFTAttribute* mftAttribute);
   ~Bitmap();
+  bool                          isAllocated(uint64_t offset) const;
+  std::vector<Range>            unallocatedRanges(void);
+
+  Attributes                    _attributes(void);
   static MFTAttributeContent*	create(MFTAttribute* mftAttribute);
   const std::string             typeName(void) const;
-  Attributes                    _attributes(void);
 };
 
 #endif

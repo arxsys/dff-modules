@@ -27,7 +27,7 @@
  *  NTFS 
  */
 
-NTFS::NTFS() : mfso("NTFS"), __opt(NULL), __bootSectorNode(NULL), __mftManager(NULL), __rootDirectoryNode(new Node("NTFS")), __orphansNode(new Node("orphans"))
+NTFS::NTFS() : mfso("NTFS"), __opt(NULL), __bootSectorNode(NULL), __mftManager(NULL), __rootDirectoryNode(new Node("NTFS")), __orphansNode(new Node("orphans")), __unallocatedNode(new Node("unallocated"))
 {
 }
 
@@ -58,14 +58,12 @@ void    NTFS::start(Attributes args)
   this->__mftManager->initEntries();
   this->__mftManager->linkEntries(); 
   this->__mftManager->linkOrphanEntries();
+  this->__mftManager->linkUnallocated();
+
+  //delete this->__mftManager; //Unallocated sans sert
 
   this->registerTree(this->opt()->fsNode(), this->rootDirectoryNode());
-
-  //std::cout << "Deleting manager " << std::endl;
-  //delete this->__mftManager;
-  //std::cout << "end" << std::endl;
-
-  this->setStateInfo("finished successfully");
+  this->setStateInfo("Finished successfully");
   this->res["Result"] = Variant_p(new Variant(std::string("NTFS parsed successfully.")));
 }
 
@@ -102,6 +100,11 @@ Node*		NTFS::rootDirectoryNode(void) const
 BootSectorNode*	NTFS::bootSectorNode(void) const
 {
   return (this->__bootSectorNode);
+}
+
+Node*           NTFS::unallocatedNode(void) const
+{
+  return (this->__unallocatedNode);
 }
 
 int32_t  NTFS::vread(int fd, void *buff, unsigned int size)

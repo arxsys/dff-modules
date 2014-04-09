@@ -23,6 +23,14 @@
 #include "mftattributecontent.hpp"
 #include "indexentry.hpp"
 
+PACK_S IndexList_s
+{
+  uint32_t              indexEntriesStart;
+  uint32_t              indexEntriesEnd;
+  uint32_t              endOfEntries;
+  uint32_t              flags;   
+} PACK;
+
 PACK_S IndexRoot_s 
 {
   uint32_t              indexType;
@@ -32,25 +40,6 @@ PACK_S IndexRoot_s
   uint8_t               unused[3];
 } PACK;
  
-PACK_S IndexList_s
-{
-  uint32_t              indexEntriesStart;
-  uint32_t              indexEntriesEnd;
-  uint32_t              endOfEntries;
-  uint32_t              flags;   
-} PACK;
-
-class IndexMFTInfo 
-{
-public:
-  IndexMFTInfo(uint64_t id, bool);
-  uint64_t      id(void) const;
-  bool          allocated(void) const;
-private:
-  uint64_t      __id;
-  bool          __allocated;
-};
-
 class IndexRoot : public MFTAttributeContent
 {
 private:
@@ -67,13 +56,13 @@ public:
   uint32_t                      sortType(void);
   uint32_t                      indexRecordSize(void);
   uint8_t                       indexRecordClusterSize(void);
+  bool                          isIndexSmall(void) const;
+  bool                          isIndexLarge(void) const;
 
   uint32_t                      indexEntriesStart(void) const;
   uint32_t                      indexEntriesEnd(void) const;
   uint32_t                      endOfEntries(void) const;
   uint32_t                      flags(void) const;  
-  bool                          isIndexSmall(void) const;
-  bool                          isIndexLarge(void) const;
   std::vector<IndexEntry>       indexEntries(void);
 };
 
