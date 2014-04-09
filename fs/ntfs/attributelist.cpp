@@ -112,7 +112,7 @@ AttributeList::AttributeList(MFTAttribute* mftAttribute) : MFTAttributeContent(m
       AttributeListItems attrib(vfile);
       this->__attributes.push_back(attrib);
     }
-    catch (const std::string& error)
+    catch (std::string const& error)
     {
     }
   }

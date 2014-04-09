@@ -37,7 +37,8 @@ private:
 class MFTEntryInfo
 {
 public:
-  MFTEntryInfo();
+  MFTEntryInfo(MFTNode* node);
+  ~MFTEntryInfo();
   uint64_t              id;
   std::list<uint64_t>   childrenId;
   bool                  linked; //node.parent() != null ? 
@@ -70,7 +71,7 @@ public:
 private:
   NTFS*                                 __ntfs;
   MFTNode*                              __masterMFTNode;
-  std::map<uint64_t, MFTEntryInfo>      __entries;
+  std::map<uint64_t, MFTEntryInfo*>     __entries;
   uint64_t                              __numberOfEntry;
 };
 

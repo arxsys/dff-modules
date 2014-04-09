@@ -16,11 +16,8 @@
 
 #include "ntfsopt.hpp"
 
-NTFSOpt::NTFSOpt(Attributes args)
+NTFSOpt::NTFSOpt(Attributes args) : __fsNode(NULL), __validateBootSector(false)
 {
-  this->__fsNode = NULL;
-  this->__validateBootSector = true;
-
   if (args.find("file") != args.end())
     this->__fsNode = args["file"]->value<Node* >();
   else

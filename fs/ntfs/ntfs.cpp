@@ -115,7 +115,7 @@ int32_t  NTFS::vread(int fd, void *buff, unsigned int size)
   {
     fi = this->__fdmanager->get(fd);
   }
-  catch (vfsError& e)
+  catch (vfsError const& e)
   {
     return (0); 
   }

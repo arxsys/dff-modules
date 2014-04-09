@@ -68,28 +68,17 @@ void	MFTNode::init(void)
    *  Search for name attribute to set node name
    */
   ///XXX 
-  bool debug = false;
-  if (this->__name == "Unknown-3761152")
-  {
-   debug = true;
-   std::cout << "hello " << this->__mftEntryNode << std::endl;
-  }
-
   uint8_t fileNameID = FILENAME_NAMESPACE_DOS_WIN32;
   if (this->__mftEntryNode != NULL)
   {
-    if (debug)
-      std::cout << "getting name " << std::endl;
     try 
     {
       std::vector<MFTAttribute* > fileNames = this->__mftEntryNode->MFTAttributesType($FILE_NAME);
       std::vector<MFTAttribute* >::iterator currentFileName = fileNames.begin();
 
-      if (debug)
-        std::cout << "find " << fileNames.size() << " name " << std::endl;
       for (; currentFileName != fileNames.end(); ++currentFileName)
       {
-        FileName*	fileName = static_cast<FileName* >((*currentFileName)->content());
+        FileName*	fileName = dynamic_cast<FileName* >((*currentFileName)->content());
         if (fileName->nameSpaceID() <= fileNameID) 
         {
           this->__name = fileName->name();
@@ -204,12 +193,10 @@ std::vector<MFTAttribute*>      MFTNode::data(void)
   return (dataAttributes);
 }
 
-
 //XXX use BITMAP !!!
 std::vector<IndexEntry> MFTNode::indexes(void) //indexesFilename // don't return objectIds, securityDescriptor ...
 {
   std::vector<IndexEntry> indexes;
-
 
   std::vector<MFTAttribute*> indexRootAttributes = this->__mftEntryNode->MFTAttributesType($INDEX_ROOT);
   std::vector<MFTAttribute*>::iterator indexRootAttribute = indexRootAttributes.begin(); 
@@ -252,7 +239,6 @@ std::vector<IndexEntry> MFTNode::indexes(void) //indexesFilename // don't return
     delete (*allocation);
   }
  
-  return indexes;
   std::vector<MFTAttribute* > attributesLists = this->__mftEntryNode->MFTAttributesType($ATTRIBUTE_LIST);
   std::vector<MFTAttribute* >::iterator attributesList = attributesLists.begin();
   if (attributesLists.size() > 0) 

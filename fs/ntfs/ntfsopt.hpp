@@ -21,14 +21,14 @@
 
 class NTFSOpt
 {
-private:
-  Node* __fsNode;
-  bool  __validateBootSector;
 public:
         NTFSOpt(Attributes args);
         ~NTFSOpt();
   Node* fsNode(void);
   bool  validateBootSector(void);
+private:
+  Node* __fsNode;
+  bool  __validateBootSector;
 };
 
 #endif

@@ -111,7 +111,7 @@ std::vector<MFTAttribute*>	MFTEntryNode::MFTAttributes(void)
        offset += mftAttr->length();
     }
   }
-  catch(std::string& error)
+  catch(std::string const& error)
   {
   }
   return (mftAttributes);

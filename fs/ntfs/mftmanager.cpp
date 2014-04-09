@@ -22,8 +22,13 @@
 /**
  *  MFTEntryInfo
  */
-MFTEntryInfo::MFTEntryInfo() : id(0), linked(false), node(NULL)
+MFTEntryInfo::MFTEntryInfo(MFTNode* _node) : id(0), linked(false), node(_node)
 {
+}
+
+MFTEntryInfo::~MFTEntryInfo()
+{
+//delete node & unlink
 }
 
 /**
@@ -38,9 +43,9 @@ MFTEntryManager::MFTEntryManager(NTFS* ntfs, MFTNode* mftNode) : __ntfs(ntfs), _
 
 MFTEntryManager::~MFTEntryManager()
 {
-  //for i in self :
-  // delete node
-  // unlink orphans & root
+  std::map<uint64_t, MFTEntryInfo* >::const_iterator entry = this->__entries.begin();
+  for (; entry != this->__entries.end(); ++entry)
+     delete ((*entry).second);
 }
 
 /**
@@ -56,10 +61,10 @@ uint64_t MFTEntryManager::entryCount(void) const
  */
 bool    MFTEntryManager::exist(uint64_t id) const
 {
-  std::map<uint64_t, MFTEntryInfo>::const_iterator entry = this->__entries.find(id);
+  std::map<uint64_t, MFTEntryInfo*>::const_iterator entry = this->__entries.find(id);
   if (entry != this->__entries.end()) //if node exist
   {
-    if ((*entry).second.node == NULL)
+    if ((*entry).second == NULL)
        return (false);
     return (true);
   }
@@ -73,8 +78,10 @@ bool    MFTEntryManager::add(uint64_t id, MFTNode* node)
 {
   if (this->exist(id) == false)
   {
-    this->__entries[id].node = node;
-    //this->addChildId(id, node);
+    if (this->exist(id))
+      std::cout << "CHELOU add " << std::endl;
+    this->__entries[id] = new MFTEntryInfo(node);
+    //this->addChildId(id, node); //XXX pour l instant on link avec les id 
   }
   return (true);
 }
@@ -85,9 +92,12 @@ bool    MFTEntryManager::add(uint64_t id, MFTNode* node)
 bool    MFTEntryManager::add(uint64_t id, uint64_t childId)
 {
 //sanitaze !
-  if (this->__entries[id].node == NULL)
+  if (this->exist(id) == false)
+  {
     std::cout << "Adding to a non-existent entry " << id << " child " << childId << std::endl;
-  this->__entries[id].childrenId.push_back(childId);
+  }
+  else
+    this->__entries[id]->childrenId.push_back(childId);
 
   return (true);
 }
@@ -97,9 +107,13 @@ bool    MFTEntryManager::add(uint64_t id, uint64_t childId)
  */
 MFTNode*  MFTEntryManager::node(uint64_t id) const
 {
-  std::map<uint64_t, MFTEntryInfo>::const_iterator entry = this->__entries.find(id);
-  if (entry != this->__entries.end()) //if node exist
-    return ((*entry).second.node);
+  std::map<uint64_t, MFTEntryInfo*>::const_iterator entry = this->__entries.find(id);
+  if (entry != this->__entries.end()) //if node exisit
+  {
+    MFTEntryInfo* info = (*entry).second;
+    if (info)
+      return (info->node);
+  }
   return (NULL);
 }
 
@@ -124,9 +138,13 @@ bool    MFTEntryManager::addChildId(uint64_t nodeId, MFTNode* node)
     this->add(nodeId, entryId);
   }
 
-  this->__entries[nodeId].childrenId.sort();
-  this->__entries[nodeId].childrenId.unique();
-  indexes.clear();
+  if (this->exist(nodeId))
+  {
+    this->__entries[nodeId]->childrenId.sort();
+    this->__entries[nodeId]->childrenId.unique();
+  }
+  else
+   std::cout << "CHELOU ADD CHILD" << std::endl;
   return (true);
 }
 
@@ -144,8 +162,8 @@ bool    MFTEntryManager::addChild(uint64_t nodeId)
     return (false);
   }
                                         //check if null / size d abord ? ou allocate au debut la bonne taille ? 
-  std::list<uint64_t> childrenId = this->__entries[nodeId].childrenId;
-  std::list<uint64_t>::iterator childId = childrenId.begin();
+  MFTEntryInfo* info =  this->__entries[nodeId];
+  std::list<uint64_t>::iterator childId = info->childrenId.begin();
 //XXX this algo is fucked up avec les unnalocated au moins
 //car si y a un unallocated qui etait link a une liste de fichier
 //il va reclamer c node et comme elle ont pas de parent elle vont etre linker
@@ -153,9 +171,9 @@ bool    MFTEntryManager::addChild(uint64_t nodeId)
 // si non forcer double relinking
   //XXX check sequence en + ? 
 
-  if (childrenId.size() == 0)
+  if (info->childrenId.size() == 0)
     return (false);
-  for (; childId != childrenId.end(); ++childId)
+  for (; childId != info->childrenId.end(); ++childId)
   {
     if (*childId == 0) //end of list
       continue;
@@ -173,19 +191,22 @@ bool    MFTEntryManager::addChild(uint64_t nodeId)
  */
 void    MFTEntryManager::inChildren(uint64_t id, uint64_t childId)
 {
-  std::list<uint64_t> subchildrenId = this->__entries[childId].childrenId;
-  std::list<uint64_t>::iterator subchild = subchildrenId.begin();
-  for (; subchild != subchildrenId.end(); ++subchild)
+  if (!this->exist(childId))  //XXX a mettre aileurs suffisant ? 
+    return ;
+  MFTEntryInfo* info = this->__entries[childId];
+  if (info->childrenId.size() == 0)
+    return ;
+
+  std::list<uint64_t>::const_iterator subchild = info->childrenId.begin();
+  for (; subchild != info->childrenId.end(); ++subchild)
   {
     if (id == *subchild)
     {
-      //std::cout << "found a loop (remove it) " << std::endl;
-      //std::cout << "id " << id << " child id " << childId << " subchild " <<  *subchild << std::endl;
-      this->__entries[childId].childrenId.remove(*subchild);
-       //this->inChildren(id, childId); 
-       //break; // remove from iterator ? 
+      info->childrenId.remove(*subchild);
+      break;
     }
-    this->inChildren(id, *subchild);
+    else
+      this->inChildren(id, *subchild);
   }
 }
 /**
@@ -193,7 +214,7 @@ void    MFTEntryManager::inChildren(uint64_t id, uint64_t childId)
  */ 
 void    MFTEntryManager::childrenSanitaze(void)
 {
-  std::map<uint64_t, MFTEntryInfo >::iterator  entry = this->__entries.begin();
+  std::map<uint64_t, MFTEntryInfo* >::iterator  entry = this->__entries.begin();
   for (; entry != this->__entries.end(); entry++)
      this->inChildren(entry->first, entry->first);
 }
@@ -220,7 +241,7 @@ void    MFTEntryManager::initEntries(void)
     }
     try 
     {
-      if (this->__entries[id].node == NULL)
+      if (this->__entries[id] == NULL)
       {
         MFTNode* currentMFTNode = new MFTNode(this->__ntfs, this->__masterMFTNode, NULL, id * mftRecordSize); 
         this->add(id, currentMFTNode);
