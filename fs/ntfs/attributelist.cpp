@@ -114,6 +114,8 @@ AttributeList::AttributeList(MFTAttribute* mftAttribute) : MFTAttributeContent(m
     }
     catch (std::string const& error)
     {
+      std::cout << "attribute list items error" << std::endl;
+      break; //XXX ? arrive ds la recovery ntfs2
     }
   }
   delete vfile;

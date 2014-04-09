@@ -81,7 +81,7 @@ bool    MFTEntryManager::add(uint64_t id, MFTNode* node)
     if (this->exist(id))
       std::cout << "CHELOU add " << std::endl;
     this->__entries[id] = new MFTEntryInfo(node);
-    //this->addChildId(id, node); //XXX pour l instant on link avec les id 
+    this->addChildId(id, node); //XXX pour l instant on link avec les id 
   }
   return (true);
 }
@@ -352,16 +352,54 @@ void    MFTEntryManager::linkOrphanEntries(void)
 void    MFTEntryManager::linkUnallocated(void)
 {
   std::cout << "linking unallocated " << std::endl;
-  this->__ntfs->rootDirectoryNode()->addChild(new Unallocated(this->__ntfs));
+  Unallocated* unallocated = new Unallocated(this->__ntfs); //add to ntfs or list ? 
+  this->__ntfs->rootDirectoryNode()->addChild(unallocated);
+
+  std::cout << "lauching recovery " << std::endl;
+  //VFile* vfile = this->__ntfs->fsNode->open();
+  std::cout << "recoivery part carv size " << unallocated->size() << std::endl;
+  VFile* vfile = unallocated->open();
+
+  std::vector<uint64_t>* indexes = vfile->indexes("FILE0", 5); //XXX XXX modulo block size (ca srait bcp plus rapide)
+  delete vfile;
+  if (indexes)
+    std::cout << "will try to recover : " << indexes->size() << std::endl;
+  else 
+    std::cout << "recovery not possible " << std::endl;
+//XXX this need a filemaping cache > 20 si non il est pas en cache ! 
+  std::vector<uint64_t>::const_iterator index = indexes->begin();
+  ++index; //XXX tes zap premier burgain
+  for (uint32_t count = 0; index != indexes->end(); ++index, ++count)
+  {
+          //std::cout << "count : " << count << " offset " <<   *index << std::endl;
+    if (count % 100 == 0)
+      std::cout << "recovered " << count << "/" << indexes->size() << std::endl;
+    try {
+      MFTNode* entry = new MFTNode(this->__ntfs, unallocated, NULL, *index);
+      unallocated->addChild(entry);
+    } catch(std::string const& error)
+    {
+      std::cout << "recovery error " << error << std::endl;
+    }
+    catch(vfsError const& e)
+    {
+      std::cout << "recovery vfs error " << e.error << std::endl;
+    }
+  }
+ 
+  delete indexes; 
 }
 
 Unallocated::Unallocated(NTFS* ntfs) : Node("FreeSpace", 0, NULL, ntfs), __ntfs(ntfs)
 {
-  std::vector<Range> ranges = this->ranges();
-  std::vector<Range>::const_iterator range = ranges.begin();
+        //std::vector<Range> this->__ranges = this->ranges();
+  this->__ranges = this->ranges();
+  //std::vector<Range>::const_iterator range = ranges.begin();
+  std::vector<Range>::const_iterator range = this->__ranges.begin();
 
   uint64_t size = 0;
-  for (; range != ranges.end(); ++range)
+  //for (; range != ranges.end(); ++range)
+  for (; range != this->__ranges.end(); ++range)
     size += (1 + (*range).end() - (*range).start()) * this->__ntfs->bootSectorNode()->clusterSize();
   this->setSize(size);
 }
@@ -395,12 +433,13 @@ std::vector<Range> Unallocated::ranges(void)
 
 void    Unallocated::fileMapping(FileMapping* fm)
 {
-  std::vector<Range> ranges = this->ranges();
-  std::vector<Range>::const_iterator range = ranges.begin();
+//  std::vector<Range> ranges = this->ranges();
+  std::vector<Range>::const_iterator range = this->__ranges.begin();
   uint64_t offset = 0;
   uint64_t clusterSize = this->__ntfs->bootSectorNode()->clusterSize();
 
-  for (; range != ranges.end(); ++range)
+  //for (; range != ranges.end(); ++range)
+  for (; range != this->__ranges.end(); ++range)
   {
     //XXXX XXX  1 - 1 pour cluster de 1 
     fm->push(offset , (1 + (*range).end() - (*range).start()) * clusterSize, this->__ntfs->fsNode(), (*range).start() * clusterSize);

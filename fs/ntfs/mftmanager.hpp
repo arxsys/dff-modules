@@ -31,6 +31,7 @@ public:
   //Attributes	                       _attributes(void);
   std::vector<Range>  ranges(void);
 private:
+  std::vector<Range>  __ranges; //test for carving et recovery car si non pu ds cache ? tres tres lent !
   NTFS*         __ntfs;
 };
 

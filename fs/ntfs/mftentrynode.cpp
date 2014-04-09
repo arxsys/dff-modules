@@ -38,6 +38,9 @@ MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::stri
   }
   delete vfile;
 
+//  this->validate(); exemple ds le carving ou ca pete car decallage donc rajouter du checking 
+//  if carving done des mauvais result ...
+
   //test : read all attributes of the node 
   //std::vector<MFTAttribute* > mftAttributes = this->MFTAttributes();
   //std::vector<MFTAttribute* >::iterator	mftAttribute;
