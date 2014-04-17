@@ -59,7 +59,7 @@ private:
   std::string                   __name;
   uint64_t			__offset;
   MFTEntryNode*			__mftEntryNode;
-  MFTAttribute_s*		__mftAttribute;
+  MFTAttribute_s		__mftAttribute;
   MFTResidentAttribute*		__residentAttribute;
   MFTNonResidentAttribute*	__nonResidentAttribute;
 public:

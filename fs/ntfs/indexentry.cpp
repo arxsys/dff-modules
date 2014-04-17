@@ -35,6 +35,11 @@ uint64_t        IndexEntry::mftEntryId(void) const
   return (mftEntryId);
 }
 
+uint16_t        IndexEntry::sequence(void) const
+{
+  return (this->__indexEntry.sequence);
+}
+
 uint16_t        IndexEntry::size(void) const
 {
   return (this->__indexEntry.size);

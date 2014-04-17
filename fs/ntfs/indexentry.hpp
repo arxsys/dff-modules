@@ -41,6 +41,7 @@ private:
 public:
                                 IndexEntry(VFile*);
   uint64_t                      mftEntryId(void) const;
+  uint16_t                      sequence(void) const;
   uint16_t                      size(void) const;
   uint16_t                      contentSize(void) const;
   uint32_t                      flags(void) const;

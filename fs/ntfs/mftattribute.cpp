@@ -24,7 +24,6 @@
 
 MFTAttribute::MFTAttribute(MFTEntryNode* mftEntryNode, uint64_t offset) : __offset(offset), __mftEntryNode(mftEntryNode), __residentAttribute(NULL), __nonResidentAttribute(NULL)
 {
-  this->__mftAttribute = new MFTAttribute_s; 
   VFile*  vfile = mftEntryNode->open();
   if (vfile->seek(offset) != offset)
   {
@@ -33,14 +32,14 @@ MFTAttribute::MFTAttribute(MFTEntryNode* mftEntryNode, uint64_t offset) : __offs
     throw std::string("MFT Attribute can't seek to attribute offset");
   }
 
-  if (vfile->read((void*) this->__mftAttribute, sizeof(MFTAttribute_s)) != sizeof(MFTAttribute_s))
+  if (vfile->read(&this->__mftAttribute, sizeof(MFTAttribute_s)) != sizeof(MFTAttribute_s))
   {
     delete vfile;
     this->destroy();
     throw std::string("MFT Attribute can't read enough data");
   }
 
-  if (this->typeId() == 0xffffffff)
+  if (this->typeId() == 0xffffffff) //XXX check if typeid in our typeid list/attrdef  to enforce ?
   {
     delete vfile;
     this->destroy();
@@ -67,23 +66,23 @@ MFTAttribute::MFTAttribute(MFTEntryNode* mftEntryNode, uint64_t offset) : __offs
       throw std::string("MFT can't read non-resident attribute");
     }
   }
-  if (this->__mftAttribute->nameSize > 0) 
+  if (this->__mftAttribute.nameSize > 0) 
   {
-    if (vfile->seek(offset + this->__mftAttribute->nameOffset) != (offset + this->__mftAttribute->nameOffset))
+    if (vfile->seek(offset + this->__mftAttribute.nameOffset) != (offset + this->__mftAttribute.nameOffset))
     {
       delete vfile;
       this->destroy();
       throw std::string("MFT can't seek to name offset");
     }
-    uint16_t* name = new uint16_t[this->__mftAttribute->nameSize];
-    if (vfile->read((void*)name, this->__mftAttribute->nameSize * sizeof(uint16_t)) != (int32_t)(this->__mftAttribute->nameSize * sizeof(uint16_t)))
+    uint16_t* name = new uint16_t[this->__mftAttribute.nameSize];
+    if (vfile->read((void*)name, this->__mftAttribute.nameSize * sizeof(uint16_t)) != (int32_t)(this->__mftAttribute.nameSize * sizeof(uint16_t)))
     {
       delete vfile;
       delete[] name;
       this->destroy();
       throw std::string("MFT can't read attribute name");
     }
-    UnicodeString((char*)name, this->__mftAttribute->nameSize * sizeof(uint16_t), "UTF16-LE").toUTF8String(this->__name);
+    UnicodeString((char*)name, this->__mftAttribute.nameSize * sizeof(uint16_t), "UTF16-LE").toUTF8String(this->__name);
     delete[] name;
   }
   delete vfile;
@@ -91,11 +90,6 @@ MFTAttribute::MFTAttribute(MFTEntryNode* mftEntryNode, uint64_t offset) : __offs
 
 void MFTAttribute::destroy(void)
 {
-  if (this->__mftAttribute != NULL)
-  {
-    delete this->__mftAttribute;
-    this->__mftAttribute = NULL;
-  }
   if (this->__nonResidentAttribute != NULL)
   {
     delete this->__nonResidentAttribute;
@@ -177,38 +171,38 @@ NTFS*	MFTAttribute::ntfs(void) const
 
 uint32_t MFTAttribute::typeId(void) const
 {
-  return (this->__mftAttribute->typeId);
+  return (this->__mftAttribute.typeId);
 }
 
 uint32_t MFTAttribute::length(void) const
 {
-  return (this->__mftAttribute->length);
+  return (this->__mftAttribute.length);
 }
 
 uint8_t	MFTAttribute::nonResidentFlag(void) const
 {
-  return (this->__mftAttribute->nonResidentFlag);
+  return (this->__mftAttribute.nonResidentFlag);
 }
 
 uint8_t	MFTAttribute::nameSize(void) const
 {
-  return (this->__mftAttribute->nameSize);
+  return (this->__mftAttribute.nameSize);
 }
 
 uint16_t MFTAttribute::nameOffset(void) const
 {
-  return (this->__mftAttribute->nameOffset);
+  return (this->__mftAttribute.nameOffset);
 }
 
 ///XXX flags() 
 uint16_t MFTAttribute::flags(void) const
 {
-  return (this->__mftAttribute->flags);
+  return (this->__mftAttribute.flags);
 }
 
 uint16_t MFTAttribute::id(void) const
 {
-  return (this->__mftAttribute->id);
+  return (this->__mftAttribute.id);
 }
 
 uint64_t MFTAttribute::VNCStart(void) const
@@ -227,17 +221,17 @@ uint64_t MFTAttribute::VNCEnd(void) const
 
 bool    MFTAttribute::isCompressed(void) const
 {
-  return ((this->__mftAttribute->flags & 0x0001) == 0x0001);
+  return ((this->__mftAttribute.flags & 0x0001) == 0x0001);
 }
 
 bool    MFTAttribute::isEncrypted(void) const
 {
-  return ((this->__mftAttribute->flags & 0x4000) == 0x4000);
+  return ((this->__mftAttribute.flags & 0x4000) == 0x4000);
 }
 
 bool    MFTAttribute::isSparse(void) const
 {
-  return ((this->__mftAttribute->flags & 0x8000) == 0x8000);
+  return ((this->__mftAttribute.flags & 0x8000) == 0x8000);
 }
 
 uint32_t MFTAttribute::compressionBlockSize(void) const

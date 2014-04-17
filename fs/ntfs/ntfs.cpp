@@ -13,8 +13,6 @@
  * Author(s):
  *  Solal Jacob <sja@digital-forensic.org>
  */
-#include <iostream>
-
 #include "ntfs.hpp"
 #include "ntfsopt.hpp"
 #include "bootsector.hpp"
@@ -57,12 +55,14 @@ void    NTFS::start(Attributes args)
   this->__mftManager = new MFTEntryManager(this, mftNode);
   this->__mftManager->initEntries();
   this->__mftManager->linkEntries(); 
+  this->registerTree(this->opt()->fsNode(), this->rootDirectoryNode());
   this->__mftManager->linkOrphanEntries();
+  this->registerTree(this->rootDirectoryNode(), this->orphansNode());
   this->__mftManager->linkUnallocated();
+  this->registerTree(this->rootDirectoryNode(), this->unallocatedNode());
 
   //delete this->__mftManager; //Unallocated sans sert
 
-  this->registerTree(this->opt()->fsNode(), this->rootDirectoryNode());
   this->setStateInfo("Finished successfully");
   this->res["Result"] = Variant_p(new Variant(std::string("NTFS parsed successfully.")));
 }
@@ -109,6 +109,7 @@ Node*           NTFS::unallocatedNode(void) const
 
 int32_t  NTFS::vread(int fd, void *buff, unsigned int size)
 {
+  //XXX
   return (mfso::vread(fd, buff, size));
   fdinfo* fi = NULL;
   try

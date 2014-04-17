@@ -32,7 +32,29 @@ public:
   std::vector<Range>  ranges(void);
 private:
   std::vector<Range>  __ranges; //test for carving et recovery car si non pu ds cache ? tres tres lent !
-  NTFS*         __ntfs;
+  NTFS*               __ntfs;
+};
+
+class MFTId
+{
+public:
+  MFTId(uint64_t _id, uint16_t seq) : id(_id), sequence(seq) {};
+  uint64_t id;
+  uint16_t sequence;
+  bool  operator ==(MFTId const& other)
+  {
+     if ((other.id == this->id) && (other.sequence == this->sequence))
+       return true;
+     return false;
+  }
+
+  bool  operator<(MFTId const& other)
+  {
+    if (other.id < this->id)
+      return true;
+    return false;
+  }
+
 };
 
 class MFTEntryInfo
@@ -41,11 +63,9 @@ public:
   MFTEntryInfo(MFTNode* node);
   ~MFTEntryInfo();
   uint64_t              id;
-  std::list<uint64_t>   childrenId;
-  bool                  linked; //node.parent() != null ? 
+//uint16_t              sequence;
+  std::list<MFTId>      childrenId;
   MFTNode*              node;
-  //unalocated          unallocatedMFT; mft is unalocated
-  //std::list<uint64_t>   __unallocatedChildrenId; //index unaloted
 };
 
 class MFTEntryManager
@@ -59,11 +79,10 @@ public:
   void                                  linkUnallocated(void);
  
   void                                  childrenSanitaze(void);
-  bool                                  add(uint64_t id, MFTNode* node);
-  bool                                  add(uint64_t id, uint64_t childId);
   MFTNode*                              create(uint64_t id);
-  bool                                  addChildId(uint64_t nodeId, MFTNode* node);
-  bool                                  addChild(uint64_t nodeId);
+  bool                                  add(uint64_t id, MFTNode* node); //??
+  bool                                  addChild(uint64_t nodeId);//???
+  bool                                  addChildId(uint64_t nodeId, MFTNode* node); //??
   void                                  inChildren(uint64_t nodeId, uint64_t childId);
          
   uint64_t                              entryCount(void) const;  

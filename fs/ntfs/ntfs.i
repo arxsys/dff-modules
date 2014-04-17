@@ -55,6 +55,9 @@ class ntfs(Module):
     self.conf.addArgument({"name": "file",
                            "description": "Path to a file containing NTFS",
                            "input": Argument.Required|Argument.Single|typeId.Node})
+    self.conf.addArgument({"name" : "no-recovery",
+                           "description" : "If set the module will not try to recover file by carving MFT in unallocated clusters",
+                           "input": Argument.Empty})
     self.conf.addArgument({"name" : "no-bootsector-check",
                            "description" : "If set the module will continue even if the bootsector is corrupted",
                            "input": Argument.Empty})

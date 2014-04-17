@@ -111,11 +111,18 @@ std::vector<MFTAttribute*>	MFTEntryNode::MFTAttributes(void)
        mftAttributes.push_back(mftAttr); 
        if (mftAttr->length() == 0) //check for other anormal size ? very big?
 	 break;
-       offset += mftAttr->length();
+       uint64_t attributeLength = mftAttr->length();
+       if (attributeLength == 0)
+       {
+         std::cout << "erropr attribute length 0 " << std::endl;
+         break;
+       }
+       offset += attributeLength;
     }
   }
   catch(std::string const& error)
   {
+    //std::cout << "MFTAttribute error getting attribute " << error << std::endl;
   }
   return (mftAttributes);
 }
