@@ -42,28 +42,28 @@ MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::stri
 //  if carving done des mauvais result ...
 
   //test : read all attributes of the node 
-  //std::vector<MFTAttribute* > mftAttributes = this->MFTAttributes();
-  //std::vector<MFTAttribute* >::iterator	mftAttribute;
-  //mftAttribute = mftAttributes.begin();
-  //for (; mftAttribute != mftAttributes.end(); ++mftAttribute)
-  //{
-    //try 
-    //{
-      //MFTAttributeContent* mftAttributeContent = (*mftAttribute)->content();//test content
-      //mftAttributeContent->_attributes();//test call attrib
-      //delete mftAttributeContent;
-      //if (*mftAttribute != NULL)
-        //delete (*mftAttribute);
-    //}
-    //catch (vfsError& e)
-    //{
-      //std::cout << "MFTEntryNode::_attributes error: " << e.error << std::endl;
-    //}
-    //catch (std::string& e)
-    //{
-      //std::cout << "MFTEntryNode::_attributes error: " << e << std::endl;
-    //}
-  //}
+  std::vector<MFTAttribute* > mftAttributes = this->MFTAttributes();
+  std::vector<MFTAttribute* >::iterator	mftAttribute;
+  mftAttribute = mftAttributes.begin();
+  for (; mftAttribute != mftAttributes.end(); ++mftAttribute)
+  {
+          try 
+          {
+                  MFTAttributeContent* mftAttributeContent = (*mftAttribute)->content();//test content
+                  mftAttributeContent->_attributes();//test call attrib
+                  delete mftAttributeContent;
+                  if (*mftAttribute != NULL)
+                          delete (*mftAttribute);
+          }
+          catch (vfsError& e)
+          {
+                  std::cout << "MFTEntryNode::_attributes error: " << e.error << std::endl;
+          }
+          catch (std::string& e)
+          {
+                  std::cout << "MFTEntryNode::_attributes error: " << e << std::endl;
+          }
+  }
   this->__state++;
 }
 

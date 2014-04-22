@@ -28,6 +28,7 @@
 #include "indexallocation.hpp"
 #include "data.hpp"
 #include "bitmap.hpp"
+#include "reparsepoint.hpp"
 
 #define $STANDARD_INFORMATION   16	
 #define $ATTRIBUTE_LIST         32
@@ -37,11 +38,12 @@
 #define $VOLUME_NAME            96 
 #define $VOLUME_INFORMATION     112 
 #define $DATA			128
-#define $INDEX_ROOT             144 //0x90
-#define $INDEX_ALLOCATION       160 //0xA)
-#define $BITMAP                 176 //0xB)
+#define $INDEX_ROOT             144
+#define $INDEX_ALLOCATION       160
+#define $BITMAP                 176
+#define $SYMOBLIC_LINK          192
+#define $REPARSE_POINT          192
 
-//#define $SYMOBLIC_LINK // REPARSE_POINT 192 // 0xc0
 //#define $EA_INFORMATION       208 // 0xd0
 //#define $EA                   224 //0xe0
 //#define $PROPERTY_SET         240 // 0xf0 
@@ -67,6 +69,7 @@ ContentType const ContentTypes[] =
   { $INDEX_ROOT, &IndexRoot::create },
   { $INDEX_ALLOCATION, &IndexAllocation::create },
   { $BITMAP, &Bitmap::create },
+  { $REPARSE_POINT, &ReparsePoint::create },
   { 0, NULL },
 };
  
