@@ -64,7 +64,7 @@ std::vector<RunList>    MFTAttributeContent::runList(void)
   std::vector<RunList>   runLists;
 
   VFile* runList = this->__mftAttribute->mftEntryNode()->open();  
-  if (runList->seek(this->__mftAttribute->offset() + this->__mftAttribute->runListOffset()) != (this->__mftAttribute->offset() + this->__mftAttribute->runListOffset()))
+  if (runList->seek(this->__mftAttribute->offset() + this->__mftAttribute->runListOffset()) != this->__mftAttribute->offset() + this->__mftAttribute->runListOffset())
   {
     delete runList;
     return (runLists);
@@ -87,7 +87,7 @@ std::vector<RunList>    MFTAttributeContent::runList(void)
       if (runList->read(&runOffset, runListInfo.info.offsetSize) != runListInfo.info.offsetSize)
         break;
 
-    if ((int8_t)(runOffset >> (8 * (runListInfo.info.offsetSize - 1))) < 0) 
+    if ((runListInfo.info.offsetSize > 0) && (int8_t)(runOffset >> (8 * (runListInfo.info.offsetSize - 1))) < 0) 
     {
       int64_t toffset = -1;
 

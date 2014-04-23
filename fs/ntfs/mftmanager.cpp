@@ -57,11 +57,16 @@ MFTEntryInfo::~MFTEntryInfo()
 /**
  *  MFTEntryManager
  */
-MFTEntryManager::MFTEntryManager(NTFS* ntfs, MFTNode* mftNode) : __ntfs(ntfs), __masterMFTNode(mftNode)
+MFTEntryManager::MFTEntryManager(NTFS* ntfs) : __ntfs(ntfs) //, __masterMFTNode(mftNode)
 {
-  this->__numberOfEntry = this->__masterMFTNode->size() / this->__ntfs->bootSectorNode()->MFTRecordSize();
   //XXX check for mirror !
-  this->add(0, mftNode);
+
+  //create mft node ?
+  this->__masterMFTNode = new MFTNode(ntfs, ntfs->fsNode(), ntfs->rootDirectoryNode(),  ntfs->bootSectorNode()->MFTLogicalClusterNumber() * ntfs->bootSectorNode()->clusterSize());
+  //set name etc.. ?
+
+  this->__numberOfEntry = this->__masterMFTNode->size() / this->__ntfs->bootSectorNode()->MFTRecordSize();
+  this->add(0, __masterMFTNode);
 }
 
 MFTEntryManager::~MFTEntryManager()
@@ -205,6 +210,7 @@ void    MFTEntryManager::inChildren(uint64_t id, uint64_t childId)
       this->inChildren(id, (*subchild).id);
   }
 }
+
 /**
  *  Check for infinite directory loop in each entries
  */ 
@@ -219,14 +225,81 @@ void    MFTEntryManager::childrenSanitaze(void)
  *  Create node from id
  *  Can be used for indexallocation or others function that need node not yet created at init
  */
-MFTNode*   MFTEntryManager::create(uint64_t id) //XXX XXX oncreate mais on add pas ds la base ????
+MFTNode*   MFTEntryManager::create(uint64_t id) //XXX XXX create only : not added in bases ?
 {
   uint32_t mftRecordSize = this->__ntfs->bootSectorNode()->MFTRecordSize();
+  return (this->createFromOffset(id * mftRecordSize, this->__masterMFTNode));
+}
+
+MFTNode*  MFTEntryManager::createFromOffset(uint64_t offset, Node* fsNode)
+{
+//ex: for each attribute create a node with attribute content:
+//    create MFTEntryNode
+//    for each attributes in MFTEntryNode
+//       NTFSNode(MFTEntryNode, name, data// $attriubte)
+//       
+  MFTNode* mftNode = new MFTNode(this->__ntfs, fsNode, NULL, offset);
+  if (mftNode->mftEntryNode() == NULL)
+  {
+    //throw Error ?
+    delete mftNode; 
+    std::cout << "Error creating node at offset " << offset << " no mftEntry " << std::endl;
+    return (NULL); //ret NULL car peut rien faire finalement !
+  }
+
+  /* Set File & Dir
+   */
+  if (!mftNode->mftEntryNode()->isUsed()) //not sufficient need $BITMAP ? check & compare
+    mftNode->setDeleted();
+  if (mftNode->mftEntryNode()->isDirectory())
+    mftNode->setDir();
+  else
+    mftNode->setFile();
+
+  std::string name = mftNode->findName();
+  if (name == "")
+  {
+    std::ostringstream sname; 
+    sname << "Unknown-" << offset;
+    mftNode->setName(sname.str());
+  }
+  else
+    mftNode->setName(name);
+
+  //mftNode->setData($DATA);
+  //mftNode->setData($ATTRIBUTE_LIST)
+
   //for $DATA in Node: -> in mftnode ?
     //create node for ads
   //for $REPARSE in Node:
     //create vlink 
-  return (new MFTNode(this->__ntfs, this->__masterMFTNode, NULL, id * mftRecordSize));
+
+  //this->setNode(mftNode);
+
+  //mftNode->setData($DATA, 1)
+  //mftNode->setName($FILE_NAME)
+
+  //mftNode->setData($DATA, 2)
+  //mftNode->setName($DATA_ADS_NAME
+
+  //mftNode->vlink = ...? 
+
+  //for x in attrib :
+  //set name
+  // set data
+  //set compressed
+  //set ads
+  //set vlink
+  //if no name and data //don't register
+  //register here ? if all ok ? or mark as bad !  
+
+ //si on veut cree tous les attribute de la node : 
+//  ,ftEntry =   MFTEntryNode(x, x,)
+// for attribute in mftEntry:
+//    new MFTNode(mftEntry)->setData(attributeContent)
+//
+
+  return (mftNode);
 }
 
 /*
@@ -252,7 +325,7 @@ void    MFTEntryManager::initEntries(void)
     {
       if (this->__entries[id] == NULL)
       {
-        MFTNode* currentMFTNode = new MFTNode(this->__ntfs, this->__masterMFTNode, NULL, id * mftRecordSize); 
+        MFTNode* currentMFTNode = this->create(id);
         this->add(id, currentMFTNode);
       }
     }
@@ -264,7 +337,7 @@ void    MFTEntryManager::initEntries(void)
 }
 
 
-/*
+/**
  *  Link node to parent
  */  
 void    MFTEntryManager::linkEntries(void)
@@ -304,6 +377,7 @@ void    MFTEntryManager::linkOrphanEntries(void)
         FileName* fileName = dynamic_cast<FileName*>((*attribute)->content());
         if (fileName == NULL)
           throw std::string("MFTEntryManager attribute content can't cast to $FILE_NAME"); 
+
         uint64_t parentId = fileName->parentMFTEntryId();
         MFTNode* parent = this->node(parentId);
 
@@ -325,11 +399,10 @@ void    MFTEntryManager::linkOrphanEntries(void)
   }
 }
 
-/*
+/**
  * Create unallocated node containing unused cluster 
  * Must check for index and relink files too XXX
  */
-
 void    MFTEntryManager::linkUnallocated(void)
 {
   Unallocated* unallocated = new Unallocated(this->__ntfs);
@@ -367,7 +440,7 @@ void    MFTEntryManager::linkUnallocated(void)
       {
         try
         {
-          MFTNode* entry = new MFTNode(this->__ntfs, fsNode, NULL, offset);
+          MFTNode* entry = this->createFromOffset(offset, fsNode);
           unallocated->addChild(entry);
           recovered++;
         }

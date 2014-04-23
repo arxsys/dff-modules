@@ -50,9 +50,7 @@ void    NTFS::start(Attributes args)
    * GET MFT NODE 
    */ 
   this->setStateInfo("Reading main MFT");
-  MFTNode* mftNode = new MFTNode(this, this->fsNode(), this->rootDirectoryNode(),  this->__bootSectorNode->MFTLogicalClusterNumber() * this->__bootSectorNode->clusterSize());
-
-  this->__mftManager = new MFTEntryManager(this, mftNode);
+  this->__mftManager = new MFTEntryManager(this);
   this->__mftManager->initEntries();
   this->__mftManager->linkEntries(); 
   this->registerTree(this->opt()->fsNode(), this->rootDirectoryNode());

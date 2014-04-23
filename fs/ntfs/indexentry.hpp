@@ -37,7 +37,7 @@ class IndexEntry
 {
 private:
   IndexEntry_s                  __indexEntry;
-  uint64_t                      __vcn;
+  //uint64_t                    __vcn;
 public:
                                 IndexEntry(VFile*);
   uint64_t                      mftEntryId(void) const;
@@ -47,7 +47,7 @@ public:
   uint32_t                      flags(void) const;
   bool                          isLast(void) const;
   bool                          haveChild(void) const;
-  uint64_t                      vcn(void) const;
+  //uint64_t                    vcn(void) const;
 };
 
 class IndexEntries

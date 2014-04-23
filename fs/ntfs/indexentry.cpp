@@ -55,10 +55,10 @@ uint32_t        IndexEntry::flags(void) const
   return (this->__indexEntry.flags);
 }
 
-uint64_t        IndexEntry::vcn(void) const
-{
-  return (this->__vcn);
-}
+//uint64_t        IndexEntry::vcn(void) const
+//{
+  //return (this->__vcn);
+//}
 
 bool            IndexEntry::haveChild(void) const
 {

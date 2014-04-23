@@ -26,7 +26,7 @@ class MFTId
 {
 public:
   MFTId(uint64_t _id, uint16_t seq);
-  bool  operator ==(MFTId const& other);
+  bool  operator==(MFTId const& other);
   bool  operator<(MFTId const& other);
 
   uint64_t id;
@@ -39,7 +39,7 @@ public:
   MFTEntryInfo(MFTNode* node);
   ~MFTEntryInfo();
   uint64_t              id;
-//uint16_t              sequence;
+  //uint16_t            sequence;
   std::list<MFTId>      childrenId;
   MFTNode*              node;
 };
@@ -47,19 +47,21 @@ public:
 class MFTEntryManager
 {
 public:
-  MFTEntryManager(NTFS* ntfs, MFTNode* mftNode); 
+  MFTEntryManager(NTFS* ntfs); 
   ~MFTEntryManager();
   void                                  initEntries(void);
   void                                  linkEntries(void);
   void                                  linkOrphanEntries(void);
   void                                  linkUnallocated(void);
- 
-  void                                  childrenSanitaze(void);
+
   MFTNode*                              create(uint64_t id);
+  MFTNode*                              createFromOffset(uint64_t offset, Node* fsNode);
+
   bool                                  add(uint64_t id, MFTNode* node);
   bool                                  addChild(uint64_t nodeId);
   bool                                  addChildId(uint64_t nodeId, MFTNode* node);
   void                                  inChildren(uint64_t nodeId, uint64_t childId);
+  void                                  childrenSanitaze(void);
          
   uint64_t                              entryCount(void) const;  
   bool                                  exist(uint64_t id) const; 

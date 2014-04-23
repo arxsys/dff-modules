@@ -25,18 +25,21 @@ class NTFS;
 class MFTEntryNode;
 class MFTAttributeContent;
 
-class MFTNode : public Node
+class MFTNode : public Node //public MFTEntryNode ?
 {
 public:
   MFTNode(NTFS*	ntfs, Node* mftFsNode, Node* parent, uint64_t sectorNumber);
   ~MFTNode();
   void		                       init(void);
+  MFTEntryNode*                        mftEntryNode(void);
+  std::vector<MFTAttribute*>           data(void) const;
+  std::vector<IndexEntry>              indexes(void) const;
+  const std::string                    findName(void) const;
+  //void                                 setMapping(uint64_t attributes, uint64_t size); //attributes attributeList ? 
+  void                                 setName(const std::string name);
+
   Attributes	                       _attributes(void);
   void		                       fileMapping(FileMapping* fm);
-  MFTEntryNode*                        mftEntryNode(void);
-  std::vector<MFTAttribute*>           data(void);
-  std::vector<IndexEntry>              indexes(void);
-  void                                 setName(const std::string name);
 private:
   MFTEntryNode*	                       __mftEntryNode;
 };

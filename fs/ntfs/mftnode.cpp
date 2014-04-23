@@ -27,13 +27,6 @@ MFTNode::MFTNode(NTFS* ntfs, Node* mftFsNode, Node* parent, uint64_t offset) : N
   this->__mftEntryNode = new MFTEntryNode(ntfs, mftFsNode, offset, std::string("MFTEntry"), NULL);
   this->__mftEntryNode->updateState();
   this->init();
-
-  if (this->__name == "")
-  {
-    std::ostringstream name; 
-    name << "Unknown-" << offset;
-    this->__name = name.str();
-  }
 }
 
 MFTNode::~MFTNode(void)
@@ -50,25 +43,19 @@ MFTEntryNode* MFTNode::mftEntryNode(void)
   return (this->__mftEntryNode);
 }
 
-void MFTNode::setName(const std::string name)
+void                MFTNode::setName(const std::string name)
 {
   this->__name = name;
 }
 
-void	MFTNode::init(void)
+/**
+ *  Search for best name in attribute
+ */
+const std::string   MFTNode::findName(void) const
 {
-  if (!this->__mftEntryNode->isUsed()) //not sufficient need $BITMAP ? check & compare
-    this->setDeleted();
-  if (this->__mftEntryNode->isDirectory())
-    this->setDir();
-  else
-    this->setFile();
-
-  /*
-   *  Search for name attribute to set node name
-   */
-  ///XXX 
+  std::string name;
   uint8_t fileNameID = FILENAME_NAMESPACE_DOS_WIN32;
+
   if (this->__mftEntryNode != NULL)
   {
     try 
@@ -84,7 +71,7 @@ void	MFTNode::init(void)
           throw std::string("MFTNode can't cast attribute content to FileName");
         if (fileName->nameSpaceID() <= fileNameID) 
         {
-          this->__name = fileName->name();
+          name = fileName->name();
           fileNameID = fileName->nameSpaceID();
         }
         delete fileName;
@@ -95,6 +82,15 @@ void	MFTNode::init(void)
     {
        std::cout << e.error << std::endl;
     }
+  }
+  return (name);
+}
+
+void	MFTNode::init(void)
+{
+  if (this->__mftEntryNode == NULL)
+    return ;
+
  
    //XXX use indexallocation attribute as node data for directory
     //std::vector<MFTAttribute*> indexAllocation = this->__mftEntryNode->MFTAttributesType($INDEX_ALLOCATION);
@@ -103,6 +99,7 @@ void	MFTNode::init(void)
       //this->setSize(indexAllocation[0]->content()->size());
       //return ;
     //}
+
 
     /*
      *  search $DATA in attribute to set node size
@@ -144,18 +141,9 @@ void	MFTNode::init(void)
     }
     for (; attributesList != attributesLists.end(); ++attributesList)
       delete (*attributesList);
-  }
 }
 
-Attributes	MFTNode::_attributes(void)
-{
-  if (this->__mftEntryNode != NULL)
-    return (this->__mftEntryNode->_attributes());
-  Attributes attr;
-  return (attr);
-}
-
-std::vector<MFTAttribute*>      MFTNode::data(void)
+std::vector<MFTAttribute*>      MFTNode::data(void) const
 {
   std::vector<MFTAttribute*> dataAttributes;
 
@@ -195,7 +183,7 @@ std::vector<MFTAttribute*>      MFTNode::data(void)
 }
 
 //XXX use BITMAP !!!
-std::vector<IndexEntry> MFTNode::indexes(void) //indexesFilename // don't return objectIds, securityDescriptor ...
+std::vector<IndexEntry> MFTNode::indexes(void) const //indexesFilename // don't return objectIds, securityDescriptor ...
 {
   std::vector<IndexEntry> indexes;
 
@@ -274,6 +262,14 @@ std::vector<IndexEntry> MFTNode::indexes(void) //indexesFilename // don't return
   return (indexes);
 }
 
+Attributes	MFTNode::_attributes(void)
+{
+  if (this->__mftEntryNode != NULL)
+    return (this->__mftEntryNode->_attributes());
+  Attributes attr;
+  return (attr);
+}
+
 void		MFTNode::fileMapping(FileMapping* fm)
 {
   /* test : indexallocation filemapping */
@@ -283,6 +279,8 @@ void		MFTNode::fileMapping(FileMapping* fm)
     //indexAllocation[0]->content()->fileMapping(fm);
     //return ;
   //}
+  //this->datSet ... generqiue ? 
+
   std::vector<MFTAttribute* >  datas = this->data();
   if (datas.size() == 0)
   {
