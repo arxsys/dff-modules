@@ -20,7 +20,7 @@
 #include "ntfs.hpp"
 #include "bootsector.hpp"
 
-MFTAttributeContent::MFTAttributeContent(MFTAttribute* mftAttribute) : Node("MFTAC", (uint64_t)mftAttribute->contentSize(), NULL,  mftAttribute->ntfs()), __mftAttribute(mftAttribute)
+MFTAttributeContent::MFTAttributeContent(MFTAttribute* mftAttribute) : Node("MFTAC", (uint64_t)mftAttribute->contentSize(), NULL,  mftAttribute->ntfs()), __mftAttribute(mftAttribute), __state(0)
 {
   this->__mftAttribute->mftEntryNode()->updateState();
 }
@@ -34,9 +34,9 @@ MFTAttribute* MFTAttributeContent::mftAttribute(void)
   return (this->__mftAttribute);
 }
 
-//default for $DATA -> DATA specialization ?
 void		MFTAttributeContent::fileMapping(FileMapping* fm)
 {
+  this->__state++;
   if (this->__mftAttribute->isResident())
      fm->push(0, this->__mftAttribute->contentSize(), this->__mftAttribute->mftEntryNode(), this->__mftAttribute->contentOffset());
   else
@@ -49,7 +49,7 @@ void		MFTAttributeContent::fileMapping(FileMapping* fm)
 
     for (; run != runList.end(); ++run)
     {
-      if ((*run).offset == 0) //Sparse || runOffset == -1 
+      if ((*run).offset == 0) //Sparse
         fm->push(totalSize, (*run).length * clusterSize, NULL, 0);
       else 
         fm->push(totalSize, (*run).length * clusterSize, fsNode, (*run).offset * clusterSize);
@@ -160,4 +160,19 @@ const std::string	MFTAttributeContent::typeName(void) const
     idStream << "Unknown MFT attribute (" << this->__mftAttribute->typeId() << ")";
 
   return (idStream.str());
+}
+
+uint64_t	MFTAttributeContent::_attributesState(void)
+{
+  return (this->__state);
+}
+
+uint64_t	MFTAttributeContent::fileMappingState(void)
+{
+  return (this->__state);
+}
+
+void MFTAttributeContent::updateState(void)
+{
+  this->__state++;
 }

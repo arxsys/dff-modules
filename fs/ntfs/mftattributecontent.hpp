@@ -53,7 +53,11 @@ public:
   std::string		        attributeName(void) const;
   virtual const std::string	typeName(void) const;
   std::vector<RunList>          runList(void); //private & store for speed ? 
+  void                          updateState(void);
+  uint64_t	                _attributesState(void);
+  uint64_t	                fileMappingState(void);
 private:
+  uint64_t                      __state;
   MFTAttribute*	                __mftAttribute;
 };
 
