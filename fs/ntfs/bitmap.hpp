@@ -41,7 +41,7 @@ class Bitmap : public MFTAttributeContent
 public:
   Bitmap(MFTAttribute* mftAttribute);
   ~Bitmap();
-  bool                          isAllocated(uint64_t offset) const;
+  //bool                          isAllocated(uint64_t offset) const;
   std::vector<Range>            unallocatedRanges(void);
 
   Attributes                    _attributes(void);

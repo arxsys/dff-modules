@@ -45,14 +45,14 @@ FileName::FileName(MFTAttribute* mftAttribute) : MFTAttributeContent(mftAttribut
   if (vfile->read((void*)&(this->__fileName), sizeof(FileName_s)) != sizeof(FileName_s))
   {
     delete vfile;
-    throw vfsError("$FILE_NAME can't read FileName_s.");
+    throw std::string("$FILE_NAME can't read FileName_s.");
   }
   uint16_t* name = new uint16_t[this->nameLength()];
   if (vfile->read((void*)name, this->nameLength() * sizeof(uint16_t)) != (int32_t)(this->nameLength() *sizeof(uint16_t)))
   {
     delete[] name;
     delete vfile;
-    throw vfsError("$FILE_NAME can't read name.");
+    throw std::string("$FILE_NAME can't read name.");
   }
   UnicodeString((char*)name, this->nameLength() * sizeof(uint16_t), "UTF16-LE").toUTF8String(this->__name);
   delete[] name;

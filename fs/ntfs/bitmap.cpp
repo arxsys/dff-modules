@@ -31,7 +31,6 @@ uint64_t Range::end(void) const
   return (this->__end);
 }
 
-
 Bitmap::Bitmap(MFTAttribute* mftAttribute) : MFTAttributeContent(mftAttribute)
 {
 }
@@ -43,22 +42,6 @@ MFTAttributeContent*	Bitmap::create(MFTAttribute*	mftAttribute)
 
 Bitmap::~Bitmap()
 {
-}
-
-bool                    Bitmap::isAllocated(uint64_t offset) const
-{
-  //VFile* vfile = this->open();
-  //uint8_t value;
-
-  //vfile->seek(offset);
-  //vfile->read(&value, sizeof(uint8_t));
-  //delete vfile;
-
-
-  //if (value & mask)
-  //return (true);
-
-  return (false);
 }
 
 /** 
@@ -103,14 +86,6 @@ std::vector<Range>      Bitmap::unallocatedRanges(void)
   delete[] bitmap;
   return (unallocated);
 }
-
-///**
-//*  Return a list of bool for allocated and unallocated clusters
-//*/
-//std::vector<bool>       Bitmap::clusterAllocation(void)
-//{
-//}
-//
 
 const std::string       Bitmap::typeName(void) const
 {

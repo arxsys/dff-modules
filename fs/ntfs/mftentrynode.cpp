@@ -38,32 +38,32 @@ MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::stri
   }
   delete vfile;
 
-//  this->validate(); exemple ds le carving ou ca pete car decallage donc rajouter du checking 
-//  if carving done des mauvais result ...
+  //this->validate(); for exemple when carving if wrong value avoid infinite loop etc... 
 
-  //test : read all attributes of the node 
+  //for test only : read all attributes of the node 
+  /*
   std::vector<MFTAttribute* > mftAttributes = this->MFTAttributes();
   std::vector<MFTAttribute* >::iterator	mftAttribute;
   mftAttribute = mftAttributes.begin();
   for (; mftAttribute != mftAttributes.end(); ++mftAttribute)
   {
-          try 
-          {
-                  MFTAttributeContent* mftAttributeContent = (*mftAttribute)->content();//test content
-                  mftAttributeContent->_attributes();//test call attrib
-                  delete mftAttributeContent;
-                  if (*mftAttribute != NULL)
-                          delete (*mftAttribute);
-          }
-          catch (vfsError& e)
-          {
-                  std::cout << "MFTEntryNode::_attributes error: " << e.error << std::endl;
-          }
-          catch (std::string& e)
-          {
-                  std::cout << "MFTEntryNode::_attributes error: " << e << std::endl;
-          }
-  }
+    try 
+    {
+      MFTAttributeContent* mftAttributeContent = (*mftAttribute)->content();//test content
+      mftAttributeContent->_attributes();//test call attrib
+      delete mftAttributeContent;
+      if (*mftAttribute != NULL)
+        delete (*mftAttribute);
+    }
+    catch (vfsError& e)
+    {
+      std::cout << "MFTEntryNode::_attributes error: " << e.error << std::endl;
+    }
+    catch (std::string& e)
+    {
+      std::cout << "MFTEntryNode::_attributes error: " << e << std::endl;
+    }
+  }*/
   this->__state++;
 }
 
@@ -113,10 +113,7 @@ std::vector<MFTAttribute*>	MFTEntryNode::MFTAttributes(void)
 	 break;
        uint64_t attributeLength = mftAttr->length();
        if (attributeLength == 0)
-       {
-         std::cout << "erropr attribute length 0 " << std::endl;
          break;
-       }
        offset += attributeLength;
     }
   }
@@ -170,6 +167,8 @@ uint64_t	MFTEntryNode::fileMappingState(void)
 Attributes	MFTEntryNode::_attributes(void)
 {
   Attributes	attrs;
+
+  //XXX handle normal/advanced mode for attribute
 
   MAP_ATTR("Entry id", this->offset() / this->ntfs()->bootSectorNode()->MFTRecordSize());
   MAP_ATTR("Offset", this->offset())

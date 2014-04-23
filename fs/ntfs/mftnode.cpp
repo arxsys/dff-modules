@@ -79,6 +79,9 @@ void	MFTNode::init(void)
       for (; currentFileName != fileNames.end(); ++currentFileName)
       {
         FileName*	fileName = dynamic_cast<FileName* >((*currentFileName)->content());
+
+        if (fileName == NULL)
+          throw std::string("MFTNode can't cast attribute content to FileName");
         if (fileName->nameSpaceID() <= fileNameID) 
         {
           this->__name = fileName->name();
@@ -172,10 +175,8 @@ std::vector<MFTAttribute*>      MFTNode::data(void)
 
     std::vector<MFTAttribute* > attributesLists = this->__mftEntryNode->MFTAttributesType($ATTRIBUTE_LIST);
     std::vector<MFTAttribute* >::iterator attributesList = attributesLists.begin();
-    if (attributesLists.size() > 0) //XXX handle qu une seul list , peut en avoir plusieurs ?? 
+    if (attributesLists.size() > 0) // in normal case there is only one attribute list 
     {
-      if (attributesLists.size() > 1)
-        std::cout << "Found more than one attribute list ! " << std::endl;
       AttributeList* attributeList = static_cast<AttributeList* >((*attributesList)->content());
       std::vector<MFTAttribute* > attrs = attributeList->MFTAttributes();
       std::vector<MFTAttribute* >::iterator attr = attrs.begin();
@@ -201,15 +202,15 @@ std::vector<IndexEntry> MFTNode::indexes(void) //indexesFilename // don't return
   std::vector<MFTAttribute*> indexRootAttributes = this->__mftEntryNode->MFTAttributesType($INDEX_ROOT);
   std::vector<MFTAttribute*>::iterator indexRootAttribute = indexRootAttributes.begin(); 
 
-  if (indexRootAttributes.size() > 0) // add rootAttribute
+  if (indexRootAttributes.size() > 0)
   {
-    if (indexRootAttributes.size() > 1)
-      std::cout << "HAVE more than one ROOT attribute " << std::endl;
+    //if (indexRootAttributes.size() > 1)
+        //std::cout << "MFT entry has more than one ROOT attribute " << std::endl;
     IndexRoot* indexRoot = dynamic_cast<IndexRoot*>((*indexRootAttribute)->content());
     if (indexRoot)
     {
       std::vector<IndexEntry> info = indexRoot->indexEntries();
-      if (indexRoot->indexType() != 48) //IF ROOT IS NOT 48 return !
+      if (indexRoot->indexType() != $FILE_NAME) //Only handle $FILE_NAME index for now
       {
         delete indexRoot;
         for (;indexRootAttribute != indexRootAttributes.end(); ++indexRootAttribute)
@@ -247,14 +248,13 @@ std::vector<IndexEntry> MFTNode::indexes(void) //indexesFilename // don't return
     std::vector<MFTAttribute* > attrs = attributeList->MFTAttributes();
     std::vector<MFTAttribute* >::iterator attr = attrs.begin();
      
-    if (attributesLists.size() > 1)
-      std::cout << "MORE THAN ONE LIST FOUND !!! " << std::endl; 
+    //if (attributesLists.size() > 1)
+    //std::cout << "more than one attributes list found in index" << std::endl;  
 
     for (; attr != attrs.end(); ++attr)
     {
       if ((*attr)->typeId() == $INDEX_ALLOCATION)
       {
-        //std::cout << "ALLOCATION IN ATTRIBUTE_LIST FOUND ! " << this->name() << std::endl;
         IndexAllocation* indexAllocation = dynamic_cast<IndexAllocation* >((*attr)->content());
         if (indexAllocation)
         {
@@ -263,14 +263,11 @@ std::vector<IndexEntry> MFTNode::indexes(void) //indexesFilename // don't return
           delete indexAllocation;
         }
       }
-      else if ((*attr)->typeId() == $INDEX_ROOT)
-      {
-        std::cout << "ROOT ROOOT W000T INDEX in ATTRIBUTE_LIST found ! " << this->name() << std::endl;
-      }
+      //else if ((*attr)->typeId() == $INDEX_ROOT)
+        //this shouldn't happen
       delete (*attr);
     }
     delete attributeList;
-    //if multi attr list for ..
     delete (*attributesList);
   }
 
@@ -286,7 +283,6 @@ void		MFTNode::fileMapping(FileMapping* fm)
     //indexAllocation[0]->content()->fileMapping(fm);
     //return ;
   //}
-
   std::vector<MFTAttribute* >  datas = this->data();
   if (datas.size() == 0)
   {

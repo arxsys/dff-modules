@@ -60,7 +60,7 @@ class BootSectorNode : public Node
 {
 private:
   NTFS*		 	__ntfs;
-  BootSector*		__bootSector;
+  BootSector		__bootSector;
   uint64_t		__state; 
 public:
                 	BootSectorNode(NTFS* ntfs);

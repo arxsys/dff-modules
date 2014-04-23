@@ -25,7 +25,7 @@ class NTFS;
 class MFTEntryNode;
 class MFTAttributeContent;
 
-class MFTNode : public Node //ntfsnode
+class MFTNode : public Node
 {
 public:
   MFTNode(NTFS*	ntfs, Node* mftFsNode, Node* parent, uint64_t sectorNumber);

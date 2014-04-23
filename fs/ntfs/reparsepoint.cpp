@@ -34,7 +34,7 @@ ReparsePoint::ReparsePoint(MFTAttribute* mftAttribute) : MFTAttributeContent(mft
   if (vfile->read((void*)&(this->__reparsePoint), sizeof(ReparsePoint_s)) != sizeof(ReparsePoint_s))
   {
     delete vfile;
-    throw vfsError("$REPARSE_POINT can't read ReparsePoint_s.");
+    throw std::string("$REPARSE_POINT can't read ReparsePoint_s.");
   }
 
   if (targetSize() + printSize() + sizeof(ReparsePoint_s) > this->size())
@@ -94,7 +94,7 @@ Attributes	ReparsePoint::_attributes(void)
   MAP_ATTR("Attributes", MFTAttributeContent::_attributes())
 
   MAP_ATTR("Target name", this->target())
-  MAP_ATTR("print name", this->print())
+  MAP_ATTR("Print name", this->print())
   MAP_ATTR("Flags", this->flags()) 
 
   return (attrs);

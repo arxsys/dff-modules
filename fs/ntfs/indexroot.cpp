@@ -20,30 +20,29 @@
 #include "mftattributecontent.hpp"
 #include "mftattribute.hpp"
 
+/* XXX implement flags()
 #define PUSH_FLAGS(x, y)\
   if ((this->__fileName.flags & x) == x)\
     flagsList.push_back(NEW_VARIANT(std::string(y)));
+*/ 
 
 IndexRoot::IndexRoot(MFTAttribute* mftAttribute) : MFTAttributeContent(mftAttribute)
 {
   VFile* vfile = this->open();
- 
-  if (vfile->read((void*)&(this->__indexRoot), sizeof(IndexRoot_s)) != sizeof(IndexRoot_s))
+
+  if (vfile->read((void*)&this->__indexRoot, sizeof(IndexRoot_s)) != sizeof(IndexRoot_s))
   {
     delete vfile;
     throw std::string("$INDEX_ROOT can't read IndexRoot.");
   }
-  if (vfile->read((void*)&(this->__indexList), sizeof(IndexList_s)) != sizeof(IndexList_s))
+  if (vfile->read((void*)&this->__indexList, sizeof(IndexList_s)) != sizeof(IndexList_s))
   {
     delete vfile;
     throw std::string("$INDEX_ROOT can't read IndexList.");
-  } 
+  }
   try
   {
     vfile->seek(sizeof(IndexRoot_s));
-
-    //if (indexEntriesEnd() != endOfEntries())
-    //std::cout << "index ROOT start : " << indexEntriesStart() << " end :"  << indexEntriesEnd() <<  " enfOf " << endOfEntries() << std::endl;  
     this->__indexEntries.readEntries(vfile, this->indexEntriesStart(), this->indexEntriesEnd());
   }
   catch(std::string const& error)

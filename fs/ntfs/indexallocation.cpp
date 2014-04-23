@@ -184,10 +184,10 @@ void		IndexAllocation::fileMapping(FileMapping* fm)
     totalSize += (*run).length * clusterSize; 
   }
 }
+
 /* 
  *   IndexRecord 
  */
-
 IndexRecord::IndexRecord(VFile *vfile)
 {
    if (vfile->read((void*)&this->__indexRecord, sizeof(IndexRecord_s)) != sizeof(IndexRecord_s))

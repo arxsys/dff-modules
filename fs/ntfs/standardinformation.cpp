@@ -46,7 +46,7 @@ StandardInformation::StandardInformation(MFTAttribute* mftAttribute) : MFTAttrib
     if (vfile->read((void*)&(this->__standardInformation), 48) != 48)
     {
       delete vfile;
-      throw vfsError("Can't read attribute Standard Informations");
+      throw std::string("Can't read attribute Standard Informations");
     }
   }
   else if(this->size() == 72)
@@ -54,13 +54,13 @@ StandardInformation::StandardInformation(MFTAttribute* mftAttribute) : MFTAttrib
     if (vfile->read((void*)&(this->__standardInformation), sizeof(StandardInformation_s)) != sizeof(StandardInformation_s))
     {
       delete vfile;
-      throw vfsError("Can't read attribute Standard Informations");
+      throw std::string("Can't read attribute Standard Informations");
     }
   }
   else
   {
     delete vfile;
-    throw vfsError("Can't read attribute Standard Informations");
+    throw std::string("Can't read attribute Standard Informations");
   }
   delete vfile;
 }

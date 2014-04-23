@@ -18,43 +18,19 @@
 #define __MFT_MANAGER_HH__
 
 #include "ntfs_common.hpp"
-#include "bitmap.hpp"
 
 class NTFS;
 class MFTNode;
 
-class Unallocated : public Node
-{
-public:
-  Unallocated(NTFS* ntfs);
-  void  fileMapping(FileMapping* fm);
-  //Attributes	                       _attributes(void);
-  std::vector<Range>  ranges(void);
-private:
-  std::vector<Range>  __ranges; //test for carving et recovery car si non pu ds cache ? tres tres lent !
-  NTFS*               __ntfs;
-};
-
 class MFTId
 {
 public:
-  MFTId(uint64_t _id, uint16_t seq) : id(_id), sequence(seq) {};
+  MFTId(uint64_t _id, uint16_t seq);
+  bool  operator ==(MFTId const& other);
+  bool  operator<(MFTId const& other);
+
   uint64_t id;
   uint16_t sequence;
-  bool  operator ==(MFTId const& other)
-  {
-     if ((other.id == this->id) && (other.sequence == this->sequence))
-       return true;
-     return false;
-  }
-
-  bool  operator<(MFTId const& other)
-  {
-    if (other.id < this->id)
-      return true;
-    return false;
-  }
-
 };
 
 class MFTEntryInfo
@@ -80,9 +56,9 @@ public:
  
   void                                  childrenSanitaze(void);
   MFTNode*                              create(uint64_t id);
-  bool                                  add(uint64_t id, MFTNode* node); //??
-  bool                                  addChild(uint64_t nodeId);//???
-  bool                                  addChildId(uint64_t nodeId, MFTNode* node); //??
+  bool                                  add(uint64_t id, MFTNode* node);
+  bool                                  addChild(uint64_t nodeId);
+  bool                                  addChildId(uint64_t nodeId, MFTNode* node);
   void                                  inChildren(uint64_t nodeId, uint64_t childId);
          
   uint64_t                              entryCount(void) const;  

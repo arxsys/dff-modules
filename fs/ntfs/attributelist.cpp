@@ -26,10 +26,9 @@
 #include "mftentrynode.hpp"
 #include "mftmanager.hpp"
 
-/*
+/**
  *  AttributeListItems
  */
-
 AttributeListItems::AttributeListItems(VFile* vfile)
 {
   int32_t offset = vfile->read((void*)&this->__attributeList, sizeof(__attributeList)); 
@@ -106,7 +105,7 @@ AttributeList::AttributeList(MFTAttribute* mftAttribute) : MFTAttributeContent(m
   VFile* vfile = this->open();
 
   while (vfile->tell() < this->size()) //&& vfile->tell() - this->size() >> sizeof(AttributeList_s) 
-  {  //XXX check presvious == curent pour eviter loop inifi
+  {  //XXX check presvious == curent to avoid infinite loop 
     try
     {
       AttributeListItems attrib(vfile);
@@ -114,8 +113,8 @@ AttributeList::AttributeList(MFTAttribute* mftAttribute) : MFTAttributeContent(m
     }
     catch (std::string const& error)
     {
-      std::cout << "attribute list items error" << std::endl;
-      break; //XXX ? arrive ds la recovery ntfs2
+      //std::cout << "attribute list items error" << std::endl;
+      break; //XXX can happen sometimes in recovery (test 2) 
     }
   }
   delete vfile;
@@ -152,7 +151,7 @@ std::vector<MFTAttribute*> AttributeList::MFTAttributes(void)
       if ((*attribute)->isResident())
       {
         delete (*attribute);
-         //std::cout << "create a resident attribute ? " << (*attribute)->typeId() << " " << item->typeId() << std::endl;
+        //std::cout << "create a resident attribute ? " << (*attribute)->typeId() << " " << item->typeId() << std::endl;
       }
       else if (((*attribute)->VNCStart() == item->VCNStart()) && ((*attribute)->typeId() == item->typeId()))
         found.push_back(*attribute);

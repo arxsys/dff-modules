@@ -82,6 +82,7 @@ std::vector<IndexEntry> IndexEntries::entries(void)
 {
   return (this->__entries);
 }
+
 /*
  *  VFile should be positioned at entries start
  */
@@ -91,11 +92,9 @@ size_t IndexEntries::readEntries(VFile* vfile, uint32_t entriesStart, uint32_t e
   uint64_t currentOffset = lastOffset;
   if (vfile->seek(lastOffset) != lastOffset)
     throw std::string("IndexEntries::readEntries() can't seek to entry start");
-  //std::cout << "getting all this fucking entries" << std::endl;
+
   while ((currentOffset != entriesStart) && ((currentOffset + sizeof(IndexEntry_s)) < vfile->node()->size()))
-          //while ((currentOffset != entriesStart) && ((currentOffset + sizeof(IndexEntry_s)) < vfile->node()->size()) && (currentOffset < entriesEnd)) + start offset ? 
   {
-          //std::cout << entriesStart << " " << currentOffset << " " << entriesEnd << std::endl;
     IndexEntry entry(vfile);
     this->__entries.push_back(entry);
 
@@ -106,6 +105,7 @@ size_t IndexEntries::readEntries(VFile* vfile, uint32_t entriesStart, uint32_t e
       break;
     lastOffset = currentOffset;
   }
+
   return (this->__entries.size());
 }
 

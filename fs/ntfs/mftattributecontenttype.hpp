@@ -43,7 +43,6 @@
 #define $BITMAP                 176
 #define $SYMOBLIC_LINK          192
 #define $REPARSE_POINT          192
-
 //#define $EA_INFORMATION       208 // 0xd0
 //#define $EA                   224 //0xe0
 //#define $PROPERTY_SET         240 // 0xf0 

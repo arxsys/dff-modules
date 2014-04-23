@@ -19,6 +19,28 @@
 #include "mftnode.hpp"
 #include "bootsector.hpp"
 #include "mftattributecontenttype.hpp"
+#include "unallocated.hpp"
+
+/**
+ *  MFTId
+ */
+MFTId::MFTId(uint64_t _id, uint16_t seq) : id(_id), sequence(seq) 
+{
+}
+
+bool  MFTId::operator==(MFTId const& other)
+{
+  if ((other.id == this->id) && (other.sequence == this->sequence))
+    return (true);
+  return (false);
+}
+
+bool  MFTId::operator<(MFTId const& other)
+{
+  if (other.id < this->id)
+    return (true);
+  return (false);
+}
 
 /**
  *  MFTEntryInfo
@@ -119,9 +141,6 @@ bool    MFTEntryManager::addChildId(uint64_t nodeId, MFTNode* node)
     uint16_t sequence = (*index).sequence();
     if (entryId == 0)
       continue;
-
-    if (entryId == 8290)
-      std::cout << "entry id found for " << nodeId << " " << entryId << " " << sequence << std::endl;
     this->__entries[nodeId]->childrenId.push_back(MFTId(entryId, sequence));
   }
 
@@ -157,11 +176,7 @@ bool    MFTEntryManager::addChild(uint64_t nodeId)
     if (child)
     {
       if ((*childId).sequence == node->mftEntryNode()->sequence())
-      {
-        if ((*childId).id == 8290)
-          std::cout << "HELLO " <<  child->name() << " parent " << node->name() << std::endl;
         node->addChild(child);
-      }
     }
   }
   return (true);
@@ -204,12 +219,14 @@ void    MFTEntryManager::childrenSanitaze(void)
  *  Create node from id
  *  Can be used for indexallocation or others function that need node not yet created at init
  */
-MFTNode*   MFTEntryManager::create(uint64_t id)
+MFTNode*   MFTEntryManager::create(uint64_t id) //XXX XXX oncreate mais on add pas ds la base ????
 {
   uint32_t mftRecordSize = this->__ntfs->bootSectorNode()->MFTRecordSize();
-  MFTNode* node = new MFTNode(this->__ntfs, this->__masterMFTNode, NULL, id * mftRecordSize);
-
-  return (node);
+  //for $DATA in Node: -> in mftnode ?
+    //create node for ads
+  //for $REPARSE in Node:
+    //create vlink 
+  return (new MFTNode(this->__ntfs, this->__masterMFTNode, NULL, id * mftRecordSize));
 }
 
 /*
@@ -217,9 +234,9 @@ MFTNode*   MFTEntryManager::create(uint64_t id)
  */
 void    MFTEntryManager::initEntries(void)
 {
-  std::ostringstream nMFTStream;
-  nMFTStream  << std::string("Found ") << this->__numberOfEntry <<  std::string(" MFT entry") << endl;
-  this->__ntfs->setStateInfo(nMFTStream.str());
+  std::ostringstream stateInfo;
+  stateInfo << std::string("Found ") << this->__numberOfEntry <<  std::string(" MFT entry") << endl;
+  this->__ntfs->setStateInfo(stateInfo.str());
 
   uint32_t mftRecordSize = this->__ntfs->bootSectorNode()->MFTRecordSize();
 
@@ -227,10 +244,9 @@ void    MFTEntryManager::initEntries(void)
   {
     if (id % 10000 == 0)
     {
-      std::ostringstream cMFTStream;
-      cMFTStream << "Parsing " << id << "/" << this->__numberOfEntry;
-      std::cout << cMFTStream.str() << std::endl;
-      this->__ntfs->setStateInfo(cMFTStream.str());
+      std::ostringstream stateInfo;
+      stateInfo << "Parsing " << id << "/" << this->__numberOfEntry;
+      this->__ntfs->setStateInfo(stateInfo.str());
     }
     try 
     {
@@ -286,13 +302,15 @@ void    MFTEntryManager::linkOrphanEntries(void)
       if (attributes.size())
       {
         FileName* fileName = dynamic_cast<FileName*>((*attribute)->content());
+        if (fileName == NULL)
+          throw std::string("MFTEntryManager attribute content can't cast to $FILE_NAME"); 
         uint64_t parentId = fileName->parentMFTEntryId();
         MFTNode* parent = this->node(parentId);
 
         if (parent)
         {
           if (fileName->parentSequence() != parent->mftEntryNode()->sequence())
-             this->__ntfs->orphansNode()->addChild(mftNode);
+            this->__ntfs->orphansNode()->addChild(mftNode);
           else 
             parent->addChild(mftNode);
         }
@@ -364,60 +382,4 @@ void    MFTEntryManager::linkUnallocated(void)
   this->__ntfs->setStateInfo(state.str());
 
   delete fsFile;
-}
-
-
-/**
- *  Unallocated Node
- */
-
-Unallocated::Unallocated(NTFS* ntfs) : Node("FreeSpace", 0, NULL, ntfs), __ntfs(ntfs)
-{
-  this->__ranges = this->ranges();
-  std::vector<Range>::const_iterator range = this->__ranges.begin();
-
-  uint64_t size = 0;
-  for (; range != this->__ranges.end(); ++range)
-    size += (1 + (*range).end() - (*range).start()) * this->__ntfs->bootSectorNode()->clusterSize();
-  this->setSize(size);
-}
-
-std::vector<Range> Unallocated::ranges(void)
-{
-  std::vector<Range> ranges;
-  MFTEntryManager* mftManager = this->__ntfs->mftManager();
-  if (mftManager == NULL)
-    throw std::string("MFT Manager is null");
-
-  MFTNode* bitmapNode = mftManager->node(6); //$BITMAP_FILE_ID
-  if (!bitmapNode)
-    return (ranges);
-
-  std::vector<MFTAttribute*> attributes = bitmapNode->mftEntryNode()->MFTAttributesType($DATA);
-  std::vector<MFTAttribute*>::iterator  attribute = attributes.begin();
-
-  MFTAttributeContent* content = (*attribute)->content();
-  if (content) 
-  {
-    Bitmap* bitmap = static_cast<Bitmap*>(content);
-    ranges = bitmap->unallocatedRanges();
-    delete content;
-  }
-  for (; attribute != attributes.end(); ++attribute)
-    delete (*attribute);
-
-  return (ranges);
-}
-
-void    Unallocated::fileMapping(FileMapping* fm)
-{
-  std::vector<Range>::const_iterator range = this->__ranges.begin();
-  uint64_t offset = 0;
-  uint64_t clusterSize = this->__ntfs->bootSectorNode()->clusterSize();
-
-  for (; range != this->__ranges.end(); ++range)
-  {
-    fm->push(offset , (1 + (*range).end() - (*range).start()) * clusterSize, this->__ntfs->fsNode(), (*range).start() * clusterSize);
-    offset += (1 + (*range).end() - (*range).start()) * clusterSize;
-  }
 }

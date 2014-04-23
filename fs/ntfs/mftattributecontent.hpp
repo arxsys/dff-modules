@@ -57,8 +57,8 @@ public:
   uint64_t	                _attributesState(void);
   uint64_t	                fileMappingState(void);
 private:
-  uint64_t                      __state;
   MFTAttribute*	                __mftAttribute;
+  uint64_t                      __state;
 };
 
 #endif

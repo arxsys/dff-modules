@@ -25,11 +25,11 @@
 
 PACK_S IndexRecord_s
 {
-  uint32_t              signature;
-  uint16_t              fixupArrayOffset;
-  uint16_t              fixupArrayCount; 
-  uint64_t              sequence;
-  uint64_t              vcn;
+  uint32_t                      signature;
+  uint16_t                      fixupArrayOffset;
+  uint16_t                      fixupArrayCount; 
+  uint64_t                      sequence;
+  uint64_t                      vcn;
 } PACK;
 
 class IndexRecord
