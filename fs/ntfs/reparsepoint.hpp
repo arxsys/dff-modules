@@ -27,10 +27,10 @@ PACK_S ReparsePoint_s
   uint16_t              dataSize;
   uint16_t              reserved;
 
-  uint16_t              targetNameOffset;
-  uint16_t              targetNameSize;
-  uint16_t              printNameOffset;
-  uint16_t              printNameSize;
+  uint16_t              targetOffset;
+  uint16_t              targetSize;
+  uint16_t              printOffset;
+  uint16_t              printSize;
 //uint32_t              flags for symlink see ntfs3g reparse.c /layout.h
 
 //guid uint64_t guid1;
@@ -40,20 +40,20 @@ PACK_S ReparsePoint_s
 class ReparsePoint : public MFTAttributeContent
 {
 private:
-  std::string           __targetName;
-  std::string           __printName;
+  std::string           __target;
+  std::string           __print;
   ReparsePoint_s        __reparsePoint;
 public:
 		        ReparsePoint(MFTAttribute* mftAttribute);
 			~ReparsePoint();
   std::list<Variant_p>	flags(void) const;
   uint32_t              dataSize(void) const;
-  uint16_t              targetNameOffset(void) const;
-  uint16_t              targetNameSize(void) const;
-  uint16_t              printNameOffset(void) const;
-  uint16_t              printNameSize(void) const;
-  const std::string	targetName(void) const;
-  const std::string	printName(void) const;
+  uint16_t              targetOffset(void) const;
+  uint16_t              targetSize(void) const;
+  uint16_t              printOffset(void) const;
+  uint16_t              printSize(void) const;
+  const std::string	target(void) const;
+  const std::string	print(void) const;
   const std::string     typeName(void) const;
   Attributes		_attributes(void);
   static MFTAttributeContent*	create(MFTAttribute* mftAttribute);

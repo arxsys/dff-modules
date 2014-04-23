@@ -15,7 +15,7 @@
  */
 
 //#include <list>
-//#include <unicode/unistr.h>
+#include <unicode/unistr.h>
 #include "reparsepoint.hpp"
 #include "mftattributecontent.hpp"
 #include "mftattribute.hpp"
@@ -36,32 +36,45 @@ ReparsePoint::ReparsePoint(MFTAttribute* mftAttribute) : MFTAttributeContent(mft
     delete vfile;
     throw vfsError("$REPARSE_POINT can't read ReparsePoint_s.");
   }
-  vfile->seek(vfile->tell() + 1);
-  std::string test;
 
-  //std::cout <<"data name " <<  test << std::endl;  
+  if (targetSize() + printSize() + sizeof(ReparsePoint_s) > this->size())
+  {
+    delete vfile;
+    throw std::string("$REPARSE_POINT size error");
+  }
   
+  uint64_t offset = this->targetOffset() + sizeof(ReparsePoint_s);
+  if (vfile->seek(offset) != offset)
+  {
+    delete vfile;
+    throw std::string("$REPARSE_POINT can't seek to target offset.");
+  }
+  uint16_t* target = new uint16_t[this->targetSize()];
+  if (vfile->read((void*)target, this->targetSize()) != (int32_t)(this->targetSize()))
+  {
+    delete[] target;
+    delete vfile;
+    throw std::string("$REPARSE_POINT can't read target name.");
+  }
+  UnicodeString((char*)target, this->targetSize(), "UTF16-LE").toUTF8String(this->__target);
+  delete[] target;
 
-  std::cout << "data type" << __reparsePoint.type <<
-               " unused " << __reparsePoint.reserved <<
-               " flags " << this->__reparsePoint.flags << 
-               " size " << __reparsePoint.dataSize <<
-               " targetsize  " << targetNameSize() << 
-               " print size " << printNameSize() <<
-               " buff size " << this->size() <<
-               " target offset " << this->targetNameOffset() <<
-               " print offset " << this->printNameOffset() <<
-               std::endl;
+  offset = this->printOffset() + sizeof(ReparsePoint_s);
+  if (vfile->seek(offset) != offset)
+  {
+    delete vfile;
+    throw std::string("$REPARSE_POINT can't seek to print offset.");
+  }
+  uint16_t* print = new uint16_t[this->printSize()];
+  if (vfile->read((void*)print, this->printSize()) != (int32_t)(this->printSize()))
+  {
+    delete[] print;
+    delete vfile;
+    throw std::string("$REPARSE_POINT can't read print name.");
+  }
+  UnicodeString((char*)print, this->printSize(), "UTF16-LE").toUTF8String(this->__print);
+  delete[] print;
 
-  //uint16_t* name = new uint16_t[this->nameLength()];
-  //if (vfile->read((void*)name, this->nameLength() * sizeof(uint16_t)) != (int32_t)(this->nameLength() *sizeof(uint16_t)))
-  //{
-  //delete[] name;
-  //delete vfile;
-  //throw vfsError("$REPARSE_POINT can't read name.");
-  //}
-  //UnicodeString((char*)name, this->nameLength() * sizeof(uint16_t), "UTF16-LE").toUTF8String(this->__name);
-  //delete[] name;
   delete vfile;
 }
 
@@ -80,8 +93,8 @@ Attributes	ReparsePoint::_attributes(void)
 
   MAP_ATTR("Attributes", MFTAttributeContent::_attributes())
 
-  MAP_ATTR("Target name", this->targetName())
-  MAP_ATTR("print name", this->printName())
+  MAP_ATTR("Target name", this->target())
+  MAP_ATTR("print name", this->print())
   MAP_ATTR("Flags", this->flags()) 
 
   return (attrs);
@@ -92,34 +105,34 @@ uint32_t ReparsePoint::dataSize(void) const
   return (this->__reparsePoint.dataSize);
 }
 
-uint16_t ReparsePoint::targetNameOffset(void) const
+uint16_t ReparsePoint::targetOffset(void) const
 {
-  return (this->__reparsePoint.targetNameOffset);
+  return (this->__reparsePoint.targetOffset);
 }
 
-uint16_t ReparsePoint::targetNameSize(void) const
+uint16_t ReparsePoint::targetSize(void) const
 {
-  return (this->__reparsePoint.targetNameSize);
+  return (this->__reparsePoint.targetSize);
 }
 
-uint16_t ReparsePoint::printNameOffset(void) const
+uint16_t ReparsePoint::printOffset(void) const
 {
-  return (this->__reparsePoint.printNameOffset);
+  return (this->__reparsePoint.printOffset);
 }
 
-uint16_t ReparsePoint::printNameSize(void) const
+uint16_t ReparsePoint::printSize(void) const
 {
-  return (this->__reparsePoint.printNameSize);
+  return (this->__reparsePoint.printSize);
 }
 
-const std::string  ReparsePoint::targetName(void) const
+const std::string  ReparsePoint::target(void) const
 {
-  return (this->__targetName);
+  return (this->__target);
 }
 
-const std::string  ReparsePoint::printName(void) const
+const std::string  ReparsePoint::print(void) const
 {
-  return (this->__printName);
+  return (this->__print);
 }
 
 const std::string  ReparsePoint::typeName(void) const
