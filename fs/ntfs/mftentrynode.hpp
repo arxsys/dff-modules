@@ -18,6 +18,7 @@
 #define __NTFS_MFT_ENTRY_NODE_HH__
 
 #include "ntfs_common.hpp"
+#include "indexroot.hpp"
 
 class NTFS;
 class MFTAttribute;
@@ -49,9 +50,10 @@ private:
   MFTEntry*		__MFTEntry;
   uint64_t		__offset;
   uint64_t		__state;
-  class MFTAttribute*	__MFTAttribute(uint16_t offset);
 public:
+  virtual class MFTAttribute*	__MFTAttribute(uint16_t offset);
 			MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::string name, Node* parent);
+                        MFTEntryNode(MFTEntryNode& mftEntryNode);
 			~MFTEntryNode();
   NTFS*			ntfs(void);
   Node*			mftNode(void);
@@ -75,6 +77,10 @@ public:
   bool                  isCompressed(void) const;
   std::vector<MFTAttribute* >	MFTAttributes();
   std::vector<MFTAttribute* >	MFTAttributesType(uint32_t typeId);
+
+  const std::string             findName(void); //const 
+  std::vector<MFTAttribute*>    data(void); //const
+  std::vector<IndexEntry>       indexes(void); // const
 };
 
 #endif

@@ -109,6 +109,7 @@ int32_t  NTFS::vread(int fd, void *buff, unsigned int size)
 {
   //XXX
   return (mfso::vread(fd, buff, size));
+/*
   fdinfo* fi = NULL;
   try
   {
@@ -129,7 +130,7 @@ int32_t  NTFS::vread(int fd, void *buff, unsigned int size)
 
   if (fi->offset > mftNode->size())
     return (0);
-
+*/
   //std::vector<MFTAttributeContent*> datas = mftNode->data(); //too slow
   //std::vector<MFTAttributeContent*>::iterator data = datas.begin();
   //if (!datas.size())

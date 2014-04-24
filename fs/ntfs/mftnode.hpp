@@ -19,25 +19,17 @@
 
 #include "ntfs_common.hpp"
 #include "mftentrynode.hpp"
-#include "indexroot.hpp"
 
 class NTFS;
-class MFTEntryNode;
-class MFTAttributeContent;
 
-class MFTNode : public Node //public MFTEntryNode ?
+class MFTNode : public Node// MFTEntryNode
 {
 public:
-  MFTNode(NTFS*	ntfs, Node* mftFsNode, Node* parent, uint64_t sectorNumber);
+  MFTNode(NTFS* ntfs, MFTEntryNode* mftEntryNode);
+  //MFTNode(MFTEntryNode const& mftEntryNode);
   ~MFTNode();
-  void		                       init(void);
-  MFTEntryNode*                        mftEntryNode(void);
-  std::vector<MFTAttribute*>           data(void) const;
-  std::vector<IndexEntry>              indexes(void) const;
-  const std::string                    findName(void) const;
-  //void                                 setMapping(uint64_t attributes, uint64_t size); //attributes attributeList ? 
+  MFTEntryNode*                        mftEntryNode(MFTEntryNode* mftENtryNode = NULL);
   void                                 setName(const std::string name);
-
   Attributes	                       _attributes(void);
   void		                       fileMapping(FileMapping* fm);
 private:

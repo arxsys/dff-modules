@@ -19,6 +19,7 @@
 #include "ntfs.hpp"
 #include "mftattribute.hpp"
 #include "mftattributecontent.hpp"
+#include "mftattributecontenttype.hpp"
 
 MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::string name, Node* parent = NULL) : Node(name, ntfs->bootSectorNode()->MFTRecordSize(), parent, ntfs), __ntfs(ntfs), __mftNode(mftNode), __offset(offset), __state(0)
 {
@@ -65,6 +66,13 @@ MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::stri
     }
   }*/
   this->__state++;
+}
+
+MFTEntryNode::MFTEntryNode(MFTEntryNode& copy) : __ntfs(copy.__ntfs), __mftNode(copy.__mftNode), __offset(copy.__offset), __state(copy.__state), Node(copy)
+{
+   std::cout << "mftentrynode by copy " << std::endl;
+  this->__MFTEntry = new MFTEntry;
+  memcpy((void*)this->__MFTEntry, (void*)copy.__MFTEntry, sizeof(MFTEntry));
 }
 
 void MFTEntryNode::updateState(void)
@@ -126,6 +134,7 @@ std::vector<MFTAttribute*>	MFTEntryNode::MFTAttributes(void)
 
 MFTAttribute*			MFTEntryNode::__MFTAttribute(uint16_t offset)
 {
+  MFTAttribute* attr = new MFTAttribute(this, offset);
   return (new MFTAttribute(this, offset));
 }
 
@@ -300,3 +309,161 @@ bool            MFTEntryNode::isDirectory(void) const
     return (this->__MFTEntry->flags & 0x2);
   throw std::string("ntfs::MFTEntryNode::isDirectory no MFTEntry."); 
 }
+
+/**
+ *  Search for best name in attribute
+ */
+const std::string   MFTEntryNode::findName(void)
+{
+  std::string name;
+  uint8_t fileNameID = FILENAME_NAMESPACE_DOS_WIN32;
+
+  try 
+  {
+    std::vector<MFTAttribute* > fileNames = this->MFTAttributesType($FILE_NAME);
+    std::vector<MFTAttribute* >::iterator currentFileName = fileNames.begin();
+
+    for (; currentFileName != fileNames.end(); ++currentFileName)
+    {
+      FileName*	fileName = dynamic_cast<FileName* >((*currentFileName)->content());
+
+      if (fileName == NULL)
+        throw std::string("MFTNode can't cast attribute content to FileName");
+      if (fileName->nameSpaceID() <= fileNameID) 
+      {
+        name = fileName->name();
+        fileNameID = fileName->nameSpaceID();
+      }
+      delete fileName;
+      delete (*currentFileName);
+    }
+  }
+  catch (vfsError& e)
+  {
+    std::cout << e.error << std::endl;
+  }
+  
+  return (name);
+}
+
+/**
+ *  Serch for all $DATA attribute
+ */
+
+std::vector<MFTAttribute*>      MFTEntryNode::data(void)
+{
+  std::vector<MFTAttribute*> dataAttributes;
+
+  std::vector<MFTAttribute* > datas = this->MFTAttributesType($DATA);
+  std::vector<MFTAttribute* >::iterator mftAttribute = datas.begin();
+  if (datas.size() > 0) //XXX choose the right one because of ADS 
+  {
+    MFTAttribute* dataAttribute = datas[0];
+    dataAttributes.push_back(dataAttribute);
+
+    for (++mftAttribute; mftAttribute != datas.end(); ++mftAttribute)
+      delete (*mftAttribute);
+    return (dataAttributes); //attribute is not deleted != attributeContent 
+  }
+
+  std::vector<MFTAttribute* > attributesLists = this->MFTAttributesType($ATTRIBUTE_LIST);
+  std::vector<MFTAttribute* >::iterator attributesList = attributesLists.begin();
+  if (attributesLists.size() > 0) // in normal case there is only one attribute list 
+  {
+    AttributeList* attributeList = static_cast<AttributeList* >((*attributesList)->content());
+    std::vector<MFTAttribute* > attrs = attributeList->MFTAttributes();
+    std::vector<MFTAttribute* >::iterator attr = attrs.begin();
+      
+    for (; attr != attrs.end(); ++attr)
+    {
+      if ((*attr)->typeId() == $DATA)
+        dataAttributes.push_back(*attr);
+      else
+        delete (*attr);
+    }
+    delete (*attributesList);
+  }
+  
+  return (dataAttributes);
+}
+
+//XXX use BITMAP !!!
+std::vector<IndexEntry> MFTEntryNode::indexes(void)// const //indexesFilename // don't return objectIds, securityDescriptor ...
+{
+  std::vector<IndexEntry> indexes;
+
+  std::vector<MFTAttribute*> indexRootAttributes = this->MFTAttributesType($INDEX_ROOT);
+  std::vector<MFTAttribute*>::iterator indexRootAttribute = indexRootAttributes.begin(); 
+
+  if (indexRootAttributes.size() > 0)
+  {
+    //if (indexRootAttributes.size() > 1)
+        //std::cout << "MFT entry has more than one ROOT attribute " << std::endl;
+    IndexRoot* indexRoot = dynamic_cast<IndexRoot*>((*indexRootAttribute)->content());
+    if (indexRoot)
+    {
+      std::vector<IndexEntry> info = indexRoot->indexEntries();
+      if (indexRoot->indexType() != $FILE_NAME) //Only handle $FILE_NAME index for now
+      {
+        delete indexRoot;
+        for (;indexRootAttribute != indexRootAttributes.end(); ++indexRootAttribute)
+          delete (*indexRootAttribute);
+        return (indexes);
+      }
+      indexes.insert(indexes.end(), info.begin(), info.end());
+      delete indexRoot;
+    }
+    for (;indexRootAttribute != indexRootAttributes.end(); ++indexRootAttribute)
+       delete (*indexRootAttribute);
+  }
+  else 
+    return (indexes);
+
+  std::vector<MFTAttribute*> allocations = this->MFTAttributesType($INDEX_ALLOCATION);
+  std::vector<MFTAttribute*>::iterator  allocation = allocations.begin(); 
+  for (; allocation != allocations.end(); ++allocation)
+  {
+    IndexAllocation* indexAllocation = dynamic_cast<IndexAllocation* >((*allocation)->content());
+    if (indexAllocation)
+    {
+      std::vector<IndexEntry> info = indexAllocation->indexEntries();
+      indexes.insert(indexes.end(), info.begin(), info.end());    
+      delete indexAllocation;
+    }
+    delete (*allocation);
+  }
+ 
+  std::vector<MFTAttribute* > attributesLists = this->MFTAttributesType($ATTRIBUTE_LIST);
+  std::vector<MFTAttribute* >::iterator attributesList = attributesLists.begin();
+  if (attributesLists.size() > 0) 
+  {
+    AttributeList* attributeList = static_cast<AttributeList* >((*attributesList)->content());
+    std::vector<MFTAttribute* > attrs = attributeList->MFTAttributes();
+    std::vector<MFTAttribute* >::iterator attr = attrs.begin();
+     
+    //if (attributesLists.size() > 1)
+    //std::cout << "more than one attributes list found in index" << std::endl;  
+
+    for (; attr != attrs.end(); ++attr)
+    {
+      if ((*attr)->typeId() == $INDEX_ALLOCATION)
+      {
+        IndexAllocation* indexAllocation = dynamic_cast<IndexAllocation* >((*attr)->content());
+        if (indexAllocation)
+        {
+          std::vector<IndexEntry> info = indexAllocation->indexEntries();
+          indexes.insert(indexes.end(), info.begin(), info.end());    
+          delete indexAllocation;
+        }
+      }
+      //else if ((*attr)->typeId() == $INDEX_ROOT)
+        //this shouldn't happen
+      delete (*attr);
+    }
+    delete attributeList;
+    delete (*attributesList);
+  }
+
+  return (indexes);
+}
+
