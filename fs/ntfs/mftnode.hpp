@@ -22,18 +22,56 @@
 
 class NTFS;
 
+class MappingAttributes
+{
+public:
+  MappingAttributes(uint16_t _offset, MFTEntryNode* _entryNode) : offset(_offset), entryNode(_entryNode)  {};
+  uint16_t              offset;
+  MFTEntryNode*         entryNode; //because of ATTRIBUTE_LIST $data could be describe by different MFT ! 
+  bool  operator==(MappingAttributes const& other) 
+  {
+     if ((other.offset == offset) && (other.entryNode == entryNode))
+       return (true);
+     return (false);
+  }
+};
+
+class MappingAttributesInfo
+{
+public:
+  std::list<MappingAttributes> mappingAttributes;
+  uint64_t size;
+  bool     compressed;
+};
+
+
 class MFTNode : public Node// MFTEntryNode
 {
 public:
   MFTNode(NTFS* ntfs, MFTEntryNode* mftEntryNode);
-  //MFTNode(MFTEntryNode const& mftEntryNode);
   ~MFTNode();
   MFTEntryNode*                        mftEntryNode(MFTEntryNode* mftENtryNode = NULL);
   void                                 setName(const std::string name);
   Attributes	                       _attributes(void);
   void		                       fileMapping(FileMapping* fm);
+
+  void                                 setCompressed(bool isCompressed);
+  void                                 setMappingAttributes(MappingAttributesInfo const& mappingAttributesInfo);
 private:
   MFTEntryNode*	                       __mftEntryNode;
+  bool                                 __isCompressed;
+  std::list<MappingAttributes>         mappingAttributesOffset; //then this->__mftEntryNode->mftAttribute(offset);
+// if offset = -1 ou 0 return this->__mftEntryNode to map MFT ? 
 };
+
+//class ADS : public MFTNode
+//{
+  ////ads name, number ? 
+//}
+
+//class  Attribute
+//{
+ ////attrubte type
+//}
 
 #endif

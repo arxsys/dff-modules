@@ -68,13 +68,6 @@ MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::stri
   this->__state++;
 }
 
-MFTEntryNode::MFTEntryNode(MFTEntryNode& copy) : __ntfs(copy.__ntfs), __mftNode(copy.__mftNode), __offset(copy.__offset), __state(copy.__state), Node(copy)
-{
-   std::cout << "mftentrynode by copy " << std::endl;
-  this->__MFTEntry = new MFTEntry;
-  memcpy((void*)this->__MFTEntry, (void*)copy.__MFTEntry, sizeof(MFTEntry));
-}
-
 void MFTEntryNode::updateState(void)
 {
   this->__state++;
@@ -315,9 +308,8 @@ bool            MFTEntryNode::isDirectory(void) const
  */
 const std::string   MFTEntryNode::findName(void)
 {
-  std::string name;
   uint8_t fileNameID = FILENAME_NAMESPACE_DOS_WIN32;
-
+  std::string name;
   try 
   {
     std::vector<MFTAttribute* > fileNames = this->MFTAttributesType($FILE_NAME);
@@ -349,22 +341,9 @@ const std::string   MFTEntryNode::findName(void)
 /**
  *  Serch for all $DATA attribute
  */
-
 std::vector<MFTAttribute*>      MFTEntryNode::data(void)
 {
-  std::vector<MFTAttribute*> dataAttributes;
-
-  std::vector<MFTAttribute* > datas = this->MFTAttributesType($DATA);
-  std::vector<MFTAttribute* >::iterator mftAttribute = datas.begin();
-  if (datas.size() > 0) //XXX choose the right one because of ADS 
-  {
-    MFTAttribute* dataAttribute = datas[0];
-    dataAttributes.push_back(dataAttribute);
-
-    for (++mftAttribute; mftAttribute != datas.end(); ++mftAttribute)
-      delete (*mftAttribute);
-    return (dataAttributes); //attribute is not deleted != attributeContent 
-  }
+  std::vector<MFTAttribute* > dataAttributes = this->MFTAttributesType($DATA);
 
   std::vector<MFTAttribute* > attributesLists = this->MFTAttributesType($ATTRIBUTE_LIST);
   std::vector<MFTAttribute* >::iterator attributesList = attributesLists.begin();
@@ -383,9 +362,12 @@ std::vector<MFTAttribute*>      MFTEntryNode::data(void)
     }
     delete (*attributesList);
   }
-  
   return (dataAttributes);
 }
+
+//std::vector<MFTAttribute*>      MFTEntryNode::dataName(std::string const& data)
+//{
+//}
 
 //XXX use BITMAP !!!
 std::vector<IndexEntry> MFTEntryNode::indexes(void)// const //indexesFilename // don't return objectIds, securityDescriptor ...

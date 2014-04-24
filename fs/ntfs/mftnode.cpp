@@ -21,7 +21,7 @@
 #include "mftattributecontenttype.hpp"
 
 //MFTNode::MFTNode(NTFS* ntfs, MFTEntryNode& mftEntryNode) : MFTEntryNode(mftEntryNode)//Node("", 0, NULL, ntfs)
-MFTNode::MFTNode(NTFS* ntfs, MFTEntryNode* mftEntryNode) : Node("", 0, NULL, ntfs), __mftEntryNode(mftEntryNode)
+MFTNode::MFTNode(NTFS* ntfs, MFTEntryNode* mftEntryNode) : Node("", 0, NULL, ntfs), __mftEntryNode(mftEntryNode), __isCompressed(false)
 {
 }
 
@@ -36,8 +36,6 @@ MFTNode::~MFTNode(void)
 
 MFTEntryNode* MFTNode::mftEntryNode(MFTEntryNode* mftEntryNode)
 {
-        //if (mftEntryNode)
-        //this->__mftEntryNode = new MFTEntryNode(*mftEntryNode);
   return (this->__mftEntryNode);
 }
 
@@ -46,12 +44,11 @@ void                MFTNode::setName(const std::string name)
   this->__name = name;
 }
 
-Attributes	MFTNode::_attributes(void)
+void            MFTNode::setMappingAttributes(MappingAttributesInfo const&  mappingAttributesInfo)
 {
-  if (this->__mftEntryNode != NULL)
-    return (this->__mftEntryNode->_attributes());
-  Attributes attr;
-  return (attr);
+  this->mappingAttributesOffset = mappingAttributesInfo.mappingAttributes;
+  this->__isCompressed = mappingAttributesInfo.compressed;
+  this->setSize(mappingAttributesInfo.size);
 }
 
 void		MFTNode::fileMapping(FileMapping* fm)
@@ -59,25 +56,22 @@ void		MFTNode::fileMapping(FileMapping* fm)
   if (this->size() == 0)
     return;
 
-  /* test : indexallocation filemapping */
-  //std::vector<MFTAttribute*> indexAllocation = this->__mftEntryNode->MFTAttributesType($INDEX_ALLOCATION);
-  //if (indexAllocation.size())
-  //{
-    //indexAllocation[0]->content()->fileMapping(fm);
-    //return ;
-  //}
-
-  std::vector<MFTAttribute* >  datas = this->__mftEntryNode->data();
-  std::vector<MFTAttribute*>::iterator data = datas.begin();
-  for (; data != datas.end(); ++data)
+  std::list<MappingAttributes >::iterator attributeOffset = this->mappingAttributesOffset.begin();
+  for (; attributeOffset != this->mappingAttributesOffset.end(); ++attributeOffset)
   {
-    MFTAttributeContent* dataContent = (*data)->content();
-    dataContent->fileMapping(fm);
-    delete (dataContent);
-    delete (*data);
-  }
+    MappingAttributes ma = *attributeOffset;
+    MFTAttribute* data = ma.entryNode->__MFTAttribute(ma.offset);
+    MFTAttributeContent* content = data->content();
+    content->fileMapping(fm);
+    delete data;
+    delete content;   
+  } 
+}
 
-
-  //if (this->mapMFT == true) show mft 
-  //  this->__mftEntryNode->fileMapping(fm);
+Attributes	MFTNode::_attributes(void)
+{
+  if (this->__mftEntryNode != NULL)
+    return (this->__mftEntryNode->_attributes());
+  Attributes attr;
+  return (attr);
 }

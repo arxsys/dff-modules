@@ -239,88 +239,88 @@ MFTNode*  MFTEntryManager::createFromOffset(uint64_t offset, Node* fsNode)
   if (mftEntryNode == NULL)
   {
     //throw Error ?
-    //delete mftNode; 
+    //delete mftNode; null
     std::cout << "Error creating node at offset " << offset << " no mftEntry " << std::endl;
     return (NULL); //ret NULL car peut rien faire finalement !
   }
-  MFTNode* mftNode = new MFTNode(__ntfs, mftEntryNode);
-  //MFTNode* mftNode = new MFTNode(mftEntryNode);
-  ///mftNode->mftEntryNode(mftEntryNode);
-  mftEntryNode->updateState();
-  //mftEntryNode->updateState();
-
   /* 
-   * Set File & Dir
-   */
-  if (!mftEntryNode->isUsed()) //not sufficient need $BITMAP ? check & compare
-    mftNode->setDeleted();
-  if (mftEntryNode->isDirectory())
-    mftNode->setDir();
-  else
-    mftNode->setFile();
-
-  /* 
-   * Set node Size
-   */ 
-  std::vector<MFTAttribute*> datas = mftEntryNode->data();
-  std::vector<MFTAttribute*>::iterator data = datas.begin();
-  if (datas.size())
-  {
-    mftNode->setSize((*data)->contentSize());
-  }
-  for (; data != datas.end(); ++data)
-    delete (*data);
-   
-  /* 
-   * Set node name
+   * get node base name
    */
   std::string name = mftEntryNode->findName();
   if (name == "")
   {
     std::ostringstream sname; 
     sname << "Unknown-" << offset;
-    mftNode->setName(sname.str());
+    name = sname.str();
   }
-  else
-    mftNode->setName(name);
+  /* 
+   * Set node Size & attributes offset for filemaping
+   */
+  std::map<std::string, MappingAttributesInfo > map;
+ 
+  std::vector<MFTAttribute*> datas = mftEntryNode->data();
+  std::vector<MFTAttribute*>::iterator data = datas.begin();
+  for (; data != datas.end(); ++data)
+  {
+    std::string finalName = name;
+    if ((*data)->name() != "")
+    {
+      finalName += ":" + (*data)->name();
+    }
+    ///XXX XXX check if already set car je c pas si ds les attribute list y a aussi la bonne size et aussi compressed recopier
+    map[finalName].size = (*data)->contentSize();
+    map[finalName].compressed = (*data)->isCompressed();
+    map[finalName].mappingAttributes.push_back(MappingAttributes((*data)->offset(), (*data)->mftEntryNode()));
+    delete (*data);
+  }
 
+  //mftEntryNode->updateState(); //?
+  MFTNode* tmp = NULL; //for compat only
+  std::map<std::string, MappingAttributesInfo >::iterator info = map.begin();
+  for (; info != map.end(); ++info)
+  {
+    MFTNode* mftNode = new MFTNode(__ntfs, mftEntryNode); //get mappingInfo at construction ?
+    if ((*info).first == name)
+      tmp = mftNode;
+    else //XXX XXX fix temporaire 
+    {
+      if (tmp)
+        tmp->addChild(mftNode);
+    }
+      
+    if (tmp == NULL)
+      tmp = mftNode;
+    (*info).second.mappingAttributes.unique();
+    mftNode->setMappingAttributes((*info).second);
+    if (!mftEntryNode->isUsed()) //not sufficient need $BITMAP ? check & compare
+      mftNode->setDeleted();
+    if (mftEntryNode->isDirectory())
+      mftNode->setDir();
+    else
+      mftNode->setFile();
+    mftNode->setName((*info).first);
+  }
+  //XXX link ads ! 
+
+  if (tmp == NULL)
+  {
+   //create node with fake name ? and info car carrive aussi de pas avoir de $data ex les directory ! 
+    tmp = new MFTNode(__ntfs, mftEntryNode);
+    if (!mftEntryNode->isUsed()) //not sufficient need $BITMAP ? check & compare
+      tmp->setDeleted();
+    if (mftEntryNode->isDirectory())
+      tmp->setDir();
+    else
+      tmp->setFile();
+    tmp->setName(name);
+  }
   /*
    *  Create Node for unamed $DATA and ADS $DATA 
    */ 
-   
-  
-  //mftNode->setData($DATA);
-  //mftNode->setData($ATTRIBUTE_LIST)
-
-  //for $DATA in Node: -> in mftnode ?
-    //create node for ads
   //for $REPARSE in Node:
     //create vlink 
-
-  //mftNode->setData($DATA, 1)
-  //mftNode->setName($FILE_NAME)
-
-  //mftNode->setData($DATA, 2)
-  //mftNode->setName($DATA_ADS_NAME
-
   //mftNode->vlink = ...? 
-
-  //for x in attrib :
-  //set name
-  // set data
-  //set compressed
-  //set ads
-  //set vlink
-  //if no name and data //don't register
-  //register here ? if all ok ? or mark as bad !  
-
- //si on veut cree tous les attribute de la node : 
-//  ,ftEntry =   MFTEntryNode(x, x,)
-// for attribute in mftEntry:
-//    new MFTNode(mftEntry)->setData(attributeContent)
-//
-
-  return (mftNode);
+  return (tmp); //HEU XXX return main mft ? 
 }
 
 /*

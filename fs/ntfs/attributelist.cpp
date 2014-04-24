@@ -150,7 +150,7 @@ std::vector<MFTAttribute*> AttributeList::MFTAttributes(void)
     {
       if ((*attribute)->isResident())
       {
-        delete (*attribute);
+        delete (*attribute); ///XXX wtf 
         //std::cout << "create a resident attribute ? " << (*attribute)->typeId() << " " << item->typeId() << std::endl;
       }
       else if (((*attribute)->VNCStart() == item->VCNStart()) && ((*attribute)->typeId() == item->typeId()))

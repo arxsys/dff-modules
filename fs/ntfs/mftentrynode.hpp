@@ -45,41 +45,43 @@ PACK_S	MFTEntry
 class MFTEntryNode : public Node
 {
 private:
-  NTFS*			__ntfs; 
-  Node*			__mftNode;
-  MFTEntry*		__MFTEntry;
-  uint64_t		__offset;
-  uint64_t		__state;
+  NTFS*			        __ntfs; 
+  Node*			        __mftNode;
+  MFTEntry*		        __MFTEntry;
+  uint64_t		        __offset;
+  uint64_t		        __state;
 public:
+			        MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::string name, Node* parent);
+			        ~MFTEntryNode();
+  NTFS*			        ntfs(void);
+  Node*			        mftNode(void);
+  virtual uint64_t	        fileMappingState(void);
+  virtual void		        fileMapping(FileMapping* fm);
+  virtual uint64_t	        _attributesState(void);
+  virtual Attributes 	        _attributes(void);
+  void                          updateState(void);
+  uint64_t		        offset(void) const;
+  uint32_t		        signature(void) const;
+  uint32_t		        usedSize(void) const;
+  uint32_t		        allocatedSize(void) const;
+  void			        validate(void) const;
+  uint16_t                      sequence(void) const;
+  uint16_t		        firstAttributeOffset(void) const;
+  uint16_t		        fixupArrayOffset(void) const;
+  uint16_t		        fixupArrayEntryCount(void) const;
+  uint16_t		        fixupArraySignature(void) const;
+  bool                          isUsed(void) const;
+  bool                          isDirectory(void) const;
+  bool                          isCompressed(void) const;
+
+
   virtual class MFTAttribute*	__MFTAttribute(uint16_t offset);
-			MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::string name, Node* parent);
-                        MFTEntryNode(MFTEntryNode& mftEntryNode);
-			~MFTEntryNode();
-  NTFS*			ntfs(void);
-  Node*			mftNode(void);
-  virtual uint64_t	fileMappingState(void);
-  virtual void		fileMapping(FileMapping* fm);
-  virtual uint64_t	_attributesState(void);
-  virtual Attributes 	_attributes(void);
-  void                  updateState(void);
-  uint64_t		offset(void) const;
-  uint32_t		signature(void) const;
-  uint32_t		usedSize(void) const;
-  uint32_t		allocatedSize(void) const;
-  void			validate(void) const;
-  uint16_t              sequence(void) const;
-  uint16_t		firstAttributeOffset(void) const;
-  uint16_t		fixupArrayOffset(void) const;
-  uint16_t		fixupArrayEntryCount(void) const;
-  uint16_t		fixupArraySignature(void) const;
-  bool                  isUsed(void) const;
-  bool                  isDirectory(void) const;
-  bool                  isCompressed(void) const;
   std::vector<MFTAttribute* >	MFTAttributes();
   std::vector<MFTAttribute* >	MFTAttributesType(uint32_t typeId);
 
   const std::string             findName(void); //const 
   std::vector<MFTAttribute*>    data(void); //const
+  std::vector<MFTAttribute*>    data(std::string const& data);
   std::vector<IndexEntry>       indexes(void); // const
 };
 

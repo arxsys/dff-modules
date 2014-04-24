@@ -18,6 +18,7 @@
 #define __MFT_MANAGER_HH__
 
 #include "ntfs_common.hpp"
+#include "mftnode.hpp"
 
 class NTFS;
 class MFTNode;
