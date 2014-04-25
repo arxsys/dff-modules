@@ -138,13 +138,13 @@ std::vector<MFTAttribute*> AttributeList::MFTAttributes(void)
 
     MFTEntryManager* mftManager = this->mftAttribute()->ntfs()->mftManager();
     uint64_t entryId = item->mftEntryId();
-    MFTNode* mftNode  = mftManager->node(entryId);
-    if (mftNode == NULL)
-    {
-      mftNode = mftManager->create(entryId);
-      mftManager->add(entryId, mftNode);
-    } 
-    std::vector<MFTAttribute*> attributes = mftNode->mftEntryNode()->MFTAttributes(); 
+//XXX iugly style
+    MFTEntryNode* itemEntryNode = mftManager->entryNode(entryId);
+    if (itemEntryNode == NULL)
+      mftManager->create(entryId);
+    itemEntryNode = mftManager->entryNode(entryId);
+
+    std::vector<MFTAttribute*> attributes = itemEntryNode->MFTAttributes(); 
     std::vector<MFTAttribute*>::iterator attribute = attributes.begin();
     for (; attribute != attributes.end(); ++attribute)
     {

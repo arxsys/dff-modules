@@ -37,12 +37,14 @@ public:
 class MFTEntryInfo
 {
 public:
-  MFTEntryInfo(MFTNode* node);
+  MFTEntryInfo();
   ~MFTEntryInfo();
   uint64_t              id;
   //uint16_t            sequence;
   std::list<MFTId>      childrenId;
-  MFTNode*              node;
+  MFTNode*              node; //this is need to link other nodes and do final / directory linking  (can't link to an entry)
+  MFTEntryNode*         entryNode; //entry is related to different node causes of ADS etc...
+  std::list<MFTNode*>   nodes;
 };
 
 class MFTEntryManager
@@ -56,9 +58,9 @@ public:
   void                                  linkUnallocated(void);
 
   MFTNode*                              create(uint64_t id);
-  MFTNode*                              createFromOffset(uint64_t offset, Node* fsNode);
+  MFTNode*                              createFromOffset(uint64_t offset, Node* fsNode, int64_t id);
 
-  bool                                  add(uint64_t id, MFTNode* node);
+  //bool                                  add(uint64_t id, MFTNode* node);
   bool                                  addChild(uint64_t nodeId);
   bool                                  addChildId(uint64_t nodeId, MFTNode* node);
   void                                  inChildren(uint64_t nodeId, uint64_t childId);
@@ -66,7 +68,8 @@ public:
          
   uint64_t                              entryCount(void) const;  
   bool                                  exist(uint64_t id) const; 
-  MFTNode*                              node(uint64_t id) const;
+  MFTNode*                              node(uint64_t id) const; //return main data node ? really usefull or return the entry ?
+  MFTEntryNode*                         entryNode(uint64_t id) const;
 private:
   NTFS*                                 __ntfs;
   MFTNode*                              __masterMFTNode;

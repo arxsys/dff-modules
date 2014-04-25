@@ -127,7 +127,6 @@ std::vector<MFTAttribute*>	MFTEntryNode::MFTAttributes(void)
 
 MFTAttribute*			MFTEntryNode::__MFTAttribute(uint16_t offset)
 {
-  MFTAttribute* attr = new MFTAttribute(this, offset);
   return (new MFTAttribute(this, offset));
 }
 
@@ -320,7 +319,10 @@ const std::string   MFTEntryNode::findName(void)
       FileName*	fileName = dynamic_cast<FileName* >((*currentFileName)->content());
 
       if (fileName == NULL)
+      {
+        //XXX delete all MFTAttribute before thrwoing !
         throw std::string("MFTNode can't cast attribute content to FileName");
+      }
       if (fileName->nameSpaceID() <= fileNameID) 
       {
         name = fileName->name();

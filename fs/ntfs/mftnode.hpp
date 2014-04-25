@@ -44,7 +44,6 @@ public:
   bool     compressed;
 };
 
-
 class MFTNode : public Node// MFTEntryNode
 {
 public:
@@ -54,7 +53,6 @@ public:
   void                                 setName(const std::string name);
   Attributes	                       _attributes(void);
   void		                       fileMapping(FileMapping* fm);
-
   void                                 setCompressed(bool isCompressed);
   void                                 setMappingAttributes(MappingAttributesInfo const& mappingAttributesInfo);
 private:

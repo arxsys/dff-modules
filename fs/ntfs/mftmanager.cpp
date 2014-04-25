@@ -45,7 +45,7 @@ bool  MFTId::operator<(MFTId const& other)
 /**
  *  MFTEntryInfo
  */
-MFTEntryInfo::MFTEntryInfo(MFTNode* _node) : id(0), node(_node)
+MFTEntryInfo::MFTEntryInfo() : id(0), node(NULL)
 {
 }
 
@@ -60,9 +60,8 @@ MFTEntryInfo::~MFTEntryInfo()
 MFTEntryManager::MFTEntryManager(NTFS* ntfs) : __ntfs(ntfs) //, __masterMFTNode(mftNode)
 {
   //XXX check for mirror !
-  this->__masterMFTNode = this->createFromOffset(ntfs->bootSectorNode()->MFTLogicalClusterNumber() * ntfs->bootSectorNode()->clusterSize(), ntfs->fsNode());
-  this->add(0, __masterMFTNode);
-
+  this->createFromOffset(ntfs->bootSectorNode()->MFTLogicalClusterNumber() * ntfs->bootSectorNode()->clusterSize(), ntfs->fsNode(), 0);
+  this->__masterMFTNode = this->node(0); //or entrynode 
   this->__numberOfEntry = this->__masterMFTNode->size() / this->__ntfs->bootSectorNode()->MFTRecordSize();
 }
 
@@ -96,18 +95,6 @@ bool    MFTEntryManager::exist(uint64_t id) const
   return (false);
 }
 
-/**
- *  Add a node to an MFTEntry
- */
-bool    MFTEntryManager::add(uint64_t id, MFTNode* node)
-{
-  if (this->exist(id) == false)
-  {
-    this->__entries[id] = new MFTEntryInfo(node);
-    //this->addChildId(id, node);
-  }
-  return (true);
-}
 
 /**
  *  Return Node corresponding to MFT id or NULL 
@@ -120,6 +107,21 @@ MFTNode*  MFTEntryManager::node(uint64_t id) const
     MFTEntryInfo* info = (*entry).second;
     if (info)
       return (info->node);
+  }
+  return (NULL);
+}
+
+/**
+ *  Return EntryNode corresponding to MFT id or NULL 
+ */
+MFTEntryNode*  MFTEntryManager::entryNode(uint64_t id) const
+{
+  std::map<uint64_t, MFTEntryInfo*>::const_iterator entry = this->__entries.find(id);
+  if (entry != this->__entries.end())
+  {
+    MFTEntryInfo* info = (*entry).second;
+    if (info)
+      return (info->entryNode);
   }
   return (NULL);
 }
@@ -225,17 +227,23 @@ void    MFTEntryManager::childrenSanitaze(void)
 MFTNode*   MFTEntryManager::create(uint64_t id) //XXX XXX create only : not added in bases ?
 {
   uint32_t mftRecordSize = this->__ntfs->bootSectorNode()->MFTRecordSize();
-  return (this->createFromOffset(id * mftRecordSize, this->__masterMFTNode));
+  MFTNode* mftNode = this->createFromOffset(id * mftRecordSize, this->__masterMFTNode, id);
+  return (mftNode);
 }
 
-MFTNode*  MFTEntryManager::createFromOffset(uint64_t offset, Node* fsNode)
+MFTNode*  MFTEntryManager::createFromOffset(uint64_t offset, Node* fsNode, int64_t id)
 {
-//ex: for each attribute create a node with attribute content:
-//    create MFTEntryNode
-//    for each attributes in MFTEntryNode
-//       NTFSNode(MFTEntryNode, name, data// $attriubte)
-//       
   MFTEntryNode* mftEntryNode = new MFTEntryNode(this->__ntfs, fsNode, offset, std::string("MFTEntry"), NULL);
+  //if (this->exist(id) == false)
+  //{
+  MFTEntryInfo* mftEntryInfo = new MFTEntryInfo;
+  if (id != -1)
+  {
+    this->__entries[id] = mftEntryInfo;
+    mftEntryInfo->entryNode = mftEntryNode;
+  }
+  //} //XXX
+
   if (mftEntryNode == NULL)
   {
     //throw Error ?
@@ -257,6 +265,7 @@ MFTNode*  MFTEntryManager::createFromOffset(uint64_t offset, Node* fsNode)
    * Set node Size & attributes offset for filemaping
    */
   std::map<std::string, MappingAttributesInfo > map;
+  MFTNode* tmp = NULL; //for compat only
  
   std::vector<MFTAttribute*> datas = mftEntryNode->data();
   std::vector<MFTAttribute*>::iterator data = datas.begin();
@@ -264,48 +273,19 @@ MFTNode*  MFTEntryManager::createFromOffset(uint64_t offset, Node* fsNode)
   {
     std::string finalName = name;
     if ((*data)->name() != "")
-    {
       finalName += ":" + (*data)->name();
-    }
     ///XXX XXX check if already set car je c pas si ds les attribute list y a aussi la bonne size et aussi compressed recopier
     map[finalName].size = (*data)->contentSize();
     map[finalName].compressed = (*data)->isCompressed();
     map[finalName].mappingAttributes.push_back(MappingAttributes((*data)->offset(), (*data)->mftEntryNode()));
     delete (*data);
   }
-
-  //mftEntryNode->updateState(); //?
-  MFTNode* tmp = NULL; //for compat only
-  std::map<std::string, MappingAttributesInfo >::iterator info = map.begin();
-  for (; info != map.end(); ++info)
+  if (datas.size() == 0) //ex direectory etc : have name but no data || handle no name no data also !
   {
-    MFTNode* mftNode = new MFTNode(__ntfs, mftEntryNode); //get mappingInfo at construction ?
-    if ((*info).first == name)
-      tmp = mftNode;
-    else //XXX XXX fix temporaire 
-    {
-      if (tmp)
-        tmp->addChild(mftNode);
-    }
-      
-    if (tmp == NULL)
-      tmp = mftNode;
-    (*info).second.mappingAttributes.unique();
-    mftNode->setMappingAttributes((*info).second);
-    if (!mftEntryNode->isUsed()) //not sufficient need $BITMAP ? check & compare
-      mftNode->setDeleted();
-    if (mftEntryNode->isDirectory())
-      mftNode->setDir();
-    else
-      mftNode->setFile();
-    mftNode->setName((*info).first);
-  }
-  //XXX link ads ! 
-
-  if (tmp == NULL)
-  {
-   //create node with fake name ? and info car carrive aussi de pas avoir de $data ex les directory ! 
-    tmp = new MFTNode(__ntfs, mftEntryNode);
+    MFTNode* mftNode = new MFTNode(__ntfs, mftEntryNode);
+    if (id != -1)
+      mftEntryInfo->nodes.push_back(mftNode);
+    tmp = mftNode;
     if (!mftEntryNode->isUsed()) //not sufficient need $BITMAP ? check & compare
       tmp->setDeleted();
     if (mftEntryNode->isDirectory())
@@ -314,9 +294,42 @@ MFTNode*  MFTEntryManager::createFromOffset(uint64_t offset, Node* fsNode)
       tmp->setFile();
     tmp->setName(name);
   }
-  /*
-   *  Create Node for unamed $DATA and ADS $DATA 
-   */ 
+  else
+  {
+  //mftEntryNode->updateState(); //?
+    std::map<std::string, MappingAttributesInfo >::iterator info = map.begin();
+    for (; info != map.end(); ++info)
+    {
+      MFTNode* mftNode = new MFTNode(__ntfs, mftEntryNode); //get mappingInfo at construction ?
+      if (id != -1)
+        mftEntryInfo->nodes.push_back(mftNode);
+
+      if ((*info).first == name)
+        tmp = mftNode;
+      else //XXX XXX fix temporaire 
+      {
+       if (tmp)
+         tmp->addChild(mftNode);
+      }
+      
+      if (tmp == NULL)
+        tmp = mftNode;
+      (*info).second.mappingAttributes.unique();
+      mftNode->setMappingAttributes((*info).second);
+      if (!mftEntryNode->isUsed()) //not sufficient need $BITMAP ? check & compare
+        mftNode->setDeleted();
+      if (mftEntryNode->isDirectory())
+        mftNode->setDir();
+      else
+        mftNode->setFile();
+      mftNode->setName((*info).first);
+     //XXX delete MFTNode ??
+    }
+  }
+  //XXX link ads ! 
+  if (id != -1)
+    mftEntryInfo->node = tmp;
+
   //for $REPARSE in Node:
     //create vlink 
   //mftNode->vlink = ...? 
@@ -343,10 +356,7 @@ void    MFTEntryManager::initEntries(void)
     try 
     {
       if (this->__entries[id] == NULL)
-      {
-        MFTNode* currentMFTNode = this->create(id);
-        this->add(id, currentMFTNode);
-      }
+        this->create(id);
     }
     catch (std::string& error)
     {
@@ -459,7 +469,7 @@ void    MFTEntryManager::linkUnallocated(void)
       {
         try
         {
-          MFTNode* entry = this->createFromOffset(offset, fsNode);
+          MFTNode* entry = this->createFromOffset(offset, fsNode, -1);
           unallocated->addChild(entry);
           recovered++;
         }
