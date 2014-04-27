@@ -22,15 +22,17 @@
 class NTFSOpt
 {
 public:
-        NTFSOpt(Attributes args);
-        ~NTFSOpt();
-  Node* fsNode(void) const;
-  bool  validateBootSector(void) const;
-  bool  recovery(void) const;
+                NTFSOpt(Attributes args);
+                ~NTFSOpt();
+  Node*         fsNode(void) const;
+  bool          recovery(void) const;
+  std::string   driveName(void) const;
+  bool          validateBootSector(void) const;
 private:
-  Node* __fsNode;
-  bool  __validateBootSector;
-  bool  __recovery;
+  Node*         __fsNode;
+  bool          __validateBootSector;
+  bool          __recovery;
+  std::string   __driveName;
 };
 
 #endif

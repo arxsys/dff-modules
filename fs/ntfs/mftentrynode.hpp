@@ -22,6 +22,7 @@
 
 class NTFS;
 class MFTAttribute;
+typedef std::vector<MFTAttribute* > MFTAttributes;
 
 #define		MFT_SIGNATURE_FILE	0x454C4946
 #define		MFT_SIGNATURE_BAAD	0x44414142
@@ -76,12 +77,12 @@ public:
 
 
   virtual class MFTAttribute*	__MFTAttribute(uint16_t offset);
-  std::vector<MFTAttribute* >	MFTAttributes();
-  std::vector<MFTAttribute* >	MFTAttributesType(uint32_t typeId);
+  MFTAttributes	                mftAttributes();
+  MFTAttributes	                findMFTAttributes(uint32_t typeId);
 
   const std::string             findName(void); //const 
-  std::vector<MFTAttribute*>    data(void); //const
-  std::vector<MFTAttribute*>    data(std::string const& data);
+  MFTAttributes                 data(void); //const
+  MFTAttributes                 data(std::string const& data);
   std::vector<IndexEntry>       indexes(void); // const
 };
 

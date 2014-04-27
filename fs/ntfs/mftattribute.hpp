@@ -93,5 +93,6 @@ public:
   MFTAttributeContent*          content(void);
 };
 
-#endif
+typedef std::vector<MFTAttribute* > MFTAttributes;
 
+#endif

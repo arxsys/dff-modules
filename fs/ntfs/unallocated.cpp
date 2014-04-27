@@ -46,7 +46,7 @@ std::vector<Range> Unallocated::ranges(void)
   if (!bitmapNode)
     return (ranges);
 
-  std::vector<MFTAttribute*> attributes = bitmapNode->mftEntryNode()->MFTAttributesType($DATA);
+  std::vector<MFTAttribute*> attributes = bitmapNode->mftEntryNode()->findMFTAttributes($DATA);
   std::vector<MFTAttribute*>::iterator  attribute = attributes.begin();
 
   MFTAttributeContent* content = (*attribute)->content();

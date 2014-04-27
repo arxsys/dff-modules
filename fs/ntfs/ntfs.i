@@ -65,6 +65,10 @@ class ntfs(Module):
                            "description": "managed mime type",
                            "type" : typeId.String,
                            "values" : ["NTFS"]})
+    self.conf.addArgument({"name" : "drive-name",
+                          "description": "Use this drive name to link reparse point and symlink",
+                          "input" : Argument.Optional|Argument.Single|typeId.String,
+                          "values": ["C:"]})
     self.conf.description = "Creates a tree from a NTFS file system, for regular and deleted/orphan files.\nIt also provides human-readable dump of MFT or Indexex entries."
     self.tags = "File systems"
 %}

@@ -56,6 +56,7 @@ public:
   void                                  linkEntries(void);
   void                                  linkOrphanEntries(void);
   void                                  linkUnallocated(void);
+  void                                  linkReparsePoint(void) const;
 
   MFTNode*                              create(uint64_t id);
   MFTNode*                              createFromOffset(uint64_t offset, Node* fsNode, int64_t id);
@@ -70,6 +71,7 @@ public:
   bool                                  exist(uint64_t id) const; 
   MFTNode*                              node(uint64_t id) const; //return main data node ? really usefull or return the entry ?
   MFTEntryNode*                         entryNode(uint64_t id) const;
+  Node*                                 mapLink(MFTNode* node) const;
 private:
   NTFS*                                 __ntfs;
   MFTNode*                              __masterMFTNode;

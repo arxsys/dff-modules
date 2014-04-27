@@ -43,8 +43,8 @@ MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::stri
 
   //for test only : read all attributes of the node 
   /*
-  std::vector<MFTAttribute* > mftAttributes = this->MFTAttributes();
-  std::vector<MFTAttribute* >::iterator	mftAttribute;
+  MFTAttributes mftAttributes = this->MFTAttributes();
+  MFTAttributes::iterator	mftAttribute;
   mftAttribute = mftAttributes.begin();
   for (; mftAttribute != mftAttributes.end(); ++mftAttribute)
   {
@@ -82,13 +82,16 @@ MFTEntryNode::~MFTEntryNode()
   }
 }
 
-std::vector<MFTAttribute*>	MFTEntryNode::MFTAttributesType(uint32_t typeId)
+/** 
+ *  Return all MFT Attributes of type typeId
+ */
+MFTAttributes	MFTEntryNode::findMFTAttributes(uint32_t typeId)
 {
-  std::vector<MFTAttribute* >		mftAttributesType;
-  std::vector<MFTAttribute* >		mftAttributes;
-  std::vector<MFTAttribute* >::iterator	mftAttribute;
+  MFTAttributes		mftAttributesType;
+  MFTAttributes		mftAttributes;
+  MFTAttributes::iterator	mftAttribute;
 
-  mftAttributes = this->MFTAttributes();
+  mftAttributes = this->mftAttributes();
   mftAttribute = mftAttributes.begin();
   for (; mftAttribute != mftAttributes.end(); ++mftAttribute)
     if ((*mftAttribute)->typeId() == typeId)
@@ -98,9 +101,13 @@ std::vector<MFTAttribute*>	MFTEntryNode::MFTAttributesType(uint32_t typeId)
   return (mftAttributesType);
 }
 
-std::vector<MFTAttribute*>	MFTEntryNode::MFTAttributes(void)
+/**
+ *  Return all MFT Attributes
+ */
+
+MFTAttributes	MFTEntryNode::mftAttributes(void)
 {
-  std::vector<MFTAttribute*>	mftAttributes; 
+  MFTAttributes	mftAttributes; 
   uint32_t offset = this->firstAttributeOffset();
 
   try 
@@ -178,8 +185,8 @@ Attributes	MFTEntryNode::_attributes(void)
   MAP_ATTR("Allocated size", this->allocatedSize())
   MAP_ATTR("First attribute offset", this->firstAttributeOffset())
 
-  std::vector<MFTAttribute*>		mftAttributes = this->MFTAttributes();
-  std::vector<MFTAttribute*>::iterator  mftAttribute = mftAttributes.begin();
+  MFTAttributes		mftAttributes = this->mftAttributes();
+  MFTAttributes::iterator  mftAttribute = mftAttributes.begin();
   for (; mftAttribute != mftAttributes.end(); ++mftAttribute)
   {
     try 
@@ -311,8 +318,8 @@ const std::string   MFTEntryNode::findName(void)
   std::string name;
   try 
   {
-    std::vector<MFTAttribute* > fileNames = this->MFTAttributesType($FILE_NAME);
-    std::vector<MFTAttribute* >::iterator currentFileName = fileNames.begin();
+    MFTAttributes fileNames = this->findMFTAttributes($FILE_NAME);
+    MFTAttributes::iterator currentFileName = fileNames.begin();
 
     for (; currentFileName != fileNames.end(); ++currentFileName)
     {
@@ -343,17 +350,17 @@ const std::string   MFTEntryNode::findName(void)
 /**
  *  Serch for all $DATA attribute
  */
-std::vector<MFTAttribute*>      MFTEntryNode::data(void)
+MFTAttributes      MFTEntryNode::data(void)
 {
-  std::vector<MFTAttribute* > dataAttributes = this->MFTAttributesType($DATA);
+  MFTAttributes dataAttributes = this->findMFTAttributes($DATA);
 
-  std::vector<MFTAttribute* > attributesLists = this->MFTAttributesType($ATTRIBUTE_LIST);
-  std::vector<MFTAttribute* >::iterator attributesList = attributesLists.begin();
+  MFTAttributes attributesLists = this->findMFTAttributes($ATTRIBUTE_LIST);
+  MFTAttributes::iterator attributesList = attributesLists.begin();
   if (attributesLists.size() > 0) // in normal case there is only one attribute list 
   {
     AttributeList* attributeList = static_cast<AttributeList* >((*attributesList)->content());
-    std::vector<MFTAttribute* > attrs = attributeList->MFTAttributes();
-    std::vector<MFTAttribute* >::iterator attr = attrs.begin();
+    MFTAttributes attrs = attributeList->mftAttributes();
+    MFTAttributes::iterator attr = attrs.begin();
       
     for (; attr != attrs.end(); ++attr)
     {
@@ -367,7 +374,7 @@ std::vector<MFTAttribute*>      MFTEntryNode::data(void)
   return (dataAttributes);
 }
 
-//std::vector<MFTAttribute*>      MFTEntryNode::dataName(std::string const& data)
+//MFTAttributes      MFTEntryNode::dataName(std::string const& data)
 //{
 //}
 
@@ -376,8 +383,8 @@ std::vector<IndexEntry> MFTEntryNode::indexes(void)// const //indexesFilename //
 {
   std::vector<IndexEntry> indexes;
 
-  std::vector<MFTAttribute*> indexRootAttributes = this->MFTAttributesType($INDEX_ROOT);
-  std::vector<MFTAttribute*>::iterator indexRootAttribute = indexRootAttributes.begin(); 
+  MFTAttributes indexRootAttributes = this->findMFTAttributes($INDEX_ROOT);
+  MFTAttributes::iterator indexRootAttribute = indexRootAttributes.begin(); 
 
   if (indexRootAttributes.size() > 0)
   {
@@ -403,8 +410,8 @@ std::vector<IndexEntry> MFTEntryNode::indexes(void)// const //indexesFilename //
   else 
     return (indexes);
 
-  std::vector<MFTAttribute*> allocations = this->MFTAttributesType($INDEX_ALLOCATION);
-  std::vector<MFTAttribute*>::iterator  allocation = allocations.begin(); 
+  MFTAttributes allocations = this->findMFTAttributes($INDEX_ALLOCATION);
+  MFTAttributes::iterator  allocation = allocations.begin(); 
   for (; allocation != allocations.end(); ++allocation)
   {
     IndexAllocation* indexAllocation = dynamic_cast<IndexAllocation* >((*allocation)->content());
@@ -417,13 +424,13 @@ std::vector<IndexEntry> MFTEntryNode::indexes(void)// const //indexesFilename //
     delete (*allocation);
   }
  
-  std::vector<MFTAttribute* > attributesLists = this->MFTAttributesType($ATTRIBUTE_LIST);
-  std::vector<MFTAttribute* >::iterator attributesList = attributesLists.begin();
+  MFTAttributes attributesLists = this->findMFTAttributes($ATTRIBUTE_LIST);
+  MFTAttributes::iterator attributesList = attributesLists.begin();
   if (attributesLists.size() > 0) 
   {
     AttributeList* attributeList = static_cast<AttributeList* >((*attributesList)->content());
-    std::vector<MFTAttribute* > attrs = attributeList->MFTAttributes();
-    std::vector<MFTAttribute* >::iterator attr = attrs.begin();
+    MFTAttributes attrs = attributeList->mftAttributes();
+    MFTAttributes::iterator attr = attrs.begin();
      
     //if (attributesLists.size() > 1)
     //std::cout << "more than one attributes list found in index" << std::endl;  

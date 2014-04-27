@@ -13,6 +13,8 @@
  *  Solal Jacob <sja@digital-forensic.org>
  */
 
+#include "vlink.hpp"
+
 #include "mftmanager.hpp"
 #include "ntfs.hpp"
 #include "ntfsopt.hpp"
@@ -330,6 +332,8 @@ MFTNode*  MFTEntryManager::createFromOffset(uint64_t offset, Node* fsNode, int64
   if (id != -1)
     mftEntryInfo->node = tmp;
 
+  
+
   //for $REPARSE in Node:
     //create vlink 
   //mftNode->vlink = ...? 
@@ -399,7 +403,7 @@ void    MFTEntryManager::linkOrphanEntries(void)
  
     if (mftNode && (mftNode->parent() == NULL))
     {
-      std::vector<MFTAttribute* > attributes = mftNode->mftEntryNode()->MFTAttributesType($FILE_NAME);
+      std::vector<MFTAttribute* > attributes = mftNode->mftEntryNode()->findMFTAttributes($FILE_NAME);
       std::vector<MFTAttribute* >::iterator attribute = attributes.begin();
       if (attributes.size())
       {
@@ -484,4 +488,99 @@ void    MFTEntryManager::linkUnallocated(void)
   this->__ntfs->setStateInfo(state.str());
 
   delete fsFile;
+}
+
+/**
+ *  Create a VLink to reparse point if path is found and return VLink
+ *  else return NULL
+ */
+Node*  MFTEntryManager::mapLink(MFTNode* node) const
+{
+  MFTEntryNode* mftEntryNode = node->mftEntryNode();
+  if (!mftEntryNode)
+    return (NULL);
+
+  MFTAttributes reparses = mftEntryNode->findMFTAttributes($REPARSE_POINT);
+  if (reparses.size())
+  {
+    MFTAttributes::iterator attribute = reparses.begin();
+    MFTAttributeContent* content = (*attribute)->content();
+
+    ReparsePoint* reparsePoint = dynamic_cast<ReparsePoint* >(content);
+    if (reparsePoint)
+    {
+      std::string driveName = this->__ntfs->opt()->driveName();
+      std::string printName = reparsePoint->print();
+
+      if (driveName == printName.substr(0, 2))
+      {
+        std::string path = printName.substr(3); //chomp first '\'
+        Node* nodeToLink = this->__ntfs->rootDirectoryNode();
+        size_t pathPos = path.find("\\");
+        std::string childName = "root";
+        while (true)
+        {
+          std::vector<Node* > children = nodeToLink->children();
+          std::vector<Node* >::iterator child = children.begin(); 
+          if (children.size() == 0)
+            break;
+          for (; child != children.end() ;++child) 
+          {
+            if ((*child)->name() == childName)
+            {
+              nodeToLink = (*child);
+              if (childName == path)
+              {
+                VLink* vlink = new VLink(nodeToLink, node);
+                delete reparsePoint;
+                for (; attribute != reparses.end(); ++attribute)
+                  delete (*attribute);
+                return (vlink); //XXX ret vlink
+              }
+              break;
+            }
+          }
+          if (child == children.end())
+            break;
+          if (childName == path)
+             break; //avoid invfinite loop
+          pathPos = path.find("\\");
+          if (pathPos == std::string::npos) //end link to 
+            childName = path;
+          else
+          {
+            childName = path.substr(0 , pathPos);
+            path = path.substr(pathPos + 1);
+          }
+        }
+        std::string error("Can't link create VLink for repars point : " + printName);
+        std::cout << error << std::endl;
+      }
+      delete reparsePoint;
+    }
+    for (; attribute != reparses.end(); ++attribute)
+      delete (*attribute);
+  }
+  return (NULL);
+}
+
+/**
+ *  Search for all MFTNode with reparse point
+ *  and try to create vlink from the node to the reparse point 
+ */
+void   MFTEntryManager::linkReparsePoint(void) const
+{
+  //sort by path to avoid dead link 
+  //ex : Users -> vlink Users -> app/data -> vlink ie ...
+  //resolve first ? 
+  //handle vlink to directory in gui 
+  //remove mftnode ?
+  this->__ntfs->setStateInfo("Linking reparse point");
+  std::map<uint64_t, MFTEntryInfo*>::const_iterator entry = this->__entries.begin();
+  for (; entry != this->__entries.end(); ++entry)
+  {
+    MFTNode* mftNode = entry->second->node;
+    if (mftNode)
+      this->mapLink(mftNode);
+  }
 }

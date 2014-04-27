@@ -124,7 +124,7 @@ AttributeList::~AttributeList()
 {
 }
 
-std::vector<MFTAttribute*> AttributeList::MFTAttributes(void)
+MFTAttributes   AttributeList::mftAttributes(void)
 {
   std::vector<MFTAttribute*> found;
   std::vector<AttributeListItems>::iterator item = this->__attributes.begin();
@@ -144,7 +144,7 @@ std::vector<MFTAttribute*> AttributeList::MFTAttributes(void)
       mftManager->create(entryId);
     itemEntryNode = mftManager->entryNode(entryId);
 
-    std::vector<MFTAttribute*> attributes = itemEntryNode->MFTAttributes(); 
+    std::vector<MFTAttribute*> attributes = itemEntryNode->mftAttributes(); 
     std::vector<MFTAttribute*>::iterator attribute = attributes.begin();
     for (; attribute != attributes.end(); ++attribute)
     {

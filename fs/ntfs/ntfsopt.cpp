@@ -18,6 +18,8 @@
 
 NTFSOpt::NTFSOpt(Attributes args) : __fsNode(NULL), __validateBootSector(false), __recovery(true)
 {
+  Attributes::iterator arg;
+
   if (args.find("file") != args.end())
     this->__fsNode = args["file"]->value<Node* >();
   else
@@ -26,23 +28,33 @@ NTFSOpt::NTFSOpt(Attributes args) : __fsNode(NULL), __validateBootSector(false),
     this->__validateBootSector = false;
   if (args.find("no-recovery") != args.end())
     this->__recovery = false;
+  arg =args.find("drive-name");
+  if (arg != args.end())
+    this->__driveName = arg->second->value<std::string>();
+  else 
+    this->__driveName = "C:";
 }
 
 NTFSOpt::~NTFSOpt(void)
 {
 }
 
-Node*   NTFSOpt::fsNode(void) const
+Node*           NTFSOpt::fsNode(void) const
 {
   return (this->__fsNode);
 }
 
-bool    NTFSOpt::recovery(void) const
+bool            NTFSOpt::recovery(void) const
 {
   return (this->__recovery);
 }
 
-bool    NTFSOpt::validateBootSector(void) const
+bool            NTFSOpt::validateBootSector(void) const
 {
   return (this->__validateBootSector);
+}
+
+std::string     NTFSOpt::driveName(void) const
+{
+  return (this->__driveName);
 }

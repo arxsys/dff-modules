@@ -20,6 +20,7 @@
 #include  <vector>
 
 #include "ntfs_common.hpp"
+#include "mftattribute.hpp"
 #include "mftattributecontent.hpp"
 
 PACK_S AttributeList_s
@@ -60,7 +61,7 @@ public:
                                 AttributeList(MFTAttribute* mftAttribute);
 		                ~AttributeList();
   Attributes                    _attributes(void);
-  std::vector<MFTAttribute*>    MFTAttributes(void);
+  MFTAttributes                 mftAttributes(void);
   const std::string             typeName(void) const;
   static MFTAttributeContent*	create(MFTAttribute* mftAttribute);
 };
