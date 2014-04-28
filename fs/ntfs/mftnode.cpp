@@ -91,6 +91,8 @@ int32_t         MFTNode::readCompressed(void* buff, unsigned int size, uint64_t*
     MFTAttribute* dataAttribute = mappingAttributes.entryNode->__MFTAttribute(mappingAttributes.offset);
     MFTAttributeContent* content = dataAttribute->content();
     Data* data = dynamic_cast<Data*>(content);  
+    if (!data)
+     return (0);
 
     if (!compressionBlockSize)
       compressionBlockSize = dataAttribute->compressionBlockSize();

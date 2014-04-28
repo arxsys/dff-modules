@@ -135,7 +135,15 @@ int32_t  NTFS::vread(int fd, void *buff, unsigned int size)
   if (fi->offset > mftNode->size())
     return (0);
 
-  if (!mftNode->isCompressed())
-    return (mfso::vread(fd, buff, size));
-  return (mftNode->readCompressed(buff, size, &fi->offset));
+  try 
+  {
+    if (!mftNode->isCompressed())
+      return (mfso::vread(fd, buff, size));
+    return (mftNode->readCompressed(buff, size, &fi->offset));
+  }
+  catch (const std::string& error)
+  {
+    std::string finalError = "NTFS::vread on " + mftNode->absolute() + " error: " + error;
+    throw vfsError(finalError);
+  }
 }

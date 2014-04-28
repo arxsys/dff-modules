@@ -236,20 +236,28 @@ bool    MFTAttribute::isSparse(void) const
 
 uint32_t MFTAttribute::compressionBlockSize(void) const
 {
+  if (!this->__nonResidentAttribute)
+    throw std::string("MFTAttribute can't access non resident attribute");
   return (1 << this->__nonResidentAttribute->compressionBlockSize);
 }
 
 uint64_t MFTAttribute::contentAllocatedSize(void) const
 {
+  if (!this->__nonResidentAttribute)
+    throw std::string("MFTAttribute can't access non resident attribute");
   return (this->__nonResidentAttribute->contentAllocatedSize);
 }
 
 uint64_t MFTAttribute::contentActualSize(void) const
 {
+  if (!this->__nonResidentAttribute)
+    throw std::string("MFTAttribute can't access non resident attribute");
   return (this->__nonResidentAttribute->contentActualSize);
 }
 
 uint64_t MFTAttribute::contentInitializedSize(void) const
 {
+  if (!this->__nonResidentAttribute)
+    throw std::string("MFTAttribute can't access non resident attribute");
   return (this->__nonResidentAttribute->contentInitializedSize);
 }

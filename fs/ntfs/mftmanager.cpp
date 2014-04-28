@@ -47,7 +47,7 @@ bool  MFTId::operator<(MFTId const& other)
 /**
  *  MFTEntryInfo
  */
-MFTEntryInfo::MFTEntryInfo() : id(0), node(NULL)
+MFTEntryInfo::MFTEntryInfo() : id(0), node(NULL), entryNode(NULL)
 {
 }
 
@@ -63,7 +63,9 @@ MFTEntryManager::MFTEntryManager(NTFS* ntfs) : __ntfs(ntfs) //, __masterMFTNode(
 {
   //XXX check for mirror !
   this->createFromOffset(ntfs->bootSectorNode()->MFTLogicalClusterNumber() * ntfs->bootSectorNode()->clusterSize(), ntfs->fsNode(), 0);
-  this->__masterMFTNode = this->node(0); //or entrynode 
+  this->__masterMFTNode = this->node(0); //or entrynode
+  if (this->__masterMFTNode == NULL)
+    throw std::string("Can't create master MFT entry"); //try mirror 
   this->__numberOfEntry = this->__masterMFTNode->size() / this->__ntfs->bootSectorNode()->MFTRecordSize();
 }
 

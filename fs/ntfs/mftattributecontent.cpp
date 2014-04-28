@@ -87,7 +87,6 @@ std::vector<RunList>    MFTAttributeContent::runList(void)
       if (runList->read(&runOffset, runListInfo.info.offsetSize) != runListInfo.info.offsetSize)
         break;
 
-    //if ((runListInfo.info.offsetSize > 0) && (int8_t)(runOffset >> (8 * (runListInfo.info.offsetSize - 1))) < 0) 
     if ((runListInfo.info.offsetSize > 0) && (int8_t)(runOffset >> (8 * (runListInfo.info.offsetSize - 1))) < 0) 
     {
       int64_t toffset = -1;
@@ -111,7 +110,7 @@ std::vector<RunList>    MFTAttributeContent::runList(void)
   return (runLists);
 }
 
-/*
+/**
  *  Return MFTAttribute attributes
  */ 
 Attributes	MFTAttributeContent::_attributes(void)
