@@ -108,14 +108,13 @@ class CAT(QSplitter, Script):
     self.args = args
     try:
       self.node = args["file"].value()
-      #self.offsets = self.linecount()
+      self.offsets = self.linecount()
     except:
       pass
 
   def g_display(self):
-    return 
-    #QSplitter.__init__(self)
-    #self.initShape()
+    QSplitter.__init__(self)
+    self.initShape()
 
     self.read(0)
 
