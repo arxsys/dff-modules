@@ -94,7 +94,7 @@ class CompoundDocumentParser(object):
 	  #except RuntimeError, e:
 	  #pass	 
           except :
-	    error()
+	    #error()
 	    pass
         if not 'no-extraction' in largs:
 	  del stream 
