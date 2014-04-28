@@ -105,6 +105,7 @@ class PropertySetStream(Struct):
               propertyCount += 1		
 	      vfile.seek(sectionHeader.Offset + propert.Offset)
               propert.Variant = MSVariant(vfile)
+              #print propert.Variant # c ici que c set ?? 
 	      self.sectionList.append(sectionHeader)
 	  vfile.seek(currentSectionListOffset)
 	  count += 1
@@ -127,6 +128,3 @@ class PropertySetStream(Struct):
 	  print propert
 	  print propert.Variant.Type
 	  print propert.Variant.Value
-
-
-

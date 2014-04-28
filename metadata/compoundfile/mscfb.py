@@ -217,7 +217,14 @@ class CompoundDocumentHeader(Struct):
      self.entries = DirectoryEntries(fat, minifat, self.FirstDirSectLocation, self.header, self.node, self.mfsobj, register)
      
   def streams(self):
-     return self.entries.entries()
+     entries = self.entries.entries()
+     sortedEntries = []
+     for entry in entries:
+       if entry.objectName == "DocumentSummaryInformation": #special case it will be parsed first so we could used code page to decode properly other entry
+         sortedEntries.insert(0, entry)
+       else:
+         sortedEntries.append(entry) 
+     return sortedEntries 
 
   def _attributes(self):
      try:

@@ -42,6 +42,7 @@ class CompoundDocumentParser(object):
      self.node = node
      self.attr = {} 
      self.extraAttr = []
+     self.codePage = None
      try :    
         self.cdh = CompoundDocumentHeader(node, mfsobj)
 	self.cdh.parseDocument(not 'no-extraction' in largs)
@@ -66,6 +67,7 @@ class CompoundDocumentParser(object):
 	     else:
 	       propertySet = PropertySetStream(stream, OfficeDocumentSectionCLSID.keys())
 	       for clsid in OfficeDocumentSectionCLSID.iterkeys():
+                  print clsid 
 	          section = propertySet.sectionCLSID(clsid)
 	          if section:
 		    (sectionName, sectionIDS) = OfficeDocumentSectionCLSID[clsid]
@@ -77,6 +79,12 @@ class CompoundDocumentParser(object):
 		         if p and isinstance(p, Variant): #Thumbnail is type node
 			   if v == 'Total editing time': #special case see msoshared.py
 			     p = Variant(str(datetime.timedelta(seconds=(p.value()/10000000))))
+                           elif v == 'Code page':
+                             codePage = p.value()
+                             if isinstance(codePage, long):
+                               self.codePage = 'cp' + str(codePage)
+                           elif self.codePage and (v == "Title" or v == "Subject" or v == "Author" or v == "Comments" or v == "Last Author"):
+                             p = Variant(p.value().decode(self.codePage).encode('UTF-8'))
 			   else:
 			     p = Variant(p)
 			   mattr[v] =  p
@@ -86,7 +94,7 @@ class CompoundDocumentParser(object):
 	  #except RuntimeError, e:
 	  #pass	 
           except :
-	    #error()
+	    error()
 	    pass
         if not 'no-extraction' in largs:
 	  del stream 
