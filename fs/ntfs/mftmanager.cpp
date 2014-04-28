@@ -331,13 +331,7 @@ MFTNode*  MFTEntryManager::createFromOffset(uint64_t offset, Node* fsNode, int64
   //XXX link ads ! 
   if (id != -1)
     mftEntryInfo->node = tmp;
-
-  
-
-  //for $REPARSE in Node:
-    //create vlink 
-  //mftNode->vlink = ...? 
-  return (tmp); //HEU XXX return main mft ? 
+  return (tmp); //XXX return main mft ? 
 }
 
 /*

@@ -36,7 +36,7 @@ CompressionInfo::~CompressionInfo(void)
   free(this->comp_buf);
 }
 
-void Data::uncompressUnit(CompressionInfo* comp)
+void Data::__uncompressBlock(CompressionInfo* comp)
 { //code from sleuthkit 4.0.x
   comp->uncomp_idx = 0;
   for (size_t cl_index = 0; cl_index + 1 < comp->comp_len;) 
@@ -127,7 +127,7 @@ void Data::uncompressUnit(CompressionInfo* comp)
   }
 }
 
-uint64_t Data::uncompressBlock(VFile* fs, RunList run, char** data, CompressionInfo* comp, uint64_t* lastValidOffset, uint32_t compressionBlockSize)
+uint64_t Data::__readBlock(VFile* fs, RunList run, uint8_t** data, int64_t runSize, uint64_t* lastValidOffset, uint32_t compressionBlockSize)
 {
   uint32_t clusterSize = this->mftAttribute()->ntfs()->bootSectorNode()->clusterSize();
   uint64_t blockSize = (uint64_t)clusterSize * (uint64_t)compressionBlockSize;
@@ -136,86 +136,87 @@ uint64_t Data::uncompressBlock(VFile* fs, RunList run, char** data, CompressionI
   uint64_t runRoundedSize = runRoundedBlock * clusterSize;
   uint64_t runOffset = run.offset;
   uint64_t total = 0;
+  CompressionInfo compressionInfo(runSize);
 
   if (run.length > compressionBlockSize)
-    *data = (char*)malloc(clusterSize * ((runLength / compressionBlockSize) + 1) * compressionBlockSize); //roundedBlockSize + 1
+    *data = (uint8_t*)malloc(clusterSize * ((runLength / compressionBlockSize) + 1) * compressionBlockSize); //roundedBlockSize + 1
   else
-    *data = (char*)malloc(blockSize); //malloc before then free
-  
-  if (runLength >= compressionBlockSize) //not compressed
+    *data = (uint8_t*)malloc(blockSize); //malloc before then free
+ 
+  /* data is not compressed or data is sparse */ 
+  if (runLength >= compressionBlockSize)
   {
-    comp->uncomp_idx = 0;
+    compressionInfo.uncomp_idx = 0;
+    /* data is sparse */
     if (runOffset == 0)
     {
       memset(*data, 0, runRoundedSize);
       total += runRoundedSize;
       return (total); //even if there is still data a compressed run will follow
     }
+    /* data is not compressed */
     else
     {
       if (fs->seek(runOffset * clusterSize) != (runOffset * clusterSize))
       {
-        //std::cout << "Uncompress can't seek to data to copy : " << std::endl; //throw ?
         return (total);
       }
       if (fs->read(*data, runRoundedSize) != (int32_t)runRoundedSize)
       {
-        //std::cout << "Uncompress can't read : " << runRoundedSize << std::endl;
         return (total);
       }
       runOffset += runRoundedBlock;
-      comp->uncomp_idx += runRoundedSize;
+      compressionInfo.uncomp_idx += runRoundedSize;
       *lastValidOffset = runOffset;
     }
-    //std::cout << "add runRoundedSize " << runRoundedSize << std::endl;
     total += runRoundedSize;
     runLength = runLength % compressionBlockSize;
     if (runLength == 0)
-    {
-      //std::cout << "RunLength == 0" << std::endl;
       return total;
-    }
   }
+  /* data is compressed */
   if (runOffset && runLength < compressionBlockSize)
   {
     if (fs->seek(runOffset * clusterSize) != (runOffset * clusterSize))
-      throw std::string("Can't seek to data on fs node");
-    if (fs->read(&(comp->comp_buf[comp->comp_len]), clusterSize * runLength) != (int32_t)(clusterSize * runLength))
-      throw std::string("Can't read data on fs node");
-    comp->comp_len += clusterSize * runLength; //increment buffer size
+      throw std::string("Data::readBlock can't seek to data for decompression buffer");
+    if (fs->read(&(compressionInfo.comp_buf[compressionInfo.comp_len]), clusterSize * runLength) != (int32_t)(clusterSize * runLength))
+      throw std::string("Data::readBlock can't read data to decompression buffer");
+    compressionInfo.comp_len += clusterSize * runLength; //increment buffer size
     *lastValidOffset += runLength;
     
-    this->uncompressUnit(comp);
-    //std::cout << "copy uncompressed data " << blockSize << std::endl; 
+    this->__uncompressBlock(&compressionInfo);
+
     if (run.length > compressionBlockSize)
-      memcpy(*data + runRoundedSize, comp->uncomp_buf, blockSize);
+      memcpy(*data + runRoundedSize, compressionInfo.uncomp_buf, blockSize);
     else
-      memcpy(*data, comp->uncomp_buf, blockSize);
+      memcpy(*data, compressionInfo.uncomp_buf, blockSize);
     total += blockSize;
-    //std::cout << "uncompress ret total " << total << std::endl;
     return (total);
   }
-  //std::cout << "at end ret total " << total << std::endl;;
   return (total);
 }
 
-//data specialization to fast read branchment with filemapping ?
-uint64_t        Data::uncompress(uint64_t offset, uint8_t* buff, uint64_t size, uint32_t compressionBlockSize)
+/**
+ *  Use run list to determine if data is compressed, sparse or not compressed
+ */
+uint64_t        Data::uncompress(uint8_t* buff, uint64_t size, uint64_t offset, uint32_t compressionBlockSize)
 {
-  uint32_t clusterSize = this->mftAttribute()->ntfs()->bootSectorNode()->clusterSize();
-  std::vector<RunList>  runList = this->runList(); //runList
-  std::vector<RunList>::iterator run = runList.begin(); 
-  VFile* fs = this->mftAttribute()->ntfs()->fsNode()->open();
-  uint64_t startOffset = this->mftAttribute()->VNCStart() * clusterSize;
   uint64_t readed = 0;
   uint64_t totalRead = 0;
   uint64_t lastValidOffset = 0;
+  uint32_t clusterSize = this->mftAttribute()->ntfs()->bootSectorNode()->clusterSize();
+  uint64_t startOffset = this->mftAttribute()->VNCStart() * clusterSize;
+  std::vector<RunList>  runList = this->runList(); //runList
+  std::vector<RunList>::iterator run = runList.begin(); 
+  VFile* fs = this->mftAttribute()->ntfs()->fsNode()->open();
 
-  //std::cout << "Uncompress offset: " << offset << " size: " << size << std::endl;
-  for (; (readed < size) && (run != runList.end()); run++)
+  /*
+   * Read run list until end
+   * Use run list to determine if data is compressed, sparse or not compressed
+   */
+  for (; (readed < size) && (run != runList.end()); ++run)
   {
-    //std::cout << "Next Run offset :  " << (*run).offset << " length: " << (*run).length << " readed: " << readed <<  " totread " << totalRead << std::endl;
-    char* data = NULL;
+    uint8_t* data = NULL;
     try
     {
       int64_t runSize = (*run).length;
@@ -223,58 +224,45 @@ uint64_t        Data::uncompress(uint64_t offset, uint8_t* buff, uint64_t size, 
         runSize = (int64_t)compressionBlockSize * (int64_t)clusterSize;
       else
         runSize = runSize * clusterSize;
-      CompressionInfo comp(runSize);
 
       if ((*run).offset != 0)
         lastValidOffset = (*run).offset; //keep track of last offset
      
       /*calculate next block run size */ 
-      uint64_t uncompressBlockSize = 0;
+      uint64_t uncompressedBlockSize = 0;
       uint64_t currentLength = (*run).length;
       if (currentLength > compressionBlockSize)
       {
         uint64_t rounded = (currentLength / compressionBlockSize ) * compressionBlockSize;
-        //std::cout << "1 " << std::endl;
-        uncompressBlockSize = rounded * clusterSize;
+        uncompressedBlockSize = rounded * clusterSize;
         currentLength -= rounded;
       }
-      if ((*run).offset && currentLength &&  (currentLength <= compressionBlockSize)) //check runOffset ? or only (*run).offset = 0 && block = 16 == sparse block complet ? only complet sparse block exist ?
-      {
-        //std::cout << "2 " << std::endl;
-        uncompressBlockSize += clusterSize * compressionBlockSize;
+      if ((*run).offset && currentLength &&  (currentLength <= compressionBlockSize))       {
+        uncompressedBlockSize += clusterSize * compressionBlockSize;
       }
-      else if (((*run).offset  == 0 ) && (currentLength == compressionBlockSize)) //check runOffset ? or only (*run).offset = 0 && block = 16 == sparse block complet ? only complet sparse block exist ?
+      else if (((*run).offset  == 0) && (currentLength == compressionBlockSize))
       {
-        uncompressBlockSize += clusterSize * compressionBlockSize;
-        //std::cout << " 3" << std::endl;
+        uncompressedBlockSize += clusterSize * compressionBlockSize;
       }
-
-      //std::cout << "UncompressBlockSize " << uncompressBlockSize << std::endl;
-      if (uncompressBlockSize == 0) //sparse for end of compression block
+      if (uncompressedBlockSize == 0) 
       {
-        //std::cout << "  uncompressBlockSize == 0 free continue " << std::endl;
         free(data);
         continue;
       }
+
       uint64_t currentOffset = totalRead + startOffset;
       uint64_t nextOffset = offset + readed;
-      uint64_t maxOffset = totalRead  + startOffset + uncompressBlockSize;
-      //std::cout << "currentOffset " <<  currentOffset << " " << nextOffset << " " << maxOffset << std::endl;
+      uint64_t maxOffset = totalRead  + startOffset + uncompressedBlockSize;
       if ((currentOffset <= nextOffset) && (nextOffset <= maxOffset)) //in range 
       {
-        //std::cout << "this->uncimpressBLOCK() :" << std::endl;
-        uint64_t dataSize = this->uncompressBlock(fs, *run, &data, &comp, &lastValidOffset, compressionBlockSize);
-        //std::cout << "this->uncompressBlock() ret => " <<  dataSize << std::endl;
+        uint64_t dataSize = this->__readBlock(fs, *run, &data, runSize, &lastValidOffset, compressionBlockSize);
         if (dataSize <= 0)
         {
           free(data);
           delete fs;
-          //std::cout << "Data size <= 0 " << readed << std::endl;
           return (readed);
         }
-        uint64_t dataOff = nextOffset - currentOffset;
-        if (!totalRead) //?
-          dataOff = 0;
+        uint64_t dataOffset = nextOffset - currentOffset;
         uint64_t toCopy = size - readed;
         uint64_t copyMax = maxOffset - nextOffset;
         if (toCopy > copyMax)
@@ -283,32 +271,28 @@ uint64_t        Data::uncompress(uint64_t offset, uint8_t* buff, uint64_t size, 
         {
           free(data);
           totalRead += dataSize;
-          //std::cout << "!toCopy " << readed << std::endl;
           continue ; //block boundary 
         }
         if (readed + dataSize >= size)
         {
-          //std::cout << "readed + dataSize >= size " << size << std::endl;
-          memcpy(buff + readed, data + dataOff, toCopy);
+          memcpy(buff + readed, data + dataOffset, toCopy);
           free(data);
           delete fs;
           return (size);
         }
-        memcpy(buff + readed, data + dataOff, dataSize - dataOff);
-        readed += dataSize - dataOff;
+        memcpy(buff + readed, data + dataOffset, dataSize - dataOffset);
+        readed += dataSize - dataOffset;
       }
       free(data);
-      totalRead += uncompressBlockSize;
+      totalRead += uncompressedBlockSize;
     }
     catch(std::string const& error)
     {
-      //std::cout << "error break " << std::endl;
       free(data); 
       break;
     } 
   }
   delete fs;
-  //std::cout << "Uncompress read " << readed << std::endl;
   return (readed);
 }
 

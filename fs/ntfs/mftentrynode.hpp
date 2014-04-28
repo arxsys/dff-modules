@@ -73,7 +73,6 @@ public:
   uint16_t		        fixupArraySignature(void) const;
   bool                          isUsed(void) const;
   bool                          isDirectory(void) const;
-  bool                          isCompressed(void) const;
 
 
   virtual class MFTAttribute*	__MFTAttribute(uint16_t offset);

@@ -19,8 +19,8 @@
 #include "mftnode.hpp"
 #include "ntfs.hpp"
 #include "mftattributecontenttype.hpp"
+#include "bootsector.hpp"
 
-//MFTNode::MFTNode(NTFS* ntfs, MFTEntryNode& mftEntryNode) : MFTEntryNode(mftEntryNode)//Node("", 0, NULL, ntfs)
 MFTNode::MFTNode(NTFS* ntfs, MFTEntryNode* mftEntryNode) : Node("", 0, NULL, ntfs), __mftEntryNode(mftEntryNode), __isCompressed(false)
 {
 }
@@ -29,7 +29,7 @@ MFTNode::~MFTNode(void)
 {
   if (this->__mftEntryNode != NULL)
   {
-    //delete this->__mftEntryNode; //used by ads ?
+    //delete this->__mftEntryNode; //used by ads 
     this->__mftEntryNode = NULL;
   }
 }
@@ -39,7 +39,7 @@ MFTEntryNode* MFTNode::mftEntryNode(MFTEntryNode* mftEntryNode)
   return (this->__mftEntryNode);
 }
 
-void                MFTNode::setName(const std::string name)
+void            MFTNode::setName(const std::string name)
 {
   this->__name = name;
 }
@@ -49,6 +49,11 @@ void            MFTNode::setMappingAttributes(MappingAttributesInfo const&  mapp
   this->mappingAttributesOffset = mappingAttributesInfo.mappingAttributes;
   this->__isCompressed = mappingAttributesInfo.compressed;
   this->setSize(mappingAttributesInfo.size);
+}
+
+bool            MFTNode::isCompressed(void) const
+{
+  return (this->__isCompressed);
 }
 
 void		MFTNode::fileMapping(FileMapping* fm)
@@ -66,6 +71,58 @@ void		MFTNode::fileMapping(FileMapping* fm)
     delete data;
     delete content;   
   } 
+}
+
+/**
+ *  read compressed data at offset
+ *  return readed data size
+ */
+int32_t         MFTNode::readCompressed(void* buff, unsigned int size, uint64_t* offset)
+{
+  uint32_t readed = 0;
+  uint32_t compressionBlockSize = 0;
+  uint64_t clusterSize = this->__mftEntryNode->ntfs()->bootSectorNode()->clusterSize();
+  uint32_t attributeCount = 0;
+
+  std::list<MappingAttributes >::iterator attributeOffset = this->mappingAttributesOffset.begin();
+  for (; (readed < size) && (attributeOffset != this->mappingAttributesOffset.end()); ++attributeOffset)
+  {
+    MappingAttributes mappingAttributes = *attributeOffset;
+    MFTAttribute* dataAttribute = mappingAttributes.entryNode->__MFTAttribute(mappingAttributes.offset);
+    MFTAttributeContent* content = dataAttribute->content();
+    Data* data = dynamic_cast<Data*>(content);  
+
+    if (!compressionBlockSize)
+      compressionBlockSize = dataAttribute->compressionBlockSize();
+    uint64_t start = dataAttribute->VNCStart() * clusterSize;
+    uint64_t end = dataAttribute->VNCEnd() * clusterSize;
+    if ((start <= *offset) && (*offset < end))
+    {
+      int32_t read = 0;
+      try 
+      {
+        read = data->uncompress((uint8_t*)buff + readed, size - readed, *offset, compressionBlockSize);
+      }
+      catch (std::string const & error)
+      {
+        //std::cout << "MFTNode::readCompressed data uncompression error : " << error << std::endl;
+      }
+      if (read  <= 0)
+        break;
+      if (*offset + read > this->size())
+      {
+        readed += this->size() - *offset;
+        *offset = this->size();
+        break;
+      }
+      *offset += read;
+      readed += read;
+    }
+    attributeCount++;
+    delete data;
+    delete dataAttribute;
+  }
+  return (readed);
 }
 
 Attributes	MFTNode::_attributes(void)

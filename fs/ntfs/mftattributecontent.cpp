@@ -142,6 +142,7 @@ Attributes	MFTAttributeContent::_attributes(void)
     MAP_ATTR("Content actual size", this->__mftAttribute->contentActualSize())
     MAP_ATTR("Content initialized size", this->__mftAttribute->contentInitializedSize())
   }
+  MAP_ATTR("Compressed", this->__mftAttribute->isCompressed())
 
   return attrs;
 }

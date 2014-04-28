@@ -46,9 +46,10 @@ public:
   static MFTAttributeContent*	create(MFTAttribute* mftAttribute);
   const std::string             typeName(void) const;
   Attributes                    _attributes(void);
-  uint64_t                      uncompress(uint64_t offset, uint8_t* buff, uint64_t size, uint32_t compressionBlockSize);
-  uint64_t                      uncompressBlock(VFile* fs, RunList run, char** data, CompressionInfo* comp, uint64_t* lastValidOffset, uint32_t compressionBlockSize);
-  void                          uncompressUnit(CompressionInfo* comp); 
+  uint64_t                      uncompress(uint8_t* buff, uint64_t size, uint64_t offset, uint32_t compressionBlockSize);
+private:
+  uint64_t                      __readBlock(VFile* fs, RunList run, uint8_t** data, int64_t runSize, uint64_t* lastValidOffset, uint32_t compressionBlockSize);
+  void                          __uncompressBlock(CompressionInfo* comp); 
 };
 
 #endif

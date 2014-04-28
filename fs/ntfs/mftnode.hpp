@@ -49,27 +49,19 @@ class MFTNode : public Node// MFTEntryNode
 public:
   MFTNode(NTFS* ntfs, MFTEntryNode* mftEntryNode);
   ~MFTNode();
-  MFTEntryNode*                        mftEntryNode(MFTEntryNode* mftENtryNode = NULL);
   void                                 setName(const std::string name);
   Attributes	                       _attributes(void);
   void		                       fileMapping(FileMapping* fm);
   void                                 setCompressed(bool isCompressed);
   void                                 setMappingAttributes(MappingAttributesInfo const& mappingAttributesInfo);
+  MFTEntryNode*                        mftEntryNode(MFTEntryNode* mftENtryNode = NULL);
+  bool                                 isCompressed(void) const;
+  int32_t                              readCompressed(void* buff, unsigned int size, uint64_t* offset);
 private:
   MFTEntryNode*	                       __mftEntryNode;
   bool                                 __isCompressed;
   std::list<MappingAttributes>         mappingAttributesOffset; //then this->__mftEntryNode->mftAttribute(offset);
 // if offset = -1 ou 0 return this->__mftEntryNode to map MFT ? 
 };
-
-//class ADS : public MFTNode
-//{
-  ////ads name, number ? 
-//}
-
-//class  Attribute
-//{
- ////attrubte type
-//}
 
 #endif

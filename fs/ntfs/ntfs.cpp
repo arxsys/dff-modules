@@ -21,10 +21,11 @@
 #include "mftattributecontent.hpp"
 #include "mftattribute.hpp"
 #include "mftmanager.hpp"
-/*
+#include "data.hpp"
+
+/**
  *  NTFS 
  */
-
 NTFS::NTFS() : mfso("NTFS"), __opt(NULL), __bootSectorNode(NULL), __mftManager(NULL), __rootDirectoryNode(new Node("NTFS")), __orphansNode(new Node("orphans")), __unallocatedNode(new Node("unallocated"))
 {
 }
@@ -106,11 +107,13 @@ Node*           NTFS::unallocatedNode(void) const
   return (this->__unallocatedNode);
 }
 
+/**
+ *  Redefine read to use both file mapping
+ *  and special read method for compressed data
+ */
+
 int32_t  NTFS::vread(int fd, void *buff, unsigned int size)
 {
-  //XXX
-  return (mfso::vread(fd, buff, size));
-/*
   fdinfo* fi = NULL;
   try
   {
@@ -131,54 +134,8 @@ int32_t  NTFS::vread(int fd, void *buff, unsigned int size)
 
   if (fi->offset > mftNode->size())
     return (0);
-*/
-  //std::vector<MFTAttributeContent*> datas = mftNode->data(); //too slow
-  //std::vector<MFTAttributeContent*>::iterator data = datas.begin();
-  //if (!datas.size())
-    //return (mfso::vread(fd, buff, size)); //can have a mapped attribute !
-    ////return (0); 
-  //if (!datas[0]->mftAttribute()->isCompressed())
-  //{
-    //for (;data != datas.end(); ++data)
-      //delete (*data);
-    //return (mfso::vread(fd, buff, size));
-  //}
 
-  uint32_t readed = 0;
-  //uint32_t compressionBlockSize = 0;
-  //try
-  //{
-    //int32_t attributecount = 0;
-    //for (; (readed < size) && (data != datas.end()); ++data)
-    //{
-      //if (!compressionBlockSize)
-        //compressionBlockSize = (*data)->mftAttribute()->compressionBlockSize();
-      //uint64_t start = (*data)->mftAttribute()->VNCStart() * this->bootSectorNode()->clusterSize();
-      //uint64_t end = (*data)->mftAttribute()->VNCEnd() * this->bootSectorNode()->clusterSize();
-      //if ((start <= fi->offset) && (fi->offset < end))
-      //{
-        //int32_t read = (*data)->uncompress(fi->offset, (uint8_t*)buff + readed, size - readed, compressionBlockSize);
-        //if (read  <= 0)
-          //break; //can return  
-        //if (fi->offset + read > mftNode->size())
-        //{
-          //readed += mftNode->size() - fi->offset;
-          //fi->offset = mftNode->size();
-          //break; //cant return
-        //}
-        //fi->offset += read;
-        //readed += read;
-      //}
-      //attributecount++;
-      //delete (*data);
-    //}
-    //for (;data != datas.end(); ++data)
-      //delete (*data);
-  //}
-  //catch (std::string const & error)
-  //{
-    //std::cout << "Error in data attribute : " << error << std::endl;
-    ////for datas.end() delete
-  //}
-  return (readed);
+  if (!mftNode->isCompressed())
+    return (mfso::vread(fd, buff, size));
+  return (mftNode->readCompressed(buff, size, &fi->offset));
 }

@@ -45,9 +45,6 @@ public:
   Node*                 orphansNode(void) const;
   Node*                 unallocatedNode(void) const;
   MFTEntryManager*      mftManager(void) const;
-  /*
-   *  Need file mapping && bufer read for decompression
-   */
   int32_t 	        vread(int fd, void *buff, unsigned int size);
 };
 
