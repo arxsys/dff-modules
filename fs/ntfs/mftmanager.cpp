@@ -549,8 +549,8 @@ Node*  MFTEntryManager::mapLink(MFTNode* node) const
             path = path.substr(pathPos + 1);
           }
         }
-        std::string error("Can't link create VLink for repars point : " + printName);
-        std::cout << error << std::endl;
+        //std::string error("Can't create VLink for repars point : " + printName);
+        //std::cout << error << std::endl;
       }
       delete reparsePoint;
     }

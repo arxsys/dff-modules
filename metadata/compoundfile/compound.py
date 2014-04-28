@@ -67,7 +67,6 @@ class CompoundDocumentParser(object):
 	     else:
 	       propertySet = PropertySetStream(stream, OfficeDocumentSectionCLSID.keys())
 	       for clsid in OfficeDocumentSectionCLSID.iterkeys():
-                  print clsid 
 	          section = propertySet.sectionCLSID(clsid)
 	          if section:
 		    (sectionName, sectionIDS) = OfficeDocumentSectionCLSID[clsid]
