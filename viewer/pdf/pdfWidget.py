@@ -1,5 +1,5 @@
 # DFF -- An Open Source Digital Forensics Framework
-# Copyright (C) 2009-2013 ArxSys
+# Copyright (C) 2009-2014 ArxSys
 # This program is free software, distributed under the terms of
 # the GNU General Public License Version 2. See the LICENSE file
 # at the top of the source tree.
@@ -78,6 +78,9 @@ class PDFViewer(QWidget, Ui_pdfToolbar):
         pid = (0 if pageID is 1 else pageID - 1)
         page = self.document.page(pid)
         annotations = page.annotations()
+        if not annotations:
+            self.renderSplitter.moveSplitter(50, 0)
+            return
         self.annotationsEdit.clear()
         for count, annotation in enumerate(annotations):
             self.annotationsEdit.insertPlainText(QString(annotation.contents()))
