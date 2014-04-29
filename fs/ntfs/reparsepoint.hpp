@@ -20,7 +20,8 @@
 #include "ntfs_common.hpp"
 #include "mftattributecontent.hpp"
 
-PACK_S ReparsePoint_s 
+PACK_START
+typedef struct s_ReparsePoint_s 
 {
   uint16_t              type;
   uint16_t              flags;
@@ -35,7 +36,8 @@ PACK_S ReparsePoint_s
 
 //guid uint64_t guid1;
 //guid uint64_t guid2;
-} PACK;
+}			ReparsePoint_s;
+PACK_END
 
 class ReparsePoint : public MFTAttributeContent
 {

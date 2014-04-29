@@ -23,7 +23,9 @@
 #include "mftattribute.hpp"
 #include "mftattributecontent.hpp"
 
-PACK_S AttributeList_s
+
+PACK_START
+typedef struct s_AttributeList_s
 {
   uint32_t      typeId;
   uint16_t      size;
@@ -33,7 +35,8 @@ PACK_S AttributeList_s
   uint8_t       mftEntryId[6];
   uint8_t       sequence[2];
   uint16_t      attributeId;
-} PACK;
+}		AttributeList_s;
+PACK_END
 
 class AttributeListItems
 {

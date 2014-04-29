@@ -23,22 +23,26 @@
 #include "mftattributecontent.hpp"
 #include "indexentry.hpp"
 
-PACK_S IndexList_s
+PACK_START
+typedef struct s_IndexList_s
 {
   uint32_t              indexEntriesStart;
   uint32_t              indexEntriesEnd;
   uint32_t              endOfEntries;
   uint32_t              flags;   
-} PACK;
+}			IndexList_s;
+PACK_END
 
-PACK_S IndexRoot_s 
+PACK_START
+typedef struct s_IndexRoot_s 
 {
   uint32_t              indexType;
   uint32_t              sortType;
   uint32_t              indexRecordSize;
   uint8_t               indexRecordClusterSize;// == << * -1 ?
   uint8_t               unused[3];
-} PACK;
+}			IndexRoot_s;
+PACK_END
  
 class IndexRoot : public MFTAttributeContent
 {

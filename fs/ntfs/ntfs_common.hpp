@@ -23,24 +23,12 @@
 #include <string.h>
 
 
+#include "export.hpp"
 #include "vfs.hpp"
 #include "mfso.hpp"
 #include "node.hpp"
 #include "variant.hpp"
 #include "typesconv.hpp"
-
-
-#ifdef WIN32
-#define PACK
-#else
-#define PACK __attribute__((packed))
-#endif
-
-#ifdef WIN32
-#define PACK_S #pragma pack(1) struct
-#else
-#define PACK_S struct
-#endif
 
 #define NEW_VARIANT(x) Variant_p(new Variant(x))
 #define MAP_ATTR(x, y) attrs[x] = NEW_VARIANT(y);

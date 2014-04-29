@@ -23,14 +23,16 @@
 #include "indexroot.hpp"
 #include "mftattributecontent.hpp"
 
-PACK_S IndexRecord_s
+PACK_START
+typedef struct s_IndexRecord_s
 {
   uint32_t                      signature;
   uint16_t                      fixupArrayOffset;
   uint16_t                      fixupArrayCount; 
   uint64_t                      sequence;
   uint64_t                      vcn;
-} PACK;
+}				IndexRecord_s;
+PACK_END
 
 class IndexRecord
 {

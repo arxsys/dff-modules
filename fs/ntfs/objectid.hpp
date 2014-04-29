@@ -20,13 +20,15 @@
 #include "ntfs_common.hpp"
 #include "mftattributecontent.hpp"
 
-PACK_S ObjectId_s
+PACK_START
+typedef struct s_ObjectId_s
 {
   uint64_t      objectId[2];
   uint64_t      birthVolumeId[2];
   uint64_t      birthObjectId[2];
   uint64_t      birthDomainId[2];
-} PACK;
+}		ObjectId_s;
+PACK_END
 
 class ObjectId : public MFTAttributeContent
 {
