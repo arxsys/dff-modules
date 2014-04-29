@@ -27,7 +27,8 @@ typedef std::vector<MFTAttribute* > MFTAttributes;
 #define		MFT_SIGNATURE_FILE	0x454C4946
 #define		MFT_SIGNATURE_BAAD	0x44414142
 
-PACK_S	MFTEntry
+PACK_START
+typedef struct s_MFTEntry
 {
   uint32_t	signature;
   uint16_t	fixupArrayOffset;
@@ -41,7 +42,8 @@ PACK_S	MFTEntry
   uint32_t	allocatedSize;
   uint64_t	fileReferenceToBaseRecord; //reference to 1 st mft when is multi-mft based 
   uint16_t	nextAttributeID;
-} PACK;
+}		MFTEntry;
+PACK_END
 
 class MFTEntryNode : public Node
 {

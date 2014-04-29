@@ -20,7 +20,8 @@
 #include "ntfs_common.hpp"
 #include "mftattributecontent.hpp"
 
-PACK_S StandardInformation_s
+PACK_START
+typedef struct s_StandardInformation_s
 {
   uint64_t		creationTime;
   uint64_t		alteredTime;
@@ -34,7 +35,8 @@ PACK_S StandardInformation_s
   uint32_t		securityID;
   uint64_t		quotaCharged;
   uint64_t		USN;
-} PACK;
+}			StandardInformation_s;
+PACK_END
 
 class StandardInformation : public MFTAttributeContent
 {

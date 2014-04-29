@@ -23,14 +23,17 @@ class NTFS;
 class MFTEntryNode;
 class MFTAttributeContent;
 
-PACK_S	MFTResidentAttribute
+PACK_START
+typedef struct	s_MFTResidentAttribute
 {
   uint32_t	contentSize;
   uint16_t	contentOffset;
-} PACK;
+}		MFTResidentAttribute;
+PACK_END
 
 //can use an union between the two struct ?
-PACK_S	MFTNonResidentAttribute
+PACK_START
+typedef struct s_MFTNonResidentAttribute
 {
   uint64_t	VNCStart;
   uint64_t	VNCEnd;
@@ -40,9 +43,11 @@ PACK_S	MFTNonResidentAttribute
   uint64_t	contentAllocatedSize; //size round up to cluster size if compressed multi[ple of compression blocksize
   uint64_t	contentActualSize;   //uncompressed size if compressed
   uint64_t	contentInitializedSize; //compressed size if compressed else actual/real size !
-} PACK;
+}		MFTNonResidentAttribute;
+PACK_END
 
-PACK_S  MFTAttribute_s
+PACK_START
+typedef struct s_MFTAttribute_s
 {
   uint32_t	typeId;
   uint32_t	length;
@@ -51,7 +56,8 @@ PACK_S  MFTAttribute_s
   uint16_t	nameOffset;
   uint16_t	flags;  //compressed flags //XXX
   uint16_t	id;
-} PACK;
+}		MFTAttribute_s;
+PACK_END
 
 class MFTAttribute
 {

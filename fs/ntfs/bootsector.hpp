@@ -23,7 +23,8 @@ using namespace std;
 
 class NTFS;
 
-PACK_S BPB
+PACK_START
+typedef struct s_BPB
 {
   uint16_t	bytesPerSector;
   uint8_t	sectorsPerCluster;
@@ -39,21 +40,27 @@ PACK_S BPB
   uint8_t	reserved4[3];
   uint64_t	volumeSerialNumber;
   uint32_t	reserved5;
-} PACK;
+}		BPB;
+PACK_END
 
-PACK_S BootStrap
+
+PACK_START
+typedef struct s_BootStrap
 {
   uint8_t  	bootStrap[426];
-} PACK;
+}		BootStrap;
+PACK_END
 
-PACK_S BootSector
+PACK_START
+typedef struct s_BootSector
 {
   uint8_t 	jump[3];
   uint64_t 	OEMID;
   BPB		bpb;
   BootStrap	bootStrap;
   uint16_t	endOfSector;
-} PACK;
+}		BootSector;
+PACK_END
 
 
 class BootSectorNode : public Node

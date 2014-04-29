@@ -25,7 +25,8 @@
 #define FILENAME_NAMESPACE_DOS	 	2
 #define FILENAME_NAMESPACE_DOS_WIN32 	3
 
-PACK_S FileName_s 
+PACK_START
+typedef struct s_FileName_s 
 {
   uint8_t               parentMFTEntryId[6];
   uint16_t              parentSequence;
@@ -39,7 +40,8 @@ PACK_S FileName_s
   uint32_t		reparseValue;
   uint8_t		nameLength;
   uint8_t		nameSpace;
-} PACK;
+}			FileName_s;
+PACK_END
 
 class FileName : public MFTAttributeContent
 {

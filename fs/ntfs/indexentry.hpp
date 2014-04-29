@@ -21,7 +21,8 @@
 
 #include "ntfs_common.hpp"
 
-PACK_S IndexEntry_s
+PACK_START
+typedef struct s_IndexEntry_s
 {
   uint8_t       mftEntryId[6];
   uint16_t      sequence; 
@@ -31,7 +32,8 @@ PACK_S IndexEntry_s
   uint8_t       unknown[3];
   //int8_t*     content[contentSize]
   //uint64_t    vnc; //-> content[contentSize] - 8
-} PACK;
+}		IndexEntry_s;
+PACK_END
 
 class IndexEntry
 {

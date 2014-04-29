@@ -34,13 +34,15 @@ private:
 };
 
 
-PACK_S VolumeInformation_s
+PACK_START
+typedef struct s_VolumeInformation_s
 {
   uint64_t      unused;
   uint8_t       major;
   uint8_t       minor; 
   uint16_t      flags;
-} PACK;
+}		VolumeInformation_s;
+PACK_END
 
 class VolumeInformation : public MFTAttributeContent
 {
