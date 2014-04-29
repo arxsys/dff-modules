@@ -106,7 +106,8 @@ class OfficeArtFBSE(object):
      else:
        fdelay = delay.open()
        try:
-         fdelay.seek(self.foDelay)
+         if fdelay.seek(self.foDelay) != self.foDelay:
+           raise Exception("Can't seek to foDelay in OfficeArtFBSE")
          self.bliprh = OfficeArtRecordHeader(fdelay)
          self.blip = OfficeArtBlip(self.bliprh, fdelay.tell())	
        except :

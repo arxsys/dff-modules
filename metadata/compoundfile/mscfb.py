@@ -78,8 +78,9 @@ class DIFAT(object):
        previousSector = None
        while sector < 0xFFFFFFFA:
         if previousSector == sector: 
-          raise "Error infinite loop in DIFAT"
-	vfile.seek(512 + (sector * self.sectorSize))
+          raise Exception("Error infinite loop in DIFAT")
+	if vfile.seek(512 + (sector * self.sectorSize)) != 512 + (sector * self.sectorSize):
+          raise Exception("Error can't seek in DIFAT")
         self.table += vfile.read(self.sectorSize)
         previousSector = sector
  	sector = self.readSector(sector)
@@ -93,7 +94,8 @@ class DIFAT(object):
      try :
        currentfattableid = fatsector / (self.sectorSize / 4)
        currentfatsector = unpack('I', self.table[currentfattableid*4:(currentfattableid*4)+4])[0]
-       vfile.seek(512 + (currentfatsector * self.sectorSize))
+       if vfile.seek(512 + (currentfatsector * self.sectorSize)) != 512 + (currentfatsector * self.sectorSize):
+         raise Exception("DIFAT readsector error can't seek")
        fattable = unpack((self.sectorSize/4)*'I', vfile.read(self.sectorSize))
      except :
 	error()
@@ -114,7 +116,8 @@ class FAT(object):
        self.table = "" 
        for index in range(0, self.numberOfSector):
         sector = unpack('I', self.difat.table[index*4:(index*4)+4])[0]
-        vfile.seek(512 + (sector * self.sectorSize))
+        if vfile.seek(512 + (sector * self.sectorSize)) != (512 + (sector * self.sectorSize)):
+          raise Exception("Compound FAT can't seek")
         data = vfile.read(self.sectorSize)
         self.table += data
      except :
@@ -128,7 +131,8 @@ class FAT(object):
       try: 
         while (sector < 0xFFFFFFFA) and (sector not in parsedIndex):
 	  parsedIndex.add(sector) 
-          vfile.seek(512 + ((sector) * self.sectorSize))
+          if vfile.seek(512 + ((sector) * self.sectorSize)) != (512 + ((sector) * self.sectorSize)):
+            raise Exception("Compound FAT readSector can't seek")
           data += vfile.read(self.sectorSize)
 	  sector = unpack('I', self.table[sector*4:(sector*4)+4])[0]
       except :

@@ -43,7 +43,7 @@ class CompoundDocumentParser(object):
      self.attr = {} 
      self.extraAttr = []
      self.codePage = None
-     try :    
+     try :   
         self.cdh = CompoundDocumentHeader(node, mfsobj)
 	self.cdh.parseDocument(not 'no-extraction' in largs)
      except :
@@ -117,15 +117,15 @@ class MetaCompoundHandler(AttributesHandler, ModuleProcessusHandler):
     self.nodeAttributes[long(node.this)] = classAttributes 
 
   def update(self, processus):
-	pass
+    pass
 
   def nodes(self, root):
     nodes = []
     rootAbsolute = root.absolute()
     for node in self.nodeAttributes.keys():
-	node = self.vfs.getNodeFromPointer(node)
-	if node.absolute().find(rootAbsolute) == 0:
-	  nodes.append(node)
+      node = self.vfs.getNodeFromPointer(node)
+      if node.absolute().find(rootAbsolute) == 0:
+	nodes.append(node)
     return nodes
 
   def attributes(self, node):
@@ -148,12 +148,12 @@ class MetaCompound(mfso):
       largs = []
       node = args['file'].value()	
       for arg in ['no-extraction', 'no-text', 'no-pictures', 'no-root_metadata']:
-	 try:
-	   value =  args[arg].value()
-	   if value:
-	     largs.append(arg)
-	 except IndexError:
-	     pass
+	try:
+	  value =  args[arg].value()
+	  if value:
+	    largs.append(arg)
+	except IndexError:
+	  pass
       self.stateinfo = "Registering node: " + str(node.name())
       p = CompoundDocumentParser(node, largs, self)
       self.handler.setAttributes(node, p)

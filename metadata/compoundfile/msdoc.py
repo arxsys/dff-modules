@@ -165,7 +165,8 @@ class WordDocument(Struct):
 		 chpxfkp = stChpxFKPs.CHPXFKP[chpxFKPidx]
 		 runstart = chpxfkp.RGFCs[chpx.rfc] 
 		 runend = chpxfkp.RGFCs[chpx.rfc + 1]
-		 worddocument.seek(runstart)
+		 if worddocument.seek(runstart) != runstart:
+                   raise Exception("Can't seek to data stream")
 		 run = worddocument.read(runend +1 -runstart)
 		 if run.find('\x01') != -1:
 		   data = 0
@@ -224,7 +225,8 @@ class PICFAndOfficeArtData(object):
   def __init__(self, datastream, offset):
      vfile = datastream.open()
      try:
-       vfile.seek(offset)
+       if vfile.seek(offset) != offset:
+         raise Exception("Can't seek in PICAndOfficeArtData")
        data = vfile.read(68)
        picf = PICF(data)	
        if picf.mm == 0x66:
@@ -245,7 +247,8 @@ class OfficeArtContent(object):
   def __init__(self, tablestream, offset, size, delay = None):
      vfile = tablestream.open()
      try:
-       vfile.seek(offset)
+       if vfile.seek(offset) != offset:
+         raise Exception("Can't seek to OfficeArtContent")
        self.pictures = OfficeArtDggContainer(vfile, delay)
      except :
 	vfile.close()
@@ -272,7 +275,8 @@ class PlcBteChpx(object):
      
      vfile = self.worddocument.open()
      try:
-       vfile.seek(self.offset)
+       if vfile.seek(self.offset) != self.offset:
+         raise Exception("Can't seek to PlcBteChpx")
        data = vfile.read((self.naFC * 4))
        self.aFC = unpack('I'*self.naFC, data)
        data = vfile.read(self.nPNFKPCHPX * 4)
@@ -294,7 +298,8 @@ class ChpxFKPs(object):
      try:
        for x in xrange(0, plcBteChpx.nPNFKPCHPX):
          offset = plcBteChpx.KPCHPXoffset(x)
-         vfile.seek(offset)
+         if vfile.seek(offset) != offset:
+           raise "Can't seek to ChpxFKPs"
          data = vfile.read(512)
          self.CHPXFKP.append(ChpxFKP(data))
      except :
@@ -393,7 +398,8 @@ class Pcdt(object):
   def __init__(self, table, offset, size):
      vfile = table.open() 
      try:
-       vfile.seek(offset)
+       if vfile.seek(offset) != offset:
+         raise Exception("Can't seek to Pcdt offset")
        data = vfile.read(size)
      except :
        vfile.close()

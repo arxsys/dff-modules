@@ -79,14 +79,16 @@ class PropertySetStream(Struct):
        except KeyError:
 	self.OSVersion = "Unknown"
        count = 0
-       vfile.seek(28)
+       if vfile.seek(28) != 28:
+         raise Exception("Can't seek in property stream")
        while count < self.SectionCount:
 	  sectionListData = vfile.read(20)
 	  sectionHeader = Struct(self.header, None, self.header.SectionList, sectionListData)
 	  sectionHeader.CLSID = UUID(sectionHeader.CLSID)
 	  currentSectionListOffset = vfile.tell()
           if not matchingSectionCLSID or (sectionHeader.CLSID in matchingSectionCLSID):
-	    vfile.seek(sectionHeader.Offset)
+            if vfile.seek(sectionHeader.Offset) != sectionHeader.Offset:
+              raise Exception("Can't seek to sectionHeader.Offset in PropertySetStream")
 	    data = vfile.read(8)
 	    sectionHeader.Section = Struct(self.header, None, self.header.Section, data) 
 	    sectionHeader.Section.PropertyList = PropertyList() 
@@ -103,11 +105,12 @@ class PropertySetStream(Struct):
               propert = Struct(self.header, None, self.header.PropertyList, data[propertyCount*8:(propertyCount*8)+8])	
 	      sectionHeader.Section.PropertyList.append(propert)
               propertyCount += 1		
-	      vfile.seek(sectionHeader.Offset + propert.Offset)
+	      if vfile.seek(sectionHeader.Offset + propert.Offset) != sectionHeader.Offset + propert.Offset:
+                raise Exception("Can't seek to sectionHeader.Offset + propert.Offset in propertyStream")
               propert.Variant = MSVariant(vfile)
-              #print propert.Variant # c ici que c set ?? 
 	      self.sectionList.append(sectionHeader)
-	  vfile.seek(currentSectionListOffset)
+	  if vfile.seek(currentSectionListOffset) != currentSectionListOffset:
+            raise Exception("Can't seek to currentSectionListOffset in PropertySetStream") 
 	  count += 1
      except :
 	vfile.close()
