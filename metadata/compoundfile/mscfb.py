@@ -75,10 +75,14 @@ class DIFAT(object):
        vfile.seek(76)    
        self.table = vfile.read(436)
        sector = self.firstSectLocation
+       previousSector = None
        while sector < 0xFFFFFFFA:
+        if previousSector == sector: 
+          raise "Error infinite loop in DIFAT"
 	vfile.seek(512 + (sector * self.sectorSize))
         self.table += vfile.read(self.sectorSize)
- 	sector =  self.readSector(sector)
+        previousSector = sector
+ 	sector = self.readSector(sector)
      except :
 	vfile.close()
 	raise 
@@ -136,7 +140,6 @@ class FAT(object):
    def offsetsSector(self, sector):
       parsedIndex = set()
       offsets = []
- 
       while (sector < 0xFFFFFFFA) and (sector not in parsedIndex):
 	parsedIndex.add(sector)
         pos = 512 + ((sector) * self.sectorSize)
@@ -430,5 +433,3 @@ class DirectoryEntry(Node, Struct):
     except :
       attr = VMap()
       return attr
-
-
