@@ -47,7 +47,7 @@ libpff_macro32_s LIBPFF_MESSAGE_IMPORTANCE_TYPE[3] =
 
 libpff_macro32_s LIBPFF_MESSAGE_PRIORITY_TYPE[3] = 
 {
-    { LIBPFF_MESSAGE_PRIORITY_TYPE_NON_URGENT, "Non Urgent"},
+    { (uint32_t)LIBPFF_MESSAGE_PRIORITY_TYPE_NON_URGENT, "Non Urgent"},
     { LIBPFF_MESSAGE_PRIORITY_TYPE_NORMAL, "Normal"},
     { LIBPFF_MESSAGE_PRIORITY_TYPE_URGENT, "Urgent"}
 }; 
@@ -272,7 +272,7 @@ int PffNodeEMail::attributesRecipients(Attributes* attr, libpff_item_t* item)
 	         {
 		   attrRecipient["Recipient type"] = new Variant(std::string("Unknown"));
 		 }
-		 if (entry_value_32bit == LIBPFF_RECIPIENT_TYPE[n].type)
+		 else if (entry_value_32bit == LIBPFF_RECIPIENT_TYPE[n].type)
 		 {
 		   attrRecipient["Recipient type"] = new Variant(std::string(LIBPFF_RECIPIENT_TYPE[n].message));
 		   break;

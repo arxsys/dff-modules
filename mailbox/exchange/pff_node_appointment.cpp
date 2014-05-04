@@ -41,7 +41,7 @@ void  PffNodeAppointment::attributesAppointment(Attributes* attr, libpff_item_t*
 
   if (maximum_entry_value_string_size == 0)
 	return ;
-  entry_value_string = (char *)malloc(sizeof(char *) * maximum_entry_value_string_size);
+  entry_value_string = (char *)malloc(sizeof(char) * maximum_entry_value_string_size);
   if (entry_value_string == NULL)
      return ;
 

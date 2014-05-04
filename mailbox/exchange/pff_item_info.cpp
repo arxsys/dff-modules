@@ -23,11 +23,8 @@ Item::Item(libpff_item_t* item)
   this->__attachment = NULL;
 }
 
-Item::Item(libpff_item_t* item, Item* attacher, libpff_item_t* attachment)
+Item::Item(libpff_item_t* item, Item* attacher, libpff_item_t* attachment) : __attacher(attacher), __item(item), __attachment(attachment)
 {
-  this->__item = item;
-  this->__attacher = attacher;
-  this->__attachment = attachment;
 }
 
 Item::~Item()
@@ -58,29 +55,21 @@ libpff_item_t* Item::pff_item(void)
   return (this->__item);
 }
 
-ItemInfo::ItemInfo(libpff_item_t* item, int index, ItemStatusType statusType, ItemInfo* attachedInfo)
+ItemInfo::ItemInfo(libpff_item_t* item, int index, ItemStatusType statusType, ItemInfo* attachedInfo) : __item(item), __index(index), __statusType(statusType), __id(0), __attachedInfo(attachedInfo)
 {
   libpff_error_t* pff_error;
-
-  this->__item = item;
-  this->__index = index;
-  this->__id = 0;
-  this->__statusType = statusType;
-  this->__attachedInfo = attachedInfo;
 
   if (this->__statusType != Recovered && this->__statusType != Orphan && this->__statusType != AttachmentItem)
     if (libpff_item_get_identifier(this->__item, &(this->__id), &pff_error) != 1)
       check_error(pff_error);
 }
 
-ItemInfo::ItemInfo(ItemInfo* itemInfo)
+ItemInfo::ItemInfo(ItemInfo* itemInfo): __item(NULL), __index(itemInfo->index()), __statusType(itemInfo->statusType()), __id(itemInfo->identifier()) 
 {
-  this->__item = NULL;
-  this->__index = itemInfo->index();
-  this->__id = itemInfo->identifier();
-  this->__statusType = itemInfo->statusType();
   if (itemInfo->attachedInfo() != NULL)
     this->__attachedInfo = new ItemInfo(itemInfo->attachedInfo());
+  else
+    this->__attachedInfo = NULL;
 }
 
 ItemInfo::~ItemInfo()

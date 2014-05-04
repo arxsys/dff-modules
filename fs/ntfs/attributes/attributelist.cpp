@@ -138,7 +138,7 @@ MFTAttributes   AttributeList::mftAttributes(void)
 
     MFTEntryManager* mftManager = this->mftAttribute()->ntfs()->mftManager();
     uint64_t entryId = item->mftEntryId();
-//XXX iugly style
+
     MFTEntryNode* itemEntryNode = mftManager->entryNode(entryId);
     if (itemEntryNode == NULL)
       mftManager->create(entryId);

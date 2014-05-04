@@ -135,7 +135,7 @@ int pff::export_note(ItemInfo* itemInfo, Node* parent)
   result = libpff_message_get_utf8_subject_size(itemInfo->pff_item(), &subject_string_size, &(pff_error));
   if (result != 0 && result != -1 && subject_string_size > 0)
   {
-    char*	subject = (char*)malloc(sizeof(char *) * subject_string_size);
+    char*	subject = (char*)malloc(sizeof(char) * subject_string_size);
     if (libpff_message_get_utf8_subject(itemInfo->pff_item(), (uint8_t*)subject, subject_string_size, &(pff_error)) != 1)
       check_error(pff_error)
     folderName << std::string(subject);
@@ -163,7 +163,7 @@ int pff::export_meeting(ItemInfo* itemInfo, Node* parent)
   result = libpff_message_get_utf8_subject_size(itemInfo->pff_item(), &subject_string_size, &(pff_error));
   if (result != 0 && result != -1 && subject_string_size > 0)
   {
-    char*	subject = (char*)malloc(sizeof(char *) * subject_string_size);
+    char*	subject = (char*)malloc(sizeof(char) * subject_string_size);
     if (libpff_message_get_utf8_subject(itemInfo->pff_item(), (uint8_t*)subject, subject_string_size, &(pff_error)) != 1)
       check_error(pff_error)
     folderName << std::string(subject);
@@ -191,7 +191,7 @@ int pff::export_task(ItemInfo* itemInfo, Node* parent)
   result = libpff_message_get_utf8_subject_size(itemInfo->pff_item(), &subject_string_size, &(pff_error));
   if (result != 0 && result != -1 && subject_string_size > 0)
   {
-    char*	subject = (char*)malloc(sizeof(char *) * subject_string_size);
+    char*	subject = (char*)malloc(sizeof(char) * subject_string_size);
     if (libpff_message_get_utf8_subject(itemInfo->pff_item(), (uint8_t*)subject, subject_string_size, &(pff_error)) != 1)
       check_error(pff_error)
     taskName << std::string(subject);
@@ -221,7 +221,7 @@ int pff::export_contact(ItemInfo* itemInfo, Node* parent)
   result = libpff_message_get_utf8_subject_size(itemInfo->pff_item(), &subject_string_size, &(pff_error));
   if (result != 0 && result != -1 && subject_string_size > 0)
   {
-    char*	subject = (char*)malloc(sizeof(char *) * subject_string_size);
+    char*	subject = (char*)malloc(sizeof(char ) * subject_string_size);
     if (libpff_message_get_utf8_subject(itemInfo->pff_item(), (uint8_t*)subject, subject_string_size, &(pff_error)) != -1)
       check_error(pff_error)
     contactName << std::string(subject);
@@ -251,7 +251,7 @@ int pff::export_appointment(ItemInfo* itemInfo, Node* parent)
   result = libpff_message_get_utf8_subject_size(itemInfo->pff_item(), &subject_string_size, &(pff_error));
   if (result != 0 && result != -1 && subject_string_size > 0)
   {
-    char*	subject = (char*)malloc(sizeof(char *) * subject_string_size);
+    char*	subject = (char*)malloc(sizeof(char) * subject_string_size);
     if (libpff_message_get_utf8_subject(itemInfo->pff_item(), (uint8_t*)subject, subject_string_size, &(pff_error)) != -1)
       check_error(pff_error)
     messageName << std::string(subject);
@@ -328,7 +328,7 @@ int pff::export_email(ItemInfo* itemInfo, Node *parent)
   result = libpff_message_get_utf8_subject_size(itemInfo->pff_item(), &subject_string_size, &(pff_error));
   if (result != 0 && result != -1 && subject_string_size > 0)
   {
-    char*	subject = (char*)malloc(sizeof(char *) * subject_string_size);
+    char*	subject = (char*)malloc(sizeof(char ) * subject_string_size);
     if (libpff_message_get_utf8_subject(itemInfo->pff_item(), (uint8_t*)subject, subject_string_size, &(pff_error)) != -1)
       check_error(pff_error)
     messageName << std::string(subject);
@@ -465,7 +465,8 @@ int pff::export_attachments(ItemInfo* itemInfo, Node* parent)
 	 {
 	   new PffNodeAttachment(attachmentName.str(), parent, this, itemInfo, attachment_data_size, attachment_iterator);
 	   delete[] attachment_filename;
-	   libpff_item_free(&attachment, &(pff_error));
+	   if (libpff_item_free(&attachment, &(pff_error)) != 1)
+             check_error(pff_error)
 	 }
      }    
      else if(attachment_type == LIBPFF_ATTACHMENT_TYPE_ITEM)

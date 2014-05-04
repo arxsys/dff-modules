@@ -18,6 +18,7 @@
 #include "mftattribute.hpp"
 #include "mftentrynode.hpp"
 #include "ntfs.hpp"
+#include "ntfsopt.hpp"
 #include "bootsector.hpp"
 
 MFTAttributeContent::MFTAttributeContent(MFTAttribute* mftAttribute) : Node("MFTAC", (uint64_t)mftAttribute->contentSize(), NULL,  mftAttribute->ntfs()), __mftAttribute(mftAttribute), __state(0)
@@ -120,12 +121,16 @@ Attributes	MFTAttributeContent::_attributes(void)
   if (this->__mftAttribute == NULL)
     return attrs;
 
+  bool advancedAttributes = this->__mftAttribute->ntfs()->opt()->advancedAttributes();
+
   MAP_ATTR("type id", this->__mftAttribute->typeId())
   MAP_ATTR("length", this->__mftAttribute->length())
   if (this->__mftAttribute->nameSize())
-    MAP_ATTR("name", this->attributeName())
-  MAP_ATTR("flags", this->__mftAttribute->flags()) //XXX
+      MAP_ATTR("name", this->attributeName())
   MAP_ATTR("id", this->__mftAttribute->id())
+  if (advancedAttributes)
+    MAP_ATTR("flags", this->__mftAttribute->flags()) //XXX
+
   if (this->__mftAttribute->isResident())
   {
     MAP_ATTR("Content size", this->__mftAttribute->contentSize());
@@ -133,10 +138,13 @@ Attributes	MFTAttributeContent::_attributes(void)
   }
   else
   {
-    MAP_ATTR("VNC start", this->__mftAttribute->VNCStart())
-    MAP_ATTR("VNC end", this->__mftAttribute->VNCEnd())
-    MAP_ATTR("Run list offset", this->__mftAttribute->runListOffset())
-    MAP_ATTR("Compression unit size", this->__mftAttribute->compressionBlockSize())
+    if (advancedAttributes)
+    {
+      MAP_ATTR("VNC start", this->__mftAttribute->VNCStart())
+      MAP_ATTR("VNC end", this->__mftAttribute->VNCEnd())
+      MAP_ATTR("Run list offset", this->__mftAttribute->runListOffset())
+      MAP_ATTR("Compression unit size", this->__mftAttribute->compressionBlockSize())
+    }
     MAP_ATTR("Content allocated size", this->__mftAttribute->contentAllocatedSize())
     MAP_ATTR("Content actual size", this->__mftAttribute->contentActualSize())
     MAP_ATTR("Content initialized size", this->__mftAttribute->contentInitializedSize())

@@ -18,7 +18,7 @@
 #include "pff.hpp"
 #include "pff_macro.hpp"
 
-pff::pff() : mfso("exchange")
+pff::pff() : mfso("exchange"), parent(NULL), __pff_file(NULL)
 {
   
 }

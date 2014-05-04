@@ -15,11 +15,11 @@
  */
 
 #include "unallocated.hpp"
+#include "bootsector.hpp"
 #include "mftmanager.hpp"
 #include "ntfs.hpp"
 #include "mftnode.hpp"
-#include "bootsector.hpp"
-#include "mftattributecontenttype.hpp"
+#include "attributes/mftattributecontenttype.hpp"
 
 /**
  *  Unallocated Node

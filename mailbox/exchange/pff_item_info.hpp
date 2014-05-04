@@ -56,11 +56,11 @@ public:
   uint8_t               type(void);
   int                   index(void);
 private:
-  int                   __index;
-  uint32_t              __id;
-  ItemStatusType        __statusType;
-  ItemInfo*             __attachedInfo;
   libpff_item_t*        __item;
+  int                   __index;
+  ItemStatusType        __statusType;
+  uint32_t              __id;
+  ItemInfo*             __attachedInfo;
 };
 
 #endif

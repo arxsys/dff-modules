@@ -20,8 +20,8 @@
 #include "ntfsopt.hpp"
 #include "mftnode.hpp"
 #include "bootsector.hpp"
-#include "mftattributecontenttype.hpp"
 #include "unallocated.hpp"
+#include "attributes/mftattributecontenttype.hpp"
 
 /**
  *  MFTId

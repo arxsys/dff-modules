@@ -16,10 +16,10 @@
 
 #include <vector>
 
+#include "bootsector.hpp"
 #include "mftnode.hpp"
 #include "ntfs.hpp"
-#include "mftattributecontenttype.hpp"
-#include "bootsector.hpp"
+#include "attributes/mftattributecontenttype.hpp"
 
 MFTNode::MFTNode(NTFS* ntfs, MFTEntryNode* mftEntryNode) : Node("", 0, NULL, ntfs), __mftEntryNode(mftEntryNode), __isCompressed(false)
 {

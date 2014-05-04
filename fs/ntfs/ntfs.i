@@ -58,6 +58,9 @@ class ntfs(Module):
     self.conf.addArgument({"name" : "no-recovery",
                            "description" : "If set the module will not try to recover file by carving MFT in unallocated clusters",
                            "input": Argument.Empty})
+    self.conf.addArgument({"name" : "advanced-attributes",
+                           "description" : "Display advanced attributes as nodes attributes",
+                           "input": Argument.Empty})
     self.conf.addArgument({"name" : "no-bootsector-check",
                            "description" : "If set the module will continue even if the bootsector is corrupted",
                            "input": Argument.Empty})

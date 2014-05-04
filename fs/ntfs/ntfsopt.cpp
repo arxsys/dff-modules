@@ -28,6 +28,8 @@ NTFSOpt::NTFSOpt(Attributes args) : __fsNode(NULL), __validateBootSector(false),
     this->__validateBootSector = false;
   if (args.find("no-recovery") != args.end())
     this->__recovery = false;
+  if (args.find("advanced-attributes") != args.end())
+    this->__advancedAttributes = true;
   arg =args.find("drive-name");
   if (arg != args.end())
     this->__driveName = arg->second->value<std::string>();
@@ -52,6 +54,11 @@ bool            NTFSOpt::recovery(void) const
 bool            NTFSOpt::validateBootSector(void) const
 {
   return (this->__validateBootSector);
+}
+
+bool            NTFSOpt::advancedAttributes(void) const
+{
+  return (this->__advancedAttributes);
 }
 
 std::string     NTFSOpt::driveName(void) const

@@ -17,7 +17,7 @@
 #ifndef __NTFS_UNALLOCATED_HH__
 #define __NTFS_UNALLOCATED_HH__
 
-#include "bitmap.hpp"
+#include "attributes/bitmap.hpp"
 
 class NTFS;
 

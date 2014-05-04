@@ -28,11 +28,13 @@ public:
   bool          recovery(void) const;
   std::string   driveName(void) const;
   bool          validateBootSector(void) const;
+  bool          advancedAttributes(void) const;
 private:
   Node*         __fsNode;
   bool          __validateBootSector;
   bool          __recovery;
   std::string   __driveName;
+  bool          __advancedAttributes;
 };
 
 #endif

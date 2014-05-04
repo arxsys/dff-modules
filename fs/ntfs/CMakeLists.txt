@@ -24,19 +24,20 @@ dff_cpp_module(ntfs
   mftattribute.cpp
   mftattributecontent.cpp
   mftnode.cpp
-  standardinformation.cpp
-  filename.cpp
-  attributelist.cpp
-  volume.cpp
-  objectid.cpp
-  indexroot.cpp
-  indexallocation.cpp
-  indexentry.cpp
   mftmanager.cpp
-  data.cpp
-  bitmap.cpp
-  reparsepoint.cpp
   unallocated.cpp
+
+  attributes/standardinformation.cpp
+  attributes/filename.cpp
+  attributes/attributelist.cpp
+  attributes/volume.cpp
+  attributes/objectid.cpp
+  attributes/indexroot.cpp
+  attributes/indexallocation.cpp
+  attributes/indexentry.cpp
+  attributes/data.cpp
+  attributes/bitmap.cpp
+  attributes/reparsepoint.cpp
   SWIG_FILE ntfs.i
   INCLUDE_DIRS ${ICU_INCLUDE_DIRS}
   LINK_LIBRARIES ${ICU_LIBRARIES} exceptions types vfs

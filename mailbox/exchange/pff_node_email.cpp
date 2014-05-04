@@ -40,10 +40,10 @@ fdinfo* PffNodeEMail::vopen(void)
    fdinfo*	fi;
    uint8_t*	buff;
 
-   fi = new fdinfo;
    if ((buff = this->dataBuffer()) == NULL)
      return (NULL);
 
+   fi = new fdinfo;
    fi->id = new Variant((void*)buff);
    fi->node = this;
    fi->offset = 0;
@@ -102,7 +102,7 @@ int32_t PffNodeEMail::vclose(fdinfo *fi)
   uint8_t*	rbuff;
 
   rbuff = (uint8_t*)fi->id->value<void* >();
-  delete rbuff;
+  delete[] rbuff;
 
   return (0);
 }

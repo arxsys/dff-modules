@@ -18,7 +18,7 @@
 #define __NTFS_MFT_ENTRY_NODE_HH__
 
 #include "ntfs_common.hpp"
-#include "indexroot.hpp"
+#include "attributes/indexroot.hpp"
 
 class NTFS;
 class MFTAttribute;

@@ -19,8 +19,8 @@
 #include "ntfs_common.hpp"
 #include "ntfs.hpp"
 #include "mftentrynode.hpp"
-#include "filename.hpp"
-#include "mftattributecontenttype.hpp"
+#include "attributes/filename.hpp"
+#include "attributes/mftattributecontenttype.hpp"
 
 MFTAttribute::MFTAttribute(MFTEntryNode* mftEntryNode, uint64_t offset) : __offset(offset), __mftEntryNode(mftEntryNode), __residentAttribute(NULL), __nonResidentAttribute(NULL)
 {

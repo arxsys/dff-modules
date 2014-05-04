@@ -14,12 +14,13 @@
  *  Solal Jacob <sja@digital-forensic.org>
  */
 
+#include "ntfsopt.hpp"
 #include "mftentrynode.hpp"
 #include "bootsector.hpp"
 #include "ntfs.hpp"
 #include "mftattribute.hpp"
 #include "mftattributecontent.hpp"
-#include "mftattributecontenttype.hpp"
+#include "attributes/mftattributecontenttype.hpp"
 
 MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::string name, Node* parent = NULL) : Node(name, ntfs->bootSectorNode()->MFTRecordSize(), parent, ntfs), __ntfs(ntfs), __mftNode(mftNode), __offset(offset), __state(0)
 {
@@ -176,16 +177,17 @@ Attributes	MFTEntryNode::_attributes(void)
 {
   Attributes	attrs;
 
-  //XXX handle normal/advanced mode for attribute
+  if (this->__ntfs->opt()->advancedAttributes())
+  { 
+    MAP_ATTR("Entry id", this->offset() / this->ntfs()->bootSectorNode()->MFTRecordSize());
+    MAP_ATTR("Offset", this->offset())
+    MAP_ATTR("Signature", this->signature())
+    MAP_ATTR("Used size", this->usedSize())
+    MAP_ATTR("Allocated size", this->allocatedSize())
+    MAP_ATTR("First attribute offset", this->firstAttributeOffset())
+  }
 
-  MAP_ATTR("Entry id", this->offset() / this->ntfs()->bootSectorNode()->MFTRecordSize());
-  MAP_ATTR("Offset", this->offset())
-  MAP_ATTR("Signature", this->signature())
-  MAP_ATTR("Used size", this->usedSize())
-  MAP_ATTR("Allocated size", this->allocatedSize())
-  MAP_ATTR("First attribute offset", this->firstAttributeOffset())
-
-  MFTAttributes		mftAttributes = this->mftAttributes();
+  MFTAttributes            mftAttributes = this->mftAttributes();
   MFTAttributes::iterator  mftAttribute = mftAttributes.begin();
   for (; mftAttribute != mftAttributes.end(); ++mftAttribute)
   {
@@ -198,7 +200,6 @@ Attributes	MFTEntryNode::_attributes(void)
         //for i in mftattribute.MFTAttribute() MAP_ATTR
       MAP_ATTR(mftAttributeContent->typeName(), mftAttributeContent->_attributes());
       delete mftAttributeContent;
-      delete (*mftAttribute);
     }
     catch (vfsError& e)
     {
@@ -208,8 +209,8 @@ Attributes	MFTEntryNode::_attributes(void)
     {
       std::cout << "MFTEntryNode::_attributes error: " << e  << std::endl;
     }
+    delete (*mftAttribute);
   }
-  //delete  attribute map;
 
   return (attrs);
 }
