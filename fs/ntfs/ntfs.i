@@ -56,7 +56,7 @@ class ntfs(Module):
                            "description": "Path to a file containing NTFS",
                            "input": Argument.Required|Argument.Single|typeId.Node})
     self.conf.addArgument({"name" : "recovery",
-                           "description" : "If set the module will not try to recover file by carving MFT in unallocated clusters",
+                           "description" : "If set the module will try to recover file by carving MFT in unallocated clusters",
                            "input": Argument.Empty})
     self.conf.addArgument({"name" : "advanced-attributes",
                            "description" : "Display advanced attributes as nodes attributes",
