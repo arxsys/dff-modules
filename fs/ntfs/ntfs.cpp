@@ -57,8 +57,8 @@ void    NTFS::start(Attributes args)
   this->registerTree(this->opt()->fsNode(), this->rootDirectoryNode());
   this->__mftManager->linkOrphanEntries();
   this->registerTree(this->rootDirectoryNode(), this->orphansNode());
-  //this->__mftManager->linkUnallocated();
-  //this->registerTree(this->rootDirectoryNode(), this->unallocatedNode());
+  /this->__mftManager->linkUnallocated();
+  /this->registerTree(this->rootDirectoryNode(), this->unallocatedNode());
  
   this->__mftManager->linkReparsePoint();
   //delete this->__mftManager; //Unallocated sans sert

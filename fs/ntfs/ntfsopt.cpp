@@ -16,7 +16,7 @@
 
 #include "ntfsopt.hpp"
 
-NTFSOpt::NTFSOpt(Attributes args) : __fsNode(NULL), __validateBootSector(false), __recovery(true)
+NTFSOpt::NTFSOpt(Attributes args) : __fsNode(NULL), __validateBootSector(false), __recovery(false)
 {
   Attributes::iterator arg;
 
@@ -26,8 +26,8 @@ NTFSOpt::NTFSOpt(Attributes args) : __fsNode(NULL), __validateBootSector(false),
     throw envError("NTFS module need a file argument.");
   if (args.find("no-bootsector-check") != args.end())
     this->__validateBootSector = false;
-  if (args.find("no-recovery") != args.end())
-    this->__recovery = false;
+  if (args.find("recovery") != args.end())
+    this->__recovery = true;
   if (args.find("advanced-attributes") != args.end())
     this->__advancedAttributes = true;
   arg =args.find("drive-name");
