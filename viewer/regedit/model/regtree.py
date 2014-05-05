@@ -36,16 +36,20 @@ class RegTreeModel(QStandardItemModel):
     self.__parent = __parent
     self.regmap = {}
     self.indexmap = {}
+    self.__columnCount = 0
     if self.createRegMap():
       self.createRootItems()
 
+
   def hasSubKeys(self, key):
     return len(key.subkeys)
+
 
   def createRegMap(self):
     processusManager = ModuleProcessusManager()
     regm = processusManager.get('winreg')
     if len(regm.registry) > 0:
+      self.__columnCount = 1
       self.hives = regm.registry
       self.manager = regm
       for key, values in self.hives.iteritems():
@@ -72,6 +76,7 @@ class RegTreeModel(QStandardItemModel):
     else:
       return False
     return False
+
 
   def createRootItems(self):
     self.root_item = self.invisibleRootItem()
@@ -107,16 +112,18 @@ class RegTreeModel(QStandardItemModel):
           except:
             pass
 
+
   def hasChildren(self, parent):
       if parent.isValid():
         item = self.itemFromIndex(parent)
         if (item.children > 0) or (item.proc == None):
           return True
-      elif self.root_item.index().internalId() == parent.internalId():
+      elif self.__columnCount > 0 and self.root_item.index().internalId() == parent.internalId():
           return True
       else:
           return False
       return False
+
 
   def data(self, index, role):
       if not index.isValid():
@@ -133,8 +140,10 @@ class RegTreeModel(QStandardItemModel):
           icon = QPixmap(":folder.png")
           return QVariant(QIcon(icon))
 
+
   def columnCount(self, parent = QModelIndex()):
-      return 1
+    return self.__columnCount
+
 
   def createItem(self, current_path, module, key):
     p = current_path[:]
@@ -143,6 +152,7 @@ class RegTreeModel(QStandardItemModel):
     item.setChildren(len(key.subkeys))
     item.setFlags(Qt.ItemIsSelectable|Qt.ItemIsEnabled)
     return item
+
 
   def refreshTree(self, index):
       item = self.itemFromIndex(index)
@@ -166,6 +176,7 @@ class RegTreeModel(QStandardItemModel):
             item.expanded = True
             item.deleteHive()
 
+
   def selectKey(self, index):
     if index.isValid():
       item = self.itemFromIndex(index)
@@ -179,6 +190,7 @@ class RegTreeModel(QStandardItemModel):
       self.emit(SIGNAL("keyItemSelected"), item)
       self.emit(SIGNAL("keySelected"), rhive, key)
       
+
   def RegType(self, node):
     try:
       if re.search(REPAIR, node.absolute(), re.IGNORECASE):
@@ -203,6 +215,7 @@ class RegTreeModel(QStandardItemModel):
     except:
       return None
     return None
+
 
 class regItem(QStandardItem):
   def __init__(self, name, proc=None, path=None):
