@@ -111,28 +111,29 @@ class PrefetchParser():
        self.prefetchFileList = unicode(self.data.decode('utf-16')).split("\x00")
        try:
          self.prefetchFileList.remove('')
-       except ValueError:
+       except ValueError as e:
+        print e
 	pass
        self.prefetchFileList = map(lambda x : (x, str), self.prefetchFileList)
        self.vfile.seek(self.prefetch.Standard.VolumeInformationBlock.VolumePathOffset + self.prefetch.Standard.VolumeInformationBlock.pointer)
-       self.volumePath = self.vfile.read(self.prefetch.Standard.VolumeInformationBlock.VolumePathLength *2).decode('UTF-16')
+       self.volumePath = self.vfile.read(self.prefetch.Standard.VolumeInformationBlock.VolumePathLength *2).decode('UTF-16').encode("UTF-8", "replace")
 
        self.VolumePrefetchList = []
        self.vfile.seek(self.prefetch.Standard.VolumeInformationBlock.pointer + self.prefetch.Standard.VolumeInformationBlock.OffsetToFolderPaths)
        pathSize = unpack('h', self.vfile.read(2))[0]
        count = 0
        while (pathSize > 0 and count < self.prefetch.Standard.VolumeInformationBlock.NumberOfFolderPaths):
-         self.VolumePrefetchList.append((unicode(self.vfile.read(pathSize * 2+2)).decode('UTF-16'), str))
+         self.VolumePrefetchList.append((unicode(self.vfile.read(pathSize * 2+2).decode('UTF-16')).encode("UTF-8", "replace"), str))
 	 count += 1
          pathSize = unpack('h', self.vfile.read(2))[0]
 
        self.vfile.close()
      except :
-	#err_type, err_value, err_traceback = sys.exc_info()
-	#for n in  traceback.format_exception_only(err_type, err_value):
-	   #print n
-      	#for n in traceback.format_tb(err_traceback):
-	 #print n
+	err_type, err_value, err_traceback = sys.exc_info()
+	for n in  traceback.format_exception_only(err_type, err_value):
+	  print n
+      	for n in traceback.format_tb(err_traceback):
+	 print n
 	self.vfile.close()
 	raise Exception("Init error")
 
@@ -187,6 +188,7 @@ class Prefetch(Script):
       self.handler.setAttributes(node, arg)
       node.registerAttributes(self.handler)
     except (KeyError, Exception):
+      print 'error iun start' 
       pass
 
 class prefetch(Module): 
@@ -200,5 +202,5 @@ class prefetch(Module):
  	                   "type": typeId.String,
  	                   "description": "compatible extension",
  	                   "values": ["pf"]})
-    self.flags = ["single"]
+    #self.flags = ["single"]
     self.tags = "Metadata"
