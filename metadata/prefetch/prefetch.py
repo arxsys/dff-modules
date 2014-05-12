@@ -108,7 +108,7 @@ class PrefetchParser():
 	    self.version_name = version_name
        if not prefetch_version:
 	 self.vfile.close
-         print 'Wrong magic number not a prefetch file : ' + node.absolute()
+         #print 'Wrong magic number not a prefetch file : ' + node.absolute()
 	 return 
 
        self.vfile.seek(0)
