@@ -101,12 +101,14 @@ class PrefetchParser():
 
        self.vfile.seek(0)
        magic_data = self.vfile.read(8)
+       prefetch_version = None
        for magic, version, version_name in self.PrefetchMagic:
 	  if magic_data == magic:
 	    prefetch_version = getattr(self.header, version)
 	    self.version_name = version_name
-       if not version:
+       if not prefetch_version:
 	 self.vfile.close
+         print 'Wrong magic number not a prefetch file : ' + node.absolute()
 	 return 
 
        self.vfile.seek(0)
@@ -195,7 +197,6 @@ class Prefetch(Script):
       self.handler.setAttributes(node, arg)
       node.registerAttributes(self.handler)
     except (KeyError, Exception):
-      print 'error iun start' 
       pass
 
 class prefetch(Module): 
