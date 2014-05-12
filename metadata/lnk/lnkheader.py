@@ -20,11 +20,11 @@ from dff.api.types.libtypes import vtime, TIME_MS_64
 class LPWSTR():
   def __init__(self, data):
     size = unpack('I', data[0:4])[0]
-    self.data = unicode(data[4:4+size*2])
+    self.data = unicode(data[4:4+size*2].decode('UTF-16')).encode("UTF-8", "replace")
     self.length = 4 + (size * 2)
 
   def __str__(self):
-     return self.data.decode('UTF-16')
+     return self.data
 
   def __len__(self):
     return (self.length)

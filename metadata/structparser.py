@@ -71,7 +71,7 @@ def attributesTypes(values, types):
        val.append(vval) 
    elif (types == str):
       if type(values) == unicode:
-	val = values.encode("ascii", "replace")
+	val = values.encode("UTF-8", "replace")
       else:
 	val = str(values)
    elif (types == VLink): #return node is already created
