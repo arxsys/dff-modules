@@ -29,7 +29,8 @@ from dff.modules.structparser import Struct, Header, ResolveAttributesMap, Attri
 
 class PrefetchParser():
   PrefetchMagic = [("\x11\x00\x00\x00\x53\x43\x43\x41", "prefetch_XP", "Windowx XP"),
-		    ("\x17\x00\x00\x00\x53\x43\x43\x41", "prefetch_Vista", "Windows Vista")]
+		    ("\x17\x00\x00\x00\x53\x43\x43\x41", "prefetch_Vista", "Windows Vista"),
+		    ("\x1a\x00\x00\x00\x53\x43\x43\x41", "prefetch_Windows8", "Windows 8")]
 
   PrefetchHeader = ({ "info" : { "os":"windows" , "arch":"x86", "name" : "prefetch" },
 	             "descr" : {
@@ -45,7 +46,13 @@ class PrefetchParser():
 				    "LastExecutionTime" : (8, 0x80),
 				    "NumberOfExecution" : (4, 0x98)
 				  }),
-
+                                  "prefetch_Windows8" : ((0xD4),
+			          {
+				    "Standard" : (0x98, 0, "prefetch_standard"),
+				    "LastExecutionTime" : (8, 0x80),
+                                    #timeinfo
+				    "NumberOfExecution" : (4, 0xD0)
+				  }),
   				  "prefetch_standard" : ((0x98),
   				  {
 				    "Header" : (8, 0),
@@ -143,7 +150,7 @@ class PrefetchParser():
     except:
       pass
 
-class PrefetchHandler(AttributesHandler, ModuleProcessusHandler): #garder module processus handler ou utiliser autre chose ? car si on le met a chaque fois c un peu redondant de le mettre partout
+class PrefetchHandler(AttributesHandler, ModuleProcessusHandler):
   def __init__(self):
     AttributesHandler.__init__(self, "prefetch")
     ModuleProcessusHandler.__init__(self, "prefetch")
@@ -202,5 +209,5 @@ class prefetch(Module):
  	                   "type": typeId.String,
  	                   "description": "compatible extension",
  	                   "values": ["pf"]})
-    #self.flags = ["single"]
+    self.flags = ["single"]
     self.tags = "Metadata"
