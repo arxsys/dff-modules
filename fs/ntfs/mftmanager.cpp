@@ -338,7 +338,7 @@ MFTEntryInfo*  MFTEntryManager::createFromOffset(uint64_t offset, Node* fsNode, 
   return (mftEntryInfo);
 }
 
-/*
+/**
  *  Create all MFT Entry found in the main MFT 
  */
 void    MFTEntryManager::initEntries(void)
@@ -387,14 +387,6 @@ void    MFTEntryManager::linkEntries(void)
     rootMFT->setName("root"); //replace '.'
     this->__ntfs->rootDirectoryNode()->addChild(rootMFT);
   }
-}
-
-void    MFTEntryManager::addEntryInfoNodes(MFTEntryInfo* mftEntryInfo, Node* parent) const
-{
-  MFTNode* mftNode = mftEntryInfo->node;
-
-  if (mftNode && mftNode->parent() == NULL)
-    parent->addChild(mftNode);
 }
 
 /**
@@ -482,7 +474,12 @@ void    MFTEntryManager::linkUnallocated(void)
         try
         {
           MFTEntryInfo* entryInfo = this->createFromOffset(offset, fsNode, -1);
-          this->addEntryInfoNodes(entryInfo, unallocated);
+          std::list<MFTNode* >::const_iterator mftNode = entryInfo->nodes.begin();
+          for ( ; mftNode != entryInfo->nodes.end(); ++mftNode)
+          {
+            if ((*mftNode))
+              unallocated->addChild((*mftNode)); 
+          }
           recovered++;
           delete entryInfo; //car -1
         }

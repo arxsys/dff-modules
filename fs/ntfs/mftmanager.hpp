@@ -67,7 +67,6 @@ public:
 
   bool                                  addChild(uint64_t nodeId);
   bool                                  addChildId(uint64_t nodeId, MFTNode* node);
-  void                                  addEntryInfoNodes(MFTEntryInfo* mftEntryInfo, Node* parent) const;
   void                                  inChildren(uint64_t nodeId, uint64_t childId);
   void                                  childrenSanitaze(void);
          
