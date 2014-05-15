@@ -50,7 +50,7 @@ class MFTEntryNode : public Node
 private:
   NTFS*			        __ntfs; 
   Node*			        __mftNode;
-  MFTEntry*		        __MFTEntry;
+  MFTEntry		        __MFTEntry;
   uint64_t		        __offset;
   uint64_t		        __state;
 public:

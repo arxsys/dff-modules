@@ -37,14 +37,18 @@ public:
 class MFTEntryInfo
 {
 public:
-  MFTEntryInfo();
+  MFTEntryInfo(MFTEntryNode* entryNode);
   ~MFTEntryInfo();
+
   uint64_t              id;
   //uint16_t            sequence;
   std::list<MFTId>      childrenId;
   MFTNode*              node; //this is need to link other nodes and do final / directory linking  (can't link to an entry)
-  MFTEntryNode*         entryNode; //entry is related to different node causes of ADS etc...
-  std::list<MFTNode*>   nodes;
+  std::list<MFTNode*>   nodes;//nodes for all $DATA attribute (unamed main $DATA and name ads)
+
+  MFTEntryNode*         entryNode(void) const;
+private:
+  MFTEntryNode*         __entryNode; //entry is related to different node causes of ADS etc...
 };
 
 class MFTEntryManager
@@ -58,12 +62,12 @@ public:
   void                                  linkUnallocated(void);
   void                                  linkReparsePoint(void) const;
 
-  MFTNode*                              create(uint64_t id);
-  MFTNode*                              createFromOffset(uint64_t offset, Node* fsNode, int64_t id);
+  MFTEntryInfo*                         create(uint64_t id);
+  MFTEntryInfo*                         createFromOffset(uint64_t offset, Node* fsNode, int64_t id);
 
-  //bool                                  add(uint64_t id, MFTNode* node);
   bool                                  addChild(uint64_t nodeId);
   bool                                  addChildId(uint64_t nodeId, MFTNode* node);
+  void                                  addEntryInfoNodes(MFTEntryInfo* mftEntryInfo, Node* parent) const;
   void                                  inChildren(uint64_t nodeId, uint64_t childId);
   void                                  childrenSanitaze(void);
          

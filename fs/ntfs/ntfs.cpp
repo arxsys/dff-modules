@@ -61,7 +61,7 @@ void    NTFS::start(Attributes args)
   this->registerTree(this->rootDirectoryNode(), this->unallocatedNode());
  
   this->__mftManager->linkReparsePoint();
-  //delete this->__mftManager; //Unallocated sans sert
+  //delete this->__mftManager; //Unallocated node use it 
 
   this->setStateInfo("Finished successfully");
   this->res["Result"] = Variant_p(new Variant(std::string("NTFS parsed successfully.")));
@@ -111,7 +111,6 @@ Node*           NTFS::unallocatedNode(void) const
  *  Redefine read to use both file mapping
  *  and special read method for compressed data
  */
-
 int32_t  NTFS::vread(int fd, void *buff, unsigned int size)
 {
   fdinfo* fi = NULL;

@@ -31,17 +31,14 @@ MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::stri
     delete vfile;
     throw std::string("Can't seek to MFT entry structure");
   }
-  this->__MFTEntry = new MFTEntry; 
-  if  (vfile->read((void *)this->__MFTEntry, sizeof(MFTEntry)) != sizeof(MFTEntry))
+  if  (vfile->read((void *)&this->__MFTEntry, sizeof(MFTEntry)) != sizeof(MFTEntry))
   {
     delete vfile;
-    delete this->__MFTEntry;  
     throw std::string("Can't read MFT Entry structure");
   }
   delete vfile;
 
   //this->validate(); for exemple when carving if wrong value avoid infinite loop etc... 
-
   //for test only : read all attributes of the node 
   /*
   MFTAttributes mftAttributes = this->MFTAttributes();
@@ -66,7 +63,6 @@ MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::stri
       std::cout << "MFTEntryNode::_attributes error: " << e << std::endl;
     }
   }*/
-  this->__state++;
 }
 
 void MFTEntryNode::updateState(void)
@@ -76,11 +72,6 @@ void MFTEntryNode::updateState(void)
 
 MFTEntryNode::~MFTEntryNode()
 {
-  if (this->__MFTEntry != NULL)
-  {
-    delete this->__MFTEntry;
-    this->__MFTEntry = NULL;
-  }
 }
 
 /** 
@@ -239,51 +230,37 @@ uint64_t	MFTEntryNode::offset(void) const
 
 uint32_t	MFTEntryNode::signature(void) const
 {
-  if (this->__MFTEntry != NULL)
-    return (this->__MFTEntry->signature);
-  throw std::string("ntfs::MFTEntryNode::signature no MFTEntry.");
+  return (this->__MFTEntry.signature);
 }
 
 uint32_t	MFTEntryNode::usedSize(void) const
 {
-  if (this->__MFTEntry != NULL)
-    return (this->__MFTEntry->usedSize);
-  throw std::string("ntfs::MFTEntryNode::useSize no MFTEntry.");
+  return (this->__MFTEntry.usedSize);
 }
 
 uint32_t	MFTEntryNode::allocatedSize(void) const
 {
-  if (this->__MFTEntry != NULL)
-    return (this->__MFTEntry->allocatedSize);
-  throw std::string("ntfs::MFTEntryNode::allocatedSize no MFTEntry.");
+  return (this->__MFTEntry.allocatedSize);
 }
 
 uint16_t        MFTEntryNode::sequence(void) const
 {
-  if (this->__MFTEntry != NULL)
-    return (this->__MFTEntry->sequence);
-  throw std::string("NTFS::MFTEntryNode no MFT Entry.");
+  return (this->__MFTEntry.sequence);
 }
 
 uint16_t	MFTEntryNode::firstAttributeOffset(void) const
 {
-  if (this->__MFTEntry != NULL) 
-    return (this->__MFTEntry->firstAttributeOffset);
-  throw std::string("ntfs::MFTEntryNode::attributeOffset no MFTEntry.");
+  return (this->__MFTEntry.firstAttributeOffset);
 }
 
 uint16_t	MFTEntryNode::fixupArrayOffset(void) const
 {
-  if (this->__MFTEntry != NULL) 
-    return (this->__MFTEntry->fixupArrayOffset);
-  throw std::string("ntfs::MFTEntryNode::fixupArrayOffset no MFTEntry.");
+  return (this->__MFTEntry.fixupArrayOffset);
 }
 
 uint16_t        MFTEntryNode::fixupArraySignature(void) const
 {
-  if (this->__MFTEntry != NULL)
-    return (this->__MFTEntry->signature);
-  throw std::string("ntfs::MFTEntryNode::fixupArraySignature no MFTEntry.");
+  return (this->__MFTEntry.signature);
 }
 
 /* 
@@ -291,23 +268,17 @@ uint16_t        MFTEntryNode::fixupArraySignature(void) const
 */
 uint16_t	MFTEntryNode::fixupArrayEntryCount(void) const
 {
-  if (this->__MFTEntry != NULL) 
-    return (this->__MFTEntry->fixupArrayEntryCount - 1);
-  throw std::string("ntfs::MFTEntryNode::fixupArratEntryCount no MFTEntry.");
+  return (this->__MFTEntry.fixupArrayEntryCount - 1);
 }
 
 bool            MFTEntryNode::isUsed(void) const
 {
-  if (this->__MFTEntry != NULL)
-    return (this->__MFTEntry->flags & 0x1);
-  throw std::string("ntfs::MFTEntryNode::isUsed no MFTEntry."); 
+  return (this->__MFTEntry.flags & 0x1);
 }
 
 bool            MFTEntryNode::isDirectory(void) const
 {
-  if (this->__MFTEntry != NULL)
-    return (this->__MFTEntry->flags & 0x2);
-  throw std::string("ntfs::MFTEntryNode::isDirectory no MFTEntry."); 
+  return (this->__MFTEntry.flags & 0x2);
 }
 
 /**
