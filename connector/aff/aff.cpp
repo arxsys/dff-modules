@@ -17,14 +17,14 @@
 #include "aff.hpp"
 #include "affnode.hpp"
 
-aff::aff() : fso("aff")
+aff::aff() : fso("aff"), __parent(NULL), __fdm(new FdManager())
 {
   mutex_init(&this->__io_mutex);
-  this->__fdm = new FdManager();
 }
 
 aff::~aff()
 {
+  delete this->__fdm;
   mutex_destroy(&this->__io_mutex);
 }
 
@@ -35,9 +35,9 @@ void aff::start(std::map<std::string, Variant_p > args)
   AffNode*					 node;
 
   if (args.find("parent") != args.end())
-    this->parent = args["parent"]->value<Node* >();
+    this->__parent = args["parent"]->value<Node* >();
   else
-    this->parent = VFS::Get().GetNode("/");
+    this->__parent = VFS::Get().GetNode("/");
   if (args.find("path") != args.end())
     vl = args["path"]->value<std::list<Variant_p > >();
   else
@@ -46,38 +46,37 @@ void aff::start(std::map<std::string, Variant_p > args)
   {
     std::ostringstream cs;
     cs << args["cache size"]->value<uint32_t >();
-    this->cache_size = cs.str(); 
+    this->__cacheSize = cs.str(); 
   }
   else
-    this->cache_size = "2";
+    this->__cacheSize = "32";
 #ifndef WIN32
-  setenv("AFFLIB_CACHE_PAGES", this->cache_size.c_str(), 1);
+  setenv("AFFLIB_CACHE_PAGES", this->__cacheSize.c_str(), 1);
 #else
-  _putenv_s("AFFLIB_CACHE_PAGES", this->cache_size.c_str());
+  _putenv_s("AFFLIB_CACHE_PAGES", this->__cacheSize.c_str());
 #endif
 
   for (vpath = vl.begin(); vpath != vl.end(); vpath++)
   {
-     std::string path = (*vpath)->value<Path* >()->path;
-     AFFILE* affile = af_open(path.c_str(), O_RDONLY, 0);
-     if (affile)
-     {
-	std::string nname = path.substr(path.rfind('/') + 1);
-	node = new AffNode(nname, af_get_imagesize(affile), NULL, this, path, affile);
-   	this->registerTree(this->parent, node);   
-	this->res[path] = Variant_p(new Variant(std::string("added successfully by aff module")));
-     }
-     else 
-       this->res[path] = Variant_p(new Variant(std::string("can't be added by aff module")));
+    std::string path = (*vpath)->value<Path* >()->path;
+    AFFILE* affile = af_open(path.c_str(), O_RDONLY, 0);
+    if (affile)
+    {
+      std::string nname = path.substr(path.rfind('/') + 1);
+      node = new AffNode(nname, af_get_imagesize(affile), NULL, this, path, affile);
+      this->registerTree(this->__parent, node);   
+      this->res[path] = Variant_p(new Variant(std::string("added successfully by aff module")));
+    }
+    else 
+      this->res[path] = Variant_p(new Variant(std::string("can't be added by aff module")));
   }
-
-  return ;
-
 }
 
 int aff::vopen(Node *node)
 {
   AffNode* affNode = dynamic_cast<AffNode* >(node);
+  if (!affNode)
+    throw std::string("Can't cast to AFF Node");
 
   if (affNode->affile)
   {
@@ -100,10 +99,12 @@ int aff::vread(int fd, void *buff, unsigned int size)
   {
      fi = this->__fdm->get(fd);
      affNode = dynamic_cast<AffNode* >(fi->node);
+     if (!affNode)
+       return (-1);
   }
   catch (...)
   {
-     return (-1); 
+    return (-1); 
   }
 
   mutex_lock(&this->__io_mutex);

@@ -34,15 +34,14 @@
 #include <stdio.h>
 #include <aclapi.h>
 
-
 class DeviceBuffer
 {
 private:
+  HANDLE			__handle;
   uint8_t*			__buffer;
   uint64_t			__offset;
   uint32_t			__BPS;
   DWORD				__currentSize;
-  HANDLE			__handle;
   uint64_t			__devSize;
   void				fillBuff(uint64_t offset);
 public:
@@ -55,31 +54,30 @@ public:
 
 class DeviceNode : public Node
 {
-	
 public:
-	std::string		icon();
-	std::string		__devname;	
-	DeviceNode(std::string devname, uint64_t size, fso* fsobj,std::string name);
+  DeviceNode(std::string devname, uint64_t size, fso* fsobj,std::string name);
+  std::string		icon();
+  std::string		__devname;	
 };
 
 
 class devices : public fso
 {
 private:
-  Node				*parent;
-  class Node*			__root;
-  FdManager*			__fdm;
+  Node*                 parent;
+  class Node*		__root;
+  FdManager*		__fdm;
 public:
-  std::string devicePath;
   devices();
   ~devices();
-  int32_t	vopen(Node* handle);
-  int32_t 	vread(int fd, void *buff, unsigned int size);
-  int32_t 	vclose(int fd);
-  uint64_t 	vseek(int fd, uint64_t offset, int whence);
-  int32_t	vwrite(int fd, void *buff, unsigned int size) { return 0; };
-  uint32_t	status(void);
-  uint64_t	vtell(int32_t fd);
-  virtual void	start(std::map<std::string, Variant_p > args);
+  std::string           devicePath;
+  virtual void	        start(std::map<std::string, Variant_p > args);
+  int32_t	        vopen(Node* handle);
+  int32_t 	        vread(int fd, void *buff, unsigned int size);
+  int32_t 	        vclose(int fd);
+  uint64_t 	        vseek(int fd, uint64_t offset, int whence);
+  int32_t	        vwrite(int fd, void *buff, unsigned int size) { return 0; };
+  uint32_t	        status(void);
+  uint64_t	        vtell(int32_t fd);
 };
 #endif

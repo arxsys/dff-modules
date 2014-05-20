@@ -26,48 +26,41 @@
 #include <sstream>
 #include <errno.h>
 
+local::local(): fso("local"), nfd(0), parent(NULL)
+{
+}
+
+local::~local()
+{
+}
 
 void local::iterdir(std::string dir, Node *parent)
 {
   struct stat		stbuff; 
   struct dirent*	dp;
   DIR*			dfd;
-  ULocalNode*		tmp;
-  uint64_t		total;
   std::string		upath;
   
   if ((dfd = opendir(dir.c_str())))
+  {
+    while ((dp = readdir(dfd)))
     {
-      while ((dp = readdir(dfd)))
+      if (!strcmp(dp->d_name, ".")  || !strcmp(dp->d_name, ".."))
+	continue; 
+      upath = dir + "/" + dp->d_name;
+      if (lstat(upath.c_str(), &stbuff) != -1)
+      {
+	if (((stbuff.st_mode & S_IFMT) == S_IFDIR ))
 	{
-	  if (!strcmp(dp->d_name, ".")  || !strcmp(dp->d_name, ".."))
-	    continue; 
-	  upath = dir + "/" + dp->d_name;
-	  if (lstat(upath.c_str(), &stbuff) != -1)
-	    {
-	      if (((stbuff.st_mode & S_IFMT) == S_IFDIR ))
-		{
-		  tmp = new ULocalNode(dp->d_name, 0, parent, this, ULocalNode::DIR,  upath);
-		  total++;
-		  this->iterdir(upath, tmp);
-		}
-	      else
-		{
-		  tmp = new ULocalNode(dp->d_name, stbuff.st_size, parent, this, ULocalNode::FILE, upath);
-		  total++;
-		}
-	    }
+	  ULocalNode* tmp = new ULocalNode(dp->d_name, 0, parent, this, ULocalNode::DIR,  upath);
+	  this->iterdir(upath, tmp);
 	}
-      closedir(dfd);
+	else
+          new ULocalNode(dp->d_name, stbuff.st_size, parent, this, ULocalNode::FILE, upath);
+      }
     }
-}
-
-local::local(): fso("local")
-{
-}
-
-local::~local()
-{
+    closedir(dfd);
+  }
 }
 
 void	local::createTree(std::list<Variant_p > vl)
@@ -76,47 +69,37 @@ void	local::createTree(std::list<Variant_p > vl)
   Path*					tpath;
   std::string				name;
   struct stat				stbuff;
-  uint64_t				size = 0;
 
   for (it = vl.begin(); it != vl.end(); it++)
+  {
+    tpath = (*it)->value<Path*>();
+    if ((tpath->path.rfind('/') + 1) == tpath->path.length())
+      tpath->path.resize(tpath->path.rfind('/'));
+    name = tpath->path.substr(tpath->path.rfind("/") + 1);
+    this->basePath = tpath->path.substr(0, tpath->path.rfind('/'));
+    if (stat(tpath->path.c_str(), &stbuff) == -1)
     {
-      tpath = (*it)->value<Path*>();
-      if ((tpath->path.rfind('/') + 1) == tpath->path.length())
-	tpath->path.resize(tpath->path.rfind('/'));
-      name = tpath->path.substr(tpath->path.rfind("/") + 1);
-      this->basePath = tpath->path.substr(0, tpath->path.rfind('/'));
-      if (stat(tpath->path.c_str(), &stbuff) == -1)
-	{
-	  return ;
-	}
-      if (((stbuff.st_mode & S_IFMT) == S_IFDIR ))
-	{
-	  Node *dir = new ULocalNode(name, 0, NULL, this, ULocalNode::DIR, tpath->path);
-	  this->iterdir(tpath->path, dir);
-	  this->registerTree(this->parent, dir);
-	}
-      else
-	{
-	  Node *f;
-	  if (size)
-	    {
-	      f = new ULocalNode(name, size, NULL, this, ULocalNode::FILE,  tpath->path);
-	      this->registerTree(this->parent, f);
-	    }
-	  else
-	    {
-	      f = new ULocalNode(name, stbuff.st_size, NULL, this, ULocalNode::FILE, tpath->path);
-	      this->registerTree(this->parent, f);
-	    }
-	}
+      return ;
     }
+    if (((stbuff.st_mode & S_IFMT) == S_IFDIR ))
+    {
+      Node *dir = new ULocalNode(name, 0, NULL, this, ULocalNode::DIR, tpath->path);
+      this->iterdir(tpath->path, dir);
+      this->registerTree(this->parent, dir);
+    }
+    else
+    {
+      Node *f;
+      f = new ULocalNode(name, stbuff.st_size, NULL, this, ULocalNode::FILE, tpath->path);
+      this->registerTree(this->parent, f);
+    }
+  }
 }
 
 void local::start(std::map<std::string, Variant_p > args)
 {
   std::map<std::string, Variant_p >::iterator	argit;
 
-  this->nfd = 0;
   if ((argit = args.find("parent")) != args.end())
     this->parent = argit->second->value<Node*>();
   else
@@ -163,18 +146,18 @@ int	local::vread_error(int fd, void *buff, unsigned int size)
 
   pos = 0;
   while (pos < size)
+  {
+    if (size - pos < 512)
+      toread = size - pos;
+    else
+      toread = 512;
+    if ((n = read(fd, ((char*)buff)+pos, toread)) == -1)
     {
-      if (size - pos < 512)
-	toread = size - pos;
-      else
-	toread = 512;
-      if ((n = read(fd, ((char*)buff)+pos, toread)) == -1)
-	{
-	  memset(((char*)buff)+pos, 0, toread);
-	  this->vseek(fd, toread, 1);
-	}
-      pos += toread;
+      memset(((char*)buff)+pos, 0, toread);
+      this->vseek(fd, toread, 1);
     }
+    pos += toread;
+  }
   return size;
 }
 
@@ -186,9 +169,9 @@ int local::vread(int fd, void *buff, unsigned int size)
   if (n < 0)
   {
     if (errno == EIO)
-      {
-	return this->vread_error(fd, buff, size);
-      }
+    {
+      return this->vread_error(fd, buff, size);
+    }
     else
       throw vfsError("local::vread error read = -1");
   }
@@ -221,9 +204,9 @@ uint64_t local::vseek(int fd, uint64_t offset, int whence)
  n = lseek64(fd, offset, whence);
 #endif
  if (n == ((uint64_t)-1))
-   {
-     throw vfsError("local::vseek can't seek error " + std::string(strerror(errno)));
-   }
+ {
+   throw vfsError("local::vseek can't seek error " + std::string(strerror(errno)));
+ }
  return (n);
 }
 

@@ -37,18 +37,11 @@
 class local : public fso
 {
 private:
-  unsigned int	nfd;
-  std::string	basePath;
-  int		vread_error(int fd, void *buff, unsigned int size);
-  Node		*parent;
-  void		createTree(std::list<Variant_p >);
-
-#ifndef WIN32
-  class ULocalNode*	__root; 
-#else
-  class WLocalNode*	__root;
-#endif
-
+  unsigned int	        nfd;
+  Node*                 parent;
+  std::string	        basePath;
+  int		        vread_error(int fd, void *buff, unsigned int size);
+  void		        createTree(std::list<Variant_p >);
 public:
 #ifndef WIN32
   void			iterdir(std::string path, Node* parent);

@@ -26,7 +26,7 @@ extern "C"
 
     node = vfs.GetNode(path);
     if (!node)
-      return -ENOENT;
+      return (-ENOENT);
   
     if (node->hasChildren())
     {
@@ -40,31 +40,31 @@ extern "C"
       stbuf->st_size = node->size();
     }
 
-      return 0;
+    return (0);
   }
 
   static int f_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi)
- {
-   Node *node;
+  {
+    Node *node;
 
-   node = vfs.GetNode(path);
-   if (!node)
-     return -ENOENT;
-   if (node->hasChildren())
-   {
-     filler(buf, ".", NULL, 0);
-     filler(buf, "..", NULL, 0);
-     std::vector<Node*>childs = node->children();
-     std::vector<Node*>::iterator i = childs.begin();
-     for (; i != childs.end(); i++)
-     {
-	filler(buf, (*i)->name().c_str(), NULL, 0);
-     }
-   }
-   else
-    return -ENOENT;
+    node = vfs.GetNode(path);
+    if (!node)
+      return (-ENOENT);
+    if (node->hasChildren())
+    {
+      filler(buf, ".", NULL, 0);
+      filler(buf, "..", NULL, 0);
+      std::vector<Node*>childs = node->children();
+      std::vector<Node*>::iterator i = childs.begin();
+      for (; i != childs.end(); i++)
+      {
+        filler(buf, (*i)->name().c_str(), NULL, 0);
+      }
+    }
+    else
+      return (-ENOENT);
 
-   return 0;
+   return (0);
   }
 
   static int f_open(const char *path, struct fuse_file_info *fi)
@@ -73,13 +73,13 @@ extern "C"
 
     node = vfs.GetNode(path);
     if (!node)
-      return -ENOENT;
+      return (-ENOENT);
     if (!node->size())
-      return -ENOENT;
+      return (-ENOENT);
     if ((fi->flags & 3) != O_RDONLY)
-      return -EACCES;
+      return (-EACCES);
 
-    return 0;
+    return (0);
   }
 
   static int f_read(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
@@ -90,7 +90,7 @@ extern "C"
 
     node = vfs.GetNode(path);
     if (!node)
-      return 0;
+      return (0);
     try
     {
       file = node->open();
@@ -100,7 +100,7 @@ extern "C"
     }
     catch (vfsError e)
     {
-      return 0;
+      return (0);
     }
     return n;
   }
@@ -141,59 +141,58 @@ void	fuse::start(std::map<std::string, Variant_p > args)
   std::string		mntopt;
   
   if ((it = args.find("path")) != args.end())
-    {
-      tpath = it->second->value<Path*>();
-      this->__mnt = tpath->path;
-    }
+  {
+    tpath = it->second->value<Path*>();
+    this->__mnt = tpath->path;
+  }
   else
-    {
-      this->res["error"] = new Variant(std::string("Path not provided"));
-      return;
-    }
+  {
+    this->res["error"] = new Variant(std::string("Path not provided"));
+    return;
+  }
   if ((it = args.find("mount_options")) != args.end())
     mntopt = it->second->value<std::string>();
   try
-    {
-      this->__addArgument("-s");
-      this->__addArgument("-o");
-      if (! mntopt.empty())
-	this->__addArgument(mntopt);
-      else
-	this->__addArgument("allow_other");
-    }
+  {
+    this->__addArgument("-s");
+    this->__addArgument("-o");
+    if (! mntopt.empty())
+      this->__addArgument(mntopt);
+    else
+      this->__addArgument("allow_other");
+  }
   catch (std::string err)
-    {
-      this->res["error"] = new Variant(err);
-      return;
-    }
+  {
+    this->res["error"] = new Variant(err);
+    return;
+  }
   if ((this->__channel = fuse_mount(this->__mnt.c_str(), &this->__arguments)) == NULL)
-    {
-      this->res["error"] = new Variant(std::string("Error while creating fuse channel"));
-      this->__cleanContext();
-      return;
-    }
+  {
+    this->res["error"] = new Variant(std::string("Error while creating fuse channel"));
+    this->__cleanContext();
+    return;
+  }
   if ((this->__handle = fuse_new(this->__channel, &this->__arguments, &f_opers, sizeof(struct fuse_operations), this->__handle)) == NULL)
-    {
-      this->res["error"] = new Variant(std::string("Error while creating handle"));
-      this->__cleanContext();
-      return;
-    }
+  {
+    this->res["error"] = new Variant(std::string("Error while creating handle"));
+    this->__cleanContext();
+    return;
+  }
   if (fuse_loop(this->__handle) != 0)
-    {
-      this->res["error"] = new Variant(std::string("Error while running fuse loop"));
-      this->__cleanContext();
-      return;
-    }
+  {
+    this->res["error"] = new Variant(std::string("Error while running fuse loop"));
+    this->__cleanContext();
+    return;
+  }
   this->__cleanContext();
   return;
 }
 
-fuse::fuse() : mfso("fuse")
+fuse::fuse() : mfso("fuse"), __channel(NULL), __handle(NULL)
 {
   this->__arguments.argc = 0;
   this->__arguments.argv = NULL;
-  this->__channel = NULL;
-  this->__handle = NULL;
+  this->__arguments.allocated = 0;
 }
 
 fuse::~fuse()

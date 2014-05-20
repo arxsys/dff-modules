@@ -20,16 +20,10 @@
 #include <windows.h>
 #include <shlwapi.h>
 
-DeviceBuffer::DeviceBuffer(HANDLE hndl, uint32_t size,  uint32_t bps, uint64_t devSize)
+DeviceBuffer::DeviceBuffer(HANDLE hndl, uint32_t size,  uint32_t bps, uint64_t devSize) : __handle(hndl), __offset(0), __BPS(bps), __currentSize(0), __devSize(devSize), __size(size * bps) 
 {
-	this->__handle = hndl;
-	this->__size = size * bps;
-	this->__currentSize = 0;
-	this->__BPS	= bps;
-	this->__buffer = (uint8_t *)malloc(this->__size);
-	this->__offset = 0;
-	this->__devSize = devSize;
-	this->fillBuff(0);
+  this->__buffer = (uint8_t *)malloc(this->__size);
+  this->fillBuff(0);
 }
 
 DeviceBuffer::~DeviceBuffer()
@@ -40,76 +34,76 @@ DeviceBuffer::~DeviceBuffer()
 
 void DeviceBuffer::fillBuff(uint64_t offset)
 {
-	LARGE_INTEGER sizeConv;
-	LARGE_INTEGER newOffset;
+  LARGE_INTEGER sizeConv;
+  LARGE_INTEGER newOffset;
 	
-	if (this->__offset > this->__devSize)
-	{
-		this->__currentSize = 0;
-		return;
-	}
-	this->__offset = ((offset / this->__BPS) * this->__BPS);
-	sizeConv.QuadPart = this->__offset;
-	SetFilePointerEx(this->__handle, sizeConv, &newOffset, 0);
-	DWORD gsize;
-	if (this->__offset + this->__size > this->__devSize)
-		gsize = (DWORD)(this->__devSize - this->__offset);
-	else
-		gsize = this->__size;
-	ReadFile(this->__handle, (void*)(this->__buffer), gsize,  &(this->__currentSize) ,0);
+  if (this->__offset > this->__devSize)
+  {
+    this->__currentSize = 0;
+    return;
+  }
+  this->__offset = ((offset / this->__BPS) * this->__BPS);
+  sizeConv.QuadPart = this->__offset;
+  SetFilePointerEx(this->__handle, sizeConv, &newOffset, 0);
+  DWORD gsize;
+  if (this->__offset + this->__size > this->__devSize)
+    gsize = (DWORD)(this->__devSize - this->__offset);
+  else
+    gsize = this->__size;
+  ReadFile(this->__handle, (void*)(this->__buffer), gsize,  &(this->__currentSize) ,0);
 }
 
 uint32_t	DeviceBuffer::getData(void *buff, uint32_t size, uint64_t offset)
 {
-	if ((offset < this->__offset) || (offset > this->__offset + this->__currentSize) 
-		||(offset + size > this->__offset + this->__currentSize))
-	{
-	  this->fillBuff(offset);
-	}
+  if ((offset < this->__offset) || (offset > this->__offset + this->__currentSize) 
+      ||(offset + size > this->__offset + this->__currentSize))
+  {
+    this->fillBuff(offset);
+  }
 
-	uint64_t leak = offset - this->__offset;
-	if (size > this->__currentSize - leak)
-		size = (uint32_t)(this->__currentSize - leak);
-	memcpy(buff, (((char*)this->__buffer) + leak), size);
+  uint64_t leak = offset - this->__offset;
+  if (size > this->__currentSize - leak)
+    size = (uint32_t)(this->__currentSize - leak);
+  memcpy(buff, (((char*)this->__buffer) + leak), size);
 
-	return (size);
+  return (size);
 }
 
 
-devices::devices(): fso("devices")
+devices::devices() : fso("devices"), __parent(NULL), __root(NULL), __fdm(new FdManager)
 {
-	this->__fdm = new FdManager;
 }
 
 devices::~devices()
 {
+  delete this->__fdm;
 }
 
-void						devices::start(std::map<std::string, Variant_p > args)
+void                    devices::start(std::map<std::string, Variant_p > args)
 {
   std::string		path;
-  Path				*lpath;
-  s_ull				sizeConverter;
-  uint64_t			size =0;
+  Path*                 lpath;
+  s_ull			sizeConverter;
+  uint64_t		size =0;
   std::string		nname;
 
   if (args.find("parent") == args.end())
-	  throw envError("Device module requires a parent argument.");
+    throw envError("Device module requires a parent argument.");
   else
-	  this->parent = args["parent"]->value<Node* >();
+    this->parent = args["parent"]->value<Node* >();
 
   if (args.find("path") == args.end())
-     throw envError("Device module require a device path argument.");
+    throw envError("Device module require a device path argument.");
   else
-	  lpath = args["path"]->value<Path *>();
+    lpath = args["path"]->value<Path *>();
   
   if (args.find("size") == args.end())
-	 size = 0;
+    size = 0;
   else 
     size = args["size"]->value<uint64_t >();
 
   if (args.find("name") == args.end())
-	  nname = "";
+    nname = "";
   else
     nname = args["name"]->value<std::string >();
 
@@ -117,7 +111,7 @@ void						devices::start(std::map<std::string, Variant_p > args)
   sizeConverter.ull = size;
  
   HANDLE hnd = CreateFileA(this->devicePath.c_str(), GENERIC_READ, FILE_SHARE_READ,
-			     0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+			   0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
   if (((HANDLE)hnd) == INVALID_HANDLE_VALUE)
   {
     res["error"] = Variant_p(new Variant(std::string("Can't open devices.")));	
@@ -126,144 +120,143 @@ void						devices::start(std::map<std::string, Variant_p > args)
   else
   {
     LPDWORD lpBytesReturned = 0;
-	DeviceIoControl(hnd, FSCTL_ALLOW_EXTENDED_DASD_IO, NULL, 0, NULL, 0, lpBytesReturned, NULL);
+    DeviceIoControl(hnd, FSCTL_ALLOW_EXTENDED_DASD_IO, NULL, 0, NULL, 0, lpBytesReturned, NULL);
     if (!size)
-	{
-	  GET_LENGTH_INFORMATION diskSize;
-	  if (DeviceIoControl(hnd, IOCTL_DISK_GET_LENGTH_INFO, NULL, 0, &diskSize, sizeof(diskSize), lpBytesReturned,0))
-	     size = (uint64_t)diskSize.Length.QuadPart;
-	  CloseHandle(hnd);
-	}
+    {	
+      GET_LENGTH_INFORMATION diskSize;
+      if (DeviceIoControl(hnd, IOCTL_DISK_GET_LENGTH_INFO, NULL, 0, &diskSize, sizeof(diskSize), lpBytesReturned,0))
+        size = (uint64_t)diskSize.Length.QuadPart;
+      CloseHandle(hnd);
+    }
     this->__root = new DeviceNode(this->devicePath, sizeConverter.ull,  this, nname);
-	this->__root->setFile();
+    this->__root->setFile();
     this->registerTree(this->parent, this->__root);
   }	
 }
 
-
-int devices::vopen(Node *node)
+int     devices::vopen(Node *node)
 {
   fdinfo*	fi;
   int32_t	fd;
 
   if (node != NULL) 
   {
-    	fi = new fdinfo;
-	int hnd = (int)CreateFileA(((DeviceNode*)node)->__devname.c_str(), GENERIC_READ, FILE_SHARE_READ,
-			     0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
-	fi->id = new Variant((void*) (new DeviceBuffer((HANDLE)hnd, 100 * sizeof(uint8_t), 4096, node->size())));
-	fi->node = node;
-	fi->offset = 0;
-	fd = this->__fdm->push(fi);
-	return (fd);
+    fi = new fdinfo;
+    int hnd = (int)CreateFileA(((DeviceNode*)node)->__devname.c_str(), GENERIC_READ, FILE_SHARE_READ,
+			       0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    fi->id = new Variant((void*) (new DeviceBuffer((HANDLE)hnd, 100 * sizeof(uint8_t), 4096, node->size())));
+    fi->node = node;
+    fi->offset = 0;
+    fd = this->__fdm->push(fi);
+    return (fd);
   }
   else
-    return -1;
+    return (-1);
 }
 
-int devices::vread(int fd, void *buff, unsigned int origSize)
+int     devices::vread(int fd, void *buff, unsigned int origSize)
 { 
-	fdinfo*				fi;
-	DeviceBuffer*		dbuff;
-	uint32_t			readed;
-	uint32_t			aReaded = 0;
+  fdinfo*               fi;
+  DeviceBuffer*         dbuff;
+  uint32_t              readed;
+  uint32_t              aReaded = 0;
 	
-    try
-    {
-      fi = this->__fdm->get(fd);
-	  dbuff = (DeviceBuffer*)fi->id->value<void *>();
-    }
-    catch (...)
-    {
-      return (0); 
-    }
-
-	while (aReaded < origSize)
-	{
-	  readed = dbuff->getData(((uint8_t *)buff + aReaded), origSize - aReaded, fi->offset);
-	  fi->offset += ((uint64_t)readed);
-	  aReaded += readed;
-	  if (fi->offset > this->__root->size())
-	  {
-		fi->offset = this->__root->size();
-		return (aReaded);
-	  }
-	  if (readed < dbuff->__size)
-        return (aReaded); 
-	}
-	return aReaded;
-}
-
-int devices::vclose(int fd)
-{
- try
-    {
-      fdinfo* fi = this->__fdm->get(fd);
-	  delete ((DeviceBuffer*)fi->id->value<void *>());
-	  this->__fdm->remove(fd);
-      return (0);
-    }
+  try
+  {
+    fi = this->__fdm->get(fd);
+    dbuff = (DeviceBuffer*)fi->id->value<void *>();
+  }
   catch (...)
+  {
+    return (0); 
+  }
+
+  while (aReaded < origSize)
+  {
+    readed = dbuff->getData(((uint8_t *)buff + aReaded), origSize - aReaded, fi->offset);
+    fi->offset += ((uint64_t)readed);
+    aReaded += readed;
+    if (fi->offset > this->__root->size())
     {
-		return -1;
+      fi->offset = this->__root->size();
+      return (aReaded);
     }
+    if (readed < dbuff->__size)
+      return (aReaded); 
+  }
+  return aReaded;
 }
 
-uint64_t	devices::vseek(int fd, uint64_t offset, int whence)
+int     devices::vclose(int fd)
+{
+  try
+  {
+    fdinfo* fi = this->__fdm->get(fd);
+    delete ((DeviceBuffer*)fi->id->value<void *>());
+    this->__fdm->remove(fd);
+    return (0);
+  }
+  catch (...)
+  {
+    return (-1);
+  }
+}
+
+uint64_t        devices::vseek(int fd, uint64_t offset, int whence)
 {
   fdinfo*	fi;
   Node*	node;
 
   try
-    {
-      fi = this->__fdm->get(fd);
-      node = dynamic_cast<Node*>(fi->node);
+  {
+    fi = this->__fdm->get(fd);
+    node = dynamic_cast<Node*>(fi->node);
 	 
-      if (whence == 0)
-	  {
-	    if (offset <= node->size())
-		{
-	      fi->offset = offset;
-		  return (fi->offset);
-		}
-	  }
-      else if (whence == 1)
-	  {
-  	    if (fi->offset + offset <= node->size())
-		{
-	      fi->offset += offset;
-		  return (fi->offset);
-		}
-	  }
-      else if (whence == 2)
-	  {
-	     fi->offset = node->size();
-         return (fi->offset);
-	  }
+    if (whence == 0)
+    {
+      if (offset <= node->size())
+      {
+        fi->offset = offset;
+	return (fi->offset);
+      }
+    }
+    else if (whence == 1)
+    {
+      if (fi->offset + offset <= node->size())
+      {
+	fi->offset += offset;
+	return (fi->offset);
+      }
+    }
+    else if (whence == 2)
+    {
+      fi->offset = node->size();
+      return (fi->offset);
+    }
   }
   catch (...)
-    {
-	  return ((uint64_t) -1);
-    }
-   return ((uint64_t) -1);
+  {
+    return ((uint64_t) -1);
   }
+  return ((uint64_t) -1);
+}
 
 uint64_t	devices::vtell(int32_t fd)
 {
   fdinfo*	fi;
 
   try
-    {
-      fi = this->__fdm->get(fd);
-      return (fi->offset);
-    }
+  {
+    fi = this->__fdm->get(fd);
+    return (fi->offset);
+  }
   catch (...)
-    {
-      return (uint64_t)-1; 
-    }
+  {
+    return (uint64_t)-1; 
+  }
 }
 
-unsigned int devices::status(void)
+unsigned int    devices::status(void)
 {
   return (1);
 }

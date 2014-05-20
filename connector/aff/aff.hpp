@@ -17,7 +17,6 @@
 #ifndef __AFF_HH__
 #define __AFF_HH__
 
-
 #include "fso.hpp"
 #include "node.hpp"
 #include <string>
@@ -34,14 +33,13 @@
 #include <afflib/afflib.h>
 #include <afflib/afflib_i.h>
 
-
 class aff : public fso
 {
 private:
   mutex_def(__io_mutex);
-  Node		*parent;
-  FdManager*	__fdm;
-  std::string   cache_size;
+  Node*                 __parent;
+  FdManager*	        __fdm;
+  std::string           __cacheSize;
 public:
   aff();
   ~aff();

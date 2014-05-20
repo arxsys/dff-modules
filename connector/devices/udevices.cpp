@@ -27,7 +27,7 @@
 #include <errno.h>
 
 
-devices::devices(): fso("devices")
+devices::devices(): fso("devices"), parent(NULL), __root(NULL), __fdm()
 {
 }
 
@@ -43,30 +43,27 @@ void devices::start(std::map<std::string, Variant_p > args)
   uint64_t					size;
 
   if (args["parent"] == NULL)
-	  throw envError("Device module requires a parent argument.");
+    throw envError("Device module requires a parent argument.");
   else
-	  this->parent = args["parent"]->value<Node* >();
+    this->parent = args["parent"]->value<Node* >();
 
   if (args["path"] == NULL)
-     throw envError("Device module require a device path argument.");
+    throw envError("Device module require a device path argument.");
   else
-	  path = args["path"]->value<Path *>()->path;
+    path = args["path"]->value<Path *>()->path;
   
   if (args["size"] == NULL)
-	 size = 0;
+    size = 0;
   else 
-	  size = args["size"]->value<uint64_t >();
+    size = args["size"]->value<uint64_t >();
 
   if (args["name"] == NULL)
-      name = path.substr(path.rfind('/') + 1);
+    name = path.substr(path.rfind('/') + 1);
   else
-      name = args["name"]->value<std::string >();
-
+    name = args["name"]->value<std::string >();
 
   DeviceNode* dev = new DeviceNode(path, size, this, name);
   this->registerTree(this->parent, dev);
-
-  return ;
 }
 
 int devices::vopen(Node *node)
@@ -76,13 +73,15 @@ int devices::vopen(Node *node)
   std::string	file;
 
   DeviceNode* dev = dynamic_cast<DeviceNode *>(node);
+  if (!dev)
+    throw std::string("devies::open error can't dynamic cast node");
 
 #if defined(__FreeBSD__)
   if ((n = open(dev->__devname.c_str(), O_RDONLY)) == -1)
 #elif defined(__linux__)
   if ((n = open(dev->__devname.c_str(), O_RDONLY | O_LARGEFILE)) == -1)
 #endif
-      throw vfsError("devices::open error can't open file");
+    throw vfsError("devices::open error can't open file");
   if (stat(dev->__devname.c_str(), &stbuff) == -1)
     throw vfsError("devices::open error can't stat");
   return (n);
