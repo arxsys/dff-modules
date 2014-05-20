@@ -268,7 +268,7 @@ int PffNodeEMail::attributesRecipients(Attributes* attr, libpff_item_t* item)
 	   {
 	      for (uint32_t n = 0; n < 5; n++)
 	      {
-		 if (n == 5)
+		 if (n >= 4)
 	         {
 		   attrRecipient["Recipient type"] = new Variant(std::string("Unknown"));
 		 }
