@@ -39,9 +39,16 @@ MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::stri
   delete vfile;
 
   //this->validate(); for exemple when carving if wrong value avoid infinite loop etc... 
+  //this->readAttributes();
   //for test only : read all attributes of the node 
-  /*
-  MFTAttributes mftAttributes = this->MFTAttributes();
+}
+
+/**
+ *  For test only : read all attributs of the node
+ */
+void MFTEntryNode::readAttributes(void)
+{
+  MFTAttributes mftAttributes = this->mftAttributes();
   MFTAttributes::iterator	mftAttribute;
   mftAttribute = mftAttributes.begin();
   for (; mftAttribute != mftAttributes.end(); ++mftAttribute)
@@ -62,8 +69,9 @@ MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::stri
     {
       std::cout << "MFTEntryNode::_attributes error: " << e << std::endl;
     }
-  }*/
+  }
 }
+
 
 void MFTEntryNode::updateState(void)
 {
@@ -185,7 +193,7 @@ Attributes	MFTEntryNode::_attributes(void)
     try 
     {
       MFTAttributeContent* mftAttributeContent = (*mftAttribute)->content();
-      //if ((*mftAttribute)->typeId() == 128) //Special case a $DATA as no attribute 
+      //Special case
       //can have multi data so must name it differently or it will be overwritten !!!
       //if ((*mftAttribute)->typeID() == 32) //Special case a $ATTRIBUTE_LIST 
         //for i in mftattribute.MFTAttribute() MAP_ATTR
@@ -346,12 +354,8 @@ MFTAttributes      MFTEntryNode::data(void)
   return (dataAttributes);
 }
 
-//MFTAttributes      MFTEntryNode::dataName(std::string const& data)
-//{
-//}
-
 //XXX use BITMAP !!!
-std::vector<IndexEntry> MFTEntryNode::indexes(void)// const //indexesFilename // don't return objectIds, securityDescriptor ...
+std::vector<IndexEntry> MFTEntryNode::indexes(void)// const 
 {
   std::vector<IndexEntry> indexes;
 
@@ -360,8 +364,6 @@ std::vector<IndexEntry> MFTEntryNode::indexes(void)// const //indexesFilename //
 
   if (indexRootAttributes.size() > 0)
   {
-    //if (indexRootAttributes.size() > 1)
-        //std::cout << "MFT entry has more than one ROOT attribute " << std::endl;
     IndexRoot* indexRoot = dynamic_cast<IndexRoot*>((*indexRootAttribute)->content());
     if (indexRoot)
     {
@@ -404,9 +406,6 @@ std::vector<IndexEntry> MFTEntryNode::indexes(void)// const //indexesFilename //
     MFTAttributes attrs = attributeList->mftAttributes();
     MFTAttributes::iterator attr = attrs.begin();
      
-    //if (attributesLists.size() > 1)
-    //std::cout << "more than one attributes list found in index" << std::endl;  
-
     for (; attr != attrs.end(); ++attr)
     {
       if ((*attr)->typeId() == $INDEX_ALLOCATION)
@@ -419,8 +418,6 @@ std::vector<IndexEntry> MFTEntryNode::indexes(void)// const //indexesFilename //
           delete indexAllocation;
         }
       }
-      //else if ((*attr)->typeId() == $INDEX_ROOT)
-        //this shouldn't happen
       delete (*attr);
     }
     delete attributeList;
