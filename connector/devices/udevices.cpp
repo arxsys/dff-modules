@@ -27,7 +27,7 @@
 #include <errno.h>
 
 
-devices::devices(): fso("devices"), parent(NULL), __root(NULL), __fdm()
+devices::devices(): fso("devices"), __parent(NULL), __root(NULL), __fdm()
 {
 }
 
@@ -45,7 +45,7 @@ void devices::start(std::map<std::string, Variant_p > args)
   if (args["parent"] == NULL)
     throw envError("Device module requires a parent argument.");
   else
-    this->parent = args["parent"]->value<Node* >();
+    this->__parent = args["parent"]->value<Node* >();
 
   if (args["path"] == NULL)
     throw envError("Device module require a device path argument.");
@@ -63,7 +63,7 @@ void devices::start(std::map<std::string, Variant_p > args)
     name = args["name"]->value<std::string >();
 
   DeviceNode* dev = new DeviceNode(path, size, this, name);
-  this->registerTree(this->parent, dev);
+  this->registerTree(this->__parent, dev);
 }
 
 int devices::vopen(Node *node)

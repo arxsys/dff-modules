@@ -90,7 +90,7 @@ void                    devices::start(std::map<std::string, Variant_p > args)
   if (args.find("parent") == args.end())
     throw envError("Device module requires a parent argument.");
   else
-    this->parent = args["parent"]->value<Node* >();
+    this->__parent = args["parent"]->value<Node* >();
 
   if (args.find("path") == args.end())
     throw envError("Device module require a device path argument.");
@@ -130,7 +130,7 @@ void                    devices::start(std::map<std::string, Variant_p > args)
     }
     this->__root = new DeviceNode(this->devicePath, sizeConverter.ull,  this, nname);
     this->__root->setFile();
-    this->registerTree(this->parent, this->__root);
+    this->registerTree(this->__parent, this->__root);
   }	
 }
 

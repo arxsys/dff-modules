@@ -64,7 +64,7 @@ public:
 class devices : public fso
 {
 private:
-  Node*                 parent;
+  Node*                 __parent;
   class Node*		__root;
   FdManager*		__fdm;
 public:
