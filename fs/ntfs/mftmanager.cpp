@@ -367,7 +367,6 @@ void    MFTEntryManager::initEntries(void)
   }
 }
 
-
 /**
  *  Link node to parent
  */  
@@ -481,7 +480,7 @@ void    MFTEntryManager::linkUnallocated(void)
               unallocated->addChild((*mftNode)); 
           }
           recovered++;
-          delete entryInfo; //car -1
+          delete entryInfo; //return by createFromOffset -1
         }
         catch(...)
         {

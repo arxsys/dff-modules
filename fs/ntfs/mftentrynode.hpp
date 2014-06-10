@@ -53,6 +53,7 @@ private:
   MFTEntry		        __MFTEntry;
   uint64_t		        __offset;
   uint64_t		        __state;
+  void                          readAttributes(void);
 public:
 			        MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::string name, Node* parent);
 			        ~MFTEntryNode();

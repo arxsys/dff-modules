@@ -23,7 +23,7 @@
 class NTFS;
 class MFTNode;
 
-class MFTId
+struct MFTId
 {
 public:
   MFTId(uint64_t _id, uint16_t seq);
@@ -39,13 +39,10 @@ class MFTEntryInfo
 public:
   MFTEntryInfo(MFTEntryNode* entryNode);
   ~MFTEntryInfo();
-
   uint64_t              id;
-  //uint16_t            sequence;
   std::list<MFTId>      childrenId;
   MFTNode*              node; //this is need to link other nodes and do final / directory linking  (can't link to an entry)
   std::list<MFTNode*>   nodes;//nodes for all $DATA attribute (unamed main $DATA and name ads)
-
   MFTEntryNode*         entryNode(void) const;
 private:
   MFTEntryNode*         __entryNode; //entry is related to different node causes of ADS etc...
@@ -72,7 +69,7 @@ public:
          
   uint64_t                              entryCount(void) const;  
   bool                                  exist(uint64_t id) const; 
-  MFTNode*                              node(uint64_t id) const; //return main data node ? really usefull or return the entry ?
+  MFTNode*                              node(uint64_t id) const;
   MFTEntryNode*                         entryNode(uint64_t id) const;
   Node*                                 mapLink(MFTNode* node) const;
 private:
