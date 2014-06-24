@@ -22,7 +22,7 @@
 #include "mftattributecontent.hpp"
 #include "attributes/mftattributecontenttype.hpp"
 
-MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::string name, Node* parent = NULL) : Node(name, ntfs->bootSectorNode()->MFTRecordSize(), parent, ntfs), __ntfs(ntfs), __mftNode(mftNode), __offset(offset), __state(0)
+MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::string name, Node* parent = NULL) : Node(name, ntfs->bootSectorNode()->MFTRecordSize(), parent, ntfs, false), __ntfs(ntfs), __mftNode(mftNode), __offset(offset), __state(0)
 {
   VFile* vfile = NULL;
   vfile = this->__mftNode->open();

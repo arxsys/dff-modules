@@ -49,7 +49,7 @@ class DataThread(QThread):
 
         if not root['dates']:
             root['dates'] = [data]
-            root['nodes'] = [[node.this]]
+            root['nodes'] = [[node.uid()]]
             dateLimits[0] = data
             dateLimits[1] = data
         else:
@@ -57,25 +57,25 @@ class DataThread(QThread):
             iCurrent = iMax / 2
             while iMin != iMax or not iMax:
                 if data == root['dates'][iCurrent]:
-                    root['nodes'][iCurrent].append(node.this)
+                    root['nodes'][iCurrent].append(node.uid())
                     break
                 elif data > root['dates'][iCurrent] and iCurrent == len(root['dates']) - 1:
                     root['dates'].append(data)
-                    root['nodes'].append([node.this])
+                    root['nodes'].append([node.uid()])
                     dateLimits[1] = data
                     break
                 elif data > root['dates'][iCurrent] and data < root['dates'][iCurrent + 1]:
                     root['dates'].insert(iCurrent + 1, data)
-                    root['nodes'].insert(iCurrent + 1, [node.this])
+                    root['nodes'].insert(iCurrent + 1, [node.uid()])
                     break
                 elif data < root['dates'][iCurrent] and not iCurrent:
                     root['dates'].insert(0, data)
-                    root['nodes'].insert(0, [node.this])
+                    root['nodes'].insert(0, [node.uid()])
                     dateLimits[0] = data
                     break
                 elif data < root['dates'][iCurrent] and data > root['dates'][iCurrent - 1]:
                     root['dates'].insert(iCurrent, data)
-                    root['nodes'].insert(iCurrent, [node.this])
+                    root['nodes'].insert(iCurrent, [node.uid()])
                     break
                 elif data > root['dates'][iCurrent]:
                     iMin = iCurrent

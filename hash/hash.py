@@ -140,13 +140,13 @@ class AttributeHash(AttributesHandler):
 
     def hasId(self, node):
       self.__lock.acquire()
-      ret = self.__hashs.has_key(long(node.this))
+      ret = self.__hashs.has_key(node.uid())
       self.__lock.release()
       return ret
 
 
     def hasHash(self, node, algo):
-      idx = long(node.this)
+      idx = node.uid()
       self.__lock.acquire()
       has_hash = self.__hashs.has_key(idx) and self.__hashs[idx].hashes.has_key(algo)
       self.__lock.release()
@@ -156,7 +156,7 @@ class AttributeHash(AttributesHandler):
     def getHash(self, node, algo):
       """ return a hash already computed else None"""
       h = None
-      idx = long(node.this)
+      idx = node.uid()
       self.__lock.acquire()
       if self.__hashs.has_key(idx):
         h = self.__hashs[idx].hashes[algo]
@@ -164,7 +164,7 @@ class AttributeHash(AttributesHandler):
       return h
 
     def setHash(self, node, algo, h):
-      idx = long(node.this)
+      idx = node.uid()
       self.__lock.acquire()
       if self.__hashs.has_key(idx):
         hashInfo = self.__hashs[idx]
@@ -177,7 +177,7 @@ class AttributeHash(AttributesHandler):
 
 
     def setKnown(self, node, setId):
-      idx = long(node.this)
+      idx = node.uid()
       self.__lock.acquire()
       if self.__hashs.has_key(idx):
         hashInfo = self.__hashs[idx]
@@ -192,7 +192,7 @@ class AttributeHash(AttributesHandler):
     def __getHashes(self, node):
        hdic = {}
        calclist = []
-       idx = long(node.this)
+       idx = node.uid()
        hashes = None
        self.__lock.acquire()
        if self.__hashs.has_key(idx):
@@ -215,7 +215,7 @@ class AttributeHash(AttributesHandler):
 
     def attributes(self, node):
        m = VMap()
-       idx = long(node.this)
+       idx = node.uid()
        self.__lock.acquire()
        if self.__hashs.has_key(idx):
          hashInfo = self.__hashs[idx]

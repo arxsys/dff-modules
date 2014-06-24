@@ -42,13 +42,13 @@ class EXIFHandler(AttributesHandler, ModuleProcessusHandler):
      lnodes = []
      rootAbsolute = root.absolute()
      for node in self.exifnodes:
-        node = self.vfs.getNodeFromPointer(node)
+        node = self.vfs.getNodeById(node)
 	if node.absolute().find(rootAbsolute) == 0:
 	  lnodes.append(node)
      return lnodes
 
   def setAttributes(self, node):
-     self.exifnodes.append(long(node.this)) 
+     self.exifnodes.append(node.uid()) 
 
   def haveExif(self, node):
     vfile = node.open()

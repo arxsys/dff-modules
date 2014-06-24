@@ -114,7 +114,7 @@ class MetaCompoundHandler(AttributesHandler, ModuleProcessusHandler):
     self.vfs = VFS.Get()
  
   def setAttributes(self, node, classAttributes):
-    self.nodeAttributes[long(node.this)] = classAttributes 
+    self.nodeAttributes[node.uid()] = classAttributes 
 
   def update(self, processus):
     pass
@@ -123,14 +123,14 @@ class MetaCompoundHandler(AttributesHandler, ModuleProcessusHandler):
     nodes = []
     rootAbsolute = root.absolute()
     for node in self.nodeAttributes.keys():
-      node = self.vfs.getNodeFromPointer(node)
+      node = self.vfs.getNodeById(node)
       if node.absolute().find(rootAbsolute) == 0:
 	nodes.append(node)
     return nodes
 
   def attributes(self, node):
     try:
-      classAttributes = self.nodeAttributes[long(node.this)]
+      classAttributes = self.nodeAttributes[node.uid()]
       return classAttributes._attributes()
     except KeyError:
       attr = VMap()
