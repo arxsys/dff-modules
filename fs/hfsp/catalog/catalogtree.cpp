@@ -174,7 +174,7 @@ void			CatalogTree::process(Node* catalog, uint64_t offset) throw (std::string)
   // XXX implement dedicated method to manage potential orphans
   for (mit = this->__nodes.begin(); mit != this->__nodes.end(); mit++)
     if (mit->second.size() > 0)
-      std::cout << "orphan entry found: " << node->name() << std::endl;
+      std::cout << "orphan entry found: " << mit->first << std::endl;
 }
 
 
