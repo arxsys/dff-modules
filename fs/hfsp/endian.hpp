@@ -14,7 +14,13 @@
  *  Frederic Baguelin <fba@digital-forensic.org>
  */
 
+#ifndef __ENDIAN_HPP__
+#define __ENDIAN_HPP__
+
 #ifdef __GNUC__
+	#if (__GNUC__ < 4 || (__GNUC__ == 4 && __GNUC_MINOR__ < 8))
+		static inline unsigned short __builtin_bswap16(unsigned short a) {return (a<<8)|(a>>8);}
+	#endif
 	#define bswap16 __builtin_bswap16
 	#define bswap32 __builtin_bswap32
 	#define bswap64 __builtin_bswap64
@@ -23,4 +29,6 @@
 	#define bswap16 byteswap_ushort
 	#define bswap32 byteswap_ulong
 	#define bswap64 byteswap_uint64
+#endif
+
 #endif
