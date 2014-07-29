@@ -63,18 +63,23 @@ MFTEntryNode*   MFTEntryInfo::entryNode(void) const
   return (this->__entryNode);
 }
 
-
-
 /**
  *  MFTEntryManager
  */
-MFTEntryManager::MFTEntryManager(NTFS* ntfs) : __ntfs(ntfs) //, __masterMFTNode(mftNode)
+MFTEntryManager::MFTEntryManager(NTFS* ntfs) : __ntfs(ntfs), __masterMFTNode(NULL), __masterMFTOffset(0),  __numberOfEntry(0) 
+{
+}
+
+void    MFTEntryManager::initMasterMFT(void)
 {
   //XXX check for mirror !
-  this->createFromOffset(ntfs->bootSectorNode()->MFTLogicalClusterNumber() * ntfs->bootSectorNode()->clusterSize(), ntfs->fsNode(), 0);
-  this->__masterMFTNode = this->node(0); //or entrynode
+  this->__masterMFTOffset = this->__ntfs->bootSectorNode()->MFTLogicalClusterNumber() * this->__ntfs->bootSectorNode()->clusterSize();
+  this->createFromOffset(this->__masterMFTOffset, this->__ntfs->fsNode(), 0);
+  this->__masterMFTNode = this->node(0);
   if (this->__masterMFTNode == NULL)
-    throw std::string("Can't create master MFT entry"); //try mirror 
+    throw std::string("Can't create master MFT entry"); //try mirror
+  if (this->__ntfs->bootSectorNode()->MFTRecordSize() == 0)
+    throw std::string("Can't read MFT Record : BootSector MFT Record size is 0");
   this->__numberOfEntry = this->__masterMFTNode->size() / this->__ntfs->bootSectorNode()->MFTRecordSize();
 }
 
@@ -238,8 +243,12 @@ void    MFTEntryManager::childrenSanitaze(void)
  */
 MFTEntryInfo*   MFTEntryManager::create(uint64_t id)
 {
+  MFTEntryInfo* mftEntryInfo = NULL;
   uint32_t mftRecordSize = this->__ntfs->bootSectorNode()->MFTRecordSize();
-  MFTEntryInfo* mftEntryInfo = this->createFromOffset(id * mftRecordSize, this->__masterMFTNode, id);
+  if (this->__masterMFTNode == NULL)
+     mftEntryInfo = this->createFromOffset(this->__masterMFTOffset + (id * mftRecordSize),  this->__ntfs->fsNode(), id); //this happen when master MFT use attributelist for is $DATA content (very large and/or very fragmented MFT)
+  else
+    mftEntryInfo = this->createFromOffset(id * mftRecordSize, this->__masterMFTNode, id);
   return (mftEntryInfo);
 }
 
@@ -255,7 +264,7 @@ MFTEntryInfo*  MFTEntryManager::createFromOffset(uint64_t offset, Node* fsNode, 
   MFTEntryNode* mftEntryNode = new MFTEntryNode(this->__ntfs, fsNode, offset, std::string("MFTEntry"), NULL);
   if (mftEntryNode == NULL)
     throw std::string("Can't allocate MFTEntryNode");
- 
+
   MFTEntryInfo* mftEntryInfo = NULL; 
   if (id == -1)
     mftEntryInfo = new MFTEntryInfo(mftEntryNode);
@@ -292,11 +301,16 @@ MFTEntryInfo*  MFTEntryManager::createFromOffset(uint64_t offset, Node* fsNode, 
     if ((*data)->name() != "")
       finalName += ":" + (*data)->name();
 
-    mapDataInfo[finalName].size = (*data)->contentSize();
-    mapDataInfo[finalName].compressed = (*data)->isCompressed();
+    if (mapDataInfo.find(finalName) == mapDataInfo.end())//avoid to push all attributes list with same name when fragmented
+    {
+      mapDataInfo[finalName].size = (*data)->contentSize();
+      mapDataInfo[finalName].compressed = (*data)->isCompressed();
+    }
     mapDataInfo[finalName].mappingAttributes.push_back(MappingAttributes((*data)->offset(), (*data)->mftEntryNode()));
+    
     delete (*data);
   }
+  
   /*
    *  No data attribute is found but an MFTEntry can represent a directory without a $DATA Attribute
    */
@@ -334,7 +348,6 @@ MFTEntryInfo*  MFTEntryManager::createFromOffset(uint64_t offset, Node* fsNode, 
       mftNode->setName((*info).first);
     }
   }
-
   return (mftEntryInfo);
 }
 
@@ -588,4 +601,9 @@ void   MFTEntryManager::linkReparsePoint(void) const
     if (mftNode)
       this->mapLink(mftNode);
   }
+}
+
+MFTNode*        MFTEntryManager::masterMFTNode(void) const
+{
+  return (this->__masterMFTNode);
 }

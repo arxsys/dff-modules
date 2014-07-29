@@ -53,6 +53,7 @@ class MFTEntryManager
 public:
   MFTEntryManager(NTFS* ntfs); 
   ~MFTEntryManager();
+  void                                  initMasterMFT(void);           
   void                                  initEntries(void);
   void                                  linkEntries(void);
   void                                  linkOrphanEntries(void);
@@ -72,9 +73,11 @@ public:
   MFTNode*                              node(uint64_t id) const;
   MFTEntryNode*                         entryNode(uint64_t id) const;
   Node*                                 mapLink(MFTNode* node) const;
+  MFTNode*                              masterMFTNode(void) const;
 private:
   NTFS*                                 __ntfs;
   MFTNode*                              __masterMFTNode;
+  uint64_t                              __masterMFTOffset;
   std::map<uint64_t, MFTEntryInfo*>     __entries;
   uint64_t                              __numberOfEntry;
 };

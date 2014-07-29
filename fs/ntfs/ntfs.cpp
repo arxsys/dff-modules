@@ -52,6 +52,7 @@ void    NTFS::start(Attributes args)
    */ 
   this->setStateInfo("Reading main MFT");
   this->__mftManager = new MFTEntryManager(this);
+  this->__mftManager->initMasterMFT();
   this->__mftManager->initEntries();
   this->__mftManager->linkEntries(); 
   this->registerTree(this->opt()->fsNode(), this->rootDirectoryNode());
