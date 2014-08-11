@@ -26,9 +26,9 @@
 	#define bswap64 __builtin_bswap64
 #elif _MSC_VER
 	#include <intrin.h>
-	#define bswap16 byteswap_ushort
-	#define bswap32 byteswap_ulong
-	#define bswap64 byteswap_uint64
+	#define bswap16 _byteswap_ushort
+	#define bswap32 _byteswap_ulong
+	#define bswap64 _byteswap_uint64
 #endif
 
 #endif
