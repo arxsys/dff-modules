@@ -15,7 +15,6 @@
  */
 
 #include "hfsp.hpp"
-// #include "specialfile.hpp"
 #include "allocation.hpp"
 #include "catalog/catalogtree.hpp"
 
@@ -77,10 +76,12 @@ void		Hfsp::__process() throw (std::string)
       afile = this->__createAllocation(volume, etree);
       this->__createCatalog(volume, etree);
       this->registerTree(this->__parent, this->__root);
+      this->stateinfo = std::string("Successfully mounted");
     }
   catch(...)
     {
       throw(std::string("HFS module: error while processing"));
+      this->stateinfo = std::string("Error while mounting");
     }
   return;
 }
@@ -93,8 +94,8 @@ ExtentsTree*	Hfsp::__createEtree(VolumeHeader* volume) throw (std::string)
   ExtentsTree*	etree;
 
   enode = new SpecialFile("$ExtentsFile", this->__root, this);
-  fork = new ForkData(volume->blockSize());
-  fork->setInitialFork(volume->extentsFile());
+  fork = new ForkData(3, volume->blockSize());
+  fork->process(volume->extentsFile(), ForkData::Data);
   enode->setContext(fork, this->__parent);
   etree = new ExtentsTree();
   etree->setBlockSize(volume->blockSize());
@@ -110,8 +111,8 @@ void		Hfsp::__createCatalog(VolumeHeader* volume, ExtentsTree* etree) throw (std
   CatalogTree*	ctree;
   
   enode = new SpecialFile("$CatalogFile", this->__root, this);
-  fork = new ForkData(volume->blockSize());
-  fork->setInitialFork(volume->catalogFile());
+  fork = new ForkData(4, etree);
+  fork->process(volume->catalogFile(), ForkData::Data);
   enode->setContext(fork, this->__parent);
   if (fork->initialForkSize() < fork->logicalSize())
     std::cout << "MISSING EXTENTS FOR CATALOG !!!! " << std::endl;
@@ -131,12 +132,11 @@ AllocationFile*		Hfsp::__createAllocation(VolumeHeader* volume, ExtentsTree* etr
   AllocationFile*	alloc;
 
   enode = new SpecialFile("$AllocationFile", this->__root, this);
-  fork = new ForkData(volume->blockSize());
-  fork->setInitialFork(volume->allocationFile());
+  fork = new ForkData(6, etree);
+  fork->process(volume->allocationFile(), ForkData::Data);
   enode->setContext(fork, this->__parent);
   if (fork->initialForkSize() < fork->logicalSize())
     std::cout << "MISSING EXTENTS FOR ALLOCATION FILE !!!! " << std::endl;
-  std::cout << fork->initialForkSize() << std::endl;
   alloc = new AllocationFile();
   alloc->setFso(this);
   alloc->setMountPoint(this->__root);

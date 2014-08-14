@@ -60,12 +60,14 @@ private:
   uint32_t	__leafRecords;
   uint32_t	__indexRecords;
   uint32_t	__effectiveLeafRecords;
+  uint64_t	__percent;
 private:
   bool			__carve;
   HfsNodesMapping	__nodes;
   void			__makeNodes(Node* catalog, CatalogTreeNode* cnode);
   void			__linkNodes(HfsNode* parent, uint32_t parentId);
   void			__registerAllocatedBlocks(HfsNode* node);
+  void			__progress(uint64_t current);
 public:
   CatalogTree();
   ~CatalogTree();

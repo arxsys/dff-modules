@@ -37,23 +37,26 @@ typedef struct s_fork_data
 }		fork_data;
 PACK_END
 
+class ExtentsTree;
+
 typedef std::vector<Extent*> ExtentsList;
 
 class ForkData
 {
-private:
-  uint64_t		__initialSize;
-  uint64_t		__blocksize;
-  uint32_t		__fileId;
-  fork_data		__fork;
-  std::vector<Extent* >	__extents;
-  class ExtentsTree*	__etree;
-  void			__clearExtents();
 public:
-  ForkData(uint64_t blocksize);
+  ForkData(uint32_t fileid, uint64_t blocksize); // special case for ExtentsTree file
+  ForkData(uint32_t fileid, ExtentsTree* etree);
   ~ForkData();
-  void		setInitialFork(fork_data fork);
+  typedef enum
+    {
+      Data	= 0x00,
+      Resource	= 0xFF
+    } Type;
+  void		setBlockSize(uint64_t blocksize);
   void		setExtentsTree(ExtentsTree* efile);
+  void		setFileId(uint32_t fileId);
+  void		process(Node* origin, uint64_t offset, ForkData::Type type) throw (std::string);
+  void		process(fork_data fork, ForkData::Type type) throw (std::string);
   uint64_t	initialForkSize();
   void		dump(std::string tab);
   uint64_t	logicalSize();
@@ -61,9 +64,22 @@ public:
   uint32_t	totalBlocks();
   uint64_t	allocatedBytes();
   uint64_t	slackSize();
-  void		setFileId(uint32_t fileId);
   Extent*	getExtent(uint32_t id);
   ExtentsList	extents();
+
+private:
+  uint32_t		__fileId;
+  uint64_t		__blockSize;
+  uint64_t		__initialSize;
+  uint64_t		__extendedSize;
+  ForkData::Type	__type;
+  class ExtentsTree*	__etree;
+  fork_data		__fork;
+  std::vector<Extent* >	__extents;
+
+  bool			__readToBuffer(void* buffer, uint16_t size, Node* origin, uint64_t offset);
+  void			__clearExtents();
+  uint64_t		__processFork(fork_data fork);
 };
 
 

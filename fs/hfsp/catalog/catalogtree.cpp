@@ -90,6 +90,7 @@ CatalogTree::CatalogTree()
   this->__folderCount = 0;
   this->__fileThreadCount = 0;
   this->__folderThreadCount = 0;
+  this->__percent = 0;
 }
 
 
@@ -142,6 +143,7 @@ void			CatalogTree::process(Node* catalog, uint64_t offset) throw (std::string)
   if ((this->__allocatedBlocks = new TwoThreeTree()) == NULL)
     throw std::string("Cannot create allocated blocks status");
   sstr << "Proceesing catalog tree";
+  this->__percent = 0;
   for (idx = 0; idx < this->totalNodes(); idx++)
     {
       try
@@ -154,13 +156,9 @@ void			CatalogTree::process(Node* catalog, uint64_t offset) throw (std::string)
 	{
 	  std::cout << "Error while making node" << err << std::endl;
 	}
-      // sstr << "Processing nodes in catalog tree: " << idx << " / " << this->totalNodes();
-      // this->__fsobj->stateinfo = sstr.str();
-      // sstr.str("");
+      this->__progress(idx);
     }
-  sstr << "Processing nodes in catalog tree: " << idx << " / " << this->totalNodes();
-  this->__fsobj->stateinfo = sstr.str();
-  sstr.str("");
+  this->__progress(idx);
   if ((mit = this->__nodes.find(1)) != this->__nodes.end())
     {
       for (it = mit->second.begin(); it != mit->second.end(); it++)
@@ -175,6 +173,22 @@ void			CatalogTree::process(Node* catalog, uint64_t offset) throw (std::string)
   for (mit = this->__nodes.begin(); mit != this->__nodes.end(); mit++)
     if (mit->second.size() > 0)
       std::cout << "orphan entry found: " << mit->first << std::endl;
+}
+
+
+void			CatalogTree::__progress(uint64_t current)
+{
+  uint64_t		percent;
+  std::stringstream	sstr;
+
+  percent = (current * 100) / this->totalNodes();
+  if (this->__percent < percent)
+    {
+      sstr << "Processing nodes in catalog tree: " << percent << "% (" << current << " / " << this->totalNodes() << ")" << std::endl;
+      this->__fsobj->stateinfo = sstr.str();
+      sstr.str("");
+      this->__percent = percent;
+    }
 }
 
 

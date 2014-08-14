@@ -17,19 +17,79 @@
 #include "fork.hpp"
 
 
-ForkData::ForkData(uint64_t blocksize)
+ForkData::ForkData(uint32_t fileid, uint64_t blocksize) : __fileId(fileid), __blockSize(blocksize), __initialSize(0), __extendedSize(0), __etree(NULL)
 {
-  memset(&this->__fork, 0, sizeof(fork_data));
-  this->__etree = NULL;
-  this->__blocksize = blocksize;
-  this->__initialSize = 0;
-  this->__fileId = 0;
 }
 
+ForkData::ForkData(uint32_t fileid, ExtentsTree* etree) : __fileId(fileid), __blockSize(0), __initialSize(0), __extendedSize(0), __etree(etree)
+{
+  if (etree != NULL)
+    this->__blockSize = this->__etree->blockSize();
+}
 
 ForkData::~ForkData()
 {
   this->__clearExtents();
+}
+
+
+void		ForkData::process(Node* origin, uint64_t offset, ForkData::Type type) throw (std::string)
+{
+  fork_data	fork;
+
+  if (this->__readToBuffer(&fork, sizeof(fork_data), origin, offset))
+    this->process(fork, type);
+  else
+    throw std::string("ForkData: cannot read fork_data structure");
+}
+
+
+void		ForkData::process(fork_data initial, ForkData::Type type) throw (std::string)
+{
+  std::map<uint32_t, fork_data* >		forks;
+  std::map<uint32_t, fork_data* >::iterator	mit;
+  uint64_t					size;
+
+  if (this->__blockSize == 0)
+    return;
+  this->__fork = initial;
+  this->__clearExtents();
+  this->__type = type;
+  this->__initialSize = this->__processFork(initial);
+  this->__extendedSize = 0;
+  if (this->__initialSize < this->logicalSize())
+    {
+      if (this->__etree != NULL)
+      	{
+	  forks = this->__etree->forksById(this->__fileId, type);
+	  for (mit = forks.begin(); mit != forks.end(); mit++)
+	    {
+	      if (mit->second != NULL)
+		{
+		  size = this->__processFork(*(mit->second));
+		  this->__extendedSize += size;
+		}
+	    }
+      	}
+      else
+      	std::cout << "[!] No Extents Overflow File set. Resulting data will be truncated" << std::endl;
+    }
+  else
+    ; // too many forks !
+}
+
+
+void		ForkData::setBlockSize(uint64_t blocksize)
+{
+  //XXX check if coherent
+  this->__blockSize = blocksize;
+}
+
+
+void		ForkData::setExtentsTree(ExtentsTree* etree)
+{
+  if (etree != NULL)
+    this->__etree = etree;
 }
 
 
@@ -39,38 +99,25 @@ void		ForkData::setFileId(uint32_t fileId)
 }
 
 
-void		ForkData::setInitialFork(fork_data fork)
+uint64_t	ForkData::__processFork(fork_data fork)
 {
   int		i;
   Extent*	ext;
-  
-  this->__fork = fork;
-  this->__clearExtents();
-  this->__initialSize = 0;
+  uint64_t	size;
+
+  size = 0;
   for (i = 0; i < 8; i++)
     {
-      ext = new Extent(fork.extents[i], this->__blocksize);
-      this->__initialSize += ext->size();
-      this->__extents.push_back(ext);
+      ext = new Extent(fork.extents[i], this->__blockSize);
+      if (ext->size() > 0)
+	{
+	  size += ext->size();
+	  this->__extents.push_back(ext);
+	}
+      else
+	delete ext;
     }
-  if (this->__initialSize < this->logicalSize())
-    {
-      // std::cout << "this is the case for: " << this->__fileId << std::endl;
-      // if (this->__etree != NULL)
-      // 	{
-      // 	  std::vector<fork_data* > ret = this->__etree->forkById(this->__fileId);
-      // 	}
-      // else
-      // 	std::cout << "[!] No Extents Overflow File set. Resulting data will be truncated" << std::endl;
-    }
-  // else if (initsize > this->logicalSize())
-  //   std::cout << "[!] Size of initial extents is greater than set logical size" << std::endl;
-}
-
-
-void		ForkData::setExtentsTree(ExtentsTree* etree)
-{
-  this->__etree = etree;
+  return size;
 }
 
 
@@ -157,6 +204,37 @@ void		ForkData::dump(std::string tab)
       bcount += this->__extents[i]->blockCount();
     }
   std::cout << tab << "Missing blocks " << bcount << std::endl;
+}
+
+
+bool	ForkData::__readToBuffer(void* buffer, uint16_t size, Node* origin, uint64_t offset)
+{
+  bool		success;
+  VFile*	vfile;
+  
+  vfile = NULL;
+  success = true;
+  try
+    {
+      vfile = origin->open();
+      vfile->seek(offset);
+      if (vfile->read(buffer, size) != size)
+	success = false;
+    }
+  catch (std::string& err)
+    {
+      success = false;
+    }
+  catch (vfsError& err)
+    {
+      success = false;
+    }
+  if (vfile != NULL)
+    {
+      vfile->close();
+      delete vfile;
+    }
+  return success;
 }
 
 

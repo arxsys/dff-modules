@@ -40,7 +40,9 @@ private:
   uint64_t	__cacheOffset;
   std::map<uint64_t, uint64_t>	__freeBlocks;
   uint64_t	__blocks;
+  uint64_t	__percent;
 
+  void			__progress(uint64_t current);
   void			__initCache();
   void			__clearCache();
   void			__updateCache(uint64_t offset);

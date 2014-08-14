@@ -28,6 +28,8 @@
 
 typedef struct s_fork_data fork_data;
 
+class ForkData;
+
 PACK_START
 typedef struct	s_extent_key
 {
@@ -48,8 +50,10 @@ public:
   ExtentKey();
   ~ExtentKey();
   void			process(Node* origin, uint64_t offset, uint16_t size) throw (std::string);
+  uint8_t		forkType();
   uint32_t		fileId();
   uint32_t		startBlock();
+  fork_data*		forkData();
 };
 
 
@@ -60,10 +64,10 @@ private:
 public:
   ExtentTreeNode();
   ~ExtentTreeNode();
-  virtual void	process(Node* origin, uint64_t uid, uint16_t size) throw (std::string);
-  virtual KeyedRecords	records();
-  bool	exists(uint32_t fileId);
-  std::vector<fork_data* >	forkById(uint32_t fileId);
+  virtual void				process(Node* origin, uint64_t uid, uint16_t size) throw (std::string);
+  virtual KeyedRecords			records();
+  bool					exists(uint32_t fileId, uint8_t type);
+  std::map<uint32_t, fork_data * >	forksById(uint32_t fileId, uint8_t type);
 };
 
 
@@ -72,14 +76,13 @@ class ExtentsTree : public HTree
 private:
   Node*			__origin;
   uint64_t		__bsize;
-  //ExtentTreeNode*	__find(uint32_t fileid);
 public:
   ExtentsTree();
   ~ExtentsTree();
-  void			process(Node* origin, uint64_t offset) throw (std::string);
-  std::vector<fork_data* >	forkById(uint32_t fileid);
-  uint64_t		blockSize();
-  void			setBlockSize(uint64_t bsize);
+  void					process(Node* origin, uint64_t offset) throw (std::string);
+  std::map<uint32_t, fork_data* >	forksById(uint32_t fileid, uint8_t type);
+  uint64_t				blockSize();
+  void					setBlockSize(uint64_t bsize);
 };
 
 #endif

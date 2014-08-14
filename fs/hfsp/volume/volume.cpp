@@ -31,75 +31,6 @@ VolumeHeader::~VolumeHeader()
 }
 
 
-void	displayFiles(fork_data forkdata, Node* node)
-{
-  // uint64_t	start;
-  // uint64_t	count;
-  // uint64_t	it;
-
-  // VFile*	vf;
-  // BtreeNode	bnode;
-  // HeaderNode	hnode;
-  // uint8_t*	buff;
-  // kcatalog	cat;
-
-  // uint8_t*	name;
-
-  // name = (uint8_t*)malloc(sizeof(uint8_t) * 512);
-  // buff = (uint8_t*)malloc(sizeof(uint8_t) * 4096);
-
-  // vf = node->open();
-  // start = (uint64_t)bswap32(forkdata.extents[0].startBlock);
-  // start *= 4096;
-  // count = (uint64_t)bswap32(forkdata.extents[0].blockCount);
-  // std::cout << start << std::endl;
-  // vf->seek(start);
-  // vf->read(buff, 4096);
-  // memcpy(&bnode, buff, sizeof(bnode));
-  // memcpy(&hnode, buff+sizeof(bnode), sizeof(hnode));
-  // uint16_t	swap16;
-  // uint32_t	swap32;
-  // if (bnode.kind == 1)
-  //   std::cout << "Header node found" << std::endl;
-  // else
-  //   std::cout << "not header node :(" << std::endl;
-  // swap16 = bswap16(bnode.numRecords);
-  // std::cout << "record: " << swap16 << std::endl;
-  // swap16 = bswap16(hnode.treeDepth);
-  // std::cout << "depth: " << swap16 << std::endl;
-  // swap32 = bswap32(hnode.totalNodes);
-  // std::cout << "Total nodes: " << swap32 << std::endl;
-  // swap16 = bswap16(hnode.maxKeyLength);
-  // std::cout << "max key length: " << swap16 << std::endl;
-  // for (it = 1; it < count; it++)
-  //   {
-  //     memset(buff, 0, 4096);
-  //     vf->read(buff, 4096);
-  //     memcpy(&bnode, buff, sizeof(bnode));
-  //     //printf("node type: %d\n", bnode.kind);
-  //     if (bnode.kind == -1)
-  //     	{
-  // 	  //std::cout << "Leaf node" << std::endl;
-  //      	  memcpy(&cat, buff+sizeof(bnode), sizeof(cat));
-  // 	  //std::cout << "prtou" << std::endl;
-  //      	  memset(name, 0, 512);
-  // 	  swap16 = bswap16(cat.keyLength);
-  // 	  if (swap16 < 516 && swap16 > 6)
-  //     	    {
-  // 	      uint16_t len;
-  // 	      memcpy(&len, buff+sizeof(bnode)+sizeof(cat), 2);
-  // 	      len = bswap16(len);
-  // 	      memset(name, 0, 512);
-  //     	      memcpy(name, buff+sizeof(bnode)+sizeof(cat)+2, len*2);
-  // 	      //for (int i = 1; i < len; i++)
-  // 	      //printf("%c", name[i]);
-  // 	      //printf("\n");
-		  
-  //     	    }
-  //     	}
-  //   }
-}
-
 void	VolumeHeader::process(Node* origin, fso* fsobj) throw (std::string)
 {
   VFile*	vf;
@@ -111,7 +42,6 @@ void	VolumeHeader::process(Node* origin, fso* fsobj) throw (std::string)
     {
       vf = origin->open();
       vf->seek(1024);
-      std::cout << "Reading " << sizeof(volumeheader) << " bytes at " << vf->tell() << std::endl;
       if (vf->read(&this->__vheader, sizeof(volumeheader)) != sizeof(volumeheader))
 	{
 	  vf->close();

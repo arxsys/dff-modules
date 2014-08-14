@@ -27,6 +27,7 @@ AllocationFile::AllocationFile()
   this->__vfile = NULL;
   this->__cache = NULL;
   this->__cacheOffset = 0;
+  this->__percent = 0;
 }
 
 
@@ -112,6 +113,22 @@ void			AllocationFile::__updateCache(uint64_t offset)
 }
 
 
+void			AllocationFile::__progress(uint64_t current)
+{
+  uint64_t		percent;
+  std::stringstream	sstr;
+
+  percent = (current * 100) / this->__blocks;
+  if (this->__percent < percent)
+    {
+      sstr << "Processing bitmap allocation block: " << percent << "% (" << current << " / " << this->__blocks << ")" << std::endl;
+      this->__fsobj->stateinfo = sstr.str();
+      sstr.str("");
+      this->__percent = percent;
+    }
+}
+
+
 bool			AllocationFile::isBlockAllocated(uint64_t block) throw (std::string)
 {
   uint64_t		offset;
@@ -135,7 +152,6 @@ void			AllocationFile::process(Node* allocation, uint64_t offset, uint64_t block
   uint64_t		nsize;
   uint64_t		start;
   bool			commit;
-  std::stringstream	sstr;
   
   if (allocation == NULL)
     throw std::string("Provided allocation file does not exist");
@@ -143,6 +159,7 @@ void			AllocationFile::process(Node* allocation, uint64_t offset, uint64_t block
     throw std::string("Provided offset is greater than allocation file size");
   this->__allocation = allocation;
   this->__blocks = blocks;
+  this->__percent = 0;
   try
     {
       this->__vfile = this->__allocation->open();
@@ -157,11 +174,6 @@ void			AllocationFile::process(Node* allocation, uint64_t offset, uint64_t block
   commit = false;
   for (current = 0; current < this->__blocks; ++current)
     {
-      // XXX settings this at each round could result to abort... Du to the GUI trying to get
-      // the content of stateinfo while being update...
-      //sstr << "Bitmap Allocation block: " << current << " / " << this->__blocks;
-      //this->__fsobj->stateinfo = sstr.str();
-      //sstr.str("");
       if (!this->isBlockAllocated(current))
 	{
 	  if (commit == false)
@@ -180,6 +192,7 @@ void			AllocationFile::process(Node* allocation, uint64_t offset, uint64_t block
 	    }
 	}
     }
+  this->__progress(current);
   UnallocatedNode* unalloc = new UnallocatedNode("$Unallocated space", nsize, this->__mountpoint, this->__fsobj);
   unalloc->setContext(this->__origin, this->__etree->blockSize(), this->__freeBlocks);
 }

@@ -665,18 +665,12 @@ void		HfsFile::process(Node* origin, Node* catalog, uint64_t offset, ExtentsTree
 
 ForkData*	HfsFile::dataFork()
 {
-  fork_data	data;
   ForkData*     fork;
+  uint64_t	offset;
 
-  fork = NULL;
-  if (this->_readToBuffer(&data, this->_offset+sizeof(catalog_entry), sizeof(fork_data)))
-    {
-      fork = new ForkData(this->_etree->blockSize());
-      //fork = new ForkData(this->_etree->blockSize());
-      fork->setExtentsTree(this->_etree);
-      fork->setInitialFork(data);
-    }
-  fork->setFileId(this->cnid());
+  offset = this->_offset+sizeof(catalog_entry);
+  fork = new ForkData(this->cnid(), this->_etree);
+  fork->process(this->_catalog, offset, ForkData::Data);
   return fork;
 }
 
@@ -684,17 +678,12 @@ ForkData*	HfsFile::dataFork()
 
 ForkData*	HfsFile::resourceFork()
 {
-  fork_data	resource;
   ForkData*     fork;
+  uint64_t	offset;
 
-  fork = NULL;
-  if (this->_readToBuffer(&resource, this->_offset+sizeof(catalog_entry)+sizeof(fork_data), sizeof(fork_data)))
-    {
-      fork = new ForkData(this->_etree->blockSize());
-      fork->setExtentsTree(this->_etree);
-      fork->setInitialFork(resource);
-    }
-  fork->setFileId(this->cnid());
+  offset = this->_offset+sizeof(catalog_entry)+sizeof(fork_data);
+  fork = new ForkData(this->cnid(), this->_etree);
+  fork->process(this->_catalog, offset, ForkData::Resource);
   return fork;
 }
 
@@ -725,11 +714,6 @@ void            HfsFile::fileMapping(FileMapping* fm)
   ForkData*		fork;
 
   fork = this->dataFork();
-  // if (fork->initialForkSize() < fork->logicalSize())
-  //   {
-  //     std::cout << this->absolute() << std::endl;
-  //     std::cout << "\tid: " << this->cnid() << " -- offset: " << this->_offset << " -- initsize: " << fork->initialForkSize() << " -- logicsize: " << fork->logicalSize() << std::endl;
-  //   }
   coffset = 0;
   extents = fork->extents();
   for (it = extents.begin(); it != extents.end(); it++)

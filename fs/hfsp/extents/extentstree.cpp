@@ -40,6 +40,12 @@ void	ExtentKey::process(Node* origin, uint64_t offset, uint16_t size) throw (std
 }
 
 
+uint8_t		ExtentKey::forkType()
+{
+  return this->__ekey.forkType;
+}
+
+
 uint32_t	ExtentKey::fileId()
 {
   return bswap32(this->__ekey.fileId);
@@ -52,6 +58,26 @@ uint32_t	ExtentKey::startBlock()
   return bswap32(this->__ekey.startBlock);
 }
 
+
+fork_data*	ExtentKey::forkData()
+{
+  uint8_t*		data;
+  fork_data*		fork;
+ 
+  data = NULL;
+  fork = NULL;
+  if ((this->dataLength() >= sizeof(extent)*8) && ((data = this->data()) != NULL)
+      && ((fork = (fork_data*)malloc(sizeof(fork_data))) != NULL))
+    {
+      fork->logicalSize = 0;
+      fork->clumpSize = 0;
+      fork->totalBlocks = 0;
+      memcpy(fork->extents, data, sizeof(extent)*8);
+    }
+  if (data != NULL)
+    free(data);
+  return fork;
+}
 
 
 ExtentTreeNode::ExtentTreeNode()
@@ -94,15 +120,30 @@ KeyedRecords	ExtentTreeNode::records()
 }
 
 
-std::vector<fork_data* >	ExtentTreeNode::forkById(uint32_t fileId)
+std::map<uint32_t, fork_data * >	ExtentTreeNode::forksById(uint32_t fileId, uint8_t type)
 {
-  std::vector<fork_data* >     forks;
-  
+  std::map<uint32_t, fork_data * >	forks;
+  fork_data*				fork;
+  ExtentKey*				record;
+  int					i;
+
+  if (this->isLeafNode() && (this->numberOfRecords() > 0))
+    {
+      for (i = this->numberOfRecords(); i > 0; i--)
+	{
+	  record = this->__createExtentKey(bswap16(this->_roffsets[i]), bswap16(this->_roffsets[i-1]));
+	  if (record->fileId() == fileId && record->forkType() == type)
+	    {
+	      if ((fork = record->forkData()) != NULL)
+		forks[record->startBlock()] = fork;
+	    }
+	}
+    }
   return forks;
 }
 
 
-bool	ExtentTreeNode::exists(uint32_t fileId)
+bool	ExtentTreeNode::exists(uint32_t fileId, uint8_t type)
 {
   std::string	error;
   ExtentKey*	record;
@@ -116,7 +157,7 @@ bool	ExtentTreeNode::exists(uint32_t fileId)
       for (i = this->numberOfRecords(); i > 0; i--)
 	{
 	  record = this->__createExtentKey(bswap16(this->_roffsets[i]), bswap16(this->_roffsets[i-1]));
-	  if (record->fileId() == fileId)
+	  if (record->fileId() == fileId && record->forkType() == type)
 	    found = true;
 	  delete record;
 	}
@@ -136,9 +177,7 @@ ExtentKey*	ExtentTreeNode::__createExtentKey(uint16_t start, uint16_t end)
   if (start < end)
     size = end - start;
   record = new ExtentKey();
-  record->setOrigin(this->_origin);
-  record->setOffset(offset);
-  record->setSize(size);
+  record->process(this->_origin, offset, size);
   return record;
 }
 
@@ -164,11 +203,12 @@ void		ExtentsTree::process(Node* origin, uint64_t offset) throw (std::string)
 }
 
 
-std::vector<fork_data *>	ExtentsTree::forkById(uint32_t fileid)
+std::map<uint32_t, fork_data *>	ExtentsTree::forksById(uint32_t fileid, uint8_t type)
 {
   uint64_t				idx;
   ExtentTreeNode*			enode;
-  std::vector<fork_data *>		ret;
+  std::map<uint32_t, fork_data *>	forks;
+  std::map<uint32_t, fork_data *>	nodeforks;
 
   if ((enode = new ExtentTreeNode()) == NULL)
     throw std::string("Cannot create extent node");
@@ -177,17 +217,15 @@ std::vector<fork_data *>	ExtentsTree::forkById(uint32_t fileid)
       try
    	{
    	  enode->process(this->_origin, idx, this->nodeSize());
-	  if (enode->isLeafNode() && enode->exists(fileid))
-	    {
-	      ret = enode->forkById(fileid);
-	    }
+	  nodeforks = enode->forksById(fileid, type);
+	  forks.insert(nodeforks.begin(), nodeforks.end());
 	}
       catch (std::string err)
   	{
   	  std::cout << "ERROR " << err << std::endl;
   	}
     }
-  return ret;
+  return forks;
 }
 
 
