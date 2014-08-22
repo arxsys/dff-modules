@@ -25,7 +25,11 @@ void Partition::start(std::map<std::string, Variant_p > args)
   soffset = 0;
   sectsize = 512;
   if ((it = args.find("sector-size")) != args.end())
+  {
     sectsize = it->second->value<uint32_t>();
+    if (sectsize == 0)
+      sectsize = 512;
+  }
   if ((it = args.find("offset")) != args.end())
     soffset = it->second->value<uint64_t>();
   if ((it = args.find("file")) != args.end())

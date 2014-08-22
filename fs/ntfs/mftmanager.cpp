@@ -44,8 +44,6 @@ bool  MFTId::operator<(MFTId const& other)
   return (false);
 }
 
-
-
 /**
  *  MFTEntryInfo
  */
@@ -63,14 +61,21 @@ MFTEntryNode*   MFTEntryInfo::entryNode(void) const
   return (this->__entryNode);
 }
 
-
-
 /**
  *  MFTEntryManager
  */
-MFTEntryManager::MFTEntryManager(NTFS* ntfs) : __ntfs(ntfs) //, __masterMFTNode(mftNode)
+MFTEntryManager::MFTEntryManager(Destruct::DStruct* dstruct) : DCppObject<MFTEntryManager>(dstruct), __ntfs(NULL)
+{
+}
+
+MFTEntryManager::MFTEntryManager(Destruct::DStruct* dstruct, Destruct::DValue const& args) : DCppObject<MFTEntryManager>(dstruct, args), __ntfs(NULL)
+{
+}
+
+void    MFTEntryManager::init(NTFS* ntfs)
 {
   //XXX check for mirror !
+  this->__ntfs = ntfs;
   this->createFromOffset(ntfs->bootSectorNode()->MFTLogicalClusterNumber() * ntfs->bootSectorNode()->clusterSize(), ntfs->fsNode(), 0);
   this->__masterMFTNode = this->node(0); //or entrynode
   if (this->__masterMFTNode == NULL)
@@ -415,7 +420,7 @@ void    MFTEntryManager::linkOrphanEntries(void)
         MFTNode* parent = this->node(parentId);
         if (parent)
         {
-          if (fileName->parentSequence() != parent->mftEntryNode()->sequence()) //XXX check for $SDS:?
+          if (fileName->parentSequence() != parent->mftEntryNode()->sequence()) 
             this->__ntfs->orphansNode()->addChild(*mftNode);
           else 
             parent->addChild(*mftNode);
@@ -435,14 +440,15 @@ void    MFTEntryManager::linkOrphanEntries(void)
  * Create unallocated node containing unused cluster 
  * Must check for index and relink files too XXX
  */
-void    MFTEntryManager::linkUnallocated(void)
+Unallocated* MFTEntryManager::createUnallocated(void)
 {
   Unallocated* unallocated = new Unallocated(this->__ntfs);
   this->__ntfs->rootDirectoryNode()->addChild(unallocated);
+  return (unallocated);
+}
 
-  if (this->__ntfs->opt()->recovery() == false)
-    return ;
-
+void    MFTEntryManager::searchUnallocated(Unallocated* unallocated)
+{
   uint64_t mftRecordSize = this->__ntfs->bootSectorNode()->MFTRecordSize(); 
   uint64_t clusterSize = this->__ntfs->bootSectorNode()->clusterSize(); 
 
@@ -451,10 +457,10 @@ void    MFTEntryManager::linkUnallocated(void)
   std::vector<Range>::const_iterator range = ranges.begin();
 
   uint32_t signature;
-  uint64_t recovered = 0;
   uint64_t parsed = 0;
-  Node*  fsNode = this->__ntfs->fsNode();
   VFile* fsFile = this->__ntfs->fsNode()->open();
+
+  this->unallocatedOffset = Destruct::Destruct::instance().generate("DVectorUInt64");
 
   for (uint64_t rangeCount = 0; range != ranges.end(); ++range, ++rangeCount) 
   {
@@ -469,30 +475,45 @@ void    MFTEntryManager::linkUnallocated(void)
       fsFile->read(&signature, 4);
         
       if (signature == MFT_SIGNATURE_FILE)
-      {
-        try
-        {
-          MFTEntryInfo* entryInfo = this->createFromOffset(offset, fsNode, -1);
-          std::list<MFTNode* >::const_iterator mftNode = entryInfo->nodes.begin();
-          for ( ; mftNode != entryInfo->nodes.end(); ++mftNode)
-          {
-            if ((*mftNode))
-              unallocated->addChild((*mftNode)); 
-          }
-          recovered++;
-          delete entryInfo; //return by createFromOffset -1
-        }
-        catch(...)
-        {
-        }
-      }
+        static_cast<Destruct::DObject*>(this->unallocatedOffset)->call("push", Destruct::RealValue<DUInt64>(offset));
     }
   }
+  uint64_t recovered = this->linkUnallocated(unallocated);
   std::ostringstream state;
   state << "Recovered " << recovered << "/" << parsed;
   this->__ntfs->setStateInfo(state.str());
 
   delete fsFile;
+}
+
+uint64_t MFTEntryManager::linkUnallocated(Unallocated* unallocated)
+{
+  uint64_t recovered = 0;
+
+  Destruct::DObject* vector = this->unallocatedOffset;
+  Node*  fsNode = this->__ntfs->fsNode();
+
+  DUInt64 count = vector->call("size").get<DUInt64>();
+  for (DUInt64 index = 0; index < count; index++)
+  {
+     try
+     {
+       DUInt64 offset = vector->call("get", Destruct::RealValue<DUInt64>(index)).get<DUInt64>();
+       MFTEntryInfo* entryInfo = this->createFromOffset(offset, fsNode, -1);
+       std::list<MFTNode* >::const_iterator mftNode = entryInfo->nodes.begin();
+       for ( ; mftNode != entryInfo->nodes.end(); ++mftNode)
+       {
+         if ((*mftNode))
+           unallocated->addChild((*mftNode)); 
+       }
+       recovered++;
+       delete entryInfo;
+     }
+     catch (...)
+     {
+     }    
+  }
+  return (recovered);
 }
 
 /**

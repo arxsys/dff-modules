@@ -16,12 +16,23 @@
 
 #include "ntfsopt.hpp"
 
-NTFSOpt::NTFSOpt(Attributes args) : __fsNode(NULL), __validateBootSector(false), __recovery(false)
+#include "../session/session.hpp"
+
+//#include "session.hpp" //for dnode 
+
+//NTFSOpt::NTFSOpt(Attributes args) : NTFSOpt(new DStruct(NULL, "NTFSOpt",DCppObject<NTFSOpt>::newObject, NTFSOpt::ownAttributeBegin(), NTFSOpt::ownAttributeEnd)
+//{
+//}
+
+NTFSOpt::NTFSOpt(Attributes args, Destruct::DStruct* dstruct) : DCppObject<NTFSOpt>(dstruct), __validateBootSector(false), __recovery(false), __fsNode(NULL) 
 {
   Attributes::iterator arg;
 
   if (args.find("file") != args.end())
-    this->__fsNode = args["file"]->value<Node* >();
+  {
+    Node* node = args["file"]->value<Node* >();
+    this->__fsNode = new NodeContainer(Destruct::Destruct::instance().find("NodeContainer"), node);
+  }
   else
     throw envError("NTFS module need a file argument.");
   if (args.find("no-bootsector-check") != args.end())
@@ -30,11 +41,16 @@ NTFSOpt::NTFSOpt(Attributes args) : __fsNode(NULL), __validateBootSector(false),
     this->__recovery = true;
   if (args.find("advanced-attributes") != args.end())
     this->__advancedAttributes = true;
-  arg =args.find("drive-name");
+  arg = args.find("drive-name");
   if (arg != args.end())
     this->__driveName = arg->second->value<std::string>();
   else 
     this->__driveName = "C:";
+}
+
+
+NTFSOpt::NTFSOpt(Destruct::DStruct* dstruct, Destruct::DValue const& dargs) : DCppObject<NTFSOpt>(dstruct, dargs)
+{
 }
 
 NTFSOpt::~NTFSOpt(void)
@@ -43,7 +59,7 @@ NTFSOpt::~NTFSOpt(void)
 
 Node*           NTFSOpt::fsNode(void) const
 {
-  return (this->__fsNode);
+  return (static_cast<NodeContainer*>(static_cast<Destruct::DObject*>(this->__fsNode))->node());
 }
 
 bool            NTFSOpt::recovery(void) const

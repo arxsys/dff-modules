@@ -39,9 +39,12 @@
 #include "mfso.hpp"
 #include "ntfs.hpp"
 #include "rootnode.hpp"
+#include "../../../api/destruct/python/py_dvalue.hpp"
 %}
 
 %import "../../../api/vfs/libvfs.i"
+%import "../../../api/include/dswrapper.i"
+
 %include "ntfs.hpp"
 
 %pythoncode
@@ -52,6 +55,7 @@ from dff.api.types.libtypes import *
 class ntfs(Module):
   def __init__(self):
     Module.__init__(self, 'ntfs', NTFS)
+    NTFS.declare()
     self.conf.addArgument({"name": "file",
                            "description": "Path to a file containing NTFS",
                            "input": Argument.Required|Argument.Single|typeId.Node})

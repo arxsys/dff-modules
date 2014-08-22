@@ -26,7 +26,6 @@
 #include "node.hpp"
 #include "filemapping.hpp"
 #include "variant.hpp"
-#include "datatype.hpp"
 
 typedef struct
 {

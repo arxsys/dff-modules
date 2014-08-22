@@ -22,6 +22,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "destruct.hpp"
+#include "drealvalue.hpp"
+#include "dvalue.hpp"
+#include "dobject.hpp"
+#include "dnullobject.hpp"
+#include "protocol/dcppobject.hpp"
 
 #include "export.hpp"
 #include "vfs.hpp"

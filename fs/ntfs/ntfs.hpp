@@ -23,6 +23,7 @@ class NTFSOpt;
 class BootSectorNode;
 class MFTNode;
 class MFTEntryManager;
+class Unallocated;
 
 class NTFS : public mfso
 {
@@ -32,20 +33,69 @@ private:
   MFTEntryManager*      __mftManager;
   Node*                 __rootDirectoryNode;
   Node*                 __orphansNode;
-  Node*                 __unallocatedNode;
+  Unallocated*          __unallocatedNode;
 public:
                         NTFS();
                         ~NTFS();
-  virtual void          start(Attributes args);
+
+  static                void declare(void); // # XXX ///called from Python Module 
+
+  void                  start(Attributes args);
+  bool                  load(Destruct::DValue value);
+  Destruct::DValue      save(void) const;
+
   void                  setStateInfo(const std::string&);
   NTFSOpt*              opt(void) const;
   Node*                 fsNode(void) const;
   Node*                 rootDirectoryNode(void) const;
   BootSectorNode*       bootSectorNode(void) const;
   Node*                 orphansNode(void) const;
-  Node*                 unallocatedNode(void) const;
+  Unallocated*          unallocatedNode(void) const;
   MFTEntryManager*      mftManager(void) const;
   int32_t 	        vread(int fd, void *buff, unsigned int size);
+};
+
+class DNTFS : public Destruct::DCppObject<DNTFS>
+{
+public:
+  DNTFS(Destruct::DStruct* dstruct, Destruct::DValue const& args);
+  ~DNTFS();
+
+  Destruct::RealValue<Destruct::DObject*>       opt, mftManager;
+  static size_t ownAttributeCount()
+  {
+    return (2);
+  }
+
+  static Destruct::DAttribute* ownAttributeBegin()
+  {
+    static Destruct::DAttribute  attributes[] = 
+    {
+      Destruct::DAttribute(Destruct::DType::DObjectType, "opt"),
+      Destruct::DAttribute(Destruct::DType::DObjectType, "mftManager"),
+    };
+    return (attributes);
+  }
+
+  static Destruct::DPointer<DNTFS>* memberBegin()
+  {
+    static Destruct::DPointer<DNTFS> memberPointer[] = 
+    {
+      Destruct::DPointer<DNTFS>(&DNTFS::opt),
+      Destruct::DPointer<DNTFS>(&DNTFS::mftManager),
+    };
+    return (memberPointer);
+  }
+
+  static Destruct::DAttribute* ownAttributeEnd()
+  {
+    return (ownAttributeBegin() + ownAttributeCount());
+  }
+
+  static Destruct::DPointer<DNTFS >*  memberEnd()
+  {
+    return (memberBegin() + ownAttributeCount());
+  }
 };
 
 #endif

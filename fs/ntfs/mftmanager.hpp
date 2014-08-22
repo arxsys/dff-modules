@@ -22,6 +22,7 @@
 
 class NTFS;
 class MFTNode;
+class Unallocated;
 
 struct MFTId
 {
@@ -48,15 +49,16 @@ private:
   MFTEntryNode*         __entryNode; //entry is related to different node causes of ADS etc...
 };
 
-class MFTEntryManager
+class MFTEntryManager : public Destruct::DCppObject<MFTEntryManager>
 {
 public:
-  MFTEntryManager(NTFS* ntfs); 
+  MFTEntryManager(Destruct::DStruct* dstruct); 
+  MFTEntryManager(Destruct::DStruct* dstruct, Destruct::DValue const& args); 
   ~MFTEntryManager();
+  void                                  init(NTFS* ntfs);
   void                                  initEntries(void);
   void                                  linkEntries(void);
   void                                  linkOrphanEntries(void);
-  void                                  linkUnallocated(void);
   void                                  linkReparsePoint(void) const;
 
   MFTEntryInfo*                         create(uint64_t id);
@@ -72,11 +74,51 @@ public:
   MFTNode*                              node(uint64_t id) const;
   MFTEntryNode*                         entryNode(uint64_t id) const;
   Node*                                 mapLink(MFTNode* node) const;
+
+  void                                          searchUnallocated(Unallocated* unallocated);
+  Unallocated*                                  createUnallocated(void);
+  uint64_t                                      linkUnallocated(Unallocated* unallocated);
 private:
   NTFS*                                 __ntfs;
   MFTNode*                              __masterMFTNode;
   std::map<uint64_t, MFTEntryInfo*>     __entries;
+
+//std::list<DUInt64_t offset>           __unallocated offset;
   uint64_t                              __numberOfEntry;
+public :
+  Destruct::RealValue<Destruct::DObject*>       unallocatedOffset;
+  static size_t ownAttributeCount()
+  {
+    return (1);
+  }
+
+  static Destruct::DAttribute* ownAttributeBegin()
+  {
+    static Destruct::DAttribute  attributes[] = 
+    {
+      Destruct::DAttribute(Destruct::DType::DObjectType, "unallocated"),
+    };
+    return (attributes);
+  }
+
+  static Destruct::DPointer<MFTEntryManager>* memberBegin()
+  {
+    static Destruct::DPointer<MFTEntryManager> memberPointer[] = 
+    {
+      Destruct::DPointer<MFTEntryManager>(&MFTEntryManager::unallocatedOffset),
+    };
+    return (memberPointer);
+  }
+
+  static Destruct::DAttribute* ownAttributeEnd()
+  {
+    return (ownAttributeBegin() + ownAttributeCount());
+  }
+
+  static Destruct::DPointer<MFTEntryManager >*  memberEnd()
+  {
+    return (memberBegin() + ownAttributeCount());
+  }
 };
 
 #endif

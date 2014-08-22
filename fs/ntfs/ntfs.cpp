@@ -23,11 +23,25 @@
 #include "mftmanager.hpp"
 #include "attributes/data.hpp"
 
+#include "protocol/dcppobject.hpp"
+
+void    NTFS::declare(void) //XXX static loading
+{
+  Destruct::Destruct& destruct = Destruct::Destruct::instance();
+  Destruct::DStruct* optStruct = Destruct::makeNewDCpp<NTFSOpt>("NTFSOpt");
+  destruct.registerDStruct(optStruct);
+  Destruct::DStruct* dntfsStruct = Destruct::makeNewDCpp<DNTFS>("DNTFS");
+  destruct.registerDStruct(dntfsStruct);
+  Destruct::DStruct* mftEntryManager = Destruct::makeNewDCpp<MFTEntryManager>("MFTEntryManager");
+  destruct.registerDStruct(mftEntryManager);
+}
+
 /**
  *  NTFS 
  */
-NTFS::NTFS() : mfso("NTFS"), __opt(NULL), __bootSectorNode(NULL), __mftManager(NULL), __rootDirectoryNode(new Node("NTFS")), __orphansNode(new Node("orphans")), __unallocatedNode(new Node("unallocated"))
+NTFS::NTFS() : mfso("NTFS"), __opt(NULL), __bootSectorNode(NULL), __mftManager(NULL), __rootDirectoryNode(new Node("NTFS")), __orphansNode(new Node("orphans")), __unallocatedNode(NULL)
 {
+ //XXX XXX must register DNTFS
 }
 
 NTFS::~NTFS()
@@ -42,7 +56,8 @@ NTFS::~NTFS()
 
 void    NTFS::start(Attributes args)
 {
-  this->__opt = new NTFSOpt(args);
+  Destruct::Destruct& destruct = Destruct::Destruct::instance();
+  this->__opt = new NTFSOpt(args, destruct.find("NTFSOpt"));
   this->__bootSectorNode = new BootSectorNode(this);
   if (this->__opt->validateBootSector())
     this->__bootSectorNode->validate();
@@ -51,14 +66,16 @@ void    NTFS::start(Attributes args)
    * GET MFT NODE 
    */ 
   this->setStateInfo("Reading main MFT");
-  this->__mftManager = new MFTEntryManager(this);
+  this->__mftManager = new MFTEntryManager(destruct.find("MFTEntryManager"));
+  this->__mftManager->init(this);
   this->__mftManager->initEntries();
   this->__mftManager->linkEntries(); 
   this->registerTree(this->opt()->fsNode(), this->rootDirectoryNode());
   this->__mftManager->linkOrphanEntries();
   this->registerTree(this->rootDirectoryNode(), this->orphansNode());
-  this->__mftManager->linkUnallocated();
-  this->registerTree(this->rootDirectoryNode(), this->unallocatedNode());
+  this->__unallocatedNode = this->__mftManager->createUnallocated();
+  if (this->__opt->recovery())
+    this->__mftManager->searchUnallocated(this->__unallocatedNode);
  
   this->__mftManager->linkReparsePoint();
   //delete this->__mftManager; //Unallocated node use it 
@@ -102,7 +119,7 @@ BootSectorNode*	NTFS::bootSectorNode(void) const
   return (this->__bootSectorNode);
 }
 
-Node*           NTFS::unallocatedNode(void) const
+Unallocated*    NTFS::unallocatedNode(void) const
 {
   return (this->__unallocatedNode);
 }
@@ -145,4 +162,62 @@ int32_t  NTFS::vread(int fd, void *buff, unsigned int size)
     std::string finalError = "NTFS::vread on " + mftNode->absolute() + " error: " + error;
     throw vfsError(finalError);
   }
+}
+
+/** Loading and saving method **/
+bool                    NTFS::load(Destruct::DValue value)
+{
+  ////XXX code me and it's done :) 
+  std::cout << "NTFS load method called with " << value.asUnicodeString() << std::endl;
+ 
+  DNTFS* dntfs = static_cast<DNTFS*>(value.get<Destruct::DObject*>());
+
+  this->__opt = static_cast<NTFSOpt*>(static_cast<Destruct::DObject*>(dntfs->opt));
+  this->__bootSectorNode = new BootSectorNode(this);
+  if (this->__opt->validateBootSector())
+    this->__bootSectorNode->validate();
+
+  this->setStateInfo("Reading main MFT");
+
+  this->__mftManager = static_cast<MFTEntryManager*>(static_cast<Destruct::DObject*>(dntfs->mftManager));
+  this->__mftManager->init(this);
+  this->__mftManager->initEntries();
+  this->__mftManager->linkEntries(); 
+  this->registerTree(this->opt()->fsNode(), this->rootDirectoryNode());
+  this->__mftManager->linkOrphanEntries();
+  this->registerTree(this->rootDirectoryNode(), this->orphansNode());
+  this->__unallocatedNode = this->__mftManager->createUnallocated();
+  if (this->__opt->recovery())
+    this->__mftManager->linkUnallocated(this->__unallocatedNode);
+  this->__mftManager->linkReparsePoint();
+  //delete this->__mftManager; //Unallocated node use it 
+
+  this->setStateInfo("Finished successfully");
+  this->res["Result"] = Variant_p(new Variant(std::string("NTFS parsed successfully.")));
+
+
+  return (true);
+}
+
+Destruct::DValue        NTFS::save(void) const //save(args) --> modules arg ? 
+{
+  std::cout << "NTFS save called" << std::endl;
+
+  DNTFS* dntfs = static_cast<DNTFS*>(Destruct::makeNewDCpp<DNTFS>("DNTFS")->newObject());
+  dntfs->opt = this->__opt;
+  dntfs->mftManager = this->__mftManager;
+
+  return (Destruct::RealValue<Destruct::DObject*>(dntfs));
+}
+
+/**
+* DNTFS
+* class to serialize for loading & saving
+**/
+DNTFS::DNTFS(Destruct::DStruct* dstruct, Destruct::DValue const& args) : DCppObject<DNTFS>(dstruct, args)
+{
+}
+
+DNTFS::~DNTFS()
+{
 }
