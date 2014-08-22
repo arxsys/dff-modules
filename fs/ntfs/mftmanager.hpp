@@ -75,12 +75,14 @@ public:
   MFTEntryNode*                         entryNode(uint64_t id) const;
   Node*                                 mapLink(MFTNode* node) const;
 
-  void                                          searchUnallocated(Unallocated* unallocated);
-  Unallocated*                                  createUnallocated(void);
-  uint64_t                                      linkUnallocated(Unallocated* unallocated);
+  void                                  searchUnallocated(Unallocated* unallocated);
+  Unallocated*                          createUnallocated(void);
+  uint64_t                              linkUnallocated(Unallocated* unallocated);
+  MFTNode*                              masterMFTNode(void) const;
 private:
   NTFS*                                 __ntfs;
   MFTNode*                              __masterMFTNode;
+  uint64_t                              __masterMFTOffset;
   std::map<uint64_t, MFTEntryInfo*>     __entries;
 
 //std::list<DUInt64_t offset>           __unallocated offset;

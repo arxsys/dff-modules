@@ -60,8 +60,7 @@ public:
 private:
   MFTEntryNode*	                       __mftEntryNode;
   bool                                 __isCompressed;
-  std::list<MappingAttributes>         mappingAttributesOffset; //then this->__mftEntryNode->mftAttribute(offset);
-// if offset = -1 ou 0 return this->__mftEntryNode to map MFT ? 
+  std::list<MappingAttributes>         mappingAttributesOffset; 
 };
 
 #endif

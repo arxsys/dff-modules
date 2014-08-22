@@ -24,8 +24,9 @@
 
 MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::string name, Node* parent = NULL) : Node(name, ntfs->bootSectorNode()->MFTRecordSize(), parent, ntfs, false), __ntfs(ntfs), __mftNode(mftNode), __offset(offset), __state(0)
 {
-  VFile* vfile = NULL;
-  vfile = this->__mftNode->open();
+  if (this->__mftNode == NULL)
+    throw std::string("MFTEntryNode: Can't open MFT Node is null");
+  VFile* vfile = this->__mftNode->open();
   if (vfile->seek(this->offset()) != this->offset())
   {
     delete vfile;

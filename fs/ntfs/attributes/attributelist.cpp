@@ -114,7 +114,7 @@ AttributeList::AttributeList(MFTAttribute* mftAttribute) : MFTAttributeContent(m
     catch (std::string const& error)
     {
       //std::cout << "attribute list items error" << std::endl;
-      break; //XXX can happen sometimes in recovery (test 2) 
+      break; //XXX can happen sometimes in recovery 
     }
   }
   delete vfile;
@@ -136,10 +136,10 @@ MFTAttributes   AttributeList::mftAttributes(void)
     if (mftEntryNode->offset() == item->mftEntryId() * MFTEntrySize) 
       continue;
 
-    MFTEntryManager* mftManager = this->mftAttribute()->ntfs()->mftManager();
     uint64_t entryId = item->mftEntryId();
-
+    MFTEntryManager* mftManager = this->mftAttribute()->ntfs()->mftManager();
     MFTEntryNode* itemEntryNode = mftManager->entryNode(entryId);
+
     if (itemEntryNode == NULL)
       mftManager->create(entryId);
     itemEntryNode = mftManager->entryNode(entryId);
