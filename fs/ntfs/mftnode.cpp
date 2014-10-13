@@ -21,8 +21,15 @@
 #include "ntfs.hpp"
 #include "attributes/mftattributecontenttype.hpp"
 
-MFTNode::MFTNode(NTFS* ntfs, MFTEntryNode* mftEntryNode) : Node("", 0, NULL, ntfs), __mftEntryNode(mftEntryNode), __isCompressed(false)
+MFTNode::MFTNode(const std::string name, NTFS* ntfs, MFTEntryNode* mftEntryNode, bool isDirectory, bool isUsed) : Node(name, 0, NULL, ntfs), __mftEntryNode(mftEntryNode), __isCompressed(false)
 {
+  if (isDirectory)
+    this->setDir();
+  else
+    this->setFile();
+ 
+  if (!isUsed)
+    this->setDeleted();
 }
 
 MFTNode::~MFTNode(void)
@@ -133,4 +140,19 @@ Attributes	MFTNode::_attributes(void)
     return (this->__mftEntryNode->_attributes());
   Attributes attr;
   return (attr);
+}
+
+Destruct::DObject*      MFTNode::save(void) //const
+{
+  Destruct::DObject* mftNode = Destruct::Destruct::instance().generate("MFTNode");
+
+  mftNode->setValue("name", Destruct::RealValue<Destruct::DUnicodeString>(this->name())); 
+  if (__mftEntryNode)
+    mftNode->setValue("mftEntryNode", Destruct::RealValue<DUInt64>(__mftEntryNode->offset()));
+  mftNode->setValue("isDirectory", Destruct::RealValue<DUInt8>(this->isDir()));
+  mftNode->setValue("isUsed", Destruct::RealValue<DUInt8>(this->isDeleted()));
+  mftNode->setValue("isCompressed", Destruct::RealValue<DUInt8>(this->__isCompressed));
+  //mftNode->setValue("mappingAttributesOffset" RealValue<DUInt8>()); //XXX XXX XXX
+
+  return (mftNode);
 }

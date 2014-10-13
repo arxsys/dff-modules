@@ -47,7 +47,7 @@ public:
 class MFTNode : public Node// MFTEntryNode
 {
 public:
-  MFTNode(NTFS* ntfs, MFTEntryNode* mftEntryNode);
+  MFTNode(const std::string name, NTFS* ntfs, MFTEntryNode* mftEntryNode, bool isDirectory, bool isUsed);
   ~MFTNode();
   void                                 setName(const std::string name);
   Attributes	                       _attributes(void);
@@ -57,6 +57,7 @@ public:
   MFTEntryNode*                        mftEntryNode(MFTEntryNode* mftENtryNode = NULL);
   bool                                 isCompressed(void) const;
   int32_t                              readCompressed(void* buff, unsigned int size, uint64_t* offset);
+  Destruct::DObject*                   save(void); //const;
 private:
   MFTEntryNode*	                       __mftEntryNode;
   bool                                 __isCompressed;

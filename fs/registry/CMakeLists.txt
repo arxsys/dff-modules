@@ -1,27 +1,28 @@
 # DFF -- An Open Source Digital Forensics Framework
-# Copyright (C) 2009-2013 ArxSys
+# Copyright (C) 2011 ArxSys
+#
 # This program is free software, distributed under the terms of
 # the GNU General Public License Version 2. See the LICENSE file
 # at the top of the source tree.
-#  
+#
 # See http://www.digital-forensic.org for more information about this
 # project. Please do not directly contact any of the maintainers of
 # DFF for assistance; the project provides a web site, mailing lists
 # and IRC channels for your use.
-# 
+#
 # Author(s):
-#  Frederic Baguelin <fba@digital-forensic.org>
 #  Solal Jacob <sja@digital-forensic.org>
 
+include_directories(${ICU_INCLUDE_DIRS})
 
-add_subdirectory (extfs)
-add_subdirectory (fat)
-add_subdirectory (ntfs)
-add_subdirectory (hfsp)
-add_subdirectory (registry)
-
-install_file(
-  __init__.py
-  spare.py
+dff_cpp_module(registry
+  CPP_FILES registry.cpp
+  registryopt.cpp
+  regf.cpp
+  streamvfile.cpp
+  key.cpp
+  value.cpp
+  SWIG_FILE registry.i
+  INCLUDE_DIRS ${ICU_INCLUDE_DIRS}
+  LINK_LIBRARIES ${ICU_LIBRARIES} exceptions types vfs
 )
-

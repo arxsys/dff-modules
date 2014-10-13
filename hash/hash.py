@@ -21,13 +21,13 @@ from dff.api.vfs import vfs
 from dff.api.module.script import Script 
 from dff.api.module.module import Module 
 from dff.api.types.libtypes import Variant, VMap, VList, Parameter, Argument, typeId
-from dff.api.vfs.libvfs import AttributesHandler, VLink
+from dff.api.vfs.libvfs import VFS, AttributesHandler, VLink
+
+from dff.api.destruct import *
 
 class HashSets(object):
-
   KNOWN_GOOD = True
   KNOWN_BAD = False
-
   def __init__(self):
      self.hsets = []
 
@@ -123,6 +123,12 @@ class HashInfo(object):
        self.hashes = {}
        self.hsets = set()
 
+####
+#i self.__hashs = dict{ uid : hashInfo }
+#  hashInfo.hashes = { algo, hash } 
+#  hashInfo.hsets = set([hashSetId])
+###
+
 class AttributeHash(AttributesHandler): 
     def __init__(self, parent, modname):
       self.__parent = parent
@@ -130,7 +136,6 @@ class AttributeHash(AttributesHandler):
       self.__lock = threading.Lock()
       self.__hashs = {}
       self.__disown__()	
-
 
     def count(self):
       self.__lock.acquire()
@@ -144,14 +149,12 @@ class AttributeHash(AttributesHandler):
       self.__lock.release()
       return ret
 
-
     def hasHash(self, node, algo):
       idx = node.uid()
       self.__lock.acquire()
       has_hash = self.__hashs.has_key(idx) and self.__hashs[idx].hashes.has_key(algo)
       self.__lock.release()
       return has_hash
-
 
     def getHash(self, node, algo):
       """ return a hash already computed else None"""
@@ -175,7 +178,6 @@ class AttributeHash(AttributesHandler):
       self.__lock.release()
       node.attributesHandlers().updateState()
 
-
     def setKnown(self, node, setId):
       idx = node.uid()
       self.__lock.acquire()
@@ -187,7 +189,6 @@ class AttributeHash(AttributesHandler):
       hashInfo.hsets.add(setId)
       self.__lock.release()
       node.attributesHandlers().updateState()
-
 
     def __getHashes(self, node):
        hdic = {}
@@ -211,7 +212,6 @@ class AttributeHash(AttributesHandler):
          return hdic
        else:
          return {}
-
 
     def attributes(self, node):
        m = VMap()
@@ -250,8 +250,90 @@ class AttributeHash(AttributesHandler):
 	   m["known good"] = goodList
        return m
 
+    def save(self):
+      destruct = Destruct()
+      vectorObjectStruct = destruct.find("DVectorObject")
+      vectorStringStruct = destruct.find("DVectorString")
+      vectorUIntStruct = destruct.find("DVectorUInt8") #suffisant ? 
+      hashInfoStruct = destruct.find("DHashInfo")
+      hashesStruct = destruct.find("DHashes")
+      hlists = vectorObjectStruct.newObject()
+      try:
+       vfs = VFS.Get()
+       for nodeId, hashInfo in self.__hashs.iteritems():
+         dhInfo = hashInfoStruct.newObject()
+         dhInfo.nodeUID = nodeId 
+         dhInfo.hashes = vectorObjectStruct.newObject()
+         for algo, h in hashInfo.hashes.iteritems():
+            hashes = hashesStruct.newObject()
+            hashes.algo = algo
+            hashes.hash = h
+            dhInfo.hashes.push(hashes)
+         hlists.push(dhInfo)
+         if len(hashInfo.hsets): #XXX code me add now we have the base
+           dhInfo.hsets = vectorUIntStruct.newObject()
+           for uid in hashInfo.hsets:
+             dhInfo.hsets.push(uid)
+
+      except Exception as e:
+       print 'Exception in save :', e
+       return None
+      return hlists
+
+    def load(self, hashes):
+      vfs = VFS.Get()
+      error = 0 
+      ok = 0
+      try:
+       for dhinfo in hashes:
+         try:
+           node = vfs.getNodeByDUid(dhinfo.nodeUID)
+           if node == None:
+            error +=1 
+            continue
+         except :
+           error += 1
+         hInfo = HashInfo()
+         for dhashes in dhinfo.hashes:
+           hInfo.hashes[dhashes.algo] = dhashes.hash
+           if dhinfo.hsets:
+             hInfo.hsets = set()
+             for uid in dhinfo.hsets:
+               hInfo.hsets.add(uid)
+         self.__hashs[node.uid()] = hInfo 
+         node.registerAttributes(self)
+         ok += 1
+      except Exception as e:
+        print "can't reload hash module", e
+      return True
+
     def __del__(self):
 	pass
+
+class DHashInfo(DStruct):
+  def __init__(self):
+    DStruct.__init__(self, None, "DHashInfo")
+    self.addAttribute(DAttribute("nodeUID", DUInt64))
+    self.addAttribute(DAttribute("hashes", DObject)) #dvectorobject DHashes
+    self.addAttribute(DAttribute("hsets", DObject)) #dvectorstring
+
+class DHashes(DStruct):
+  def __init__(self):
+    DStruct.__init__(self, None, "DHashes")
+    self.addAttribute(DAttribute("algo", DUnicodeString))
+    self.addAttribute(DAttribute("hash", DUnicodeString))
+
+class DHSet(DStruct):
+  def __init__(self):
+    DStruct.__init__(self, None, "DHSet")
+    self.addAttribute(DAttribute("path", DUnicodeString))
+    self.addAttribute(DAttribute("setType", DUInt8))
+
+class DHSave(DStruct):
+  def __init__(self):
+    DStruct.__init__(self, None, "DHSave")
+    self.addAttribute(DAttribute("hsets", DObject))
+    self.addAttribute(DAttribute("hlists", DObject))
 
 class HASH(Script): 
     def __init__(self):
@@ -266,6 +348,31 @@ class HASH(Script):
       self.__skippedFiles = 0
       self.attributeHash = AttributeHash(self, "hash")
 
+    @staticmethod
+    def declare():
+      destruct = Destruct()
+      for struct in [DHashInfo(), DHashes(), DHSet(), DHSave()]:
+        destruct.registerDStruct(struct)
+
+    def load(self, dhsave):
+       #XXX si un hset et pas trouver qu'est ce qu on fait ? en plus on se base sur un uid donc ca va faire uid -1 et mettre une mauvaise base si par ex il y a 3 base et que la deuxieme n est pas trouver ...
+       for hset in dhsave.hsets:
+         self.__hashSets.add(hset.path, hset.setType)
+       return self.attributeHash.load(dhsave.hlists)
+
+    def save(self):
+       destruct = Destruct() 
+       dhsets = destruct.find("DVectorObject").newObject()
+       dhsave = destruct.find("DHSave").newObject()
+       hsetStruct = destruct.find("DHSet")
+       for hset in self.__hashSets.hsets:
+         dhset = hsetStruct.newObject()
+         dhset.path = hset.path
+         dhset.setType = hset.knownGood
+         dhsets.push(dhset) 
+       dhsave.hsets = dhsets
+       dhsave.hlists = self.attributeHash.save()
+       return dhsave 
 
     def start(self, args):
       node = args["file"].value()
@@ -308,13 +415,11 @@ class HASH(Script):
       self.__run(node, set(algorithms), currentHashSets)
       self.__setResults()
 
-
     def getHashSetFromId(self, setId):
       self.__lock.acquire()
       hset = self.__hashSets.get(setId)
       self.__lock.release()
       return hset
-
 
     def calc(self, node, algorithms):
       buffsize = 10*1024*1024
@@ -361,7 +466,6 @@ class HASH(Script):
     ###
     ###  Private methods
     ###
-
     def __run(self, node, algorithms, currentHashSets):
       doalgo = []
       hashmap = {}
@@ -451,6 +555,7 @@ class hash(Module):
 ex: hash /myfile"""
     def __init__(self):
         Module.__init__(self, "hash", HASH)
+        HASH.declare()
         self.conf.addArgument({"input": Argument.Required|Argument.Single|typeId.Node,
                                "name": "file",
                                "description": "file to hash"

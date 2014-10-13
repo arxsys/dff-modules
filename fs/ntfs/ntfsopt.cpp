@@ -27,6 +27,7 @@
 NTFSOpt::NTFSOpt(Attributes args, Destruct::DStruct* dstruct) : DCppObject<NTFSOpt>(dstruct), __validateBootSector(false), __recovery(false), __fsNode(NULL) 
 {
   Attributes::iterator arg;
+  this->init();
 
   if (args.find("file") != args.end())
   {
@@ -51,6 +52,7 @@ NTFSOpt::NTFSOpt(Attributes args, Destruct::DStruct* dstruct) : DCppObject<NTFSO
 
 NTFSOpt::NTFSOpt(Destruct::DStruct* dstruct, Destruct::DValue const& dargs) : DCppObject<NTFSOpt>(dstruct, dargs)
 {
+  this->init();
 }
 
 NTFSOpt::~NTFSOpt(void)
