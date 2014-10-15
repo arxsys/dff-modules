@@ -18,7 +18,7 @@
 #include "allocation.hpp"
 #include "catalog/catalogtree.hpp"
 
-Hfsp::Hfsp() : mfso("hfsp")
+Hfsp::Hfsp() : mfso("hfsp"), __parent(NULL), __root(NULL)
 {
 }
 
@@ -59,6 +59,7 @@ void		Hfsp::__process() throw (std::string)
   
   
   volume = NULL;
+  etree = NULL;
   afile = NULL;
   try
     {
@@ -80,6 +81,14 @@ void		Hfsp::__process() throw (std::string)
     }
   catch(...)
     {
+      if (this->__root != NULL)
+	delete this->__root;
+      if (volume != NULL)
+	delete volume;
+      if (etree != NULL)
+	delete etree;
+      if (afile != NULL)
+	delete afile;
       throw(std::string("HFS module: error while processing"));
       this->stateinfo = std::string("Error while mounting");
     }
@@ -121,7 +130,7 @@ void		Hfsp::__createCatalog(VolumeHeader* volume, ExtentsTree* etree) throw (std
   ctree->setMountPoint(this->__root);
   ctree->setExtentsTree(etree);
   ctree->setOrigin(this->__parent);
-  ctree->process(enode, 0);  
+  ctree->process(enode, 0);
 }
 
 
