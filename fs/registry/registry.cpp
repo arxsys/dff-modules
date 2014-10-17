@@ -91,7 +91,7 @@ void    Registry::start(Attributes args)
   serializer->deserialize(*streamVFile, key);
   this->__regf->key = key;
 
-  //this->show(this->__regf);  
+  this->show(this->__regf);  
   //this->setStateInfo("Finished successfully");
  //this->res["Result"] = Variant_p(new Variant(std::string("Registry parsed successfully.")));
 }

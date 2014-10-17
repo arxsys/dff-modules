@@ -26,16 +26,16 @@
 #include "protocol/dcppobject.hpp"
 #include "dsimpleobject.hpp"
 
+
+#include "time.h"
+
 void    NTFS::declare(void) //XXX static loading
 {
   Destruct::Destruct& destruct = Destruct::Destruct::instance();
   Destruct::DStruct* optStruct = Destruct::makeNewDCpp<NTFSOpt>("NTFSOpt");
   destruct.registerDStruct(optStruct);
-   std::cout << "makeNewDCpp<DNtfs>(DNTFS)" << std::endl;
   Destruct::DStruct* dntfsStruct = Destruct::makeNewDCpp<DNTFS>("DNTFS");
-   std::cout << "destruct.registerDStruct(dntfsStruct)" << std::endl;
   destruct.registerDStruct(dntfsStruct);
-   std::cout << "makeNewDCpp<MFTEntryManager>" << std::endl;
   Destruct::DStruct* mftEntryManager = Destruct::makeNewDCpp<MFTEntryManager>("MFTEntryManager");
   destruct.registerDStruct(mftEntryManager);
 
@@ -47,6 +47,11 @@ void    NTFS::declare(void) //XXX static loading
   mftEntryInfo->addAttribute(Destruct::DAttribute(Destruct::DType::DUInt64Type, "entryNode"));
   destruct.registerDStruct(mftEntryInfo);
 
+  Destruct::DStruct* mappingAttributes = new Destruct::DStruct(NULL, "MappingAttributes", Destruct::DSimpleObject::newObject);
+  mappingAttributes->addAttribute(Destruct::DAttribute(Destruct::DType::DUInt16Type, "offset"));
+  mappingAttributes->addAttribute(Destruct::DAttribute(Destruct::DType::DUInt64Type, "mftEntryNode"));
+  destruct.registerDStruct(mappingAttributes);
+
 
   Destruct::DStruct* mftNode = new Destruct::DStruct(NULL, "MFTNode", Destruct::DSimpleObject::newObject);
   mftNode->addAttribute(Destruct::DAttribute(Destruct::DType::DUnicodeStringType, "name"));
@@ -54,6 +59,8 @@ void    NTFS::declare(void) //XXX static loading
   mftNode->addAttribute(Destruct::DAttribute(Destruct::DType::DUInt8Type, "isDirectory"));
   mftNode->addAttribute(Destruct::DAttribute(Destruct::DType::DUInt8Type, "isUsed"));
   mftNode->addAttribute(Destruct::DAttribute(Destruct::DType::DUInt8Type, "isCompressed"));
+  mftNode->addAttribute(Destruct::DAttribute(Destruct::DType::DUInt64Type, "size"));
+  mftNode->addAttribute(Destruct::DAttribute(Destruct::DType::DObjectType, "mappingAttributes"));
   destruct.registerDStruct(mftNode);
 }
 
@@ -206,24 +213,54 @@ bool                    NTFS::load(Destruct::DValue value)
   this->setStateInfo("Reading main MFT");
   this->__mftManager = static_cast<MFTEntryManager*>(static_cast<Destruct::DObject*>(dntfs->mftManager));
 
+
   this->__mftManager->init(this); //save & load
-  this->__mftManager->initEntries(); //this-> dntfs->mftManager->entryList ? 
+
+  time_t current;
+  time_t after;
+
+  std::cout << "loadEntries" << std::endl;
+  time(&current);
+
+  this->__mftManager->loadEntries(dntfs->entries, NULL);
+  time(&after);
+  std::cout << "loadEntries take: " << difftime(after, current) << std::endl;
+
+  std::cout << "linkEntries" << std::endl;
+  time(&current);
   this->__mftManager->linkEntries(); 
-  this->__mftManager->linkOrphanEntries(); //save & load ?  for i in dntfs->mftManager->entryList getfname etc.. (a part si deja fait sous forme d abre donc zap aussi ce passage (for each node create node in the tree or simply relink the tree et rajouet la root mais node doit herited de dobject enfin MFTEntryNode : DObject comme ca le tree est directe ... peut etre le plus simple :) et chaque DMFTEntryNode garde les info qu il a besoin pour ce recree   
+  time(&after);
+  std::cout << "linkEntries take " << difftime(after, current) << std::endl;
+
+
+  std::cout << "linkOrphanEntries" << std::endl;
+  time(&current);
+  this->__mftManager->linkOrphanEntries(); //save & load ?  for i in dntfs->mftManager->entryList getfname etc.. (a part si deja fait sous forme d abre donc zap aussi ce passage (for each node create node in the tree or simply relink the tree et rajouet la root mais node doit herited de dobject enfin MFTEntryNode : DObject comme ca le tree est directe ... peut etre le plus simple :) et chaque DMFTEntryNode garde les info qu il a besoin pour ce recree  
+  time(&after); 
+  std::cout << "linkOprhanEtries take " << difftime(after, current) << std::endl;
 
   this->registerTree(this->opt()->fsNode(), this->rootDirectoryNode());
   this->registerTree(this->rootDirectoryNode(), this->orphansNode());
-
+  //
+  std::cout << "createUnallocated" << std::endl;
+  time(&current);
   this->__unallocatedNode = this->__mftManager->createUnallocated();
   if (this->__opt->recovery())
-    this->__mftManager->linkUnallocated(this->__unallocatedNode); //deja serializer
-
-  this->__mftManager->linkReparsePoint();  //save & load reparse point (les sauvegarder/marquer creation de DVLink node ds le tree si on suavegtarde un tree ? comme ca pas a le refaire ?) 
+  this->__mftManager->linkUnallocated(this->__unallocatedNode); //deja serializer
+  time(&after); 
+  std::cout << "createUnallocated take " << difftime(after, current) << std::endl;
+  
+  std::cout << "linkReparsePoint " << std::endl;
+  time(&current);
+  this->__mftManager->linkReparsePoint();
+  time(&after); 
+  std::cout << "linkReparsePoint take " << difftime(after, current) << std::endl;
   //delete this->__mftManager; //Unallocated node use it 
-
+ 
+  //dntfs->destroy();??
+ 
   this->setStateInfo("Finished successfully");
   this->res["Result"] = Variant_p(new Variant(std::string("NTFS parsed successfully.")));
-
 
   return (true);
 }
@@ -263,10 +300,11 @@ Destruct::DValue        NTFS::save(void) const //save(args) --> modules arg ?
     std::cout << "NTFS::save exception " << exception.error() << std::endl;
     return (Destruct::RealValue<Destruct::DObject*>(Destruct::DNone));
   }
-  //catch (std::bad_cast const& exception)
-  //{
-  //std::cout << "NTFS::bad cast " << exception.what() << std::endl;:
-  //}
+  catch (std::bad_cast const& exception)
+  {
+    std::cout << "NTFS::bad cast " << exception.what() << std::endl;
+    return (Destruct::RealValue<Destruct::DObject*>(Destruct::DNone));
+  }
 }
 
 /**

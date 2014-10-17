@@ -35,7 +35,7 @@ public:
 
   static size_t ownAttributeCount()
   {
-    return (2);
+    return (3);
   }
 
   static Destruct::DAttribute* ownAttributeBegin()

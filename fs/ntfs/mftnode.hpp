@@ -18,8 +18,8 @@
 #define __NTFS_MFT_HH__
 
 #include "ntfs_common.hpp"
-#include "mftentrynode.hpp"
 
+class MFTEntryNode;
 class NTFS;
 
 class MappingAttributes
@@ -28,12 +28,9 @@ public:
   MappingAttributes(uint16_t _offset, MFTEntryNode* _entryNode) : offset(_offset), entryNode(_entryNode)  {};
   uint16_t              offset;
   MFTEntryNode*         entryNode; //because of ATTRIBUTE_LIST $data could be describe by different MFT ! 
-  bool  operator==(MappingAttributes const& other) 
-  {
-     if ((other.offset == offset) && (other.entryNode == entryNode))
-       return (true);
-     return (false);
-  }
+  bool  operator==(MappingAttributes const& other);
+  Destruct::DObject*    save(void) const;
+  static MappingAttributes     load(NTFS* ntfs, Node* mftNode, Destruct::DValue const& args);
 };
 
 class MappingAttributesInfo
@@ -49,6 +46,7 @@ class MFTNode : public Node// MFTEntryNode
 public:
   MFTNode(const std::string name, NTFS* ntfs, MFTEntryNode* mftEntryNode, bool isDirectory, bool isUsed);
   ~MFTNode();
+  static                               MFTNode* load(NTFS* ntfs, MFTEntryNode* entryNode,  Destruct::DValue const& args);
   void                                 setName(const std::string name);
   Attributes	                       _attributes(void);
   void		                       fileMapping(FileMapping* fm);

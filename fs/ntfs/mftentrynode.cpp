@@ -89,23 +89,78 @@ MFTEntryNode::~MFTEntryNode()
 MFTAttributes	MFTEntryNode::findMFTAttributes(uint32_t typeId)
 {
   MFTAttributes		mftAttributesType;
-  MFTAttributes		mftAttributes;
-  MFTAttributes::iterator	mftAttribute;
 
-  mftAttributes = this->mftAttributes();
-  mftAttribute = mftAttributes.begin();
-  for (; mftAttribute != mftAttributes.end(); ++mftAttribute)
-    if ((*mftAttribute)->typeId() == typeId)
-      mftAttributesType.push_back(*mftAttribute);
-    else
-      delete (*mftAttribute);
+  uint32_t offset = this->firstAttributeOffset();
+  try 
+  {
+    //XXX this->useSize() != add all mft attributelist size 
+    while (offset < this->usedSize()) 
+    {   
+       MFTAttribute* mftAttr = new MFTAttribute(this, offset);// this->__MFTAttribute(offset);
+       if (mftAttr == NULL)
+         break;
+       uint64_t attributeLength = mftAttr->length();
+       if (attributeLength == 0)
+       {
+         delete mftAttr;
+         break;
+       }
+       if (mftAttr->typeId() == typeId)
+         mftAttributesType.push_back(mftAttr);
+       else
+         delete mftAttr;
+       offset += attributeLength;
+    }
+  }
+  catch(std::string const& error)
+  {
+    //std::cout << "MFTAttribute error getting attribute " << error << std::endl;
+  }
+
   return (mftAttributesType);
 }
+
+
+/**
+ *  Return First MFTAttribute of type typeId 
+ *  or NULL if not found
+ */
+MFTAttribute*	MFTEntryNode::findMFTAttribute(uint32_t typeId)
+{
+  uint32_t offset = this->firstAttributeOffset();
+  try 
+  {
+    //XXX this->useSize() != add all mft attributelist size 
+    while (offset < this->usedSize()) 
+    {   
+       MFTAttribute* mftAttr = new MFTAttribute(this, offset);// this->__MFTAttribute(offset);
+       if (mftAttr == NULL)
+         break;
+       uint64_t attributeLength = mftAttr->length();
+       if (attributeLength == 0)
+       {
+         delete mftAttr;
+         break;
+       }
+       if (mftAttr->typeId() == typeId)
+         return (mftAttr);
+
+       delete mftAttr;
+       offset += attributeLength;
+    }
+  }
+  catch(std::string const& error)
+  {
+    //std::cout << "MFTAttribute error getting attribute " << error << std::endl;
+  }
+
+  return (NULL);
+}
+
 
 /**
  *  Return all MFT Attributes
  */
-
 MFTAttributes	MFTEntryNode::mftAttributes(void)
 {
   MFTAttributes	mftAttributes; 

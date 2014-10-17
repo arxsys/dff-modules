@@ -19,6 +19,7 @@
 #include "mftmanager.hpp"
 #include "ntfs.hpp"
 #include "mftnode.hpp"
+#include "mftentrynode.hpp"
 #include "attributes/mftattributecontenttype.hpp"
 
 /**

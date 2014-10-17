@@ -17,11 +17,15 @@
 
 #include "mftmanager.hpp"
 #include "ntfs.hpp"
+#include "bootsector.hpp"
 #include "ntfsopt.hpp"
 #include "mftnode.hpp"
-#include "bootsector.hpp"
+#include "mftentrynode.hpp"
 #include "unallocated.hpp"
+#include "mftentryinfo.hpp"
 #include "attributes/mftattributecontenttype.hpp"
+
+#include "ntfs_common.hpp"
 
 /**
  *  MFTEntryManager
@@ -373,6 +377,7 @@ Destruct::DValue         MFTEntryManager::saveEntries(void) const
     item->setValue("key", Destruct::RealValue<DUInt64>(i->first));
     item->setValue("value", Destruct::RealValue<Destruct::DObject* >((i->second)->save()));
     dentries->call("setItem", Destruct::RealValue<Destruct::DObject*>(item));
+    item->destroy();
   }
 
   return (Destruct::RealValue<Destruct::DObject*>(dentries));
@@ -381,78 +386,55 @@ Destruct::DValue         MFTEntryManager::saveEntries(void) const
 void                    MFTEntryManager::loadEntries(Destruct::DValue const& entries, Node* fsNode)
 {
   std::cout << "MFTEntryManager::loadEntries(DValue entries, Node* fsNode)" << std::endl;
-
+  uint64_t found = 0;
+ 
   Destruct::DObject* dentries = entries.get<Destruct::DObject* >();
   Destruct::DObject* iterator = dentries->call("iterator").get<Destruct::DObject* >();
 
-  for (; iterator->call("isDone").get<DUInt8>(); iterator->call("nextItem"))
+  std::cout << "Load entries : size " << dentries->call("size").get<DUInt64>() << " " << dentries->instanceOf()->name() << std::endl;
+  for (; iterator->call("isDone").get<DInt8>() != true; iterator->call("nextItem"))
   {
-    Destruct::DValue key = iterator->call("currentItem");
-    Destruct::DObject* value = dentries->call("get", key).get<Destruct::DObject*>();
-    std::cout << "Get Key Value in entries map " << key.asUnicodeString() << ":" << value->instanceOf()->name() << std::endl;
-  }
+    Destruct::DObject* item = iterator->call("currentItem").get<DObject*>();
+    Destruct::DValue key = item->getValue("key");
+    Destruct::DObject* dmftEntryInfo = item->getValue("value").get<DObject*>();
+    DUInt64 entryNodeOffset = dmftEntryInfo->getValue("entryNode").get<DUInt64>();
+    MFTEntryNode* mftEntryNode = NULL;
 
+    try 
+    {
+      mftEntryNode = new MFTEntryNode(this->__ntfs, this->masterMFTNode(), entryNodeOffset, std::string("MFTEntry"), NULL);
+      MFTNode* mftNode = MFTNode::load(this->__ntfs, mftEntryNode, dmftEntryInfo->getValue("node")); 
+
+      MFTEntryInfo* mftEntryInfo = new MFTEntryInfo(mftEntryNode);
+      mftEntryInfo->node = mftNode;
+      mftEntryInfo->nodes.push_back(mftNode);
+
+      found++;
+      this->__entries[key.get<DUInt64>()] = mftEntryInfo; 
+    }
+    catch (Destruct::DException const& exception)
+    {
+      std::cout << "Error creating MFTEntryNode " << this->masterMFTNode() << " " << entryNodeOffset << std::endl;
+      std::cout << "Error " << exception.error() << std::endl;
+    }
+    catch (std::bad_cast error)
+    {
+      std::cout << "Error creating MFTEntryNode " << this->masterMFTNode() << " " << entryNodeOffset << std::endl;
+      std::cout << "Error " << error.what() << std::endl;
+    }
+    catch (...)
+    {
+      std::cout << "Error creating MFTEntryNode " << this->masterMFTNode() << " " << entryNodeOffset << std::endl;
+      std::cout << "Error ..." << std::endl; 
+    }
+    dmftEntryInfo->destroy();
+    item->destroy();
+  }
+  iterator->destroy();
+  dentries->destroy();
+  std::cout << "loop end found : " << found << std::endl;
   std::cout << "MFTEntryManager::loadEntries return " << std::endl;
 }
-
-
-/*
-void    MFTEntryManager::loadEntries(Destruct::DObject* entries, Node* fsNode)
-{
-  int64_t id = 0;
-  uint64_t idCount = entries->call("size").get<DUInt64>();
-
-  for (; id < idCount; ++id)
-  {
-     DObject* entryInfo = entries->call("get", Destruct::RealValue<DUInt64>(id));
-     
-     uint64_t offset = entryInfo->mftEntryNode->offset;
-     std::string mftNodeName = entryInfo->mftEntryNode->name
-     MFTEntryNode* mftEntryNode = new MFTEntryNode(this->__ntfs, fsNode, offset, "MFTEntry", NULL); 
-
-     mftEntryInfo = MFTEntryInfo(mftEntryNode);
-     this->__entries[id] = mftEntryInfo;
-
-     * 
-   * Set node Size & attributes offset for filemaping
-   *
-    datas //XXX ? a recup car ca c lent on fait les read de $data
-    if  mftEntryInfo.datas()  // XXX XXX tous est ok sauf ici ?
-    {
-      mftNode=  new MFTNode(__ntfs, mftEntryNode) //ici ca fait du read a chaque fois c quand meme cet partie qui est lente ! donc voir si ca vaux le coup au final ! 
-      mftNode->setName(name)
-      if mftEntryNode->isUsed()
-        ...
-      if mftEntry->isDir()
-        ...
-      else
-        ...
-      mftEntryNode->node = mftNode
-      mftEntryNode->nodes.push_back(mftNode);
-      return mftEntryInfo
-    }
-    else
-    {
-      for (mapDataInfo) #XXX ???
-      {  
-       mftNode = new MFTNode(nftds, mftEntryNode)
-       if entryInfo->mftNode->name == mapDataInfo.name
-        mftEntryInfo->mftNode = mftnode
-       mftENtryInfo.nodes.push_back(mftNode)
-        
-       mftNode->setValue() //is dir is deleted mapping attriubte -> XXX XXX en faite y a que ca a save est on est bon :) 
-       //les mettre ds une list et go !
-
-      // mftNode = new MFTNode(...)
-      }
-
-    } 
-
-  }
-
-
-
-} */
 
 /**
  *   Link orphans entries (MFTNode with a NULL parent) //in fatct link all entry  if we don't use index
@@ -468,12 +450,10 @@ void    MFTEntryManager::linkOrphanEntries(void)
     {
       if (((*mftNode) == NULL) || ((*mftNode)->parent()))
         continue;
-      std::vector<MFTAttribute* > attributes;
-      attributes = (*mftNode)->mftEntryNode()->findMFTAttributes($FILE_NAME); //must check for all ADS too
-      std::vector<MFTAttribute* >::iterator attribute = attributes.begin();
-      if (attributes.size())
+      MFTAttribute* attribute = (*mftNode)->mftEntryNode()->findMFTAttribute($FILE_NAME); //must check for all ADS too
+      if (attribute)
       {
-        FileName* fileName = dynamic_cast<FileName*>((*attribute)->content());
+        FileName* fileName = dynamic_cast<FileName*>((attribute)->content());
         if (fileName == NULL)
           throw std::string("MFTEntryManager attribute content can't cast to $FILE_NAME"); 
 
@@ -491,8 +471,7 @@ void    MFTEntryManager::linkOrphanEntries(void)
       else
         this->__ntfs->orphansNode()->addChild(*mftNode);
    
-      for (; attribute != attributes.end(); ++attribute)
-        delete (*attribute);
+      delete (attribute);
     }
   }
 }
@@ -561,7 +540,7 @@ uint64_t MFTEntryManager::linkUnallocated(Unallocated* unallocated)
      {
        DUInt64 offset = vector->call("get", Destruct::RealValue<DUInt64>(index)).get<DUInt64>();
        MFTEntryInfo* entryInfo = this->createFromOffset(offset, fsNode, -1);
-       std::list<MFTNode* >::const_iterator mftNode = entryInfo->nodes.begin();
+       std::list<MFTNode* >::const_iterator mftNode = entryInfo->nodes.begin(); //nodes ou node ??
        for ( ; mftNode != entryInfo->nodes.end(); ++mftNode)
        {
          if ((*mftNode))
@@ -677,63 +656,3 @@ MFTNode*        MFTEntryManager::masterMFTNode(void) const
   return (this->__masterMFTNode);
 }
 
-/**
- *  MFTId
- */
-MFTId::MFTId(uint64_t _id, uint16_t seq) : id(_id), sequence(seq) 
-{
-}
-
-bool  MFTId::operator==(MFTId const& other)
-{
-  if ((other.id == this->id) && (other.sequence == this->sequence))
-    return (true);
-  return (false);
-}
-
-bool  MFTId::operator<(MFTId const& other)
-{
-  if (other.id < this->id)
-    return (true);
-  return (false);
-}
-
-/**
- *  MFTEntryInfo
- */
-MFTEntryInfo::MFTEntryInfo(MFTEntryNode* entryNode) : id(0), node(NULL), __entryNode(entryNode)
-{
-}
-
-MFTEntryInfo::~MFTEntryInfo()
-{
-//delete node & unlink
-}
-
-MFTEntryNode*           MFTEntryInfo::entryNode(void) const
-{
-  return (this->__entryNode);
-}
-
-Destruct::DObject*      MFTEntryInfo::save(void) const
-{
-  Destruct::Destruct& destruct = Destruct::Destruct::instance();
-  Destruct::DObject* dmftEntry = destruct.generate("MFTEntryInfo");
-  Destruct::DObject* dnodes = destruct.generate("DVectorObject");
-
-  //++nodes; HEIN ???? c surcharger ou ca ?
-
-  dmftEntry->setValue("id", Destruct::RealValue<DUInt64>(this->id));
-  if (this->node)
-    dmftEntry->setValue("node", Destruct::RealValue<Destruct::DObject*>(this->node->save()));
-  for (std::list<MFTNode*>::const_iterator mftNode = this->nodes.begin(); mftNode != this->nodes.end(); ++mftNode)
-  {
-    if (*mftNode)
-      dnodes->call("push", Destruct::RealValue<Destruct::DObject*>((*mftNode)->save()));
-  }
-  dmftEntry->setValue("nodes", Destruct::RealValue<Destruct::DObject*>(dnodes)); 
-  dmftEntry->setValue("entryNode", Destruct::RealValue<DUInt64>(this->__entryNode->offset()));
-  ///XXX MFTid List ? ?? not used yet  
- 
-  return (dmftEntry);
-}

@@ -80,6 +80,7 @@ public:
 
   virtual class MFTAttribute*	__MFTAttribute(uint16_t offset);
   MFTAttributes	                mftAttributes();
+  MFTAttribute*	                findMFTAttribute(uint32_t typeId);
   MFTAttributes	                findMFTAttributes(uint32_t typeId);
 
   const std::string             findName(void); //const 

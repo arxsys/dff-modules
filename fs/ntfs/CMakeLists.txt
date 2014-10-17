@@ -24,6 +24,7 @@ dff_cpp_module(ntfs
   mftattribute.cpp
   mftattributecontent.cpp
   mftnode.cpp
+  mftentryinfo.cpp
   mftmanager.cpp
   unallocated.cpp
 
