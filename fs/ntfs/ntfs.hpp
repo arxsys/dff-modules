@@ -25,53 +25,54 @@ class MFTNode;
 class MFTEntryManager;
 class Unallocated;
 
-class DNTFS : public Destruct::DCppObject<DNTFS>
+using namespace Destruct;
+
+class DNTFS : public DCppObject<DNTFS>
 {
 public:
-  DNTFS(Destruct::DStruct* dstruct, Destruct::DValue const& args);
+  DNTFS(DStruct* dstruct, DValue const& args);
   ~DNTFS();
 
-  Destruct::RealValue<Destruct::DObject*>       opt, mftManager, entries;
+  RealValue<DObject*>       opt, mftManager, entries;
 
   static size_t ownAttributeCount()
   {
     return (3);
   }
 
-  static Destruct::DAttribute* ownAttributeBegin()
+  static DAttribute* ownAttributeBegin()
   {
-    static Destruct::DAttribute  attributes[] = 
+    static DAttribute  attributes[] = 
     {
       // DInt32Type "version" save version load & check for an other version (return false / throw)
-      Destruct::DAttribute(Destruct::DType::DObjectType, "opt"),
-      Destruct::DAttribute(Destruct::DType::DObjectType, "mftManager"),
-      Destruct::DAttribute(Destruct::DType::DObjectType, "entries"),
+      DAttribute(DType::DObjectType, "opt"),
+      DAttribute(DType::DObjectType, "mftManager"),
+      DAttribute(DType::DObjectType, "entries"),
     };
     return (attributes);
   }
 
-  static Destruct::DPointer<DNTFS>* memberBegin()
+  static DPointer<DNTFS>* memberBegin()
   {
-    static Destruct::DPointer<DNTFS> memberPointer[] = 
+    static DPointer<DNTFS> memberPointer[] = 
     {
-      Destruct::DPointer<DNTFS>(&DNTFS::opt),
-      Destruct::DPointer<DNTFS>(&DNTFS::mftManager),
-      Destruct::DPointer<DNTFS>(&DNTFS::entries),
+      DPointer<DNTFS>(&DNTFS::opt),
+      DPointer<DNTFS>(&DNTFS::mftManager),
+      DPointer<DNTFS>(&DNTFS::entries),
     };
     return (memberPointer);
   }
 
-  static Destruct::DAttribute* ownAttributeEnd()
+  static DAttribute* ownAttributeEnd()
   {
     return (ownAttributeBegin() + ownAttributeCount());
   }
 
-  static Destruct::DPointer<DNTFS >*  memberEnd()
+  static DPointer<DNTFS >*  memberEnd()
   {
     return (memberBegin() + ownAttributeCount());
   }
 };
-
 
 class NTFS : public mfso
 {
@@ -89,8 +90,8 @@ public:
   static                void declare(void); // # XXX ///called from Python Module 
 
   void                  start(Attributes args);
-  bool                  load(Destruct::DValue value);
-  Destruct::DValue      save(void) const;
+  bool                  load(DValue value);
+  DValue      save(void) const;
 
   void                  setStateInfo(const std::string&);
   NTFSOpt*              opt(void) const;

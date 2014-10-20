@@ -22,6 +22,8 @@
 class MFTEntryNode;
 class NTFS;
 
+using namespace Destruct;
+
 class MappingAttributes
 {
 public:
@@ -29,8 +31,8 @@ public:
   uint16_t              offset;
   MFTEntryNode*         entryNode; //because of ATTRIBUTE_LIST $data could be describe by different MFT ! 
   bool  operator==(MappingAttributes const& other);
-  Destruct::DObject*    save(void) const;
-  static MappingAttributes     load(NTFS* ntfs, Node* mftNode, Destruct::DValue const& args);
+  DObject*    save(void) const;
+  static MappingAttributes     load(NTFS* ntfs, Node* mftNode, DValue const& args);
 };
 
 class MappingAttributesInfo
@@ -46,7 +48,7 @@ class MFTNode : public Node// MFTEntryNode
 public:
   MFTNode(const std::string name, NTFS* ntfs, MFTEntryNode* mftEntryNode, bool isDirectory, bool isUsed);
   ~MFTNode();
-  static                               MFTNode* load(NTFS* ntfs, MFTEntryNode* entryNode,  Destruct::DValue const& args);
+  static                               MFTNode* load(NTFS* ntfs, MFTEntryNode* entryNode,  DValue const& args);
   void                                 setName(const std::string name);
   Attributes	                       _attributes(void);
   void		                       fileMapping(FileMapping* fm);
@@ -55,7 +57,7 @@ public:
   MFTEntryNode*                        mftEntryNode(MFTEntryNode* mftENtryNode = NULL);
   bool                                 isCompressed(void) const;
   int32_t                              readCompressed(void* buff, unsigned int size, uint64_t* offset);
-  Destruct::DObject*                   save(void); //const;
+  DObject*                             save(void); //const;
 private:
   MFTEntryNode*	                       __mftEntryNode;
   bool                                 __isCompressed;

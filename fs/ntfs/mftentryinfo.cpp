@@ -72,7 +72,7 @@ Destruct::DObject*      MFTEntryInfo::save(void) const
   //++nodes; HEIN ???? c surcharger ou ca ?
   dmftEntry->setValue("id", Destruct::RealValue<DUInt64>(this->id));
   if (this->node)
-    dmftEntry->setValue("node", Destruct::RealValue<Destruct::DObject*>(this->node->save()));
+    dmftEntry->setValue("node", Destruct::RealValue<Destruct::DObject*>(this->node->save())); //XXX verifie qu il n y est pas 2 ref ! 
   for (std::list<MFTNode*>::const_iterator mftNode = this->nodes.begin(); mftNode != this->nodes.end(); ++mftNode)
   {
     if (*mftNode)
@@ -84,6 +84,8 @@ Destruct::DObject*      MFTEntryInfo::save(void) const
  
   return (dmftEntry);
 }
+
+//XXX si c pas usefull why ?
 
 //MFTEntryInfo*   MFTEntryInfo::load(Destruct::DValue const& args)
 //{

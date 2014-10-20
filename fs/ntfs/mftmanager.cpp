@@ -27,15 +27,17 @@
 
 #include "ntfs_common.hpp"
 
+using namespace Destruct;
+
 /**
  *  MFTEntryManager
  */
-MFTEntryManager::MFTEntryManager(Destruct::DStruct* dstruct) : DCppObject<MFTEntryManager>(dstruct), __ntfs(NULL), __masterMFTNode(NULL), __masterMFTOffset(0), __numberOfEntry(0)
+MFTEntryManager::MFTEntryManager(DStruct* dstruct) : DCppObject<MFTEntryManager>(dstruct), __ntfs(NULL), __masterMFTNode(NULL), __masterMFTOffset(0), __numberOfEntry(0)
 {
   //CppClass haha !this->init();
 }
 
-MFTEntryManager::MFTEntryManager(Destruct::DStruct* dstruct, Destruct::DValue const& args) : DCppObject<MFTEntryManager>(dstruct, args), __ntfs(NULL), __masterMFTNode(NULL), __masterMFTOffset(0), __numberOfEntry(0)
+MFTEntryManager::MFTEntryManager(DStruct* dstruct, DValue const& args) : DCppObject<MFTEntryManager>(dstruct, args), __ntfs(NULL), __masterMFTNode(NULL), __masterMFTOffset(0), __numberOfEntry(0)
 {
  // this->init();
 }
@@ -263,15 +265,13 @@ void    MFTEntryManager::childrenSanitaze(void)
  *  Create node from id
  *  Can be used for indexallocation or others function that need node not yet created at init
  */
-MFTEntryInfo*   MFTEntryManager::create(uint64_t id)
+void   MFTEntryManager::create(uint64_t id)
 {
-  MFTEntryInfo* mftEntryInfo = NULL;
   uint32_t mftRecordSize = this->__ntfs->bootSectorNode()->MFTRecordSize();
   if (this->__masterMFTNode == NULL)
-     mftEntryInfo = this->createFromOffset(this->__masterMFTOffset + (id * mftRecordSize),  this->__ntfs->fsNode(), id); //this happen when master MFT use attributelist for is $DATA content (very large and/or very fragmented MFT)
+    this->createFromOffset(this->__masterMFTOffset + (id * mftRecordSize),  this->__ntfs->fsNode(), id); //this happen when master MFT use attributelist for is $DATA content (very large and/or very fragmented MFT)
   else
-    mftEntryInfo = this->createFromOffset(id * mftRecordSize, this->__masterMFTNode, id);
-  return (mftEntryInfo);
+    this->createFromOffset(id * mftRecordSize, this->__masterMFTNode, id);
 }
 
 /**
@@ -365,38 +365,38 @@ MFTEntryInfo*  MFTEntryManager::createFromOffset(uint64_t offset, Node* fsNode, 
 }
 
 
-Destruct::DValue         MFTEntryManager::saveEntries(void) const
+DValue         MFTEntryManager::saveEntries(void) const
 {
   Destruct::Destruct&   destruct = Destruct::Destruct::instance();
-  Destruct::DObject*    dentries = destruct.generate("DMapUInt64Object");
+  DObject*    dentries = destruct.generate("DMapUInt64Object");
 
   std::map<uint64_t, MFTEntryInfo*>::const_iterator i = this->__entries.begin();
   for (; i != this->__entries.end(); ++i) 
   {
-    Destruct::DObject* item = dentries->call("newItem").get<Destruct::DObject*>(); 
-    item->setValue("key", Destruct::RealValue<DUInt64>(i->first));
-    item->setValue("value", Destruct::RealValue<Destruct::DObject* >((i->second)->save()));
-    dentries->call("setItem", Destruct::RealValue<Destruct::DObject*>(item));
+    DObject* item = dentries->call("newItem").get<DObject*>(); 
+    item->setValue("key", RealValue<DUInt64>(i->first));
+    item->setValue("value", RealValue<DObject* >((i->second)->save()));
+    dentries->call("setItem", RealValue<DObject*>(item));
     item->destroy();
   }
 
-  return (Destruct::RealValue<Destruct::DObject*>(dentries));
+  return (RealValue<DObject*>(dentries));
 }
 
-void                    MFTEntryManager::loadEntries(Destruct::DValue const& entries, Node* fsNode)
+void                    MFTEntryManager::loadEntries(DValue const& entries, Node* fsNode)
 {
   std::cout << "MFTEntryManager::loadEntries(DValue entries, Node* fsNode)" << std::endl;
   uint64_t found = 0;
  
-  Destruct::DObject* dentries = entries.get<Destruct::DObject* >();
-  Destruct::DObject* iterator = dentries->call("iterator").get<Destruct::DObject* >();
+  DObject* dentries = entries.get<DObject* >();
+  DObject* iterator = dentries->call("iterator").get<DObject* >();
 
   std::cout << "Load entries : size " << dentries->call("size").get<DUInt64>() << " " << dentries->instanceOf()->name() << std::endl;
   for (; iterator->call("isDone").get<DInt8>() != true; iterator->call("nextItem"))
   {
-    Destruct::DObject* item = iterator->call("currentItem").get<DObject*>();
-    Destruct::DValue key = item->getValue("key");
-    Destruct::DObject* dmftEntryInfo = item->getValue("value").get<DObject*>();
+    DObject* item = iterator->call("currentItem").get<DObject*>();
+    DValue key = item->getValue("key");
+    DObject* dmftEntryInfo = item->getValue("value").get<DObject*>();
     DUInt64 entryNodeOffset = dmftEntryInfo->getValue("entryNode").get<DUInt64>();
     MFTEntryNode* mftEntryNode = NULL;
 
@@ -412,7 +412,7 @@ void                    MFTEntryManager::loadEntries(Destruct::DValue const& ent
       found++;
       this->__entries[key.get<DUInt64>()] = mftEntryInfo; 
     }
-    catch (Destruct::DException const& exception)
+    catch (DException const& exception)
     {
       std::cout << "Error creating MFTEntryNode " << this->masterMFTNode() << " " << entryNodeOffset << std::endl;
       std::cout << "Error " << exception.error() << std::endl;
@@ -515,7 +515,7 @@ void    MFTEntryManager::searchUnallocated(Unallocated* unallocated)
       fsFile->read(&signature, 4);
         
       if (signature == MFT_SIGNATURE_FILE)
-        static_cast<Destruct::DObject*>(this->__unallocatedOffset)->call("push", Destruct::RealValue<DUInt64>(offset));
+        static_cast<DObject*>(this->__unallocatedOffset)->call("push", RealValue<DUInt64>(offset));
     }
   }
   uint64_t recovered = this->linkUnallocated(unallocated);
@@ -530,28 +530,28 @@ uint64_t MFTEntryManager::linkUnallocated(Unallocated* unallocated)
 {
   uint64_t recovered = 0;
 
-  Destruct::DObject* vector = this->__unallocatedOffset;
+  DObject* vector = this->__unallocatedOffset;
   Node*  fsNode = this->__ntfs->fsNode();
 
   DUInt64 count = vector->call("size").get<DUInt64>();
   for (DUInt64 index = 0; index < count; index++)
   {
-     try
-     {
-       DUInt64 offset = vector->call("get", Destruct::RealValue<DUInt64>(index)).get<DUInt64>();
-       MFTEntryInfo* entryInfo = this->createFromOffset(offset, fsNode, -1);
-       std::list<MFTNode* >::const_iterator mftNode = entryInfo->nodes.begin(); //nodes ou node ??
-       for ( ; mftNode != entryInfo->nodes.end(); ++mftNode)
-       {
-         if ((*mftNode))
-           unallocated->addChild((*mftNode)); 
-       }
-       recovered++;
-       delete entryInfo;
-     }
-     catch (...)
-     {
-     }    
+    try
+    {
+      DUInt64 offset = vector->call("get", RealValue<DUInt64>(index)).get<DUInt64>();
+      MFTEntryInfo* entryInfo = this->createFromOffset(offset, fsNode, -1);
+      std::list<MFTNode* >::const_iterator mftNode = entryInfo->nodes.begin(); //nodes ou node ??
+      for ( ; mftNode != entryInfo->nodes.end(); ++mftNode)
+      {
+        if ((*mftNode))
+          unallocated->addChild((*mftNode)); 
+      }
+      recovered++;
+      delete entryInfo;
+    }
+    catch (...)
+    {
+    }    
   }
   return (recovered);
 }

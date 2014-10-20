@@ -26,41 +26,42 @@
 #include "protocol/dcppobject.hpp"
 #include "dsimpleobject.hpp"
 
-
 #include "time.h"
+
+using namespace Destruct;
 
 void    NTFS::declare(void) //XXX static loading
 {
   Destruct::Destruct& destruct = Destruct::Destruct::instance();
-  Destruct::DStruct* optStruct = Destruct::makeNewDCpp<NTFSOpt>("NTFSOpt");
+  DStruct* optStruct = makeNewDCpp<NTFSOpt>("NTFSOpt");
   destruct.registerDStruct(optStruct);
-  Destruct::DStruct* dntfsStruct = Destruct::makeNewDCpp<DNTFS>("DNTFS");
+  DStruct* dntfsStruct = makeNewDCpp<DNTFS>("DNTFS");
   destruct.registerDStruct(dntfsStruct);
-  Destruct::DStruct* mftEntryManager = Destruct::makeNewDCpp<MFTEntryManager>("MFTEntryManager");
+  DStruct* mftEntryManager = makeNewDCpp<MFTEntryManager>("MFTEntryManager");
   destruct.registerDStruct(mftEntryManager);
 
-  Destruct::DStruct* mftEntryInfo = new Destruct::DStruct(NULL, "MFTEntryInfo", Destruct::DSimpleObject::newObject);
-  mftEntryInfo->addAttribute(Destruct::DAttribute(Destruct::DType::DUInt64Type, "id"));
-  mftEntryInfo->addAttribute(Destruct::DAttribute(Destruct::DType::DObjectType, "childrenId"));
-  mftEntryInfo->addAttribute(Destruct::DAttribute(Destruct::DType::DObjectType, "node"));
-  mftEntryInfo->addAttribute(Destruct::DAttribute(Destruct::DType::DObjectType, "nodes"));
-  mftEntryInfo->addAttribute(Destruct::DAttribute(Destruct::DType::DUInt64Type, "entryNode"));
+  DStruct* mftEntryInfo = new DStruct(NULL, "MFTEntryInfo", DSimpleObject::newObject);
+  mftEntryInfo->addAttribute(DAttribute(DType::DUInt64Type, "id"));
+  mftEntryInfo->addAttribute(DAttribute(DType::DObjectType, "childrenId"));
+  mftEntryInfo->addAttribute(DAttribute(DType::DObjectType, "node"));
+  mftEntryInfo->addAttribute(DAttribute(DType::DObjectType, "nodes"));
+  mftEntryInfo->addAttribute(DAttribute(DType::DUInt64Type, "entryNode"));
   destruct.registerDStruct(mftEntryInfo);
 
-  Destruct::DStruct* mappingAttributes = new Destruct::DStruct(NULL, "MappingAttributes", Destruct::DSimpleObject::newObject);
-  mappingAttributes->addAttribute(Destruct::DAttribute(Destruct::DType::DUInt16Type, "offset"));
-  mappingAttributes->addAttribute(Destruct::DAttribute(Destruct::DType::DUInt64Type, "mftEntryNode"));
+  DStruct* mappingAttributes = new DStruct(NULL, "MappingAttributes", DSimpleObject::newObject);
+  mappingAttributes->addAttribute(DAttribute(DType::DUInt16Type, "offset"));
+  mappingAttributes->addAttribute(DAttribute(DType::DUInt64Type, "mftEntryNode"));
   destruct.registerDStruct(mappingAttributes);
 
 
-  Destruct::DStruct* mftNode = new Destruct::DStruct(NULL, "MFTNode", Destruct::DSimpleObject::newObject);
-  mftNode->addAttribute(Destruct::DAttribute(Destruct::DType::DUnicodeStringType, "name"));
-  mftNode->addAttribute(Destruct::DAttribute(Destruct::DType::DUInt64Type, "mftEntryNode"));
-  mftNode->addAttribute(Destruct::DAttribute(Destruct::DType::DUInt8Type, "isDirectory"));
-  mftNode->addAttribute(Destruct::DAttribute(Destruct::DType::DUInt8Type, "isUsed"));
-  mftNode->addAttribute(Destruct::DAttribute(Destruct::DType::DUInt8Type, "isCompressed"));
-  mftNode->addAttribute(Destruct::DAttribute(Destruct::DType::DUInt64Type, "size"));
-  mftNode->addAttribute(Destruct::DAttribute(Destruct::DType::DObjectType, "mappingAttributes"));
+  DStruct* mftNode = new DStruct(NULL, "MFTNode", DSimpleObject::newObject);
+  mftNode->addAttribute(DAttribute(DType::DUnicodeStringType, "name"));
+  mftNode->addAttribute(DAttribute(DType::DUInt64Type, "mftEntryNode"));
+  mftNode->addAttribute(DAttribute(DType::DUInt8Type, "isDirectory"));
+  mftNode->addAttribute(DAttribute(DType::DUInt8Type, "isUsed"));
+  mftNode->addAttribute(DAttribute(DType::DUInt8Type, "isCompressed"));
+  mftNode->addAttribute(DAttribute(DType::DUInt64Type, "size"));
+  mftNode->addAttribute(DAttribute(DType::DObjectType, "mappingAttributes"));
   destruct.registerDStruct(mftNode);
 }
 
@@ -191,13 +192,14 @@ int32_t  NTFS::vread(int fd, void *buff, unsigned int size)
 }
 
 /** Loading and saving method **/
-bool                    NTFS::load(Destruct::DValue value)
+bool                    NTFS::load(DValue value)
 {
   ////XXX code me and it's done :) 
   std::cout << "NTFS load method called with " << value.asUnicodeString() << std::endl;
 
-  Destruct::DObject* ntfsObject = value.get<Destruct::DObject*>();
-  if (ntfsObject == Destruct::DNone)
+  DObject* ntfsObject = value.get<DObject*>();
+  std::cout << "DNTFS ntfsObject refcount  " << ntfsObject->refCount() << std::endl; 
+  if (ntfsObject == DNone)
   {
     std::cout << "can't reload NTFS object is DNone" << std::endl;
     return false;
@@ -205,14 +207,16 @@ bool                    NTFS::load(Destruct::DValue value)
 
   DNTFS* dntfs = static_cast<DNTFS*>(ntfsObject);
 
-  this->__opt = static_cast<NTFSOpt*>(static_cast<Destruct::DObject*>(dntfs->opt));
+
+  this->__opt = static_cast<NTFSOpt*>(static_cast<DObject*>(dntfs->opt));
+  //this->__opt->addRef(); ?
   this->__bootSectorNode = new BootSectorNode(this);
   if (this->__opt->validateBootSector())
     this->__bootSectorNode->validate();
 
   this->setStateInfo("Reading main MFT");
-  this->__mftManager = static_cast<MFTEntryManager*>(static_cast<Destruct::DObject*>(dntfs->mftManager));
-
+  this->__mftManager = static_cast<MFTEntryManager*>(static_cast<DObject*>(dntfs->mftManager));
+ //this->__mftManager-->addRef() ?
 
   this->__mftManager->init(this); //save & load
 
@@ -226,7 +230,7 @@ bool                    NTFS::load(Destruct::DValue value)
   time(&after);
   std::cout << "loadEntries take: " << difftime(after, current) << std::endl;
 
-  std::cout << "linkEntries" << std::endl;
+  std::cout << "linkEntries" << std::endl; //serialize as a tree and serialize reparse at same time ?
   time(&current);
   this->__mftManager->linkEntries(); 
   time(&after);
@@ -242,68 +246,69 @@ bool                    NTFS::load(Destruct::DValue value)
   this->registerTree(this->opt()->fsNode(), this->rootDirectoryNode());
   this->registerTree(this->rootDirectoryNode(), this->orphansNode());
   //
-  std::cout << "createUnallocated" << std::endl;
+  std::cout << "createUnallocated" << std::endl; //OK ? 
   time(&current);
   this->__unallocatedNode = this->__mftManager->createUnallocated();
   if (this->__opt->recovery())
-  this->__mftManager->linkUnallocated(this->__unallocatedNode); //deja serializer
+    this->__mftManager->linkUnallocated(this->__unallocatedNode); //deja serializer
   time(&after); 
   std::cout << "createUnallocated take " << difftime(after, current) << std::endl;
   
-  std::cout << "linkReparsePoint " << std::endl;
+  std::cout << "linkReparsePoint " << std::endl; //XXX serialize ?
   time(&current);
   this->__mftManager->linkReparsePoint();
   time(&after); 
   std::cout << "linkReparsePoint take " << difftime(after, current) << std::endl;
   //delete this->__mftManager; //Unallocated node use it 
  
-  //dntfs->destroy();??
+  dntfs->destroy();//??
+  std::cout << "Ref dntfs " << dntfs->refCount() << " ref opt " << this->__opt->refCount() << " ref mftManager " << this->__mftManager->refCount() << std::endl;
  
-  this->setStateInfo("Finished successfully");
+  this->setStateInfo("Reloading finished successfully");
   this->res["Result"] = Variant_p(new Variant(std::string("NTFS parsed successfully.")));
 
   return (true);
 }
 
-Destruct::DValue        NTFS::save(void) const //save(args) --> modules arg ? 
+DValue        NTFS::save(void) const //save(args) --> modules arg ? 
 {
   std::cout << "NTFS save called" << std::endl;
 
   try {
 
-  DNTFS* dntfs = static_cast<DNTFS*>(Destruct::makeNewDCpp<DNTFS>("DNTFS")->newObject());
+  DNTFS* dntfs = static_cast<DNTFS*>(makeNewDCpp<DNTFS>("DNTFS")->newObject());
   dntfs->opt = this->__opt;
   if (this->__mftManager == NULL) //?
   {
     std::cout << "Can't save NTFS module applyied on node " << this->fsNode()->absolute() << std::endl;
-    return (Destruct::RealValue<Destruct::DObject*>(Destruct::DNone));
+    return (RealValue<DObject*>(DNone));
   }
   dntfs->mftManager = this->__mftManager;
 
 
-  Destruct::DObject* opt = dntfs->opt;
+  DObject* opt = dntfs->opt;
   opt->addRef();
-  Destruct::DObject* mftManager = dntfs->mftManager;
+  DObject* mftManager = dntfs->mftManager;
   std::cout << "call MFTManager->saveEntries " << std::endl; 
   dntfs->setValue("entries", this->__mftManager->saveEntries());
  //XXX must delete it after c pas vraiment ca place car on le cree et on le garde ca sert a riuen :) 
   std::cout << "call MFTManager->saveEntries returned" << std::endl;
-  std::cout << "entries refCount " << ((Destruct::DObject*)dntfs->entries)->instanceOf()->name() << " " << ((Destruct::DObject*)dntfs->entries)->refCount() << std::endl;
+  std::cout << "entries refCount " << ((DObject*)dntfs->entries)->instanceOf()->name() << " " << ((DObject*)dntfs->entries)->refCount() << std::endl;
 
   mftManager->addRef();
   std::cout << "Returning dntfs " << std::endl;
-  return (Destruct::RealValue<Destruct::DObject*>(dntfs));
+  return (RealValue<DObject*>(dntfs));
 
   }
-  catch (Destruct::DException const& exception)
+  catch (DException const& exception)
   {
     std::cout << "NTFS::save exception " << exception.error() << std::endl;
-    return (Destruct::RealValue<Destruct::DObject*>(Destruct::DNone));
+    return (RealValue<DObject*>(DNone));
   }
   catch (std::bad_cast const& exception)
   {
     std::cout << "NTFS::bad cast " << exception.what() << std::endl;
-    return (Destruct::RealValue<Destruct::DObject*>(Destruct::DNone));
+    return (RealValue<DObject*>(DNone));
   }
 }
 
@@ -311,7 +316,7 @@ Destruct::DValue        NTFS::save(void) const //save(args) --> modules arg ?
 * DNTFS
 * class to serialize for loading & saving
 **/
-DNTFS::DNTFS(Destruct::DStruct* dstruct, Destruct::DValue const& args) : DCppObject<DNTFS>(dstruct, args)
+DNTFS::DNTFS(DStruct* dstruct, DValue const& args) : DCppObject<DNTFS>(dstruct, args)
 {
   this->init();
 }

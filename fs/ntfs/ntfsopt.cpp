@@ -18,12 +18,6 @@
 
 #include "../session/session.hpp"
 
-//#include "session.hpp" //for dnode 
-
-//NTFSOpt::NTFSOpt(Attributes args) : NTFSOpt(new DStruct(NULL, "NTFSOpt",DCppObject<NTFSOpt>::newObject, NTFSOpt::ownAttributeBegin(), NTFSOpt::ownAttributeEnd)
-//{
-//}
-
 NTFSOpt::NTFSOpt(Attributes args, Destruct::DStruct* dstruct) : DCppObject<NTFSOpt>(dstruct), __validateBootSector(false), __recovery(false), __fsNode(NULL) 
 {
   Attributes::iterator arg;

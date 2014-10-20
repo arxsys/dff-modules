@@ -22,6 +22,8 @@
 #include "mftentrynode.hpp"
 #include "attributes/mftattributecontenttype.hpp"
 
+using namespace Destruct;
+
 MFTNode::MFTNode(const std::string name, NTFS* ntfs, MFTEntryNode* mftEntryNode, bool isDirectory, bool isUsed) : Node(name, 0, NULL, ntfs), __mftEntryNode(mftEntryNode), __isCompressed(false)
 {
   if (isDirectory)
@@ -143,48 +145,47 @@ Attributes	MFTNode::_attributes(void)
   return (attr);
 }
 
-Destruct::DObject*      MFTNode::save(void) //const
+DObject*      MFTNode::save(void) //const
 {
   Destruct::Destruct& destruct = Destruct::Destruct::instance();
-  Destruct::DObject* mftNode = destruct.generate("MFTNode");
+  DObject* mftNode = destruct.generate("MFTNode");
 
-  mftNode->setValue("name", Destruct::RealValue<Destruct::DUnicodeString>(this->name())); 
+  mftNode->setValue("name", RealValue<DUnicodeString>(this->name())); 
   if (__mftEntryNode)
-    mftNode->setValue("mftEntryNode", Destruct::RealValue<DUInt64>(__mftEntryNode->offset()));
-  mftNode->setValue("isDirectory", Destruct::RealValue<DUInt8>(this->isDir()));
+    mftNode->setValue("mftEntryNode", RealValue<DUInt64>(__mftEntryNode->offset()));
+  mftNode->setValue("isDirectory", RealValue<DUInt8>(this->isDir()));
   if (this->isDeleted()) 
-    mftNode->setValue("isUsed", Destruct::RealValue<DUInt8>(0));
+    mftNode->setValue("isUsed", RealValue<DUInt8>(0));
   else
-    mftNode->setValue("isUsed", Destruct::RealValue<DUInt8>(1));
-  ///XX XXX XXX size size size !!! ou c ds les mapping attribute enfin faut savoir ! 
+    mftNode->setValue("isUsed", RealValue<DUInt8>(1));
 
-  mftNode->setValue("size", Destruct::RealValue<DUInt64>(this->__size));
-  mftNode->setValue("isCompressed", Destruct::RealValue<DUInt8>(this->__isCompressed));
+  mftNode->setValue("size", RealValue<DUInt64>(this->__size));
+  mftNode->setValue("isCompressed", RealValue<DUInt8>(this->__isCompressed));
 
-  Destruct::DObject* dmappingAttributes = destruct.generate("DVectorObject");
+  DObject* dmappingAttributes = destruct.generate("DVectorObject");
   std::list<MappingAttributes>::const_iterator ma = this->mappingAttributesOffset.begin();
   for (; ma != this->mappingAttributesOffset.end(); ++ma)
   {
-     Destruct::DObject* dma = ma->save(); 
-     dmappingAttributes->call("push", Destruct::RealValue<Destruct::DObject*>(dma));
+    DObject* dma = ma->save(); 
+    dmappingAttributes->call("push", RealValue<DObject*>(dma));
+    dma->destroy(); // XXX ?
   }
 
-  mftNode->setValue("mappingAttributes", Destruct::RealValue<Destruct::DObject*>(dmappingAttributes));
+  mftNode->setValue("mappingAttributes", RealValue<DObject*>(dmappingAttributes));
 // a desesrialize des MFTEntryNode // check doublon et pas cree 2 fois ? 
 // donc du coup les truc qui sont ds MFTEntryInfo->nodes(push) ca sert a ququchose ou c les meme ????
 // ou c juste pour les passer en param ??
-//std::cout << this->
 
   return (mftNode);
 }
 
 
-MFTNode*        MFTNode::load(NTFS* ntfs, MFTEntryNode* entryNode, Destruct::DValue const& args)
+MFTNode*        MFTNode::load(NTFS* ntfs, MFTEntryNode* entryNode, DValue const& args)
 {
-  Destruct::DObject* dnode = args.get<Destruct::DObject*>();
-  if (dnode != Destruct::DNone)
+  DObject* dnode = args.get<DObject*>();
+  if (dnode != DNone)
   {
-    Destruct::DUnicodeString dnodeName = dnode->getValue("name").get<Destruct::DUnicodeString>();
+    DUnicodeString dnodeName = dnode->getValue("name").get<DUnicodeString>();
     DUInt8 dnodeIsDirectory =  dnode->getValue("isDirectory").get<DUInt8>();
     DUInt8 dnodeIsUsed =  dnode->getValue("isUsed").get<DUInt8>(); 
     DUInt8 dnodeIsCompressed =  dnode->getValue("isCompressed").get<DUInt8>(); 
@@ -194,12 +195,12 @@ MFTNode*        MFTNode::load(NTFS* ntfs, MFTEntryNode* entryNode, Destruct::DVa
     mappingAttributesInfo.size = dnodeSize;
     mappingAttributesInfo.compressed = dnodeIsCompressed;
    
-    Destruct::DObject* dmappingAttributes = dnode->getValue("mappingAttributes").get<Destruct::DObject*>();
+    DObject* dmappingAttributes = dnode->getValue("mappingAttributes").get<DObject*>();
     DUInt64 size = dmappingAttributes->call("size").get<DUInt64>();
 
     for (DUInt64 index = 0; index < size; ++index)
     {
-      Destruct::DValue mappingAttributes = dmappingAttributes->call("get", Destruct::RealValue<DUInt64>(index));
+      DValue mappingAttributes = dmappingAttributes->call("get", RealValue<DUInt64>(index));
       mappingAttributesInfo.mappingAttributes.push_back(MappingAttributes::load(ntfs, entryNode->mftNode(), mappingAttributes));
     }    
 
@@ -230,25 +231,25 @@ MFTNode*        MFTNode::load(NTFS* ntfs, MFTEntryNode* entryNode, Destruct::DVa
 
 bool    MappingAttributes::operator==(MappingAttributes const& other)
 {
-     if ((other.offset == offset) && (other.entryNode == entryNode))
-       return (true);
-     return (false);
+  if ((other.offset == offset) && (other.entryNode == entryNode))
+    return (true);
+  return (false);
 }
 
-Destruct::DObject* MappingAttributes::save(void) const
+DObject* MappingAttributes::save(void) const
 {
-  Destruct::DObject* ma = Destruct::Destruct::instance().generate("MappingAttributes");
+  DObject* ma = Destruct::Destruct::instance().generate("MappingAttributes");
 
-  ma->setValue("offset", Destruct::RealValue<DUInt16>(offset));
-  ma->setValue("mftEntryNode", Destruct::RealValue<DUInt64>(entryNode->offset()));
+  ma->setValue("offset", RealValue<DUInt16>(offset));
+  ma->setValue("mftEntryNode", RealValue<DUInt64>(entryNode->offset()));
 
   return (ma);
 }
 
 
-MappingAttributes     MappingAttributes::load(NTFS* ntfs, Node* mftNode,  Destruct::DValue const& args)
+MappingAttributes     MappingAttributes::load(NTFS* ntfs, Node* mftNode,  DValue const& args)
 {
-  Destruct::DObject* dma = args.get<Destruct::DObject* >();
+  DObject* dma = args.get<DObject* >();
 
   uint16_t offset = dma->getValue("offset").get<DUInt16>();
   uint64_t mftEntryNodeOffset = dma->getValue("mftEntryNode").get<DUInt64>();

@@ -25,11 +25,13 @@ class MFTEntryNode;
 class MFTEntryInfo;
 class Unallocated;
 
-class MFTEntryManager : public Destruct::DCppObject<MFTEntryManager>
+using namespace Destruct;
+
+class MFTEntryManager : public DCppObject<MFTEntryManager>
 {
 public:
-  MFTEntryManager(Destruct::DStruct* dstruct); 
-  MFTEntryManager(Destruct::DStruct* dstruct, Destruct::DValue const& args); 
+  MFTEntryManager(DStruct* dstruct); 
+  MFTEntryManager(DStruct* dstruct, DValue const& args); 
                                                 ~MFTEntryManager();
 
   void                                          init(NTFS* ntfs);
@@ -38,10 +40,10 @@ public:
   void                                          linkOrphanEntries(void);
   void                                          linkReparsePoint(void) const;
 
-  void                                          loadEntries(Destruct::DValue const& value, Node* fsNode);
-  Destruct::DValue                              saveEntries(void) const;
+  void                                          loadEntries(DValue const& value, Node* fsNode);
+  DValue                              saveEntries(void) const;
 
-  MFTEntryInfo*                                 create(uint64_t id);
+  void                                          create(uint64_t id);
   MFTEntryInfo*                                 createFromOffset(uint64_t offset, Node* fsNode, int64_t id);
 
   bool                                          addChild(uint64_t nodeId);
@@ -66,46 +68,46 @@ private:
   uint64_t                                      __numberOfEntry;
   std::map<uint64_t, MFTEntryInfo*>             __entries; //DMap<a, at, b, ,bt>() ? 
 
-  Destruct::RealValue<Destruct::DObject*>         __dentries;
-  Destruct::RealValue<Destruct::DObject*>         __unallocatedOffset;
-  Destruct::RealValue<Destruct::DFunctionObject*> __loadEntries;
-  //Destruct::RealValue<Destruct::DFunctionObject*> __saveEntries;
+  RealValue<DObject*>         __dentries;
+  RealValue<DObject*>         __unallocatedOffset;
+  RealValue<DFunctionObject*> __loadEntries;
+  //RealValue<DFunctionObject*> __saveEntries;
 public :
   static size_t ownAttributeCount()
   {
     return (1);
   }
 
-  static Destruct::DAttribute* ownAttributeBegin()
+  static DAttribute* ownAttributeBegin()
   {
-    static Destruct::DAttribute  attributes[] = 
+    static DAttribute  attributes[] = 
     {
-      Destruct::DAttribute(Destruct::DType::DObjectType,"unallocated"),
-      //Destruct::DAttribute(Destruct::DType::DObjectType,"entries"),
-     //Destruct::DAttribute(Destruct::DType::DNoneType, "loadEntries", Destruct::DType::DObjectType),
-      //Destruct::DAttribute(Destruct::DType::DObjectType,"saveEntries", Destruct::DType::DNoneType),
+      DAttribute(DType::DObjectType,"unallocated"),
+      //DAttribute(DType::DObjectType,"entries"),
+     //DAttribute(DType::DNoneType, "loadEntries", DType::DObjectType),
+      //DAttribute(DType::DObjectType,"saveEntries", DType::DNoneType),
     };
     return (attributes);
   }
 
-  static Destruct::DPointer<MFTEntryManager>* memberBegin()
+  static DPointer<MFTEntryManager>* memberBegin()
   {
-    static Destruct::DPointer<MFTEntryManager> memberPointer[] = 
+    static DPointer<MFTEntryManager> memberPointer[] = 
     {
-      Destruct::DPointer<MFTEntryManager>(&MFTEntryManager::__unallocatedOffset),
-      //Destruct::DPointer<MFTEntryManager>(&MFTEntryManager::__dentries),
-      //Destruct::DPointer<MFTEntryManager>(&MFTEntryManager::__loadEntries, &MFTEntryManager::loadEntries),
-      //Destruct::DPointer<MFTEntryManager>(&MFTEntryManager::__saveEntries, &MFTEntryManager::saveEntries),
+      DPointer<MFTEntryManager>(&MFTEntryManager::__unallocatedOffset),
+      //DPointer<MFTEntryManager>(&MFTEntryManager::__dentries),
+      //DPointer<MFTEntryManager>(&MFTEntryManager::__loadEntries, &MFTEntryManager::loadEntries),
+      //DPointer<MFTEntryManager>(&MFTEntryManager::__saveEntries, &MFTEntryManager::saveEntries),
     };
     return (memberPointer);
   }
 
-  static Destruct::DAttribute* ownAttributeEnd()
+  static DAttribute* ownAttributeEnd()
   {
     return (ownAttributeBegin() + ownAttributeCount());
   }
 
-  static Destruct::DPointer<MFTEntryManager >*  memberEnd()
+  static DPointer<MFTEntryManager >*  memberEnd()
   {
     return (memberBegin() + ownAttributeCount());
   }

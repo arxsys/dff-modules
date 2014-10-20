@@ -482,4 +482,3 @@ std::vector<IndexEntry> MFTEntryNode::indexes(void)// const
 
   return (indexes);
 }
-
