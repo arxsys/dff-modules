@@ -1,5 +1,5 @@
 # DFF -- An Open Source Digital Forensics Framework
-# Copyright (C) 2009-2013 ArxSys
+# Copyright (C) 2009-2011 ArxSys
 # This program is free software, distributed under the terms of
 # the GNU General Public License Version 2. See the LICENSE file
 # at the top of the source tree.
@@ -10,19 +10,8 @@
 # and IRC channels for your use.
 # 
 # Author(s):
-#  Frederic Baguelin <fba@digital-forensic.org>
+#  Jeremy MOUNIER <fba@digital-forensic.org>
 
 install_file(
-  __init__.py
+  evtviewer.py
 )
-
-add_subdirectory(hexedit)
-add_subdirectory(regedit)
-add_subdirectory(bindiff)
-add_subdirectory(timeline)
-add_subdirectory(web)
-add_subdirectory(media)
-add_subdirectory(sqliteviewer)
-add_subdirectory(pdf)
-add_subdirectory(evtviewer)
-add_subdirectory(evtxviewer)
