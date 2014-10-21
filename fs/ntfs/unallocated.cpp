@@ -43,7 +43,7 @@ std::vector<Range> Unallocated::ranges(void)
   if (mftManager == NULL)
     throw std::string("MFT Manager is null");
 
-  MFTNode* bitmapNode = mftManager->node(6); //$BITMAP_FILE_ID
+  DataNode* bitmapNode = mftManager->node(6); //$BITMAP_FILE_ID
   if (!bitmapNode)
     return (ranges);
 

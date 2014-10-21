@@ -49,16 +49,16 @@ class MFTEntryNode : public Node
 {
 private:
   NTFS*			        __ntfs; 
-  Node*			        __mftNode;
+  Node*			        __dataNode;
   MFTEntry		        __MFTEntry;
   uint64_t		        __offset;
   uint64_t		        __state;
   void                          readAttributes(void);
 public:
-			        MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::string name, Node* parent);
+			        MFTEntryNode(NTFS* ntfs, Node* dataNode, uint64_t offset, std::string name, Node* parent);
 			        ~MFTEntryNode();
   NTFS*			        ntfs(void);
-  Node*			        mftNode(void);
+  Node*			        dataNode(void);
   virtual uint64_t	        fileMappingState(void);
   virtual void		        fileMapping(FileMapping* fm);
   virtual uint64_t	        _attributesState(void);

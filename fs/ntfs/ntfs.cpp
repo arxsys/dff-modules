@@ -39,6 +39,8 @@ void    NTFS::declare(void) //XXX static loading
   destruct.registerDStruct(dntfsStruct);
   DStruct* mftEntryManager = makeNewDCpp<MFTEntryManager>("MFTEntryManager");
   destruct.registerDStruct(mftEntryManager);
+  DStruct* voidNode = makeNewDCpp<VoidNode>("VoidNode");
+  destruct.registerDStruct(voidNode);
 
   DStruct* mftEntryInfo = new DStruct(NULL, "MFTEntryInfo", DSimpleObject::newObject);
   mftEntryInfo->addAttribute(DAttribute(DType::DUInt64Type, "id"));
@@ -54,21 +56,22 @@ void    NTFS::declare(void) //XXX static loading
   destruct.registerDStruct(mappingAttributes);
 
 
-  DStruct* mftNode = new DStruct(NULL, "MFTNode", DSimpleObject::newObject);
-  mftNode->addAttribute(DAttribute(DType::DUnicodeStringType, "name"));
-  mftNode->addAttribute(DAttribute(DType::DUInt64Type, "mftEntryNode"));
-  mftNode->addAttribute(DAttribute(DType::DUInt8Type, "isDirectory"));
-  mftNode->addAttribute(DAttribute(DType::DUInt8Type, "isUsed"));
-  mftNode->addAttribute(DAttribute(DType::DUInt8Type, "isCompressed"));
-  mftNode->addAttribute(DAttribute(DType::DUInt64Type, "size"));
-  mftNode->addAttribute(DAttribute(DType::DObjectType, "mappingAttributes"));
-  destruct.registerDStruct(mftNode);
+  DStruct* dataNode = new DStruct(NULL, "DataNode", DSimpleObject::newObject);
+  dataNode->addAttribute(DAttribute(DType::DUnicodeStringType, "name"));
+  dataNode->addAttribute(DAttribute(DType::DUInt64Type, "mftEntryNode"));
+  dataNode->addAttribute(DAttribute(DType::DUInt8Type, "isDirectory"));
+  dataNode->addAttribute(DAttribute(DType::DUInt8Type, "isUsed"));
+  dataNode->addAttribute(DAttribute(DType::DUInt8Type, "isCompressed"));
+  dataNode->addAttribute(DAttribute(DType::DUInt64Type, "size"));
+  dataNode->addAttribute(DAttribute(DType::DObjectType, "mappingAttributes"));
+  dataNode->addAttribute(DAttribute(DType::DObjectType, "children"));
+  destruct.registerDStruct(dataNode);
 }
 
 /**
  *  NTFS 
  */
-NTFS::NTFS() : mfso("NTFS"), __opt(NULL), __bootSectorNode(NULL), __mftManager(NULL), __rootDirectoryNode(new Node("NTFS")), __orphansNode(new Node("orphans")), __unallocatedNode(NULL)
+NTFS::NTFS() : mfso("NTFS"), __opt(NULL), __bootSectorNode(NULL), __mftManager(NULL), __rootDirectoryNode(new Node("NTFS", 0, NULL, this)), __orphansNode(new Node("orphans", 0, NULL, this)), __unallocatedNode(NULL)
 {
 }
 
@@ -171,22 +174,22 @@ int32_t  NTFS::vread(int fd, void *buff, unsigned int size)
     return (0);
   }
  
-  MFTNode* mftNode = dynamic_cast<MFTNode* >(fi->node);
-  if (mftNode == NULL)
+  DataNode* dataNode = dynamic_cast<DataNode* >(fi->node);
+  if (dataNode == NULL)
     return (mfso::vread(fd, buff, size));
 
-  if (fi->offset > mftNode->size())
+  if (fi->offset > dataNode->size())
     return (0);
 
   try 
   {
-    if (!mftNode->isCompressed())
+    if (!dataNode->isCompressed())
       return (mfso::vread(fd, buff, size));
-    return (mftNode->readCompressed(buff, size, &fi->offset));
+    return (dataNode->readCompressed(buff, size, &fi->offset));
   }
   catch (const std::string& error)
   {
-    std::string finalError = "NTFS::vread on " + mftNode->absolute() + " error: " + error;
+    std::string finalError = "NTFS::vread on " + dataNode->absolute() + " error: " + error;
     throw vfsError(finalError);
   }
 }
@@ -196,7 +199,7 @@ bool                    NTFS::load(DValue value)
 {
   ////XXX code me and it's done :) 
   std::cout << "NTFS load method called with " << value.asUnicodeString() << std::endl;
-
+  //Destruct::Destruct& destruct = Destruct::Destruct::instance();
   DObject* ntfsObject = value.get<DObject*>();
   std::cout << "DNTFS ntfsObject refcount  " << ntfsObject->refCount() << std::endl; 
   if (ntfsObject == DNone)
@@ -220,59 +223,130 @@ bool                    NTFS::load(DValue value)
 
   this->__mftManager->init(this); //save & load
 
-  time_t current;
-  time_t after;
 
-  std::cout << "loadEntries" << std::endl;
-  time(&current);
+  Node* rootNode = this->loadTree(dntfs->entries);
+  this->registerTree(this->opt()->fsNode(), rootNode);
 
-  this->__mftManager->loadEntries(dntfs->entries, NULL);
-  time(&after);
-  std::cout << "loadEntries take: " << difftime(after, current) << std::endl;
-
-  std::cout << "linkEntries" << std::endl; //serialize as a tree and serialize reparse at same time ?
-  time(&current);
-  this->__mftManager->linkEntries(); 
-  time(&after);
-  std::cout << "linkEntries take " << difftime(after, current) << std::endl;
-
-
-  std::cout << "linkOrphanEntries" << std::endl;
-  time(&current);
-  this->__mftManager->linkOrphanEntries(); //save & load ?  for i in dntfs->mftManager->entryList getfname etc.. (a part si deja fait sous forme d abre donc zap aussi ce passage (for each node create node in the tree or simply relink the tree et rajouet la root mais node doit herited de dobject enfin MFTEntryNode : DObject comme ca le tree est directe ... peut etre le plus simple :) et chaque DMFTEntryNode garde les info qu il a besoin pour ce recree  
-  time(&after); 
-  std::cout << "linkOprhanEtries take " << difftime(after, current) << std::endl;
-
-  this->registerTree(this->opt()->fsNode(), this->rootDirectoryNode());
-  this->registerTree(this->rootDirectoryNode(), this->orphansNode());
-  //
-  std::cout << "createUnallocated" << std::endl; //OK ? 
-  time(&current);
-  this->__unallocatedNode = this->__mftManager->createUnallocated();
-  if (this->__opt->recovery())
-    this->__mftManager->linkUnallocated(this->__unallocatedNode); //deja serializer
-  time(&after); 
-  std::cout << "createUnallocated take " << difftime(after, current) << std::endl;
-  
-  std::cout << "linkReparsePoint " << std::endl; //XXX serialize ?
-  time(&current);
-  this->__mftManager->linkReparsePoint();
-  time(&after); 
-  std::cout << "linkReparsePoint take " << difftime(after, current) << std::endl;
+ 
+//  this->__mftManager->initEntries();
+//  this->__mftManager->linkEntries(); 
+//  this->__mftManager->linkOrphanEntries();
+//  this->registerTree(this->opt()->fsNode(), this->rootDirectoryNode()); //linkOprhanEntries do initEntries job actually
+ // this->registerTree(this->rootDirectoryNode(), this->orphansNode());
+//  this->__unallocatedNode = this->__mftManager->createUnallocated();
+ // if (this->__opt->recovery())
+  //  this->__mftManager->searchUnallocated(this->__unallocatedNode);
+ // this->__mftManager->linkReparsePoint();
   //delete this->__mftManager; //Unallocated node use it 
- 
-  dntfs->destroy();//??
-  std::cout << "Ref dntfs " << dntfs->refCount() << " ref opt " << this->__opt->refCount() << " ref mftManager " << this->__mftManager->refCount() << std::endl;
- 
-  this->setStateInfo("Reloading finished successfully");
+
+  this->setStateInfo("Finished successfully");
   this->res["Result"] = Variant_p(new Variant(std::string("NTFS parsed successfully.")));
 
   return (true);
 }
 
+Node*         NTFS::loadTree(DValue const& value)
+{
+  DObject* dnode = value.get<DObject*>();
+  Node*  node = NULL;
+
+  if (dnode->instanceOf()->name() == "DataNode")
+  {
+    uint64_t entryNodeOffset = dnode->getValue("mftEntryNode").get<DUInt64>();
+
+    try 
+    {
+      MFTEntryNode* mftEntryNode = new MFTEntryNode(this, this->__mftManager->masterDataNode(), entryNodeOffset, std::string("MFTEntry"), NULL);
+     //ici map <offset, mftentrynode> //comme ca on gardes les pointeur pour pas les recree deux fois ? 
+// bien reflechir si ca arrive pourquoi $MFT marche pas et d autre truc ds le genre ...
+      node = DataNode::load(this, mftEntryNode, value); 
+    }
+    catch (...)
+    {
+      std::cout << "CAN't load DataNode or MFTEntryNode " << dnode->getValue("name").get<DUnicodeString>() << std::endl;
+      node = VoidNode::load(value);
+    }
+  }
+  else 
+    node = VoidNode::load(value);
+
+  DObject* dchildren = dnode->getValue("children").get<DObject*>();
+  if (dchildren != DNone)
+  {
+    DUInt64 size = dchildren->call("size").get<DUInt64>();
+ 
+    for (DUInt64 current = 0; current < size; ++current)
+    {
+      DObject* dchild = dchildren->call("get", RealValue<DUInt64>(current)).get<DObject*>();
+      Node* child = this->loadTree(RealValue<DObject*>(dchild));
+      node->addChild(child);
+    }
+  }
+  return (node);
+}
+
+DValue        NTFS::saveTree(Node* node) const
+{ 
+  if (!node || node->fsobj() != this)
+  {
+    std::cout << "error node is null or fsobj is not NTFS" << std::endl;
+    return RealValue<DObject*>(DNone);
+  }
+
+  DObject* dnode = DNone;
+  DataNode* dataNode = dynamic_cast<DataNode* >(node);
+  if (dataNode)
+    dnode = dataNode->save();
+  else
+  {
+    std::cout << "Void saving " << node->name() << std::endl;
+    dnode = VoidNode::save(node);    
+  } 
+
+  DObject* dchildren = dnode->getValue("children").get<DObject*>();
+  if (dchildren == DNone)
+  {
+    dchildren = Destruct::Destruct::instance().generate("DVectorObject");
+    dnode->setValue("children", RealValue<DObject*>(dchildren));
+  }
+
+  std::vector<Node*> children = node->children();
+  std::vector<Node*>::const_iterator child = children.begin();
+  for (; child != children.end(); ++child)
+  {
+     if ((*child)->fsobj() && (*child)->fsobj() == this)
+     {
+       DValue dchild = this->saveTree(*child);
+       dchildren->call("push", dchild);
+     }
+  }
+
+  return RealValue<DObject*>(dnode);
+}
+
 DValue        NTFS::save(void) const //save(args) --> modules arg ? 
 {
   std::cout << "NTFS save called" << std::endl;
+  std::cout << "NTFS saving tree directly it's easier" << std::endl;
+
+  DNTFS* dntfs = static_cast<DNTFS*>(makeNewDCpp<DNTFS>("DNTFS")->newObject());
+  dntfs->opt = this->__opt;
+
+  if (this->__mftManager == NULL) //?
+  {
+    std::cout << "Can't save NTFS module applyied on node " << this->fsNode()->absolute() << std::endl;
+    return (RealValue<DObject*>(DNone));
+  }
+  dntfs->mftManager = this->__mftManager;
+  DObject* mftManager = dntfs->mftManager;
+  mftManager->addRef();
+
+  dntfs->entries = saveTree(this->rootDirectoryNode());
+
+  
+  return (RealValue<DObject*>(dntfs));
+/*  
+  return RealValue<DObject*>(DNone);
 
   try {
 
@@ -309,7 +383,7 @@ DValue        NTFS::save(void) const //save(args) --> modules arg ?
   {
     std::cout << "NTFS::bad cast " << exception.what() << std::endl;
     return (RealValue<DObject*>(DNone));
-  }
+  }*/
 }
 
 /**

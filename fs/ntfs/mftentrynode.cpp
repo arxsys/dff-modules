@@ -22,11 +22,11 @@
 #include "mftattributecontent.hpp"
 #include "attributes/mftattributecontenttype.hpp"
 
-MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::string name, Node* parent = NULL) : Node(name, ntfs->bootSectorNode()->MFTRecordSize(), parent, ntfs, false), __ntfs(ntfs), __mftNode(mftNode), __offset(offset), __state(0)
+MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* dataNode, uint64_t offset, std::string name, Node* parent = NULL) : Node(name, ntfs->bootSectorNode()->MFTRecordSize(), parent, ntfs, false), __ntfs(ntfs), __dataNode(dataNode), __offset(offset), __state(0)
 {
-  if (this->__mftNode == NULL)
+  if (this->__dataNode == NULL)
     throw std::string("MFTEntryNode: Can't open MFT Node is null");
-  VFile* vfile = this->__mftNode->open();
+  VFile* vfile = this->__dataNode->open();
   if (vfile->seek(this->offset()) != this->offset())
   {
     delete vfile;
@@ -202,17 +202,17 @@ void		MFTEntryNode::fileMapping(FileMapping *fm)
   {
     if (this->size() - offset >= sectorSize)
     {
-      fm->push(offset, sectorSize - sizeof(uint16_t), this->__mftNode, this->offset() + offset);
+      fm->push(offset, sectorSize - sizeof(uint16_t), this->__dataNode, this->offset() + offset);
       offset += sectorSize - sizeof(uint16_t);
       fm->push(offset,
                sizeof(uint16_t),
-               this->__mftNode,
+               this->__dataNode,
 	       this->offset() + this->fixupArrayOffset() + sizeof(uint16_t) + (sizeof(uint16_t) * (offset / sectorSize)));          
       offset += sizeof(uint16_t);
     }
     else
     {
-      fm->push(offset, this->size() - offset, this->__mftNode, this->offset() + offset);
+      fm->push(offset, this->size() - offset, this->__dataNode, this->offset() + offset);
       offset += this->size() - offset;
     }
   }
@@ -282,9 +282,9 @@ NTFS*		MFTEntryNode::ntfs(void)
   return (this->__ntfs);
 }
 
-Node*		MFTEntryNode::mftNode(void)
+Node*		MFTEntryNode::dataNode(void)
 {
-  return (this->__mftNode);
+  return (this->__dataNode);
 }
 
 uint64_t	MFTEntryNode::offset(void) const

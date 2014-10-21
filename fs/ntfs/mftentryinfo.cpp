@@ -73,10 +73,10 @@ Destruct::DObject*      MFTEntryInfo::save(void) const
   dmftEntry->setValue("id", Destruct::RealValue<DUInt64>(this->id));
   if (this->node)
     dmftEntry->setValue("node", Destruct::RealValue<Destruct::DObject*>(this->node->save())); //XXX verifie qu il n y est pas 2 ref ! 
-  for (std::list<MFTNode*>::const_iterator mftNode = this->nodes.begin(); mftNode != this->nodes.end(); ++mftNode)
+  for (std::list<DataNode*>::const_iterator dataNode = this->nodes.begin(); dataNode != this->nodes.end(); ++dataNode)
   {
-    if (*mftNode)
-      dnodes->call("push", Destruct::RealValue<Destruct::DObject*>((*mftNode)->save()));
+    if (*dataNode)
+      dnodes->call("push", Destruct::RealValue<Destruct::DObject*>((*dataNode)->save()));
   }
   dmftEntry->setValue("nodes", Destruct::RealValue<Destruct::DObject*>(dnodes)); 
   dmftEntry->setValue("entryNode", Destruct::RealValue<DUInt64>(this->__entryNode->offset()));
@@ -99,7 +99,7 @@ Destruct::DObject*      MFTEntryInfo::save(void) const
   ////mftEntryInfo->addAttribute(Destruct::DAttribute(Destruct::DType::DUInt64Type, "entryNode"));
   ////DUInt64 entryNodeOffset = mftEntryInfo.getValue("entryNode")->get<DUInt64>();
   ////
-  ////MFTEntryNode(mftEntryManager->ntfs(), mftEntryManager->masterMFTNode(), entryNode->offset, std::string("MFTEntry"), NULL);
+  ////MFTEntryNode(mftEntryManager->ntfs(), mftEntryManager->masterDataNode(), entryNode->offset, std::string("MFTEntry"), NULL);
   ////
   ////dmftEntryInfo->destroy();
   

@@ -21,7 +21,7 @@
 
 class NTFSOpt;
 class BootSectorNode;
-class MFTNode;
+class DataNode;
 class MFTEntryManager;
 class Unallocated;
 
@@ -74,6 +74,69 @@ public:
   }
 };
 
+class VoidNode : public DCppObject<VoidNode>
+{
+public:
+  VoidNode(DStruct* dstruct, DValue const& args) : DCppObject<VoidNode>(dstruct, args)
+  {
+    //this->children = Destruct::Destruct::instance().generate("DVectorObject");  
+  }
+  ~VoidNode() {};
+
+  RealValue<DObject*>       children;
+  RealValue<DUnicodeString> name;
+
+  static DObject*      save(Node* node)
+  {
+    DObject* voidNode = Destruct::Destruct::instance().generate("VoidNode");
+    voidNode->setValue("name", RealValue<DUnicodeString>(node->name()));
+    return voidNode;
+  };     
+
+  static Node*      load(DValue const& args)
+  {
+    DObject* dnode = args.get<DObject*>();
+    std::string name = dnode->getValue("name").get<DUnicodeString>();
+    return new Node(name);
+  }
+
+  static size_t ownAttributeCount()
+  {
+    return (2);
+  }
+
+  static DAttribute* ownAttributeBegin()
+  {
+    static DAttribute  attributes[] = 
+    {
+      DAttribute(DType::DUnicodeStringType, "name"),
+      DAttribute(DType::DObjectType, "children"),
+    };
+    return (attributes);
+  }
+
+  static DPointer<VoidNode>* memberBegin()
+  {
+    static DPointer<VoidNode> memberPointer[] = 
+    {
+      DPointer<VoidNode>(&VoidNode::name),
+      DPointer<VoidNode>(&VoidNode::children),
+    };
+    return (memberPointer);
+  }
+
+  static DAttribute* ownAttributeEnd()
+  {
+    return (ownAttributeBegin() + ownAttributeCount());
+  }
+
+  static DPointer<VoidNode>*  memberEnd()
+  {
+    return (memberBegin() + ownAttributeCount());
+  }
+
+};
+
 class NTFS : public mfso
 {
 private:
@@ -92,6 +155,8 @@ public:
   void                  start(Attributes args);
   bool                  load(DValue value);
   DValue      save(void) const;
+  DValue      saveTree(Node* node) const;
+  Node*       loadTree(DValue const& args); 
 
   void                  setStateInfo(const std::string&);
   NTFSOpt*              opt(void) const;

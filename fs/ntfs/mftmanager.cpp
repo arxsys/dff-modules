@@ -32,12 +32,12 @@ using namespace Destruct;
 /**
  *  MFTEntryManager
  */
-MFTEntryManager::MFTEntryManager(DStruct* dstruct) : DCppObject<MFTEntryManager>(dstruct), __ntfs(NULL), __masterMFTNode(NULL), __masterMFTOffset(0), __numberOfEntry(0)
+MFTEntryManager::MFTEntryManager(DStruct* dstruct) : DCppObject<MFTEntryManager>(dstruct), __ntfs(NULL), __masterDataNode(NULL), __masterMFTOffset(0), __numberOfEntry(0)
 {
   //CppClass haha !this->init();
 }
 
-MFTEntryManager::MFTEntryManager(DStruct* dstruct, DValue const& args) : DCppObject<MFTEntryManager>(dstruct, args), __ntfs(NULL), __masterMFTNode(NULL), __masterMFTOffset(0), __numberOfEntry(0)
+MFTEntryManager::MFTEntryManager(DStruct* dstruct, DValue const& args) : DCppObject<MFTEntryManager>(dstruct, args), __ntfs(NULL), __masterDataNode(NULL), __masterMFTOffset(0), __numberOfEntry(0)
 {
  // this->init();
 }
@@ -55,12 +55,12 @@ void    MFTEntryManager::init(NTFS* ntfs)
   this->__ntfs = ntfs;
   this->__masterMFTOffset = this->__ntfs->bootSectorNode()->MFTLogicalClusterNumber() * this->__ntfs->bootSectorNode()->clusterSize();
   this->createFromOffset(this->__masterMFTOffset, this->__ntfs->fsNode(), 0);
-  this->__masterMFTNode = this->node(0);
-  if (this->__masterMFTNode == NULL)
+  this->__masterDataNode = this->node(0);
+  if (this->__masterDataNode == NULL)
     throw std::string("Can't create master MFT entry"); //try mirror
   if (this->__ntfs->bootSectorNode()->MFTRecordSize() == 0)
     throw std::string("Can't read MFT Record : BootSector MFT Record size is 0");
-  this->__numberOfEntry = this->__masterMFTNode->size() / this->__ntfs->bootSectorNode()->MFTRecordSize();
+  this->__numberOfEntry = this->__masterDataNode->size() / this->__ntfs->bootSectorNode()->MFTRecordSize();
 }
 
 
@@ -88,7 +88,7 @@ void    MFTEntryManager::initEntries(void)
     }
     catch (std::string& error)
     {
-      std::cout << "Can't create MFTNode" << id << " error: " << error << std::endl;
+      std::cout << "Can't create DataNode" << id << " error: " << error << std::endl;
     }
   }
 }
@@ -106,7 +106,7 @@ void    MFTEntryManager::linkEntries(void)
     //this->addChild(id); 
   //}
   /* mount root '.' as 'ntfs/root/' */
-  MFTNode* rootMFT = this->node(5);
+  DataNode* rootMFT = this->node(5);
   if (rootMFT)
   {
     rootMFT->setName("root"); //replace '.'
@@ -140,7 +140,7 @@ bool    MFTEntryManager::exist(uint64_t id) const
 /**
  *  Return Node corresponding to MFT id or NULL 
  */
-MFTNode*  MFTEntryManager::node(uint64_t id) const
+DataNode*  MFTEntryManager::node(uint64_t id) const
 {
   std::map<uint64_t, MFTEntryInfo*>::const_iterator entry = this->__entries.find(id);
   if (entry != this->__entries.end())
@@ -170,7 +170,7 @@ MFTEntryNode*  MFTEntryManager::entryNode(uint64_t id) const
 /**
  * Get all indexes for node and add it to MFT id children list 
  */
-bool    MFTEntryManager::addChildId(uint64_t nodeId, MFTNode* node)
+bool    MFTEntryManager::addChildId(uint64_t nodeId, DataNode* node)
 {
   std::vector<IndexEntry> indexes = node->mftEntryNode()->indexes();
   std::vector<IndexEntry>::iterator index = indexes.begin();
@@ -203,7 +203,7 @@ bool    MFTEntryManager::addChildId(uint64_t nodeId, MFTNode* node)
  */
 bool    MFTEntryManager::addChild(uint64_t nodeId)
 {
-  MFTNode* node = this->node(nodeId);
+  DataNode* node = this->node(nodeId);
   
   if (node == NULL) 
     return (false);
@@ -217,7 +217,7 @@ bool    MFTEntryManager::addChild(uint64_t nodeId)
   {
     if ((*childId).id == 0)
       continue;
-    MFTNode* child = this->node((*childId).id);
+    DataNode* child = this->node((*childId).id);
     if (child)
     {
       if ((*childId).sequence == node->mftEntryNode()->sequence())
@@ -268,14 +268,14 @@ void    MFTEntryManager::childrenSanitaze(void)
 void   MFTEntryManager::create(uint64_t id)
 {
   uint32_t mftRecordSize = this->__ntfs->bootSectorNode()->MFTRecordSize();
-  if (this->__masterMFTNode == NULL)
+  if (this->__masterDataNode == NULL)
     this->createFromOffset(this->__masterMFTOffset + (id * mftRecordSize),  this->__ntfs->fsNode(), id); //this happen when master MFT use attributelist for is $DATA content (very large and/or very fragmented MFT)
   else
-    this->createFromOffset(id * mftRecordSize, this->__masterMFTNode, id);
+    this->createFromOffset(id * mftRecordSize, this->__masterDataNode, id);
 }
 
 /**
- *   Create an MFTEntryNode and all it's derived MFTNode 
+ *   Create an MFTEntryNode and all it's derived DataNode 
  *   then register in the manager if id != -1
  *   Return MFTNEntryInfo* or throw error  if id -1 MFTEntryNode* is not registred so must
  *   be deleted by caller
@@ -341,23 +341,23 @@ MFTEntryInfo*  MFTEntryManager::createFromOffset(uint64_t offset, Node* fsNode, 
    */
   if (datas.size() == 0) //handle directory without data
   {
-    MFTNode* mftNode = new MFTNode(name, __ntfs, mftEntryNode, mftEntryNode->isDirectory(), mftEntryNode->isUsed());
+    DataNode* dataNode = new DataNode(name, __ntfs, mftEntryNode, mftEntryNode->isDirectory(), mftEntryNode->isUsed());
 
-    mftEntryInfo->node = mftNode;
-    mftEntryInfo->nodes.push_back(mftNode);
+    mftEntryInfo->node = dataNode;
+    mftEntryInfo->nodes.push_back(dataNode);
   }
   else
   {
     std::map<std::string, MappingAttributesInfo >::iterator info = mapDataInfo.begin();
     for (; info != mapDataInfo.end(); ++info)
     {
-      MFTNode* mftNode = new MFTNode(((*info)).first, __ntfs, mftEntryNode, mftEntryNode->isDirectory(), mftEntryNode->isUsed());
+      DataNode* dataNode = new DataNode(((*info)).first, __ntfs, mftEntryNode, mftEntryNode->isDirectory(), mftEntryNode->isUsed());
       (*info).second.mappingAttributes.unique();//pass mapping info in constructor ?
-      mftNode->setMappingAttributes((*info).second);
+      dataNode->setMappingAttributes((*info).second);
 
       if (((*info).first) == name && (mftEntryInfo->node == NULL))
-        mftEntryInfo->node = mftNode;
-      mftEntryInfo->nodes.push_back(mftNode); 
+        mftEntryInfo->node = dataNode;
+      mftEntryInfo->nodes.push_back(dataNode); 
 
     }
   }
@@ -402,29 +402,29 @@ void                    MFTEntryManager::loadEntries(DValue const& entries, Node
 
     try 
     {
-      mftEntryNode = new MFTEntryNode(this->__ntfs, this->masterMFTNode(), entryNodeOffset, std::string("MFTEntry"), NULL);
-      MFTNode* mftNode = MFTNode::load(this->__ntfs, mftEntryNode, dmftEntryInfo->getValue("node")); 
+      mftEntryNode = new MFTEntryNode(this->__ntfs, this->masterDataNode(), entryNodeOffset, std::string("MFTEntry"), NULL);
+      DataNode* dataNode = DataNode::load(this->__ntfs, mftEntryNode, dmftEntryInfo->getValue("node")); 
 
       MFTEntryInfo* mftEntryInfo = new MFTEntryInfo(mftEntryNode);
-      mftEntryInfo->node = mftNode;
-      mftEntryInfo->nodes.push_back(mftNode);
+      mftEntryInfo->node = dataNode;
+      mftEntryInfo->nodes.push_back(dataNode);
 
       found++;
       this->__entries[key.get<DUInt64>()] = mftEntryInfo; 
     }
     catch (DException const& exception)
     {
-      std::cout << "Error creating MFTEntryNode " << this->masterMFTNode() << " " << entryNodeOffset << std::endl;
+      std::cout << "Error creating MFTEntryNode " << this->masterDataNode() << " " << entryNodeOffset << std::endl;
       std::cout << "Error " << exception.error() << std::endl;
     }
     catch (std::bad_cast error)
     {
-      std::cout << "Error creating MFTEntryNode " << this->masterMFTNode() << " " << entryNodeOffset << std::endl;
+      std::cout << "Error creating MFTEntryNode " << this->masterDataNode() << " " << entryNodeOffset << std::endl;
       std::cout << "Error " << error.what() << std::endl;
     }
     catch (...)
     {
-      std::cout << "Error creating MFTEntryNode " << this->masterMFTNode() << " " << entryNodeOffset << std::endl;
+      std::cout << "Error creating MFTEntryNode " << this->masterDataNode() << " " << entryNodeOffset << std::endl;
       std::cout << "Error ..." << std::endl; 
     }
     dmftEntryInfo->destroy();
@@ -437,7 +437,7 @@ void                    MFTEntryManager::loadEntries(DValue const& entries, Node
 }
 
 /**
- *   Link orphans entries (MFTNode with a NULL parent) //in fatct link all entry  if we don't use index
+ *   Link orphans entries (DataNode with a NULL parent) //in fatct link all entry  if we don't use index
  */
 void    MFTEntryManager::linkOrphanEntries(void)
 {
@@ -445,12 +445,12 @@ void    MFTEntryManager::linkOrphanEntries(void)
   for (uint64_t id = 0; id < this->__numberOfEntry; ++id)
   {
     MFTEntryInfo* entryInfo = this->__entries[id];
-    std::list<MFTNode*>::const_iterator mftNode = entryInfo->nodes.begin();
-    for (; mftNode != entryInfo->nodes.end(); ++mftNode)
+    std::list<DataNode*>::const_iterator dataNode = entryInfo->nodes.begin();
+    for (; dataNode != entryInfo->nodes.end(); ++dataNode)
     {
-      if (((*mftNode) == NULL) || ((*mftNode)->parent()))
+      if (((*dataNode) == NULL) || ((*dataNode)->parent()))
         continue;
-      MFTAttribute* attribute = (*mftNode)->mftEntryNode()->findMFTAttribute($FILE_NAME); //must check for all ADS too
+      MFTAttribute* attribute = (*dataNode)->mftEntryNode()->findMFTAttribute($FILE_NAME); //must check for all ADS too
       if (attribute)
       {
         FileName* fileName = dynamic_cast<FileName*>((attribute)->content());
@@ -458,18 +458,18 @@ void    MFTEntryManager::linkOrphanEntries(void)
           throw std::string("MFTEntryManager attribute content can't cast to $FILE_NAME"); 
 
         uint64_t parentId = fileName->parentMFTEntryId();
-        MFTNode* parent = this->node(parentId);
+        DataNode* parent = this->node(parentId);
         if (parent)
         {
           if (fileName->parentSequence() != parent->mftEntryNode()->sequence()) 
-            this->__ntfs->orphansNode()->addChild(*mftNode);
+            this->__ntfs->orphansNode()->addChild(*dataNode);
           else 
-            parent->addChild(*mftNode);
+            parent->addChild(*dataNode);
         }
         delete fileName;
       }
       else
-        this->__ntfs->orphansNode()->addChild(*mftNode);
+        this->__ntfs->orphansNode()->addChild(*dataNode);
    
       delete (attribute);
     }
@@ -540,11 +540,11 @@ uint64_t MFTEntryManager::linkUnallocated(Unallocated* unallocated)
     {
       DUInt64 offset = vector->call("get", RealValue<DUInt64>(index)).get<DUInt64>();
       MFTEntryInfo* entryInfo = this->createFromOffset(offset, fsNode, -1);
-      std::list<MFTNode* >::const_iterator mftNode = entryInfo->nodes.begin(); //nodes ou node ??
-      for ( ; mftNode != entryInfo->nodes.end(); ++mftNode)
+      std::list<DataNode* >::const_iterator dataNode = entryInfo->nodes.begin(); //nodes ou node ??
+      for ( ; dataNode != entryInfo->nodes.end(); ++dataNode)
       {
-        if ((*mftNode))
-          unallocated->addChild((*mftNode)); 
+        if ((*dataNode))
+          unallocated->addChild((*dataNode)); 
       }
       recovered++;
       delete entryInfo;
@@ -557,7 +557,7 @@ uint64_t MFTEntryManager::linkUnallocated(Unallocated* unallocated)
 }
 
 /**
- *  Search for all MFTNode with reparse point
+ *  Search for all DataNode with reparse point
  *  and try to create vlink from the node to the reparse point 
  */
 void   MFTEntryManager::linkReparsePoint(void) const
@@ -571,9 +571,9 @@ void   MFTEntryManager::linkReparsePoint(void) const
   std::map<uint64_t, MFTEntryInfo*>::const_iterator entry = this->__entries.begin();
   for (; entry != this->__entries.end(); ++entry)
   {
-    MFTNode* mftNode = entry->second->node;
-    if (mftNode)
-      this->mapLink(mftNode);
+    DataNode* dataNode = entry->second->node;
+    if (dataNode)
+      this->mapLink(dataNode);
   }
 }
 
@@ -581,7 +581,7 @@ void   MFTEntryManager::linkReparsePoint(void) const
  *  Create a VLink to reparse point if path is found and return VLink
  *  else return NULL
  */
-Node*  MFTEntryManager::mapLink(MFTNode* node) const
+Node*  MFTEntryManager::mapLink(DataNode* node) const
 {
   MFTEntryNode* mftEntryNode = node->mftEntryNode();
   if (!mftEntryNode)
@@ -651,8 +651,8 @@ Node*  MFTEntryManager::mapLink(MFTNode* node) const
   return (NULL);
 }
 
-MFTNode*        MFTEntryManager::masterMFTNode(void) const
+DataNode*        MFTEntryManager::masterDataNode(void) const
 {
-  return (this->__masterMFTNode);
+  return (this->__masterDataNode);
 }
 

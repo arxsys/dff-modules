@@ -20,7 +20,7 @@
 #include "ntfs_common.hpp"
 
 class NTFS;
-class MFTNode;
+class DataNode;
 class MFTEntryNode;
 class MFTEntryInfo;
 class Unallocated;
@@ -47,23 +47,23 @@ public:
   MFTEntryInfo*                                 createFromOffset(uint64_t offset, Node* fsNode, int64_t id);
 
   bool                                          addChild(uint64_t nodeId);
-  bool                                          addChildId(uint64_t nodeId, MFTNode* node);
+  bool                                          addChildId(uint64_t nodeId, DataNode* node);
   void                                          inChildren(uint64_t nodeId, uint64_t childId);
   void                                          childrenSanitaze(void);
          
   uint64_t                                      entryCount(void) const;  
   bool                                          exist(uint64_t id) const; 
-  MFTNode*                                      node(uint64_t id) const;
+  DataNode*                                      node(uint64_t id) const;
   MFTEntryNode*                                 entryNode(uint64_t id) const;
-  Node*                                         mapLink(MFTNode* node) const;
+  Node*                                         mapLink(DataNode* node) const;
 
   void                                          searchUnallocated(Unallocated* unallocated);
   Unallocated*                                  createUnallocated(void);
   uint64_t                                      linkUnallocated(Unallocated* unallocated);
-  MFTNode*                                      masterMFTNode(void) const;
+  DataNode*                                      masterDataNode(void) const;
 private:
   NTFS*                                         __ntfs;
-  MFTNode*                                      __masterMFTNode;
+  DataNode*                                      __masterDataNode;
   uint64_t                                      __masterMFTOffset;
   uint64_t                                      __numberOfEntry;
   std::map<uint64_t, MFTEntryInfo*>             __entries; //DMap<a, at, b, ,bt>() ? 

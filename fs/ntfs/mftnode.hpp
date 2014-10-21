@@ -32,10 +32,10 @@ public:
   MFTEntryNode*         entryNode; //because of ATTRIBUTE_LIST $data could be describe by different MFT ! 
   bool  operator==(MappingAttributes const& other);
   DObject*    save(void) const;
-  static MappingAttributes     load(NTFS* ntfs, Node* mftNode, DValue const& args);
+  static MappingAttributes     load(NTFS* ntfs, Node* dataNode, DValue const& args);
 };
 
-class MappingAttributesInfo
+class MappingAttributesInfo //xxx ca sert a rien virer cettte class ou utiliser ne struct DataNode
 {
 public:
   std::list<MappingAttributes> mappingAttributes;
@@ -43,12 +43,12 @@ public:
   bool     compressed;
 };
 
-class MFTNode : public Node// MFTEntryNode
+class DataNode : public Node// MFTEntryNode
 {
 public:
-  MFTNode(const std::string name, NTFS* ntfs, MFTEntryNode* mftEntryNode, bool isDirectory, bool isUsed);
-  ~MFTNode();
-  static                               MFTNode* load(NTFS* ntfs, MFTEntryNode* entryNode,  DValue const& args);
+  DataNode(const std::string name, NTFS* ntfs, MFTEntryNode* mftEntryNode, bool isDirectory, bool isUsed);
+  ~DataNode();
+  static                               DataNode* load(NTFS* ntfs, MFTEntryNode* entryNode,  DValue const& args);
   void                                 setName(const std::string name);
   Attributes	                       _attributes(void);
   void		                       fileMapping(FileMapping* fm);
