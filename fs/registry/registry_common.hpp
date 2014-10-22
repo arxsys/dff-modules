@@ -28,6 +28,7 @@
 #include "dobject.hpp"
 #include "dnullobject.hpp"
 #include "protocol/dcppobject.hpp"
+#include "protocol/dmutableobject.hpp"
 #include "protocol/dstream.hpp"
 #include "protocol/dserialize.hpp"
 

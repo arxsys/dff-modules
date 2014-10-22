@@ -24,31 +24,6 @@
 
 using namespace Destruct;
 
-
-/**
- * RegistryValues
- */
-RegistryValue::RegistryValue(DStruct* dstruct, DValue const& args) : DCppObject<RegistryValue>(dstruct, args)
-{
-  this->init();
-  this->name = new NameLength(Destruct::Destruct::instance().find("NameLength"), RealValue<DObject*>(this));
-  ((DObject*)this->name)->setValue("attributeKeyName", RealValue<DUnicodeString>("nameLength"));
-  ((DObject*)this->name)->addRef();
-
-}
-
-RegistryValue::~RegistryValue(void)
-{
-}
-
-
-DValue    RegistryValue::deserializeRaw(DValue const& arg)
-{
-  //if this type == this->data == new DObject ..
-  return (RealValue<DUInt8>(1));
-}
-
-
 /**
  * RegistryValues
  */
@@ -64,7 +39,6 @@ RegistryValues::~RegistryValues(void)
 {
 }
 
-
 DValue    RegistryValues::deserializeRaw(DValue const& arg)
 {
   StreamVFile* stream = static_cast<StreamVFile*>(arg.get<DObject*>());
@@ -74,14 +48,13 @@ DValue    RegistryValues::deserializeRaw(DValue const& arg)
   DUInt32 valueListOffset = ((DObject*)this->parent)->getValue("valueListOffset").get<DUInt32>();
   if (valueCount == 0 || valueListOffset == 0xffffffff)
   {
-    stream->destroy();    
+    stream->destroy();   
     return (RealValue<DUInt8>(1));
   }
 
   stream->seek(valueListOffset + 0x1000); 
   size.unserialize(*stream);
 
-  std::cout << "parsing size found " << size << std::endl; 
   Destruct::DSerialize* serializer = Destruct::DSerializers::to("Raw");
   for (uint32_t index = 0; index < valueCount ; ++index)
   {
@@ -94,7 +67,7 @@ DValue    RegistryValues::deserializeRaw(DValue const& arg)
     serializer->deserialize(*stream, subvalue);
     stream->seek(currentOffset);
 
-    Registry::show(subvalue); 
+    
     ((DObject*)this->list)->call("push", RealValue<DObject*>(subvalue)); 
   }
 
@@ -104,12 +77,39 @@ DValue    RegistryValues::deserializeRaw(DValue const& arg)
   return (RealValue<DUInt8>(1));
 }
 
-      
+/**
+ * RegistryValues
+ */
+RegistryValue::RegistryValue(DStruct* dstruct, DValue const& args) : DCppObject<RegistryValue>(dstruct, args)
+{
+  this->init();
+  this->name = new NameLength(Destruct::Destruct::instance().find("NameLength"), RealValue<DObject*>(this));
+  ((DObject*)this->name)->setValue("attributeKeyName", RealValue<DUnicodeString>("nameLength"));
+  ((DObject*)this->name)->addRef();
+  
+ this->data = new RegistryValueData(Destruct::Destruct::instance().find("RegistryValueData"), RealValue<DObject*>(this));
+ ((DObject*)this->data)->addRef();
+}
+
+RegistryValue::~RegistryValue(void)
+{
+}
+
+DValue    RegistryValue::deserializeRaw(DValue const& arg)
+{
+  //Destruct::Destruct& destruct = Destruct::Destruct::instance();
+
+  //destruct.generate(this->dataTypeName[this->dataType]);
+
+  return (RealValue<DUInt8>(1));
+}
+
 /**
  * RegistryValueData
  */
 RegistryValueData::RegistryValueData(DStruct* dstruct, DValue const& args) : DCppObject<RegistryValueData>(dstruct, args)
 {
+
   this->init();
 }
 

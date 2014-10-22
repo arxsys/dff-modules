@@ -34,10 +34,12 @@ public:
   static void           declare(void);
 
   void                  start(Attributes args);
+  //void                setStateInfo(const std::string&);
   bool                  load(Destruct::DValue value);
   Destruct::DValue      save(void) const;
-  static void                  show(Destruct::DObject* object);
-  //void                setStateInfo(const std::string&);
+
+  static void           show(Destruct::DObject* object);
+  static void           toFile(std::string fileName, Destruct::DObject* object, std::string type);
 
   RegistryOpt*          opt(void) const;
   Regf*                 regf(void) const;

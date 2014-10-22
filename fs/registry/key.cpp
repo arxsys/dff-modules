@@ -39,6 +39,7 @@ RegistryKey::RegistryKey(DStruct* dstruct, DValue const& args) : DCppObject<Regi
   ((DObject*)this->timestamp)->addRef();
   ((DObject*)this->keyName)->addRef();
   ((DObject*)this->subkeys)->addRef();
+  ((DObject*)this->values)->addRef();
 }
 
 RegistryKey::~RegistryKey(void)
@@ -81,6 +82,7 @@ Subkeys::Subkeys(DStruct* dstruct, DValue const& args) : DCppObject<Subkeys>(dst
 {
   this->init();
   this->parent = args.get<DObject* >();
+  ((DObject*)this->parent)->addRef();
   this->list = Destruct::Destruct::instance().generate("DVectorObject");
   ((DObject*)list)->addRef();
 }
