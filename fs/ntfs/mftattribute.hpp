@@ -20,7 +20,7 @@
 #include "ntfs_common.hpp"
 
 class NTFS;
-class MFTEntryNode;
+class MFTNode;
 class MFTAttributeContent;
 
 PACK_START
@@ -64,15 +64,15 @@ class MFTAttribute
 private:
   std::string                   __name;
   uint64_t			__offset;
-  MFTEntryNode*			__mftEntryNode;
+  MFTNode*			__mftEntryNode;
   MFTAttribute_s		__mftAttribute;
   MFTResidentAttribute*		__residentAttribute;
   MFTNonResidentAttribute*	__nonResidentAttribute;
 public:
-		                MFTAttribute(MFTEntryNode* mftEntryNode, uint64_t offset);
+		                MFTAttribute(MFTNode* mftEntryNode, uint64_t offset);
 		                ~MFTAttribute(void);
   void                          destroy(void);
-  MFTEntryNode*		        mftEntryNode(void) const;
+  MFTNode*		        mftEntryNode(void) const;
   uint64_t		        offset(void) const;
   uint32_t		        typeId(void) const;
   uint32_t		        length(void) const;

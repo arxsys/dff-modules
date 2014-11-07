@@ -18,20 +18,20 @@
 
 #include "ntfs.hpp"
 #include "bootsector.hpp"
-#include "mftnode.hpp"
+#include "datanode.hpp"
 #include "mftentrynode.hpp"
 #include "attributes/mftattributecontenttype.hpp"
 
 using namespace Destruct;
 
-DataNode::DataNode(const std::string name, NTFS* ntfs, MFTEntryNode* mftEntryNode, bool isDirectory, bool isUsed) : Node(name, 0, NULL, ntfs), __mftEntryNode(mftEntryNode), __isCompressed(false)
+DataNode::DataNode(NTFS* ntfs, const std::string name, MFTNode* mftEntryNode) : Node(name, 0, NULL, ntfs), __mftEntryNode(mftEntryNode), __isCompressed(false)
 {
-  if (isDirectory)
+  if (mftEntryNode->isDirectory())
     this->setDir();
   else
     this->setFile();
  
-  if (!isUsed)
+  if (!(mftEntryNode->isUsed()))
     this->setDeleted();
 }
 
@@ -44,7 +44,7 @@ DataNode::~DataNode(void)
   }
 }
 
-MFTEntryNode* DataNode::mftEntryNode(MFTEntryNode* mftEntryNode)
+MFTNode* DataNode::mftEntryNode(MFTNode* mftEntryNode)
 {
   return (this->__mftEntryNode);
 }
@@ -54,7 +54,7 @@ void            DataNode::setName(const std::string name)
   this->__name = name;
 }
 
-void            DataNode::setMappingAttributes(MappingAttributesInfo const&  mappingAttributesInfo)
+void            DataNode::setMappingAttributes(MappingAttributesInfo const& mappingAttributesInfo)
 {
   this->mappingAttributesOffset = mappingAttributesInfo.mappingAttributes;
   this->__isCompressed = mappingAttributesInfo.compressed;
@@ -89,25 +89,25 @@ void		DataNode::fileMapping(FileMapping* fm)
  */
 int32_t         DataNode::readCompressed(void* buff, unsigned int size, uint64_t* offset)
 {
-  uint32_t readed = 0;
-  uint32_t compressionBlockSize = 0;
-  uint64_t clusterSize = this->__mftEntryNode->ntfs()->bootSectorNode()->clusterSize();
-  uint32_t attributeCount = 0;
+  uint32_t readed(0);
+  uint32_t compressionBlockSize(0);
+  uint32_t attributeCount(0);
+  uint64_t clusterSize(this->__mftEntryNode->ntfs()->bootSectorNode()->clusterSize());
 
   std::list<MappingAttributes >::iterator attributeOffset = this->mappingAttributesOffset.begin();
   for (; (readed < size) && (attributeOffset != this->mappingAttributesOffset.end()); ++attributeOffset)
   {
-    MappingAttributes mappingAttributes = *attributeOffset;
-    MFTAttribute* dataAttribute = mappingAttributes.entryNode->__MFTAttribute(mappingAttributes.offset);
-    MFTAttributeContent* content = dataAttribute->content();
-    Data* data = dynamic_cast<Data*>(content);  
+    MappingAttributes mappingAttributes(*attributeOffset);
+    MFTAttribute* dataAttribute(mappingAttributes.entryNode->__MFTAttribute(mappingAttributes.offset));
+    MFTAttributeContent* content(dataAttribute->content());
+    Data* data(dynamic_cast<Data*>(content));
     if (!data)
      return (0);
 
     if (!compressionBlockSize)
       compressionBlockSize = dataAttribute->compressionBlockSize();
-    uint64_t start = dataAttribute->VNCStart() * clusterSize;
-    uint64_t end = dataAttribute->VNCEnd() * clusterSize;
+    uint64_t start(dataAttribute->VNCStart() * clusterSize);
+    uint64_t end(dataAttribute->VNCEnd() * clusterSize);
     if ((start <= *offset) && (*offset < end))
     {
       int32_t read = 0;
@@ -145,91 +145,72 @@ Attributes	DataNode::_attributes(void)
   return (attr);
 }
 
-DObject*      DataNode::save(void) //const
+DValue      DataNode::save(void) const
 {
-  Destruct::Destruct& destruct = Destruct::Destruct::instance();
-  DObject* dataNode = destruct.generate("DataNode");
+  Destruct::Destruct& destruct(Destruct::Destruct::instance());
+  DObject* dataNode(destruct.generate("DataNode"));
 
   dataNode->setValue("name", RealValue<DUnicodeString>(this->name())); 
-  if (__mftEntryNode)
-    dataNode->setValue("mftEntryNode", RealValue<DUInt64>(__mftEntryNode->offset()));
-  dataNode->setValue("isDirectory", RealValue<DUInt8>(this->isDir()));
-  if (this->isDeleted()) 
-    dataNode->setValue("isUsed", RealValue<DUInt8>(0));
-  else
-    dataNode->setValue("isUsed", RealValue<DUInt8>(1));
-
+  if (this->__mftEntryNode)
+    dataNode->setValue("mftEntryNode", RealValue<DObject* >(this->__mftEntryNode->save()));
   dataNode->setValue("size", RealValue<DUInt64>(this->__size));
   dataNode->setValue("isCompressed", RealValue<DUInt8>(this->__isCompressed));
 
-  DObject* dmappingAttributes = destruct.generate("DVectorObject");
+  DObject* dmappingAttributes(destruct.generate("DVectorObject"));
   std::list<MappingAttributes>::const_iterator ma = this->mappingAttributesOffset.begin();
   for (; ma != this->mappingAttributesOffset.end(); ++ma)
-  {
-    DObject* dma = ma->save(); 
-    dmappingAttributes->call("push", RealValue<DObject*>(dma));
-    dma->destroy(); // XXX ?
-  }
-
+    dmappingAttributes->call("push", RealValue<DObject*>(ma->save()));
   dataNode->setValue("mappingAttributes", RealValue<DObject*>(dmappingAttributes));
 
-// a desesrialize des MFTEntryNode // check doublon et pas cree 2 fois ? 
-// donc du coup les truc qui sont ds MFTEntryInfo->nodes(push) ca sert a ququchose ou c les meme ????
-// ou c juste pour les passer en param ??
+  // a desesrialize des MFTNode // check doublon et pas cree 2 fois ? 
+  // donc du coup les truc qui sont ds MFTEntryInfo->nodes(push) ca sert a ququchose ou c les meme ????
+  // ou c juste pour les passer en param ??
 
-  return (dataNode);
+  return (RealValue<DObject*>(dataNode));
 }
 
-
-DataNode*        DataNode::load(NTFS* ntfs, MFTEntryNode* entryNode, DValue const& args)
+DataNode*        DataNode::load(NTFS* ntfs, DValue const& args)
 {
+  //ici map <offset, mftentrynode> //comme ca on gardes les pointeur pour pas les recree deux fois ? 
+  // bien reflechir si ca arrive pourquoi $MFT marche pas et d autre truc ds le genre ...
   DObject* dnode = args.get<DObject*>();
   if (dnode != DNone)
   {
-    DUnicodeString dnodeName = dnode->getValue("name").get<DUnicodeString>();
-    DUInt8 dnodeIsDirectory =  dnode->getValue("isDirectory").get<DUInt8>();
-    DUInt8 dnodeIsUsed =  dnode->getValue("isUsed").get<DUInt8>(); 
-    DUInt8 dnodeIsCompressed =  dnode->getValue("isCompressed").get<DUInt8>(); 
-    DUInt64 dnodeSize =  dnode->getValue("size").get<DUInt64>(); 
-    //mapping attributes
+    MFTNode* mftEntryNode(NULL);
+    DUnicodeString name(dnode->getValue("name").get<DUnicodeString>());
+    DObject* mftEntryNodeObject(dnode->getValue("mftEntryNode").get<DObject*>());
+    if (mftEntryNodeObject->instanceOf()->name() == "MFTNode")
+      mftEntryNode = MFTNode::load(ntfs, RealValue<DObject*>(mftEntryNodeObject));
+    else //MFTNode
+      mftEntryNode = MFTEntryNode::load(ntfs, RealValue<DObject*>(mftEntryNodeObject));
+    DataNode* dataNode(new DataNode(ntfs, name, mftEntryNode));
+    mftEntryNodeObject->destroy();
+
     MappingAttributesInfo mappingAttributesInfo;
-    mappingAttributesInfo.size = dnodeSize;
-    mappingAttributesInfo.compressed = dnodeIsCompressed;
+    mappingAttributesInfo.size = dnode->getValue("size").get<DUInt64>();
+    mappingAttributesInfo.compressed = dnode->getValue("isCompressed").get<DUInt8>();
    
-    DObject* dmappingAttributes = dnode->getValue("mappingAttributes").get<DObject*>();
-    DUInt64 size = dmappingAttributes->call("size").get<DUInt64>();
+    DObject* dmappingAttributes(dnode->getValue("mappingAttributes").get<DObject*>());
+    DUInt64 size(dmappingAttributes->call("size").get<DUInt64>());
 
     for (DUInt64 index = 0; index < size; ++index)
     {
-      DValue mappingAttributes = dmappingAttributes->call("get", RealValue<DUInt64>(index));
-      mappingAttributesInfo.mappingAttributes.push_back(MappingAttributes::load(ntfs, entryNode->dataNode(), mappingAttributes));
-    }    
-
+      DValue ma(dmappingAttributes->call("get", RealValue<DUInt64>(index)));
+      mappingAttributesInfo.mappingAttributes.push_back(MappingAttributes::load(ntfs, ma));
+    }   
     dmappingAttributes->destroy();
+    dataNode->setMappingAttributes(mappingAttributesInfo);     
     dnode->destroy();
-
-    try 
-    {
-      //std::cout << "creating node " << dnodeName << std::endl;
-      DataNode* dataNode = new DataNode(dnodeName, ntfs, entryNode, dnodeIsDirectory, dnodeIsUsed);
-      dataNode->setMappingAttributes(mappingAttributesInfo);     
- 
-      return (dataNode);
-    }
-    catch (...)
-    {  
-      std::cout << "Catch DataNode " << std::endl;
-      return (NULL);
-    }
+    return (dataNode);
   }
 
+  dnode->destroy();
   return (NULL);
 }
 
 /**
  *  MappingAttributes
  */
-
 bool    MappingAttributes::operator==(MappingAttributes const& other)
 {
   if ((other.offset == offset) && (other.entryNode == entryNode))
@@ -237,26 +218,30 @@ bool    MappingAttributes::operator==(MappingAttributes const& other)
   return (false);
 }
 
-DObject* MappingAttributes::save(void) const
+DValue  MappingAttributes::save(void) const
 {
-  DObject* ma = Destruct::Destruct::instance().generate("MappingAttributes");
+  DObject* ma(Destruct::Destruct::instance().generate("MappingAttributes"));
 
   ma->setValue("offset", RealValue<DUInt16>(offset));
-  ma->setValue("mftEntryNode", RealValue<DUInt64>(entryNode->offset()));
+  ma->setValue("mftEntryNode", entryNode->save());
 
-  return (ma);
+  return (RealValue<DObject*>(ma));
 }
 
-
-MappingAttributes     MappingAttributes::load(NTFS* ntfs, Node* dataNode,  DValue const& args)
+MappingAttributes     MappingAttributes::load(NTFS* ntfs, DValue const& args)
 {
-  DObject* dma = args.get<DObject* >();
+  DObject* dma(args.get<DObject* >());
 
-  uint16_t offset = dma->getValue("offset").get<DUInt16>();
-  uint64_t mftEntryNodeOffset = dma->getValue("mftEntryNode").get<DUInt64>();
-  
-  MFTEntryNode* mftEntryNode  = new MFTEntryNode(ntfs, dataNode, mftEntryNodeOffset, "MFTEntry", NULL); //MANAGER 
+  uint16_t offset(dma->getValue("offset").get<DUInt16>());
+  DObject* mftEntryNodeObject(dma->getValue("mftEntryNode").get<DObject*>());
+  MFTNode* mftEntryNode(NULL);
 
+  if (mftEntryNodeObject->instanceOf()->name() == "MFTNode")
+    mftEntryNode = MFTNode::load(ntfs, RealValue<DObject*>(mftEntryNodeObject));
+  else
+    mftEntryNode = MFTEntryNode::load(ntfs, RealValue<DObject*>(mftEntryNodeObject));
+
+  mftEntryNodeObject->destroy(); 
   dma->destroy();
   return (MappingAttributes(offset, mftEntryNode));;
 }

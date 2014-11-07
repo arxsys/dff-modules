@@ -19,7 +19,7 @@
 #include "mftattribute.hpp"
 
 #include "mftentrynode.hpp"
-#include "mftnode.hpp"
+#include "datanode.hpp"
 #include "ntfs.hpp"
 #include "bootsector.hpp"
 

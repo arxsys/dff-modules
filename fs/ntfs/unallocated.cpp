@@ -18,7 +18,7 @@
 #include "bootsector.hpp"
 #include "mftmanager.hpp"
 #include "ntfs.hpp"
-#include "mftnode.hpp"
+#include "datanode.hpp"
 #include "mftentrynode.hpp"
 #include "attributes/mftattributecontenttype.hpp"
 
@@ -36,14 +36,15 @@ Unallocated::Unallocated(NTFS* ntfs) : Node("FreeSpace", 0, NULL, ntfs), __ntfs(
   this->setSize(size);
 }
 
+Unallocated::Unallocated(NTFS* ntfs, std::vector<Range> ranges, uint64_t size) : Node("FreeSpace", size, NULL, ntfs), __ranges(ranges), __ntfs(ntfs)
+{
+}
+
 std::vector<Range> Unallocated::ranges(void)
 {
   std::vector<Range> ranges;
-  MFTEntryManager* mftManager = this->__ntfs->mftManager();
-  if (mftManager == NULL)
-    throw std::string("MFT Manager is null");
-
-  DataNode* bitmapNode = mftManager->node(6); //$BITMAP_FILE_ID
+  const MFTEntryManager& mftManager = this->__ntfs->mftManager();
+  DataNode* bitmapNode = mftManager.node(6); //$BITMAP_FILE_ID
   if (!bitmapNode)
     return (ranges);
 
@@ -77,4 +78,34 @@ void    Unallocated::fileMapping(FileMapping* fm)
     fm->push(offset , (1 + (*range).end() - (*range).start()) * clusterSize, this->__ntfs->fsNode(), (*range).start() * clusterSize);
     offset += (1 + (*range).end() - (*range).start()) * clusterSize;
   }
+}
+
+DValue  Unallocated::save(void) const
+{
+  DObject* unallocated = Destruct::Destruct::instance().generate("Unallocated");
+  DObject* dranges = Destruct::Destruct::instance().generate("DVectorObject");
+  std::vector<Range>::const_iterator range = this->__ranges.begin();
+  for (; range != this->__ranges.end(); ++range)
+    dranges->call("push", (*range).save());
+  
+  unallocated->setValue("size", RealValue<DUInt64>(this->size()));
+  unallocated->setValue("ranges", RealValue<DObject*>(dranges));
+
+  return (RealValue<DObject*>(unallocated)); 
+}
+
+Unallocated*    Unallocated::load(NTFS* ntfs, DValue const& args)
+{
+  DObject* unallocated = args.get<DObject*>();
+  DUInt64  unallocatedSize = unallocated->getValue("size").get<DUInt64>();
+  DObject* dranges = unallocated->getValue("ranges").get<DObject*>();
+  DUInt64 size = dranges->call("size").get<DUInt64>();
+  std::vector<Range> ranges;
+
+  for (DUInt64 index = 0; index < size; ++index)
+    ranges.push_back(Range::load(dranges->call("get", RealValue<DUInt64>(index))));
+
+  dranges->destroy();
+  unallocated->destroy();
+  return (new Unallocated(ntfs, ranges, unallocatedSize));
 }

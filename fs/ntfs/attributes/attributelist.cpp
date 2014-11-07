@@ -22,7 +22,7 @@
 #include "attributelist.hpp"
 #include "mftattributecontent.hpp"
 #include "mftattribute.hpp"
-#include "mftnode.hpp"
+#include "datanode.hpp"
 #include "mftentrynode.hpp"
 #include "mftmanager.hpp"
 
@@ -132,17 +132,23 @@ MFTAttributes   AttributeList::mftAttributes(void)
 
   for (; item != this->__attributes.end(); ++item)
   {
-    MFTEntryNode* mftEntryNode = this->mftAttribute()->mftEntryNode();
+    MFTNode* mftEntryNode = this->mftAttribute()->mftEntryNode();
     if (mftEntryNode->offset() == item->mftEntryId() * MFTEntrySize) 
       continue;
 
     uint64_t entryId = item->mftEntryId();
-    MFTEntryManager* mftManager = this->mftAttribute()->ntfs()->mftManager();
-    MFTEntryNode* itemEntryNode = mftManager->entryNode(entryId);
+    MFTEntryManager& mftManager = this->mftAttribute()->ntfs()->mftManager();
+    MFTNode* itemEntryNode = mftManager.entryNode(entryId);
 
     if (itemEntryNode == NULL)
-      mftManager->create(entryId);
-    itemEntryNode = mftManager->entryNode(entryId);
+    {
+     DataNode* mn = dynamic_cast<DataNode*>(mftEntryNode->mftNode());
+     if (mn)
+      mftManager.createEntry(mn, entryId);
+     else
+      mftManager.createEntry(mftEntryNode->mftNode(), entryId);
+    }
+    itemEntryNode = mftManager.entryNode(entryId);
 
     std::vector<MFTAttribute*> attributes = itemEntryNode->mftAttributes(); 
     std::vector<MFTAttribute*>::iterator attribute = attributes.begin();

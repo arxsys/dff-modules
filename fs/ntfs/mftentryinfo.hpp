@@ -19,7 +19,7 @@
 
 #include "ntfs_common.hpp"
 
-class MFTEntryNode;
+class MFTNode;
 class DataNode;
 
 struct MFTId    //serializable
@@ -36,19 +36,15 @@ public:
 class MFTEntryInfo
 {
 public:
-  MFTEntryInfo(MFTEntryNode* entryNode);
+  MFTEntryInfo(MFTNode* entryNode);
   ~MFTEntryInfo();
   uint64_t                      id;
   std::list<MFTId>              childrenId; //not use as we don't use the child method to link nodes
-  DataNode*                      node; //this is need to link other nodes and do final / directory linking  (can't link to an entry)
-  std::list<DataNode*>           nodes;//nodes for all $DATA attribute (unamed main $DATA and name ads)
-  MFTEntryNode*                 entryNode(void) const;
-
-  //static MFTEntryInfo*          fromDObject(DObject* object);  //load ?
-  //static MFTEntryInfo*          load(Destruct::DValue const& args);
-  Destruct::DObject*            save(void) const; //save ? 
+  DataNode*                     node; //this is need to link other nodes and do final / directory linking  (can't link to an entry)
+  std::list<DataNode*>          nodes;//nodes for all $DATA attribute (unamed main $DATA and name ads)
+  MFTNode*                      entryNode(void) const;
 private:
-  MFTEntryNode*                 __entryNode; //entry is related to different node causes of ADS etc...
+  MFTNode*                      __entryNode; //entry is related to different node causes of ADS etc...
 };
 
 #endif

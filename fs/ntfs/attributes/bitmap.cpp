@@ -17,6 +17,10 @@
 #include "bitmap.hpp"
 #include "mftattribute.hpp"
 
+/**
+ * Range
+ */ 
+
 Range::Range(uint64_t start, uint64_t end) : __start(start), __end(end)
 {
 }
@@ -30,6 +34,26 @@ uint64_t Range::end(void) const
 {
   return (this->__end);
 }
+
+Range   Range::load(Destruct::DValue const& args)
+{
+  Destruct::DObject* drange = args.get<Destruct::DObject*>();
+  drange->destroy();
+  return (Range(drange->getValue("start").get<DUInt64>(), drange->getValue("end").get<DUInt64>()));
+}
+
+Destruct::DValue  Range::save(void) const
+{
+  Destruct::DObject* range = Destruct::Destruct::instance().generate("Range");
+  range->setValue("start", Destruct::RealValue<DUInt64>(this->__start));
+  range->setValue("end", Destruct::RealValue<DUInt64>(this->__end));
+
+  return (Destruct::RealValue<Destruct::DObject*>(range));
+}
+
+/**
+ * Bitmap
+ */
 
 Bitmap::Bitmap(MFTAttribute* mftAttribute) : MFTAttributeContent(mftAttribute)
 {
@@ -98,3 +122,5 @@ Attributes	Bitmap::_attributes(void)
   MAP_ATTR("Attributes", MFTAttributeContent::_attributes())
   return (attrs);
 }
+
+

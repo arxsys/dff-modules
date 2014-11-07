@@ -22,7 +22,7 @@
 #include "attributes/filename.hpp"
 #include "attributes/mftattributecontenttype.hpp"
 
-MFTAttribute::MFTAttribute(MFTEntryNode* mftEntryNode, uint64_t offset) : __offset(offset), __mftEntryNode(mftEntryNode), __residentAttribute(NULL), __nonResidentAttribute(NULL)
+MFTAttribute::MFTAttribute(MFTNode* mftEntryNode, uint64_t offset) : __offset(offset), __mftEntryNode(mftEntryNode), __residentAttribute(NULL), __nonResidentAttribute(NULL)
 {
   VFile*  vfile = mftEntryNode->open();
   if (vfile->seek(offset) != offset)
@@ -107,7 +107,7 @@ MFTAttribute::~MFTAttribute(void)
   this->destroy();
 }
 
-MFTEntryNode*		MFTAttribute::mftEntryNode(void) const
+MFTNode*		MFTAttribute::mftEntryNode(void) const
 {
   return (this->__mftEntryNode);
 }

@@ -17,6 +17,7 @@
 #ifndef __NTFS_UNALLOCATED_HH__
 #define __NTFS_UNALLOCATED_HH__
 
+#include "ntfs_common.hpp"
 #include "attributes/bitmap.hpp"
 
 class NTFS;
@@ -25,9 +26,13 @@ class Unallocated : public Node
 {
 public:
   Unallocated(NTFS* ntfs);
+  Unallocated(NTFS* ntfs, std::vector<Range> ranges, uint64_t size);
+ 
   void  fileMapping(FileMapping* fm);
   //Attributes	                       _attributes(void);
   std::vector<Range>  ranges(void);
+  static Unallocated* load(NTFS* ntfs, Destruct::DValue const& arg);
+  Destruct::DValue    save(void) const;
 private:
   std::vector<Range>  __ranges;//for caving and recovery or must use large cache value for filemapping cache
   NTFS*               __ntfs;

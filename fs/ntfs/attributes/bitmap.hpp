@@ -29,8 +29,10 @@ class Range
 {
 public:
   Range(uint64_t start, uint64_t end);
-  uint64_t      start(void) const;
-  uint64_t      end(void) const;
+  uint64_t              start(void) const;
+  uint64_t              end(void) const;
+  static Range          load(Destruct::DValue const& args);
+  Destruct::DValue      save(void) const;
 private:
   uint64_t      __start;
   uint64_t      __end;

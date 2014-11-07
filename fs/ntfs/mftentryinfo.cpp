@@ -22,7 +22,7 @@
 //
 #include "mftentryinfo.hpp"
 
-#include "mftnode.hpp"
+#include "datanode.hpp"
 #include "mftentrynode.hpp"
 
 /**
@@ -49,7 +49,7 @@ bool  MFTId::operator<(MFTId const& other)
 /**
  *  MFTEntryInfo
  */
-MFTEntryInfo::MFTEntryInfo(MFTEntryNode* entryNode) : id(0), node(NULL), __entryNode(entryNode)
+MFTEntryInfo::MFTEntryInfo(MFTNode* entryNode) : id(0), node(NULL), __entryNode(entryNode)
 {
 }
 
@@ -58,51 +58,7 @@ MFTEntryInfo::~MFTEntryInfo()
 //delete node & unlink
 }
 
-MFTEntryNode*           MFTEntryInfo::entryNode(void) const
+MFTNode*           MFTEntryInfo::entryNode(void) const
 {
   return (this->__entryNode);
 }
-
-Destruct::DObject*      MFTEntryInfo::save(void) const
-{
-  Destruct::Destruct& destruct = Destruct::Destruct::instance();
-  Destruct::DObject* dmftEntry = destruct.generate("MFTEntryInfo");
-  Destruct::DObject* dnodes = destruct.generate("DVectorObject");
-
-  //++nodes; HEIN ???? c surcharger ou ca ?
-  dmftEntry->setValue("id", Destruct::RealValue<DUInt64>(this->id));
-  if (this->node)
-    dmftEntry->setValue("node", Destruct::RealValue<Destruct::DObject*>(this->node->save())); //XXX verifie qu il n y est pas 2 ref ! 
-  for (std::list<DataNode*>::const_iterator dataNode = this->nodes.begin(); dataNode != this->nodes.end(); ++dataNode)
-  {
-    if (*dataNode)
-      dnodes->call("push", Destruct::RealValue<Destruct::DObject*>((*dataNode)->save()));
-  }
-  dmftEntry->setValue("nodes", Destruct::RealValue<Destruct::DObject*>(dnodes)); 
-  dmftEntry->setValue("entryNode", Destruct::RealValue<DUInt64>(this->__entryNode->offset()));
-  ///XXX MFTid List ? ?? not used yet  
- 
-  return (dmftEntry);
-}
-
-//XXX si c pas usefull why ?
-
-//MFTEntryInfo*   MFTEntryInfo::load(Destruct::DValue const& args)
-//{
-  //Destruct::DObject* dmftEntryInfo = args.get<Destruct::DObject*>();
-
-  ////mftEntryInfo->addAttribute(Destruct::DAttribute(Destruct::DType::DUInt64Type, "id"));
-  ////mftEntryInfo->addAttribute(Destruct::DAttribute(Destruct::DType::DObjectType, "childrenId"));
-  ////mftEntryInfo->addAttribute(Destruct::DAttribute(Destruct::DType::DObjectType, "node"));
-  ////mftEntryInfo->addAttribute(Destruct::DAttribute(Destruct::DType::DObjectType, "nodes"));
-
-  ////mftEntryInfo->addAttribute(Destruct::DAttribute(Destruct::DType::DUInt64Type, "entryNode"));
-  ////DUInt64 entryNodeOffset = mftEntryInfo.getValue("entryNode")->get<DUInt64>();
-  ////
-  ////MFTEntryNode(mftEntryManager->ntfs(), mftEntryManager->masterDataNode(), entryNode->offset, std::string("MFTEntry"), NULL);
-  ////
-  ////dmftEntryInfo->destroy();
-  
-
-  //return new MFTEntryInfo(0);
-//}

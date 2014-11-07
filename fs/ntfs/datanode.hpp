@@ -19,7 +19,8 @@
 
 #include "ntfs_common.hpp"
 
-class MFTEntryNode;
+class MFTNode;
+class DataNode;
 class NTFS;
 
 using namespace Destruct;
@@ -27,12 +28,12 @@ using namespace Destruct;
 class MappingAttributes
 {
 public:
-  MappingAttributes(uint16_t _offset, MFTEntryNode* _entryNode) : offset(_offset), entryNode(_entryNode)  {};
-  uint16_t              offset;
-  MFTEntryNode*         entryNode; //because of ATTRIBUTE_LIST $data could be describe by different MFT ! 
-  bool  operator==(MappingAttributes const& other);
-  DObject*    save(void) const;
-  static MappingAttributes     load(NTFS* ntfs, Node* dataNode, DValue const& args);
+  MappingAttributes(uint16_t _offset, MFTNode* _entryNode) : offset(_offset), entryNode(_entryNode)  {};
+  uint16_t                     offset;  //AttributeOffset 
+  MFTNode*                     entryNode; //because of ATTRIBUTE_LIST $data could be described by different MFT ! 
+  bool                         operator==(MappingAttributes const& other);
+  DValue                       save(void) const;
+  static MappingAttributes     load(NTFS* ntfs, DValue const& args);
 };
 
 class MappingAttributesInfo //xxx ca sert a rien virer cettte class ou utiliser ne struct DataNode
@@ -43,23 +44,23 @@ public:
   bool     compressed;
 };
 
-class DataNode : public Node// MFTEntryNode
+class DataNode : public Node// MFTNode
 {
 public:
-  DataNode(const std::string name, NTFS* ntfs, MFTEntryNode* mftEntryNode, bool isDirectory, bool isUsed);
+  DataNode(NTFS* ntfs, const std::string name, MFTNode* mftEntryNode);
   ~DataNode();
-  static                               DataNode* load(NTFS* ntfs, MFTEntryNode* entryNode,  DValue const& args);
+  static                               DataNode* load(NTFS* ntfs, DValue const& args);
   void                                 setName(const std::string name);
   Attributes	                       _attributes(void);
   void		                       fileMapping(FileMapping* fm);
   void                                 setCompressed(bool isCompressed);
   void                                 setMappingAttributes(MappingAttributesInfo const& mappingAttributesInfo);
-  MFTEntryNode*                        mftEntryNode(MFTEntryNode* mftENtryNode = NULL);
+  MFTNode*                             mftEntryNode(MFTNode* mftENtryNode = NULL);
   bool                                 isCompressed(void) const;
   int32_t                              readCompressed(void* buff, unsigned int size, uint64_t* offset);
-  DObject*                             save(void); //const;
+  DValue                               save(void) const;
 private:
-  MFTEntryNode*	                       __mftEntryNode;
+  MFTNode*	                       __mftEntryNode;
   bool                                 __isCompressed;
   std::list<MappingAttributes>         mappingAttributesOffset; 
 };

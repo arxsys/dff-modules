@@ -20,6 +20,8 @@
 #include "ntfs_common.hpp"
 #include "attributes/indexroot.hpp"
 
+#include "datanode.hpp"
+
 class NTFS;
 class MFTAttribute;
 typedef std::vector<MFTAttribute* > MFTAttributes;
@@ -45,20 +47,20 @@ typedef struct s_MFTEntry
 }		MFTEntry;
 PACK_END
 
-class MFTEntryNode : public Node
+class MFTNode : public Node //ofset relative to the choosen $MFT  (MFTNode)
 {
 private:
   NTFS*			        __ntfs; 
-  Node*			        __dataNode;
+  Node* 	                __mftNode;
   MFTEntry		        __MFTEntry;
   uint64_t		        __offset;
   uint64_t		        __state;
   void                          readAttributes(void);
 public:
-			        MFTEntryNode(NTFS* ntfs, Node* dataNode, uint64_t offset, std::string name, Node* parent);
-			        ~MFTEntryNode();
-  NTFS*			        ntfs(void);
-  Node*			        dataNode(void);
+			        explicit MFTNode(NTFS* ntfs, Node* fsNode, uint64_t mftOffset,  std::string name, Node* parent);
+			        ~MFTNode();
+  NTFS*			        ntfs(void) const;
+  Node*			        mftNode(void) const;
   virtual uint64_t	        fileMappingState(void);
   virtual void		        fileMapping(FileMapping* fm);
   virtual uint64_t	        _attributesState(void);
@@ -87,6 +89,17 @@ public:
   MFTAttributes                 data(void); //const
   MFTAttributes                 data(std::string const& data);
   std::vector<IndexEntry>       indexes(void); // const
+
+  static  MFTNode*              load(NTFS* ntfs, Destruct::DValue const& value); 
+  virtual Destruct::DValue      save(void) const; 
+};
+
+class MFTEntryNode : public MFTNode//Offset relative to the filesystem 
+{
+public:
+  MFTEntryNode(NTFS* ntfs, DataNode* mftNode, uint64_t offset, std::string name, Node* parent = NULL); 
+  static  MFTEntryNode*         load(NTFS* ntfs, Destruct::DValue const& value); 
+  Destruct::DValue              save(void) const;
 };
 
 #endif
