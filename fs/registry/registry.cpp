@@ -24,7 +24,7 @@
 
 void    Registry::declare(void)
 {
-  Destruct::Destruct& destruct = Destruct::Destruct::instance();
+  Destruct::DStructs& destruct = Destruct::DStructs::instance();
 
   registerDCpp(StreamVFile)
   registerDCpp(RegistryOpt)
@@ -39,17 +39,17 @@ void    Registry::declare(void)
   registerDCpp(RegistryValueData)
 }
 
-Registry::Registry(Destruct::DStruct* dstruct) : mfso("Registry"), DCppObject<Registry>(dstruct), __opt(NULL), __regf(NULL), __destruct(Destruct::Destruct::instance())
+Registry::Registry(Destruct::DStruct* dstruct) : mfso("Registry"), DCppObject<Registry>(dstruct), __opt(NULL), __regf(NULL), __destruct(Destruct::DStructs::instance())
 {
   std::cout << "Registry(DStruct* dstruct" << std::endl;
 }
 
-Registry::Registry(Registry const& copy) : mfso("Registry"), DCppObject<Registry>(copy), __opt(NULL), __regf(NULL), __destruct(Destruct::Destruct::instance())
+Registry::Registry(Registry const& copy) : mfso("Registry"), DCppObject<Registry>(copy), __opt(NULL), __regf(NULL), __destruct(Destruct::DStructs::instance())
 {
   std::cout << "Registry(Registry const&" << std::endl;
 }
 
-Registry::Registry() :  mfso("Registry"), DCppObject<Registry>(NULL), __opt(NULL), __regf(NULL), __destruct(Destruct::Destruct::instance())
+Registry::Registry() :  mfso("Registry"), DCppObject<Registry>(NULL), __opt(NULL), __regf(NULL), __destruct(Destruct::DStructs::instance())
 {
   std::cout << "Registry() DStruct is NULL" << std::endl;
 }
@@ -80,7 +80,7 @@ void    Registry::start(Attributes args)
   std::cout << "time stamp " << this->__regf->time().get<Destruct::DUnicodeString>() << std::endl
             << "version " << this->__regf->version().get<Destruct::DUnicodeString>() << std::endl;
 
-  RegistryKey* key = new RegistryKey(Destruct::Destruct::instance().find("RegistryKey"), RealValue<DObject*>(DNone));
+  RegistryKey* key = new RegistryKey(Destruct::DStructs::instance().find("RegistryKey"), RealValue<DObject*>(DNone));
   DInt64 x = 0x1000 + this->__regf->keyrecord;
   streamVFile->seek(x);
   serializer->deserialize(*streamVFile, key);
@@ -99,7 +99,7 @@ void    Registry::start(Attributes args)
 
 void            Registry::toFile(std::string filePath, Destruct::DObject* object, std::string type)
 {
-  Destruct::Destruct& destruct = Destruct::Destruct::instance();
+  Destruct::DStructs& destruct = Destruct::DStructs::instance();
 
   DMutableObject* arg = static_cast<DMutableObject*>(destruct.generate("DMutable"));
   arg->setValueAttribute(DType::DUnicodeStringType, "filePath", RealValue<DUnicodeString>(filePath)); 
@@ -116,7 +116,7 @@ void            Registry::toFile(std::string filePath, Destruct::DObject* object
 
 void            Registry::show(Destruct::DObject* object)
 {
-  Destruct::DStream* cout = static_cast<Destruct::DStream*>(Destruct::Destruct::instance().generate("DStreamCout"));
+  Destruct::DStream* cout = static_cast<Destruct::DStream*>(Destruct::DStructs::instance().generate("DStreamCout"));
   Destruct::DSerialize* text = Destruct::DSerializers::to("Text");
 
   text->serialize(*cout, object);

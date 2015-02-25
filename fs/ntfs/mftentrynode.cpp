@@ -486,7 +486,7 @@ std::vector<IndexEntry> MFTNode::indexes(void)// const
 
 Destruct::DValue        MFTNode::save(void) const
 {
-  Destruct::DObject* mftNode(Destruct::Destruct::instance().generate("MFTNode"));
+  Destruct::DObject* mftNode(Destruct::DStructs::instance().generate("MFTNode"));
   mftNode->setValue("offset", RealValue<DUInt64>(this->offset()));
   
   return (Destruct::RealValue<Destruct::DObject*>(mftNode)); 
@@ -512,7 +512,7 @@ MFTEntryNode::MFTEntryNode(NTFS* ntfs, DataNode* mftNode, uint64_t offset, std::
 
 Destruct::DValue MFTEntryNode::save(void) const
 {
-  Destruct::DObject* mftEntryNode(Destruct::Destruct::instance().generate("MFTEntryNode"));
+  Destruct::DObject* mftEntryNode(Destruct::DStructs::instance().generate("MFTEntryNode"));
   DataNode* dataNode(static_cast<DataNode*>(this->mftNode()));
 
   mftEntryNode->setValue("offset", RealValue<DUInt64>(this->offset()));

@@ -26,7 +26,7 @@ RegistryOpt::RegistryOpt(Attributes args, DStruct* dstruct) : DCppObject<Registr
   if (args.find("file") != args.end())
   {
     Node* node = args["file"]->value<Node* >();
-    this->__fsNode = new NodeContainer(Destruct::Destruct::instance().find("NodeContainer"), node);
+    this->__fsNode = new NodeContainer(Destruct::DStructs::instance().find("NodeContainer"), node);
   }
   else
     throw envError("Registry module need a file argument.");

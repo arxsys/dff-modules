@@ -48,6 +48,8 @@ void    MFTEntryManager::init(NTFS* ntfs)
 {
   //XXX check for mirror !
   this->__ntfs = ntfs;
+  //std::cout << "Using mft " << this->__ntfs->bootSectoreNode()->MFTMirrorLogicalClusterNumber() << " rather than " << this->__ntfs->bootSectorNode()->MFTLogicalClusterNumber() << std::endl;
+  //this->__masterMFTOffset = this->__ntfs->bootSectorNode()->MFTMirrorLogicalClusterNumber() * this->__ntfs->bootSectorNode()->clusterSize();
   this->__masterMFTOffset = this->__ntfs->bootSectorNode()->MFTLogicalClusterNumber() * this->__ntfs->bootSectorNode()->clusterSize();
 
   MFTNode* mftNode = new MFTNode(this->__ntfs, this->__ntfs->fsNode(), this->__masterMFTOffset, "MFTNode", NULL);
@@ -298,6 +300,7 @@ MFTEntryInfo*  MFTEntryManager::createData(MFTNode* mftEntryNode, int64_t id)
   //MFTNode* mftEntryNode = new MFTNode(this->__ntfs, fsNode, offset, std::string("MFTEntry"), NULL);
   //if (mftEntryNode == NULL)
     //throw std::string("Can't allocate MFTNode");
+
   MFTEntryInfo* mftEntryInfo = NULL; 
   if (id == -1)
     mftEntryInfo = new MFTEntryInfo(mftEntryNode);
@@ -325,6 +328,8 @@ MFTEntryInfo*  MFTEntryManager::createData(MFTNode* mftEntryNode, int64_t id)
   /* 
    * Set node Size & attributes offset for filemaping
    */
+
+
   std::map<std::string, MappingAttributesInfo > mapDataInfo;
   std::vector<MFTAttribute*> datas = mftEntryNode->data();
   if (datas.size() == 0)
@@ -369,7 +374,15 @@ MFTEntryInfo*  MFTEntryManager::createData(MFTNode* mftEntryNode, int64_t id)
       mftEntryInfo->node = dataNode;
     mftEntryInfo->nodes.push_back(dataNode); 
   }
-  
+ 
+  //ads found but no default node (ads on directory ? like ads on '.')
+  if (mftEntryInfo->node == NULL && mftEntryInfo->nodes.size())
+  {
+    DataNode* dataNode = new DataNode(this->__ntfs, name, mftEntryNode);
+    mftEntryInfo->node = dataNode;
+    mftEntryInfo->nodes.push_back(dataNode);
+  }
+ 
   return (mftEntryInfo);
 }
 
@@ -387,6 +400,7 @@ void    MFTEntryManager::linkOrphanEntries(void)
     {
       if (((*dataNode) == NULL) || ((*dataNode)->parent()))
         continue;
+      
       MFTAttribute* attribute = (*dataNode)->mftEntryNode()->findMFTAttribute($FILE_NAME); //must check for all ADS too
       if (attribute)
       {
@@ -403,6 +417,9 @@ void    MFTEntryManager::linkOrphanEntries(void)
           else 
             parent->addChild(*dataNode);
         }
+        else  //we forgot this one : no parent is found but can be a tree of files 
+          this->__ntfs->orphansNode()->addChild(*dataNode);
+ 
         delete fileName;
       }
       else
@@ -437,8 +454,6 @@ void    MFTEntryManager::searchUnallocated(Unallocated* unallocated)
   uint64_t parsed = 0;
   VFile* fsFile = this->__ntfs->fsNode()->open();
 
-  this->__unallocatedOffset = Destruct::Destruct::instance().generate("DVectorUInt64"); //XXX remove if use node serialization directly
-//XXX needrange for node unallocateNode to push it but not to reconstruct as we save node now
   for (uint64_t rangeCount = 0; range != ranges.end(); ++range, ++rangeCount) 
   {
     std::ostringstream state;
@@ -452,12 +467,11 @@ void    MFTEntryManager::searchUnallocated(Unallocated* unallocated)
       fsFile->read(&signature, 4);
         
       if (signature == MFT_SIGNATURE_FILE)
-        static_cast<DObject*>(this->__unallocatedOffset)->call("push", RealValue<DUInt64>(offset));
+        this->__unallocatedOffsets.push_back(offset);
     }
   }
   uint64_t recovered = this->linkUnallocated(unallocated);
   std::ostringstream state;
-  std::cout << "Recovered " << recovered << "/" << parsed;
   state << "Recovered " << recovered << "/" << parsed;
   this->__ntfs->setStateInfo(state.str());
 
@@ -468,17 +482,13 @@ uint64_t MFTEntryManager::linkUnallocated(Unallocated* unallocated)
 {
   uint64_t recovered = 0;
 
-  DObject* vector = this->__unallocatedOffset;
-
-  DUInt64 count = vector->call("size").get<DUInt64>();
-  for (DUInt64 index = 0; index < count; index++)
+  std::vector<uint64_t>::const_iterator unallocatedOffset = this->__unallocatedOffsets.begin(); 
+  for (; unallocatedOffset != this->__unallocatedOffsets.end(); ++unallocatedOffset)
   {
     try
     {
-      DUInt64 offset = vector->call("get", RealValue<DUInt64>(index)).get<DUInt64>();
-      ////new MFTEntryNode();
-      MFTEntryInfo* entryInfo = this->createFromOffset(offset); //XXX XXX ? c trs ok 
-      std::list<DataNode* >::const_iterator dataNode = entryInfo->nodes.begin(); //nodes ou node ??
+      MFTEntryInfo* entryInfo = this->createFromOffset(*unallocatedOffset);
+      std::list<DataNode* >::const_iterator dataNode = entryInfo->nodes.begin();
       for ( ; dataNode != entryInfo->nodes.end(); ++dataNode)
       {
         if ((*dataNode))
@@ -525,7 +535,7 @@ Node*  MFTEntryManager::mapLink(DataNode* node)// const
   if (!mftEntryNode)
     return (NULL);
 
-  MFTAttributes reparses = mftEntryNode->findMFTAttributes($REPARSE_POINT);
+  MFTAttributes reparses = mftEntryNode->findMFTAttributes($REPARSE_POINT); //XXX ??? ici try catch pour dump c+ 1 qui throw ds reparsepoint
   if (reparses.size())
   {
     MFTAttributes::iterator attribute = reparses.begin();

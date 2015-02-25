@@ -31,7 +31,7 @@ RegistryValues::RegistryValues(DStruct* dstruct, DValue const& args) : DCppObjec
 {
   this->init();
   this->parent = args.get<DObject* >();
-  this->list = Destruct::Destruct::instance().generate("DVectorObject");
+  this->list = Destruct::DStructs::instance().generate("DVectorObject");
   ((DObject*)list)->addRef();
 }
 
@@ -42,7 +42,7 @@ RegistryValues::~RegistryValues(void)
 DValue    RegistryValues::deserializeRaw(DValue const& arg)
 {
   StreamVFile* stream = static_cast<StreamVFile*>(arg.get<DObject*>());
-  DStruct* valueStruct = Destruct::Destruct::instance().find("RegistryValue"); 
+  DStruct* valueStruct = Destruct::DStructs::instance().find("RegistryValue"); 
 
   DUInt32 valueCount = ((DObject*)this->parent)->getValue("valueCount").get<DUInt32>();
   DUInt32 valueListOffset = ((DObject*)this->parent)->getValue("valueListOffset").get<DUInt32>();
@@ -83,11 +83,11 @@ DValue    RegistryValues::deserializeRaw(DValue const& arg)
 RegistryValue::RegistryValue(DStruct* dstruct, DValue const& args) : DCppObject<RegistryValue>(dstruct, args)
 {
   this->init();
-  this->name = new NameLength(Destruct::Destruct::instance().find("NameLength"), RealValue<DObject*>(this));
+  this->name = new NameLength(Destruct::DStructs::instance().find("NameLength"), RealValue<DObject*>(this));
   ((DObject*)this->name)->setValue("attributeKeyName", RealValue<DUnicodeString>("nameLength"));
   ((DObject*)this->name)->addRef();
   
- this->data = new RegistryValueData(Destruct::Destruct::instance().find("RegistryValueData"), RealValue<DObject*>(this));
+ this->data = new RegistryValueData(Destruct::DStructs::instance().find("RegistryValueData"), RealValue<DObject*>(this));
  ((DObject*)this->data)->addRef();
 }
 
@@ -97,7 +97,7 @@ RegistryValue::~RegistryValue(void)
 
 DValue    RegistryValue::deserializeRaw(DValue const& arg)
 {
-  //Destruct::Destruct& destruct = Destruct::Destruct::instance();
+  //Destruct::DStructs& destruct = Destruct::Destruct::instance();
 
   //destruct.generate(this->dataTypeName[this->dataType]);
 

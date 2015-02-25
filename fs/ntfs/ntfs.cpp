@@ -33,9 +33,9 @@
 
 using namespace Destruct;
 
-void    NTFS::declare(void) //XXX static loading
+void    NTFS::declare(void)
 {
-  Destruct::Destruct& destruct(Destruct::Destruct::instance());
+  Destruct::DStructs& destruct(Destruct::DStructs::instance());
   DStruct* optStruct(makeNewDCpp<NTFSOpt>("NTFSOpt"));
   destruct.registerDStruct(optStruct);
   DStruct* dntfsStruct(makeNewDCpp<DNTFS>("DNTFS")); 
@@ -64,12 +64,12 @@ void    NTFS::declare(void) //XXX static loading
   destruct.registerDStruct(dataNode);
 
   DStruct* mftNode(new DStruct(NULL, "MFTNode", DSimpleObject::newObject));
-  mftNode->addAttribute(DAttribute(DType::DUInt64Type, "offset")); // + id etc ? & calc ?
+  mftNode->addAttribute(DAttribute(DType::DUInt64Type, "offset"));
   destruct.registerDStruct(mftNode);
 
   DStruct* mftEntryNode(new DStruct(NULL, "MFTEntryNode", DSimpleObject::newObject));
   mftEntryNode->addAttribute(DAttribute(DType::DUInt64Type, "offset"));
-  mftEntryNode->addAttribute(DAttribute(DType::DUInt64Type, "mftNodeOffset")); //+ id etc ??
+  mftEntryNode->addAttribute(DAttribute(DType::DUInt64Type, "mftNodeOffset"));
   destruct.registerDStruct(mftEntryNode);
 
   DStruct* unallocated(new DStruct(NULL, "Unallocated", DSimpleObject::newObject));
@@ -88,7 +88,6 @@ void    NTFS::declare(void) //XXX static loading
 /**
  *  NTFS 
  */
-                                                                        //static & ref? pas besoin de new maintenatque c pu reload
 NTFS::NTFS() : mfso("NTFS"), __opt(NULL), __bootSectorNode(NULL), __rootDirectoryNode(new Node("NTFS", 0, NULL, this)), __orphansNode(new Node("orphans", 0, NULL, this)), __unallocatedNode(NULL)
 {
 }
@@ -103,7 +102,7 @@ NTFS::~NTFS()
 
 void    NTFS::start(Attributes args)
 {
-  Destruct::Destruct& destruct(Destruct::Destruct::instance());
+  Destruct::DStructs& destruct(Destruct::DStructs::instance());
   this->__opt = new NTFSOpt(args, destruct.find("NTFSOpt"));
   this->__bootSectorNode = new BootSectorNode(this);
   if (this->__opt->validateBootSector())
@@ -214,18 +213,16 @@ int32_t  NTFS::vread(int fd, void *buff, unsigned int size)
   }
 }
 
-/** Loading and saving method **/
+/** 
+ *  Loading and saving method 
+ **/
 bool                    NTFS::load(DValue value)
 {
-  std::cout << "NTFS load method called with " << value.asUnicodeString() << std::endl;
-  DObject* ntfsObject(value.get<DObject*>());
+  DObject* ntfsObject = value.get<DObject*>();
   if (ntfsObject == DNone)
-  {
-    std::cout << "Can't reload NTFS saved object is None" << std::endl;
     return (false);
-  }
 
-  DNTFS* dntfs(static_cast<DNTFS*>(ntfsObject));
+  DNTFS* dntfs = static_cast<DNTFS*>(ntfsObject);
   if (dntfs->getValue("version").get<DUInt8>() != NTFS_VERSION)
     return (false); //throw wrong version ? & reload  
 
@@ -247,7 +244,25 @@ bool                    NTFS::load(DValue value)
   for (DUInt64 index = 0; index < size; ++index)
     VLink::load(vlinks->call("get", RealValue<DUInt64>(index)));
 
-  dntfs->destroy();
+
+  std::cout << "status at end      dntfs : " << dntfs->refCount() << std::endl
+            << "                   dntfs->opt " << ((DObject*)dntfs->opt)->refCount() << std::endl
+            << "                   dntfs->entries " << (((DObject*)dntfs->entries)->refCount()) << std::endl
+            << "                   dntfs->reparsePoints " << ((DObject*)dntfs->reparsePoints)->refCount() << std::endl;
+
+  //((DObject*)dntfs->entries)->destroy(); //pu utiliser
+  //((DObject*)dntfs->reparsePoints)->destroy(); //pu utiliser
+  ////dntfs->entries->opt(); //utiliser
+  //((DObject*)dntfs->opt)->destroy();
+  //dntfs->destroy();
+  //dntfs->destroy();
+  //dntfs->destroy();
+  //dntfs->destroy(); //faire une copy est destroy i lest a 5 ref lui c spe
+  std::cout << "status at end      dntfs : " << dntfs->refCount() << std::endl
+            << "                   dntfs->opt " << ((DObject*)dntfs->opt)->refCount() << std::endl
+            << "                   dntfs->entries " << (((DObject*)dntfs->entries)->refCount()) << std::endl
+            << "                   dntfs->reparsePoints " << ((DObject*)dntfs->reparsePoints)->refCount() << std::endl;
+
 
   this->setStateInfo("Finished successfully");
   this->res["Result"] = Variant_p(new Variant(std::string("NTFS parsed successfully.")));
@@ -273,13 +288,13 @@ Node*         NTFS::loadTree(DValue const& value)
     catch (...)
     {
       std::cout << "Can't load DataNode or MFTNode " << dnode->getValue("name").get<DUnicodeString>() << std::endl;
-      node = VoidNode::load(value);
+      node = VoidNode::load(this, value);
     }
   }
   else if (objectType == "Unallocated")
     node = Unallocated::load(this, value);
   else
-    node = VoidNode::load(value);
+    node = VoidNode::load(this, value); //must pass fso or will not be marked as ntfs anymore
 
   DObject* dchildren(dnode->getValue("children").get<DObject*>());
   if (dchildren != DNone)
@@ -305,9 +320,12 @@ DValue        NTFS::save(void) const
   DNTFS* dntfs(static_cast<DNTFS*>(makeNewDCpp<DNTFS>("DNTFS")->newObject()));
   dntfs->opt = this->__opt;
 
+  if (this->__bootSectorNode == NULL)
+    return (RealValue<DObject*>(DNone));
+
   dntfs->entries = saveTree(this->rootDirectoryNode());
 
-  dntfs->reparsePoints = Destruct::Destruct::instance().generate("DVectorObject");
+  dntfs->reparsePoints = Destruct::DStructs::instance().generate("DVectorObject");
   DObject* reparsePoints = dntfs->reparsePoints;
   const std::vector<VLink*>& vlinks = this->__mftManager.vlinks();
   std::vector<VLink*>::const_iterator vlink = vlinks.begin();
@@ -320,7 +338,7 @@ DValue        NTFS::save(void) const
 DValue        NTFS::saveTree(Node* node) const
 {
   if (!node || node->fsobj() != this || node == this->__bootSectorNode)
-    return RealValue<DObject*>(DNone); //link will be save later
+    return RealValue<DObject*>(DNone);
 
   DValue nodeValue = node->save();
   DObject* dnode = nodeValue.get<DObject*>();
@@ -328,7 +346,7 @@ DValue        NTFS::saveTree(Node* node) const
   DObject* dchildren(dnode->getValue("children").get<DObject*>());
   if (dchildren == DNone)
   {
-    dchildren = Destruct::Destruct::instance().generate("DVectorObject");
+    dchildren = Destruct::DStructs::instance().generate("DVectorObject");
     dnode->setValue("children", RealValue<DObject*>(dchildren));
   }
 
@@ -352,4 +370,5 @@ DNTFS::DNTFS(DStruct* dstruct, DValue const& args) : DCppObject<DNTFS>(dstruct, 
 
 DNTFS::~DNTFS()
 {
+  std::cout << "DNTFS DELETED " << std::endl;
 }

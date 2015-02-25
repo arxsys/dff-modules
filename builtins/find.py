@@ -15,6 +15,7 @@
 
 __dff_module_find_version__ = "1.2.0"
 
+from dff.api.vfs import vfs
 from dff.api.vfs.libvfs import Node, VLink
 from dff.api.module.module import Module, Script
 from dff.api.events.libevents import EventHandler
@@ -29,6 +30,17 @@ class FIND(Script, EventHandler):
         self.nodescount = 1
         self.oldcur = 0
 
+    def findRootBookmarkNode(self):
+      root = vfs.vfs().getnode('/')
+      children = root.children()
+      for node in children:
+        if node.fsobj() and node.fsobj().name == "Bookmarks":
+          return node 
+      for child in children:
+        childrens = child.children()
+        for node in childrens:
+          if node.fsobj() and node.fsobj().name == "Bookmarks":
+            return node 
 
     def start(self, args):
         self.nodes = []
@@ -55,7 +67,7 @@ class FIND(Script, EventHandler):
         f.process(root_node, recursive)
         self.res["total of matching nodes"] = Variant(len(self.nodes))
         if args.has_key("save_result"):
-            si_node = self.vfs.getnode("/Bookmarks")
+            si_node = self.findRootBookmarkNode()
             if si_node == None:
                 root = self.vfs.getnode("/")
                 si_node = Node("Bookmarks", 0, root)

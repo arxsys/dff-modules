@@ -16,6 +16,8 @@ import pyregfi
 
 from dff.modules.winreg.nodes import ValueNode, KeyNode 
 
+from time import time
+
 class RHive():
     def __init__(self, node, mfso, verbose=False):
         self.node = node
@@ -30,6 +32,10 @@ class RHive():
 	 self.vfile = None
 
     def open(self):
+        st = time()
+        #print "OPENING vfile " + self.node.absolute()
+        et = time() - st
+        #print "opening time " + str(et)
         try:
             self.vfile = self.node.open()
         except :
@@ -37,10 +43,20 @@ class RHive():
 	    self.vfile = None
             self.hive = None
 	try:
+            #print "PYREGFI.Hive(self.vfile)"
+            st = time()
             self.hive = pyregfi.Hive(self.vfile)
+            et = time() - st
+            #print "pyregfi.hive time " + str(et)           
+
             self.minor_version = self.hive.minor_version
             self.major_version = self.hive.major_version
-            self.iterator = self.hive.__iter__()
+            
+            #print "SELF ITERATOR self.hive.__iter()"
+            st  = time()
+            #self.iterator = self.hive.__iter__()
+            et = time() - st
+            #print "iterator tiem " + str(et)
             self.root = self.hive.root
             if self.verbose:
                 self.countKeys()

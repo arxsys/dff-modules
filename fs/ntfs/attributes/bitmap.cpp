@@ -44,7 +44,7 @@ Range   Range::load(Destruct::DValue const& args)
 
 Destruct::DValue  Range::save(void) const
 {
-  Destruct::DObject* range = Destruct::Destruct::instance().generate("Range");
+  Destruct::DObject* range = Destruct::DStructs::instance().generate("Range");
   range->setValue("start", Destruct::RealValue<DUInt64>(this->__start));
   range->setValue("end", Destruct::RealValue<DUInt64>(this->__end));
 

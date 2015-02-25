@@ -251,7 +251,7 @@ class AttributeHash(AttributesHandler):
        return m
 
     def save(self):
-      destruct = Destruct()
+      destruct = DStructs()
       vectorObjectStruct = destruct.find("DVectorObject")
       vectorStringStruct = destruct.find("DVectorString")
       vectorUIntStruct = destruct.find("DVectorUInt8") #suffisant ? 
@@ -350,7 +350,7 @@ class HASH(Script):
 
     @staticmethod
     def declare():
-      destruct = Destruct()
+      destruct = DStructs()
       for struct in [DHashInfo(), DHashes(), DHSet(), DHSave()]:
         destruct.registerDStruct(struct)
 
@@ -361,7 +361,7 @@ class HASH(Script):
        return self.attributeHash.load(dhsave.hlists)
 
     def save(self):
-       destruct = Destruct() 
+       destruct = DStructs() 
        dhsets = destruct.find("DVectorObject").newObject()
        dhsave = destruct.find("DHSave").newObject()
        hsetStruct = destruct.find("DHSet")

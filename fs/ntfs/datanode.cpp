@@ -147,7 +147,7 @@ Attributes	DataNode::_attributes(void)
 
 DValue      DataNode::save(void) const
 {
-  Destruct::Destruct& destruct(Destruct::Destruct::instance());
+  Destruct::DStructs& destruct(Destruct::DStructs::instance());
   DObject* dataNode(destruct.generate("DataNode"));
 
   dataNode->setValue("name", RealValue<DUnicodeString>(this->name())); 
@@ -220,7 +220,7 @@ bool    MappingAttributes::operator==(MappingAttributes const& other)
 
 DValue  MappingAttributes::save(void) const
 {
-  DObject* ma(Destruct::Destruct::instance().generate("MappingAttributes"));
+  DObject* ma(Destruct::DStructs::instance().generate("MappingAttributes"));
 
   ma->setValue("offset", RealValue<DUInt16>(offset));
   ma->setValue("mftEntryNode", entryNode->save());

@@ -16,6 +16,7 @@
 __dff_module_winreg_version__ = "1.0.0"
 
 import re
+import pyregfi
 
 from dff.api.vfs.libvfs import mfso
 from dff.api.module.module import Module 
@@ -29,6 +30,8 @@ ModuleProcessusManager().register(RegistryManager("winreg"))
 
 HKLM = ["^SYSTEM", "^SOFTWARE", "^SAM", "^SECURITY"]
 HKU = ["^NTUSER.DAT", "^DEFAULT", "^USRCLASS.DAT"]
+
+pyregfi.setLogMask(())
 
 class WINREG(mfso):
     def __init__(self):
@@ -46,9 +49,12 @@ class WINREG(mfso):
          self.mount = True
        else:
           self.mount = False
+       #print "GETTING HIVE " + self.hive.absolute()
        phive = self.getHive()
        if self.mount and phive:
+         #print "MOUNTING HIVE " + self.hive.absolute()
          phive.mount()
+       #print "END" + self.hive.absolute()
 
     def splitPath(self, path):
         if path:

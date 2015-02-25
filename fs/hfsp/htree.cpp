@@ -464,7 +464,8 @@ void	HTree::process(Node* node, uint64_t offset) throw (std::string)
       this->__vfile->seek(offset);
       if (this->__vfile->read(&this->__hnode, sizeof(header_node)) != sizeof(header_node))
 	throw std::string("Cannot read header node");
-      //this->dump("");
+      if (((this->nodeSize() % 2) != 0) || (this->nodeSize() < 512) || (this->nodeSize() > 32768))
+	throw std::string("Size of node is not correct. Must be a power of 2 from 512 through 32768");
       this->_origin = node;
     }
   catch (...)

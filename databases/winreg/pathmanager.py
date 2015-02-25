@@ -51,8 +51,10 @@ class pathManager():
     def __init__(self, hive, path=None):
         self.setPath(path)
         self.hive = hive
+        #print "getting iterator"
         self.iterator = self.hive.__iter__()
-
+        #print "end"
+    
     def setPath(self, path):
         if path == "":
             self.path = None

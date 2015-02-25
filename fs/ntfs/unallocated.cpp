@@ -82,8 +82,8 @@ void    Unallocated::fileMapping(FileMapping* fm)
 
 DValue  Unallocated::save(void) const
 {
-  DObject* unallocated = Destruct::Destruct::instance().generate("Unallocated");
-  DObject* dranges = Destruct::Destruct::instance().generate("DVectorObject");
+  DObject* unallocated = Destruct::DStructs::instance().generate("Unallocated");
+  DObject* dranges = Destruct::DStructs::instance().generate("DVectorObject");
   std::vector<Range>::const_iterator range = this->__ranges.begin();
   for (; range != this->__ranges.end(); ++range)
     dranges->call("push", (*range).save());

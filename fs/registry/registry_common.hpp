@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "destruct.hpp"
+#include "dstructs.hpp"
 #include "drealvalue.hpp"
 #include "dvalue.hpp"
 #include "dobject.hpp"

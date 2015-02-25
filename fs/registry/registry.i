@@ -55,10 +55,10 @@ class registry(Module):
     self.conf.addArgument({"name": "file",
                            "description": "Path to a file containing windows registry",
                            "input": Argument.Required|Argument.Single|typeId.Node})
-    self.conf.addConstant({"name": "mime-type",
-                           "description": "mime type value",
-                           "type" : typeId.String,
-                           "values" : ["registry file"]})
+    #self.conf.addConstant({"name": "mime-type",
+                           #"description": "mime type value",
+                           #"type" : typeId.String,
+                           #"values" : ["registry file"]})
     self.conf.description = "Expand windows registry tree."
     self.tags = "File systems"
     self.flags = ["noscan"]

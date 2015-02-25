@@ -356,6 +356,18 @@ class OptionsLayout(QTabWidget):
             time[1][8][1][1] = None
       self.timeline.updatePaintingArea()
 
+    def findRootBookmarkNode(self):
+      root = vfs.vfs().getnode('/')
+      children = root.children()
+      for node in children:
+        if node.fsobj() and node.fsobj().name == "Bookmarks":
+          return node 
+      for child in children:
+        childrens = child.children()
+        for node in childrens:
+          if node.fsobj() and node.fsobj().name == "Bookmarks":
+            return node 
+
     def exportClick(self, clickState):
       rect = self.timeline.ploter.selectionRect.rect()
       exportSelDateMin = self.timeline.draw.findXTime(rect.x())
@@ -372,7 +384,7 @@ class OptionsLayout(QTabWidget):
             if len(nodes):
               if not self.exportedNode:
 # Create /timeline if needed
-                  root = vfs.vfs().getnode('/Bookmarks')
+                  root = self.findRootBookmarkNode() # session bookmark
                   baseNode = Node('timeline', 0, root)
 	          baseNode.__disown__()
                   baseNode.setDir()
@@ -401,7 +413,8 @@ class OptionsLayout(QTabWidget):
 		  baseFamilyNode.__disown__()
                   baseFamilyNode.setDir()
 
+              v = libvfs.VFS.Get()
               for node in nodes:
 # Add each node in array as child
-		  l = VLink(node, baseFamilyNode)
+		  l = VLink(v.getNodeById(node), baseFamilyNode)
 		  l.__disown__()

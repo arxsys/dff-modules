@@ -30,12 +30,12 @@ RegistryKey::RegistryKey(DStruct* dstruct, DValue const& args) : DCppObject<Regi
 {
   this->init();
   
-  this->timestamp = new RegfTime64(Destruct::Destruct::instance().find("RegfTime64"), RealValue<DObject*>(DNone));
-  this->keyName = new NameLength(Destruct::Destruct::instance().find("NameLength"), RealValue<DObject*>(this));
+  this->timestamp = new RegfTime64(Destruct::DStructs::instance().find("RegfTime64"), RealValue<DObject*>(DNone));
+  this->keyName = new NameLength(Destruct::DStructs::instance().find("NameLength"), RealValue<DObject*>(this));
   ((DObject*)this->keyName)->setValue("attributeKeyName", RealValue<DUnicodeString>("keyNameLength"));
 
-  this->subkeys = new Subkeys(Destruct::Destruct::instance().find("Subkeys"), RealValue<DObject*>(this));
-  this->values = new RegistryValues(Destruct::Destruct::instance().find("RegistryValues"), RealValue<DObject*>(this));
+  this->subkeys = new Subkeys(Destruct::DStructs::instance().find("Subkeys"), RealValue<DObject*>(this));
+  this->values = new RegistryValues(Destruct::DStructs::instance().find("RegistryValues"), RealValue<DObject*>(this));
   ((DObject*)this->timestamp)->addRef();
   ((DObject*)this->keyName)->addRef();
   ((DObject*)this->subkeys)->addRef();
@@ -69,7 +69,7 @@ DValue    NameLength::deserializeRaw(DValue const& arg)
   stream->read(keyNameBuff, size);
   stream->destroy();
 
-  this->keyName = std::string(keyNameBuff, size);
+  this->keyName = DUnicodeString(std::string(keyNameBuff, size));
 
   return (RealValue<DUInt8>(1));
 }
@@ -83,7 +83,7 @@ Subkeys::Subkeys(DStruct* dstruct, DValue const& args) : DCppObject<Subkeys>(dst
   this->init();
   this->parent = args.get<DObject* >();
   ((DObject*)this->parent)->addRef();
-  this->list = Destruct::Destruct::instance().generate("DVectorObject");
+  this->list = Destruct::DStructs::instance().generate("DVectorObject");
   ((DObject*)list)->addRef();
 }
 
@@ -94,7 +94,7 @@ Subkeys::~Subkeys(void)
 DValue    Subkeys::deserializeRaw(DValue const& arg)
 {
   StreamVFile* stream = static_cast<StreamVFile*>(arg.get<DObject*>());
-  DStruct* keyStruct = Destruct::Destruct::instance().find("RegistryKey"); 
+  DStruct* keyStruct = Destruct::DStructs::instance().find("RegistryKey"); 
 
   //XXX IF SUBKEY COUNT IN PARENT ?
   DUInt32 parentSubkeyCount = ((DObject*)this->parent)->getValue("subkeyCount").get<DUInt32>();

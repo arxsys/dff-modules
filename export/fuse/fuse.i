@@ -26,9 +26,14 @@
 %exception;
 
 %{
+#include "fuse.hpp"
 #include "variant.hpp"
 #include "vtime.hpp"
-#include "fuse.hpp"
+#include "node.hpp"
+#include "vlink.hpp"
+#include "vfile.hpp"
+#include "mfso.hpp"
+#include "rootnode.hpp"
 %}
 
 %import "../../../api/vfs/libvfs.i"

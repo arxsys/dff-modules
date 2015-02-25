@@ -19,7 +19,7 @@
 #include "registryopt.hpp"
 
 #include "vtime.hpp"
-#include "destruct.hpp"
+#include "dstructs.hpp"
 
 using namespace Destruct;
 
@@ -30,8 +30,8 @@ Regf::Regf(DStruct* dstruct, DValue const& args) : DCppObject<Regf>(dstruct, arg
 {
   this->init();
 
-  this->regfName = new RegfName(Destruct::Destruct::instance().find("RegfName"), RealValue<DObject*>(DNone));
-  this->timestamp = new RegfTime64(Destruct::Destruct::instance().find("RegfTime64"), RealValue<DObject*>(DNone));
+  this->regfName = new RegfName(Destruct::DStructs::instance().find("RegfName"), RealValue<DObject*>(DNone));
+  this->timestamp = new RegfTime64(Destruct::DStructs::instance().find("RegfTime64"), RealValue<DObject*>(DNone));
 
 
   ((DObject*)this->regfName)->addRef();
@@ -69,7 +69,7 @@ DValue  Regf::version(void)
 
 //dDValue  Regf::key(void)
 //{
-//return  RealValue<DObject*>(new RegistryKey(Destruct::Destruct::instance().find("RegistryKey"), RealValue<DObject*>(DNone)));
+//return  RealValue<DObject*>(new RegistryKey(Destruct::DStructs::instance().find("RegistryKey"), RealValue<DObject*>(DNone)));
 //}
 /**
  *  RegfTime
@@ -135,7 +135,7 @@ DValue    RegfName::deserializeRaw(DValue const& arg)
          break;
   }
   if (i < 58)
-    this->fileName = std::string(fileNameBuff, i);
+    this->fileName = DUnicodeString(std::string(fileNameBuff, i));
 
   return (RealValue<DUInt8>(1));
 }

@@ -46,7 +46,7 @@ public:
 private:
   RegistryOpt*          __opt; 
   Regf*                 __regf;
-  Destruct::Destruct&   __destruct;
+  Destruct::DStructs&   __destruct;
 public:
   static size_t ownAttributeCount()
   {

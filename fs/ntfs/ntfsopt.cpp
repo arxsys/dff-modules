@@ -26,7 +26,7 @@ NTFSOpt::NTFSOpt(Attributes args, Destruct::DStruct* dstruct) : DCppObject<NTFSO
   if (args.find("file") != args.end())
   {
     Node* node = args["file"]->value<Node* >();
-    this->__fsNode = new NodeContainer(Destruct::Destruct::instance().find("NodeContainer"), node);
+    this->__fsNode = new NodeContainer(Destruct::DStructs::instance().find("NodeContainer"), node);
   }
   else
     throw envError("NTFS module need a file argument.");
@@ -38,7 +38,7 @@ NTFSOpt::NTFSOpt(Attributes args, Destruct::DStruct* dstruct) : DCppObject<NTFSO
     this->__advancedAttributes = true;
   arg = args.find("drive-name");
   if (arg != args.end())
-    this->__driveName = arg->second->value<std::string>();
+    this->__driveName = DUnicodeString(arg->second->value<std::string>());
   else 
     this->__driveName = "C:";
 }

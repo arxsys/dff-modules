@@ -67,8 +67,8 @@ private:
   uint64_t                              __numberOfEntry;
   std::map<uint64_t, MFTEntryInfo*>     __entries; //useful ? < MFT, entryOffset, entryInfo ?>
   std::vector<VLink* >                  __vlinks; 
-
-  RealValue<DObject*>                   __unallocatedOffset; // and this ?s 
+  std::vector<uint64_t >                __unallocatedOffsets;
+  //RealValue<DObject*>                   __unallocatedOffset; //XXX XXX sert pu ! 
 };
 
 #endif
