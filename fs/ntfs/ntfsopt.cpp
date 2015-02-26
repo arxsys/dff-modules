@@ -16,7 +16,6 @@
 
 #include "ntfsopt.hpp"
 
-#include "../session/session.hpp"
 
 NTFSOpt::NTFSOpt(Attributes args, Destruct::DStruct* dstruct) : DCppObject<NTFSOpt>(dstruct), __validateBootSector(false), __recovery(false), __fsNode(NULL) 
 {
