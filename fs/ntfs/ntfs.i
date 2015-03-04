@@ -40,7 +40,8 @@
 #include "mfso.hpp"
 #include "ntfs.hpp"
 #include "rootnode.hpp"
-#include "../../../api/destruct/python/py_dvalue.hpp"
+#include "../../../api/destruct/python/py_dobject.hpp"
+#include "../../../api/destruct/python/py_module.hpp"
 %}
 
 %import "../../../api/vfs/libvfs.i"
