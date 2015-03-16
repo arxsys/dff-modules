@@ -250,7 +250,7 @@ class Volatility(mfso):
       self.__step = 1
       self.__steps = 6
       starttime = time.time()
-      if args.has_key("profile"):
+      if args.has_key("profile") and args["profile"] != '':
          self.stateinfo = "Using provided profile: " + args['profile'].toString()
          self._config.updateCtx('profile', args['profile'].value())
          self._aspace = utils.load_as(self._config)
