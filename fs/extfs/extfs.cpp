@@ -32,9 +32,10 @@
 #include "include/fsck.h"
 
 Extfs::Extfs()
-  : mfso("extfs"), __root_dir(NULL), __node(NULL), __vfile(NULL),
-    __first_node(NULL), __fs_node(NULL), __metadata_node(NULL),
-    __first_inodes_nodes(NULL)
+  : mfso("extfs"), addBlockPointers(false), __root_dir(NULL), __GD(NULL), 
+    __node(NULL), __vfile(NULL), __first_node(NULL),
+     __fs_node(NULL), __metadata_node(NULL), __first_inodes_nodes(NULL),
+    __suspiscious_i(NULL), __suspiscious_dir(NULL), __nb_parsed_inode(0), __alloc_inode(0)
 {
   __SB = NULL;
   __orphans_i = NULL;

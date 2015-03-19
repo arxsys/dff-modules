@@ -401,8 +401,6 @@ int PffNodeEMail::attributesMessageHeader(Attributes* attr, libpff_item_t* item)
   check_maximum_size(libpff_message_get_utf8_subject_size)
   check_maximum_size(libpff_message_get_utf8_sender_name_size)
   check_maximum_size(libpff_message_get_utf8_sender_email_address_size)
-  if (!(maximum_entry_value_string_size))
-    return (0); 
 
   entry_value_string = (char *) new char[maximum_entry_value_string_size];
 

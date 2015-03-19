@@ -28,17 +28,12 @@
 #include "include/ExtfsRawDataNode.h"
 #include "include/ExtfsSlackNode.hpp"
 
-Directory::Directory(Extfs * extfs, const SuperBlock * SB,
-		     GroupDescriptor * GD) : Inode(extfs, SB, GD)
+Directory::Directory(Extfs * extfs, const SuperBlock * SB, GroupDescriptor * GD) : Inode(extfs, SB, GD), _recovery(NULL), __i_list(new TwoThreeTree)
 {
-  __i_list = new TwoThreeTree;
 }
 
-Directory::Directory(const Directory * dir)
-  : Inode(dir)
+Directory::Directory(const Directory * dir) : Inode(dir), _recovery(dir->recovery()), __i_list(dir->i_list())
 {
-  _recovery = dir->recovery();
-  __i_list = dir->i_list();
 }
 
 Directory::~Directory()

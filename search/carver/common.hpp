@@ -31,7 +31,7 @@ typedef struct	description
 {
   pattern	*header;
   pattern	*footer;
-  char		*type;
+  const char	*type;
   uint32_t	window;
   bool		aligned;
 }		description;

@@ -73,8 +73,6 @@ void		PffNodeContact::attributesContact(Attributes* attr, libpff_item_t* item)
   check_maximum_size(libpff_contact_get_utf8_business_phone_number_2_size)
   check_maximum_size(libpff_contact_get_utf8_business_fax_number_size)
 
-  if (maximum_entry_value_string_size == 0)
-    return ;
   entry_value_string = (char *)malloc(sizeof(char) * maximum_entry_value_string_size);
   if (entry_value_string ==  NULL)
     return ;

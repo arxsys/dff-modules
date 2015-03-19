@@ -39,8 +39,6 @@ void  PffNodeAppointment::attributesAppointment(Attributes* attr, libpff_item_t*
   check_maximum_size(libpff_appointment_get_utf8_location_size)
   check_maximum_size(libpff_appointment_get_utf8_recurrence_pattern_size) 
 
-  if (maximum_entry_value_string_size == 0)
-	return ;
   entry_value_string = (char *)malloc(sizeof(char) * maximum_entry_value_string_size);
   if (entry_value_string == NULL)
      return ;

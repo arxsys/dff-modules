@@ -18,10 +18,8 @@
 
 #include "include/utils/InodeStructure.h"
 
-InodeStructure::InodeStructure()
+InodeStructure::InodeStructure() : __inode(NULL), __inode_array(NULL), __inode_addr(0)
 {
-  this->__inode = NULL;
-  this->__inode_array = NULL;
 }
 
 InodeStructure::~InodeStructure()

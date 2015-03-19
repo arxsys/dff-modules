@@ -20,12 +20,8 @@
 
 #include "include/BlkList.h"
 
-BlkList::BlkList(GroupDescriptor * GD, SuperBlock * SB, VFile * vfile)
+BlkList::BlkList(GroupDescriptor * GD, SuperBlock * SB, VFile * vfile) : __GD(GD), __vfile(vfile), __SB(SB), __begin(0), __end(0), __bit_addr(0), __dec(0), __group(0)
 {
-  __GD = GD;
-  __SB = SB;
-  __vfile = vfile;
-  __end = 0;
 }
 
 BlkList::~BlkList()

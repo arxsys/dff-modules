@@ -119,10 +119,9 @@ public :
     Push the different blocks in the file mapping.
     
     \param inode the inode we are treating.
-    \throw vfsError if something goes zrong.
+    \throw vfsError or std::string if something goes zrong.
    */
-  void				push_extended_blocks(Inode * inode)
-    throw (vfsError);
+  void				push_extended_blocks(Inode * inode);
 
   /*! \brief Block list.
     \return a list of the blocks which compose the current file.

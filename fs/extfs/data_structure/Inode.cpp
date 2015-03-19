@@ -24,39 +24,19 @@
 #include "../include/utils/InodeUtils.h"
 #include "../include/ExtfsRawDataNode.h"
 
-Inode::Inode(Extfs * extfs, const SuperBlock * SB, GroupDescriptor * GD)
-  : InodeUtils(SB, GD)
+Inode::Inode(Extfs * extfs, const SuperBlock * SB, GroupDescriptor * GD) : InodeUtils(SB, GD), __inode_nb(0), __offset_in_extent(0), _extfs(extfs), _current_block(0), _calculated_size(0), _head(NULL), _extent_nb(0), _blk_nb(0), _cur_extent_blk(0), __extents(false), __s_i_blk(0), __d_i_blk(0), __t_i_blk(0)
 {
-  _extfs = extfs;
-  __extents = false;
-  _current_block = 0;
-  _extent_nb = 0;
-  _blk_nb = 0;
-  _cur_extent_blk = 0;
-  _head = NULL;
   for (int i = 0; i < 4; ++i)
     _blk_nb_l[i] = 0;
-  __s_i_blk = __d_i_blk = __t_i_blk = 0;
-  __inode_addr = 0;
-  __inode_nb = 0;
 }
 
-Inode::Inode(const Inode * inode)
-  : InodeUtils(inode->SB(), inode->GD()), _extfs(NULL)
+Inode::Inode(const Inode * inode) : InodeUtils(inode->SB(), inode->GD()), __inode_nb(0), __offset_in_extent(0), _extfs(NULL), _current_block(0), _calculated_size(0), _head(NULL), _extent_nb(0), _blk_nb(0), _cur_extent_blk(0), __extents(false), __s_i_blk(0), __d_i_blk(0), __t_i_blk(0)
+
 {
-  __extents = false;
   if (inode)
     _extfs = inode->extfs();
-  _current_block = 0;
-  _extent_nb = 0;
-  _blk_nb = 0;
-  _cur_extent_blk = 0;
-  _head = NULL;
   for (int i = 0; i < 4; ++i)
     _blk_nb_l[i] = 0;
-  __s_i_blk = __d_i_blk = __t_i_blk = 0;
-  __inode_addr = 0;
-  __inode_nb = 0;
 }
 
 Inode::~Inode()

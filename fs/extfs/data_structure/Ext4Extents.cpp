@@ -20,8 +20,7 @@
 #include "node.hpp"
 #include "includes/Ext4Extents.h"
 
-Ext4Extents::Ext4Extents(FileMapping * file_mapping) 
-  : __offset(0)
+Ext4Extents::Ext4Extents(FileMapping * file_mapping)  : __mapping(file_mapping), __size(0), __offset(0), __block_size(0), __node(NULL), __extfs(NULL),  __c_size(0), __inode(NULL)
 {
   this->__mapping = file_mapping;
   this->__c_size = 0;
@@ -140,7 +139,6 @@ uint8_t *	Ext4Extents::read_block(uint64_t addr)
 }
 
 void		Ext4Extents::push_extended_blocks(Inode * inode)
-  throw (vfsError)
 {
   if (!inode)
     throw vfsError("Ext4Extents::push_extended_blocks() : inode is NULL.");

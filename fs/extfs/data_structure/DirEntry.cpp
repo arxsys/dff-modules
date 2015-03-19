@@ -23,9 +23,8 @@
 #include "vfile.hpp"
 #include "includes/DirEntry.h"
 
-DirEntry::DirEntry()
+DirEntry::DirEntry() : _dir(NULL), _name(NULL)
 {
-    _name = NULL;
 }
 
 DirEntry::~DirEntry()

@@ -19,7 +19,7 @@
 #include "vfile.hpp"
 #include "includes/GroupDescriptor.h"
 
-GroupDescriptor::GroupDescriptor(SuperBlock * SB, uint32_t block_size)
+GroupDescriptor::GroupDescriptor(SuperBlock * SB, uint32_t block_size) : _gr_descr(NULL), _gr_descr_64(NULL), _gr_descr_array(NULL), __SB(SB)
 {
   __bg_checksum = SB->ro_features_flags() & SuperBlockStructure::_GD_CSUM;
   _SB_offset = SB->offset();
@@ -31,7 +31,6 @@ GroupDescriptor::GroupDescriptor(SuperBlock * SB, uint32_t block_size)
     _block_addr = block_size;
   _block_addr += (SB->offset() - __BOOT_CODE_SIZE);
   __FS_ID = SB->file_system_ID();
-  __SB = SB;
 }
 
 GroupDescriptor::~GroupDescriptor()

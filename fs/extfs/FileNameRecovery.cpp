@@ -26,9 +26,8 @@
 
 //#define DIR_DEBUG
 
-FileNameRecovery::FileNameRecovery(Journal * journal)
+FileNameRecovery::FileNameRecovery(Journal * journal) : _journal(journal), __inter(NULL), __addr(0)
 {
-  _journal = journal;
 }
 
 FileNameRecovery::~FileNameRecovery()
