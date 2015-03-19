@@ -49,11 +49,11 @@ from dff.api.module.module import *
 from dff.api.types.libtypes import Argument, typeId
 
 class HFSP(Module):
-  """This module create the tree contained in a fat file system, for normal and deleted files."""
+  """This module mounts the tree contained in a HFS / HFS+ / HFSX file system, for normal and deleted files and folders."""
   def __init__(self):
     Module.__init__(self, 'hfsp', Hfsp)
     self.conf.addArgument({"name": "file",
-                           "description": "file containing a HFS Plus file system",
+                           "description": "file containing a HFS / HFS+ / HFSX file system",
                            "input": Argument.Required|Argument.Single|typeId.Node})
     self.conf.addConstant({"name": "mime-type",
                            "type": typeId.String,

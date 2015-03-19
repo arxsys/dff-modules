@@ -77,12 +77,12 @@ class ViewerHexa(QWidget, Script):
         pass 
 
 class hexeditor(Module):
-  """Hexadecimal view of a file content"""
+  """Displays content of a file as an hexadecimal view"""
   def __init__(self):
     Module.__init__(self, "hexadecimal", ViewerHexa)
     self.conf.addArgument({"input": Argument.Required|Argument.Single|typeId.Node,
                            "name": "file",
-                           "description": "File to display as hexadecimal"})
+                           "description": "Files to display as hexadecimal"})
     self.conf.addArgument({"name": "preview",
 			   "description": "Preview mode",
 			   "input": Argument.Empty})

@@ -84,7 +84,7 @@ class WINREG(mfso):
             return None
 
 class winreg(Module):
-  """This modules permit to virtualy reconstruct windows registry hives files on the VFS."""
+  """This module permits to virtualy reconstruct windows registry hives files located in the VFS."""
   def __init__(self):
     Module.__init__(self, "winreg", WINREG)
     self.conf.addArgument({"name": "file",
@@ -96,7 +96,7 @@ class winreg(Module):
                            "input": Argument.Empty})
 
     self.conf.addArgument({"name": "mount",
-                           "description": "Mount registry key and value in the VFS (This can consume lot of memory)",
+                           "description": "Mount registry key and value in the VFS (This can consume lots of memory)",
                            "input": Argument.Empty})
 
     self.conf.addConstant({"name": "mime-type", 

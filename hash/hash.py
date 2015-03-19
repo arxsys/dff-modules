@@ -551,18 +551,18 @@ class HASH(Script):
  
     
 class hash(Module):
-    """Hash a file and add the results in the file attribute.
+    """Processes cryptographic hash of a file and sets results as file attributes.
 ex: hash /myfile"""
     def __init__(self):
         Module.__init__(self, "hash", HASH)
         HASH.declare()
         self.conf.addArgument({"input": Argument.Required|Argument.Single|typeId.Node,
                                "name": "file",
-                               "description": "file to hash"
+                               "description": "file to process"
                                })
         self.conf.addArgument({"input": Argument.Optional|Argument.List|typeId.String,
                                "name": "algorithm",
-                               "description": "algorithm(s) used to hash file",
+                               "description": "algorithm(s) used to process cryptographic hash",
                                "parameters": {"type": Parameter.NotEditable,
                                               "predefined": ["sha1", "md5", "sha224", "sha256", "sha384", "sha512"]}
                                })
@@ -576,10 +576,10 @@ ex: hash /myfile"""
 			      })
         self.conf.addArgument({"input": Argument.Optional|Argument.Single|typeId.UInt64,
 			       "name": "skip_size",
-			       "description" : "Each node with a size greater or equal than skip_size will not be hashed"})
+			       "description" : "Each node with a size greater than or equal to skip_size will not be processed"})
         self.conf.addArgument({"input": Argument.Optional|Argument.Single|typeId.UInt64,
 			       "name": "low_cache-limit",
-			       "description" : "Set a low bound size for the cache.\nEach node with a size lesser or equal to low_cache-limit will not be cached,\nthis could lower the RAM usage on a dump with a very huge amount of nodes",
+			       "description" : "Sets a low bound size for the cache.\nEach node with a size lesser than or equal to low_cache-limit will not be cached,\nthis could decrease the RAM usage with dumps having a very huge amount of nodes",
 			      })
         self.flags = ["single", "generic"]
         self.tags = "Hash"

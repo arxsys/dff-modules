@@ -48,12 +48,12 @@ class SqliteDB(Script):
           return c
 
 class sqlitedb(Module):
-    """Allows to query sqlite database trough the VFS"""
+    """Allows to query sqlite databases in the VFS"""
     def __init__(self):
         Module.__init__(self, "sqlitedb", SqliteDB) 
         self.conf.addArgument({"input": Argument.Optional|Argument.Single|typeId.Node,
                                "name": "file",
-                               "description": "sqlite base wrapper."
+                               "description": "sqlite database file."
                                })
 	self.conf.addConstant({"name": "mime-type", 
  	                   "type": typeId.String,

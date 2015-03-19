@@ -55,7 +55,7 @@ class RootCheckBox(QCheckBox):
 class PredefinedTree(QTreeWidget):
     def __init__(self):
         QTreeWidget.__init__(self)
-        self.setHeaderLabels(["Predefined patterns", "footer block aligned"])
+        self.setHeaderLabels(["Predefined patterns", "header starts at beginning of block"])
         self.typeItems = []
         self.blockAligned = []
         self.populate()

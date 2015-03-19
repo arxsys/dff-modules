@@ -229,8 +229,9 @@ class WEB(QWidget, Script):
     self.webv.replaceImageElements()
     self.webv.replaceCSSElements(self.webv.getCSSElements())
 
+
 class web(Module):
-  """Interpret Web pages"""
+  """Interprets Web pages"""
   def __init__(self):
     Module.__init__(self, "web", WEB)
     self.conf.addArgument({"name": "file",

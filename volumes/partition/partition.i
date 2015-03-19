@@ -46,7 +46,7 @@ from dff.api.module.module import *
 from dff.api.types.libtypes import Argument, typeId, Parameter
 
 class PARTITION(Module):
-  """Reconstruct partitions found in a volume"""
+  """Reconstructs partitions found in provided files"""
   def __init__(self):
     Module.__init__(self, 'partition', Partition)
     self.conf.addArgument({"name": "file",
@@ -54,14 +54,14 @@ class PARTITION(Module):
 	                   "input": Argument.Required|Argument.Single|typeId.Node})
 
     self.conf.addArgument({"name": "sector-size",
-	                   "description": "The size, in bytes, of the underlying device sectors (default is 512)",
+	                   "description": "The size of sectors in bytes (default is 512)",
 	                   "input": Argument.Optional|Argument.Single|typeId.UInt32,
                            "parameters": {"type": Parameter.Editable,
 	                                  "predefined": [512, 4096]}
                            })
 
     self.conf.addArgument({"name": "offset",
-			   "description": "offset where the volume containing the partition system starts",
+			   "description": "offset where the volume containing the partition is located",
 	                   "input": Argument.Optional|Argument.Single|typeId.UInt64})
     
     self.conf.addConstant({"name": "mime-type", 

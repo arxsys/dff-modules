@@ -109,7 +109,7 @@ class Split(mfso):
 
 
 class split(Module):
-    """This modules allow you to cut a node from a starting offset"""
+    """This module allows you to cut a node from a starting offset"""
     def __init__(self):
         Module.__init__(self, "split", Split)
         self.conf.addArgument({"input": Argument.Required|Argument.Single|typeId.Node,
