@@ -53,18 +53,18 @@ class DEVICES(Module):
     self.tags = "Connectors"  
     self.conf.addArgument({"input": Argument.Required|Argument.Single|typeId.Node, 
 	                   "name": "parent", 
-	                   "description": "The file will be added as son of this node or as the root node by default.",
+	                   "description": "Devices will be mount as child of this node or at root node by default.",
                        "parameters": {"type": Parameter.Editable,
                                           "predefined": [vfs.vfs().getnode("/")]}
                           })
     self.conf.addArgument({"input": Argument.Required|Argument.Single|typeId.Path,  
 	                   "name": "path", 
-	                   "description": "Path to the file or directory on your operating system."})
+	                   "description": "Path to the local device on your operating system."})
     self.conf.addArgument({"input": Argument.Required|Argument.Single|typeId.UInt64,
                         "name": "size",
-                        "description": "Size of the devices."})
+                        "description": "Size of the device."})
     self.conf.addArgument({"input": Argument.Optional|Argument.Single|typeId.String,
                         "name": "name",
-                        "description": "Name of the created node."})
+                        "description": "Name to associate to the corresponding node."})
     self.icon = ":dev_hd.png"
 %}

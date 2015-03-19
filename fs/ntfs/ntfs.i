@@ -62,10 +62,10 @@ class ntfs(Module):
                            "description": "Path to a file containing NTFS",
                            "input": Argument.Required|Argument.Single|typeId.Node})
     self.conf.addArgument({"name" : "recovery",
-                           "description" : "If set the module will try to recover file by carving MFT in unallocated clusters",
+                           "description" : "If set the module will try to recover files and folders by carving MFT in unallocated clusters",
                            "input": Argument.Empty})
     self.conf.addArgument({"name" : "advanced-attributes",
-                           "description" : "Display advanced attributes as nodes attributes",
+                           "description" : "Provides advanced attributes for nodes",
                            "input": Argument.Empty})
     self.conf.addArgument({"name" : "no-bootsector-check",
                            "description" : "If set the module will continue even if the bootsector is corrupted",
@@ -78,6 +78,6 @@ class ntfs(Module):
                           "description": "Use this drive name to link reparse point and symlink",
                           "input" : Argument.Optional|Argument.Single|typeId.String,
                           "values": ["C:"]})
-    self.conf.description = "Creates a tree from a NTFS file system, for regular and deleted/orphan files.\nIt also provides human-readable dump of MFT or Indexex entries."
+    self.conf.description = "Creates a tree from a NTFS file system, for regular and deleted/orphan files and folders.\nIt also provides human-readable dump of MFT or Indexex entries."
     self.tags = "File systems"
 %}

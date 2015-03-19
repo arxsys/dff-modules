@@ -54,13 +54,13 @@ class AFF(Module):
     Module.__init__(self, 'aff', aff)
     self.conf.addArgument({"input": Argument.Required|Argument.Single|typeId.Node, 
                            "name": "parent", 
-                           "description": "files or folders will be added as child(ren) of this node or as the root node by default",
+                           "description": "Path where the AFF dump will be mounted. Root node by default",
                        "parameters": {"type": Parameter.Editable,
                                           "predefined": [vfs.vfs().getnode("/")]}
                           })
     self.conf.addArgument({"input": Argument.Required|Argument.List|typeId.Path,  
                            "name": "path", 
-                           "description": "Path to the file or directory on your operating system."})
+                           "description": "Path to AFF files or folder on your operating system."})
     self.conf.addArgument({"input": Argument.Optional|Argument.Single|typeId.UInt32,
                            "name": "cache size",
                            "description": "Size of the pages cache, one page is 16 megabytes",

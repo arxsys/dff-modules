@@ -407,7 +407,7 @@ class Timeline(QWidget, Script):
     return nodesList
 
 class timeline(Module):
-  """ Fetch all timestamp from children of a node and create a nice view.
+  """ Fetches all timestamp from provided node and creates histogram based on timestamps.
   """
   def __init__(self):
     Module.__init__(self, 'timeline', Timeline)

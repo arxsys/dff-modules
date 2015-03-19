@@ -197,7 +197,7 @@ class CAT(QSplitter, Script):
      return self.buff
 
 class textviewer(Module):
-  """Show text file content
+  """Displays content of files as text
 ex:cat /myfile.txt"""
   def __init__(self):
     Module.__init__(self, "textviewer", CAT)

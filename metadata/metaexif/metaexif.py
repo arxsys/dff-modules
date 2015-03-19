@@ -111,11 +111,11 @@ class MetaEXIF(Script):
       pass
 
 class metaexif(Module): 
-  """This modules generate exif metadata in node attributes"""
+  """This module parses and sets as node's attributes exif metadata"""
   def __init__(self):
     Module.__init__(self, "metaexif", MetaEXIF)
     self.conf.addArgument({"name": "file",
-                           "description": "file for extracting metadata",
+                           "description": "Parses metadata of this file",
                            "input": Argument.Required|Argument.Single|typeId.Node})
     self.conf.addConstant({"name": "mime-type", 
  	                   "type": typeId.String,

@@ -69,7 +69,7 @@ class MERGE(mfso):
 
 
 class merge(Module):
-  """This module is designed to concatenate two files."""
+  """This module concatenates two or more files."""
   def __init__(self):
     Module.__init__(self, "merge", MERGE)
     self.conf.addArgument({"input": Argument.Required|Argument.List|typeId.Node,
