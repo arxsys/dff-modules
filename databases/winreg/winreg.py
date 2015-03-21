@@ -99,4 +99,5 @@ class winreg(Module):
  	                   "values": ["registry file"]})
     self.tags = "Databases"
     self.flags = ["noscan"]
+    self.scanFilter = "/windows/system32/"
     self.icon = ":password.png"
