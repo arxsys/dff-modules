@@ -48,7 +48,7 @@ from dff.api.module.module import *
 from dff.api.types.libtypes import *
 from dff.api.vfs import vfs
 class LOCAL(Module):
-  """Add file from your operating system to the VFS"""
+  """Add files from your drives to the VFS"""
   def __init__(self):
     Module.__init__(self, 'local', local)
     self.conf.addArgument({"input": Argument.Optional|Argument.Single|typeId.Node, 
@@ -59,6 +59,6 @@ class LOCAL(Module):
                           })
     self.conf.addArgument({"input": Argument.Required|Argument.List|typeId.Path,  
 	                   "name": "path", 
-	                   "description": "Path to the file or directory on your operating system."})
+	                   "description": "Path to the files or folders located on your drives."})
     self.tags = "Connectors"
 %}

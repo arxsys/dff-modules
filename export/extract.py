@@ -184,17 +184,17 @@ class EXTRACT(Script, EventHandler):
 
 
 class extract(Module):
-  """Extract file in your operating system file system."""
+  """Extracts files and folders to your local system."""
   def __init__(self):
     Module.__init__(self, "extract", EXTRACT)
     self.conf.addArgument({"name": "files",
                            "description": "Files or directories list to extract",
                            "input": Argument.Required|Argument.List|typeId.Node})
     self.conf.addArgument({"name": "syspath",
-                           "description": "Local file system path where files will be extracted",
+                           "description": "Path where files will be extracted",
                            "input": Argument.Required|Argument.Single|typeId.Path})
     self.conf.addArgument({"name": "recursive",
-                           "description": "Extract recursivly each files in all sub-directories",
+                           "description": "Extract recursivly each files and folders in all sub-directories",
                            "input": Argument.Empty})
     self.conf.addArgument({"name": "preserve",
                            "description": "Enables if the absolute path needs to be preserved",
@@ -202,8 +202,5 @@ class extract(Module):
     self.conf.addArgument({"name": "overwrite",
                            "description": "Enables if already existing files in extraction folder exist",
                            "input": Argument.Empty})
-    #self.conf.addArgument({"name": "ascii_only",
-    #                       "description": "Enables if destination folder's filesystem only supports ascii filenames",
-    #                       "input": Argument.Empty})
     self.tags = "Export"
     self.icon = ":extract.png"

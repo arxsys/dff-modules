@@ -44,12 +44,12 @@
 from dff.api.module.module import *
 from dff.api.types.libtypes import *
 class PFF(Module):
-  """Extract PST/PAB/OST mailbox content."""
+  """Mounts PST/PAB/OST mailboxes on the VFS and manages deleted and orphaned mails.\nGives access to message, message headers, attachments, appointments, contacts, ..."""
   def __init__(self):
     Module.__init__(self, 'exchange', pff)
     self.conf.addArgument({"input":Argument.Required|Argument.Single|typeId.Node,
                            "name": "file",
-                           "description": "Path to mailbox file"})
+                           "description": "Path to the mailbox file"})
     self.conf.addArgument({"name":"unallocated",
                            "description":"Don't search for unallocated data",
                            "input": Argument.Empty})

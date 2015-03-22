@@ -359,7 +359,7 @@ class ImageView(QWidget, Script):
 
 
 class imageviewer(Module):
-  """Display content of graphic file"""
+  """Displays content of graphic file"""
   def __init__(self):
     Module.__init__(self, "pictures", ImageView)
     self.conf.addArgument({"name": "file",

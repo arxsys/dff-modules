@@ -163,24 +163,24 @@ class MetaCompound(mfso):
       self.stateinfo = "Error"
 
 class compound(Module): 
-  """This modules extract metadata and content of compound files (doc,xls,msi, ....).;"""
+  """This module extracts metadata and content of compound files (doc,xls,msi, ...)"""
   def __init__(self):
     Module.__init__(self, "compound", MetaCompound)
     self.conf.addArgument({"name": "file",
-                           "description": "file to extract metadata",
+                           "description": "Extract metadata and content of this file",
                            "input": Argument.Required|Argument.Single|typeId.Node})
     self.conf.addConstant({"name": "mime-type", 
  	                   "type": typeId.String,
  	                   "description": "compatible extension",
  	                   "values": ["Composite Document File V2"]})
     self.conf.addArgument({"name": "no-extraction",	
-			   "description" : "Don't create nodes for files stored inside compound document",
+			   "description" : "Don't create nodes for files stored inside compound documents",
 			   "input": Argument.Empty})
     self.conf.addArgument({"name": "no-text",	
 			   "description" : "Don't extract text from word document",
 			   "input": Argument.Empty})
     self.conf.addArgument({"name": "no-pictures",	
-			   "description" : "Don't extract pictures from word and powerpoint document",
+			   "description" : "Don't extract pictures from word and powerpoint documents",
 			   "input": Argument.Empty})
     self.conf.addArgument({"name" : "no-root_metadata",
 			   "description" : "Don't apply metadata on the root document",

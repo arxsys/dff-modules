@@ -200,11 +200,11 @@ class Prefetch(Script):
       pass
 
 class prefetch(Module): 
-  """This modules generate metadata for prefetch files"""
+  """This module parses metadata of prefetch files and sets then to node's attributes"""
   def __init__(self):
     Module.__init__(self, "prefetch", Prefetch)
     self.conf.addArgument({"name": "file",
-                           "description": "file to extract metadata",
+                           "description": "parses metadata of this file",
                            "input": Argument.Required|Argument.Single|typeId.Node})
     self.conf.addConstant({"name": "extension-type", 
  	                   "type": typeId.String,

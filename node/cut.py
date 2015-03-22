@@ -63,25 +63,25 @@ class Cut(mfso):
 
 
 class cut(Module): 
-  """This modules allow you to cut a node from a starting offset"""
+  """This module allows you to cut a node from a starting offset"""
   def __init__(self):
     Module.__init__(self, "cut", Cut)
   
     self.conf.addArgument({"input": Argument.Required|Argument.Single|typeId.Node,
                            "name": "input",
-                           "description": "Input node which will be cut"
+                           "description": "Node to cut"
                            })
     self.conf.addArgument({"input": Argument.Required|Argument.Single|typeId.String,
                            "name": "output",
-                           "description": "Output name of created node"
+                           "description": "Output name of the created node"
                            })
     self.conf.addArgument({"input": Argument.Required|Argument.Single|typeId.UInt64,
                            "name": "start_offset",
-                           "description": "Address start of the new node"
+                           "description": "Start address of the new node"
                            })
     self.conf.addArgument({"input": Argument.Required|Argument.Single|typeId.UInt64,
                            "name": "size",
-                           "description": "Size readed after start's address. If not specified, read until EOF"
+                           "description": "Size to read. If not specified, read until EOF"
                            })
     self.icon = ":editcut"
     self.tags = "Node"

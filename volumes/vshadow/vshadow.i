@@ -44,7 +44,7 @@
 from dff.api.module.module import *
 from dff.api.types.libtypes import *
 class VSHADOW(Module):
-  """Reconstruct Windows NT Volume Shadow Snapshot (VSS)"""
+  """Reconstructs Windows NT Volume Shadow Snapshot (VSS)"""
   def __init__(self):
     Module.__init__(self, 'vshadow', Vshadow)
     self.conf.addArgument({"input":Argument.Required|Argument.Single|typeId.Node,
