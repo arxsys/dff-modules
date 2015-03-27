@@ -169,12 +169,14 @@ int	VMware::createLinks(Node *vmdkroot, std::string pcid)
   if (this->_links.size() > 1)
     this->_snaproot = new Node("Snapshots", 0, _vmdkroot);
 
-  for( std::map<std::string,Link*>::iterator ii=_links.begin(); ii!=_links.end(); ++ii)
+  for( std::map<std::string,Link*>::iterator ii=this->_links.begin(); ii!=this->_links.end(); ++ii)
       {
       std::string id = ii->first;
       Link *lnk = ii->second;
 
       uint64_t vs = lnk->volumeSize();
+
+      std::vector<Extent*> extents = lnk->getExtents();
 
       if (!lnk->isBase())
 	{

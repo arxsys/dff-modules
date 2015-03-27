@@ -35,7 +35,8 @@ private:
 
   class VMware* _vm;
 
-  uint64_t	getGT(uint64_t GDEOffset, Extent* ext);
+  unsigned int* mapGT(uint64_t GTOffset, Extent* ext);
+  uint64_t	getGTOffset(uint64_t GDEOffset, Extent* ext);
   int		mapGTGrains(uint64_t currentGDE, uint32_t curextent, FileMapping *fm, uint64_t *voffset, uint64_t *vextoffset, uint64_t GTEntries);
 
   Link		*getDeltaLink(uint64_t currentGDE, uint32_t currentGTE, uint32_t curextent);

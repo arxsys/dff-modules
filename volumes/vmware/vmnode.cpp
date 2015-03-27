@@ -12,7 +12,7 @@
  * and IRC channels for your use.
  * 
  * Author(s):
- *  Jeremy MOUNIER <fba@digital-forensic.org>
+ *  Jeremy MOUNIER <jmo@digital-forensic.org>
  */
 
 #include "vmnode.hpp"
@@ -50,21 +50,22 @@ void VMNode::fileMapping(FileMapping *fmap)
   // Get number of extents
   uint32_t	nextents = extents.size();
   uint32_t	curextent = 0;
-  //uint64_t	voffset = 0;
-  //uint64_t	vextoffset = 0;
+  uint64_t	voffset = 0;
+  uint64_t	vextoffset = 0;
   uint64_t	currentGDE = 0;
-  //int		mapcheck;
+  int		mapcheck;
   // Parse All extents
 
   while (curextent < nextents)
     {
       currentGDE = 0;
-      //vextoffset = 0;
+      vextoffset = 0;
       while (currentGDE < extents[curextent]->GDEntries)
-  	{
-          //mapcheck = this->mapGTGrains(currentGDE, curextent, fmap, &voffset, &vextoffset, extents[curextent]->GTEntries);
-	  //if mapcheck
-  	  currentGDE++;
+  	{	  
+          mapcheck = this->mapGTGrains(currentGDE, curextent, fmap, &voffset, &vextoffset, extents[curextent]->GTEntries);
+	  if (mapcheck) {
+	    currentGDE++;
+	    }
   	}
       curextent++;
     }
@@ -83,7 +84,7 @@ Link	*VMNode::getDeltaLink(uint64_t currentGDE, uint32_t currentGTE, uint32_t cu
 
       GDEOffset = (ext->sectorRGD * SECTOR_SIZE) + (currentGDE * 4);
 
-      GTOffset = this->getGT(GDEOffset, ext);
+      GTOffset = this->getGTOffset(GDEOffset, ext);
       
       GTEntry = this->readGTEntry(GTOffset, currentGTE, ext);
       if (GTEntry != 0)
@@ -93,6 +94,9 @@ Link	*VMNode::getDeltaLink(uint64_t currentGDE, uint32_t currentGTE, uint32_t cu
     }
   return this->_baseLink;
 }
+
+
+
 
 uint32_t	VMNode::readGTEntry(uint64_t GTEOffset, uint32_t currentGTE, Extent *ext)
 {
@@ -109,18 +113,32 @@ uint32_t	VMNode::readGTEntry(uint64_t GTEOffset, uint32_t currentGTE, Extent *ex
       std::cerr << "Error reading Entry : arg->get(\"parent\", &_node) failed." << std::endl;
       throw e;
     }
-
   return GTEntry;
 }
 
 //=========================
+unsigned int* VMNode::mapGT(uint64_t GTOffset, Extent* ext)
+{
+  unsigned int* uintmap = new unsigned int[512]();
 
-// Get GT Start Offset from a GD Entry
-uint64_t	VMNode::getGT(uint64_t GDEOffset, Extent* ext)
+  try
+    {
+      ext->vfile->seek(GTOffset);
+      ext->vfile->read(uintmap, 2048);
+    }
+  catch (envError & e)
+    {
+      std::cerr << "Error reading Entry : arg->get(\"parent\", &_node) failed." << std::endl;
+      throw e;
+    }
+  return uintmap;
+}
+
+uint64_t	VMNode::getGTOffset(uint64_t GDEOffset, Extent* ext)
 {
   uint64_t	GTOffset;
   uint32_t	GDEntry; // ok 
-
+  
   try
     {
       ext->vfile->seek(GDEOffset);
@@ -133,7 +151,6 @@ uint64_t	VMNode::getGT(uint64_t GDEOffset, Extent* ext)
     }
   GTOffset = GDEntry * SECTOR_SIZE;
   return GTOffset;
-    
 
 }
 
@@ -148,28 +165,24 @@ int VMNode::mapGTGrains(uint64_t currentGDE, uint32_t curextent, FileMapping *fm
   uint64_t	GDEOffset;
   uint32_t	grainSize;
   uint64_t	GTOffset;
+  unsigned int*	GTable;
+
+  Link *dlink = this->getDeltaLink(currentGDE, currentGTE, curextent);
+  std::vector<Extent *> extents = dlink->getExtents();
+  Extent *ext = extents[curextent];
+  grainSize = (ext->sectorsPerGrain * SECTOR_SIZE);
+  GDEOffset = (ext->sectorRGD * SECTOR_SIZE) + (currentGDE * 4);
+  GTOffset = this->getGTOffset(GDEOffset, ext);
+  GTable = this->mapGT(GTOffset, ext);
 
   while (currentGTE < GTEntries)
     {
-
-      Link *dlink = this->getDeltaLink(currentGDE, currentGTE, curextent);
-
-      std::vector<Extent *> extents = dlink->getExtents();
-      Extent *ext = extents[curextent];
-
       if (*vextoffset < (ext->sectors * SECTOR_SIZE))
 	{
-	  GDEOffset = (ext->sectorRGD * SECTOR_SIZE) + (currentGDE * 4);
-
-	  GTOffset = this->getGT(GDEOffset, ext);
-	  GTEntry = this->readGTEntry(GTOffset, currentGTE, ext);
-	  
-	  grainSize = (ext->sectorsPerGrain * SECTOR_SIZE);
-	  	  
-	  grainOffset = (uint64_t)(GTEntry) * SECTOR_SIZE;
-
+	  GTEntry = GTable[currentGTE];//this->readGTEntry(GTOffset, currentGTE, ext);
 	  if (GTEntry != 0)
 	    {
+	      grainOffset = (uint64_t)(GTEntry) * SECTOR_SIZE;
 	      fm->push(*voffset, grainSize, ext->vmdk, grainOffset);
 	    }
 	  else

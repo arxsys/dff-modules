@@ -105,4 +105,5 @@ class winreg(Module):
  	                   "values": ["registry file"]})
     self.tags = "Databases"
     self.flags = ["noscan"]
+    self.scanFilter = 'path in [$*Users*$, $*Documents and Settings*$] and name matches "NTUSER.DAT" or path matches $*system32/config*$'
     self.icon = ":password.png"

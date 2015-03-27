@@ -401,18 +401,21 @@ class Volatility(mfso):
       pcount = 1
       lpcount = len(self.__processes)
       for procnode in self.__processes:
-         self.stateinfo = "Step {:<2d} / {:<2d}: Dlls -- Getting load modules for each process {:>3d} / {:<3d}".format(self.__step, self.__steps, pcount, lpcount)
+         self.stateinfo = "Step {:<2d} / {:<2d}: Dlls -- Getting loaded modules for each process {:>3d} / {:<3d}".format(self.__step, self.__steps, pcount, lpcount)
          proc = procnode.eproc
          if proc.Peb != None:
             __aspace = proc.get_process_address_space()
+            if not hasattr(__aspace, "vtop"):
+               continue
             load_modules = [load_module for load_module in proc.get_load_modules()]
             lmodcount = len(load_modules)
             modcount = 1
             for mod in load_modules:
-               self.stateinfo = "Step {:<2d} / {:<2d}: Dlls -- Getting load modules for {:<16s} (process {:>3d} / {:<3d}) (dll {:>6d} / {:<6d})".format(self.__step, self.__steps, procnode.name(), pcount, lpcount, modcount, lmodcount)
+               self.stateinfo = "Step {:<2d} / {:<2d}: Dlls -- Getting loaded modules for {:<16s} (process {:>3d} / {:<3d}) (dll {:>6d} / {:<6d})".format(self.__step, self.__steps, procnode.name(), pcount, lpcount, modcount, lmodcount)
                modcount += 1
                paddr = -1
                dllname = str(mod.BaseDllName)
+               #print dir(__aspace)
                if __aspace is not None and __aspace.is_valid_address(mod.DllBase.v()):
                   paddr = long(__aspace.vtop(mod.DllBase.v()))
                if not self.__dlls.has_key(dllname):
@@ -571,7 +574,7 @@ class Volatility(mfso):
       for vad in vadtree:
          self.stateinfo = "Step {:<2d} / {:<2d}: Processes -- Creating Vad Tree for {:<16s} (process {:>3d} / {:<3d}) (vad {:>6d} / {:<6d})".format(self.__step, self.__steps, procnode.name(), pcount, lpcount, vadcount, lvadcount)
          vadcount += 1
-         if not vad:
+         if not vad or (proc.IsWow64 and vad.u.VadFlags.CommitCharge == 0x7ffffffffffff and  vad.End > 0x7fffffff):
             continue
          parent = parents.get(vad.Parent.obj_offset, None)
          if parent is None:
