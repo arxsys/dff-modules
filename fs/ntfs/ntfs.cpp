@@ -332,6 +332,7 @@ DValue        NTFS::save(void) const
   for (; vlink != vlinks.end(); ++vlink)
      reparsePoints->call("push", (*vlink)->save());
 
+  std::cout << "save ntfs " << this->rootDirectoryNode()->absolute() << std::endl;
   return (RealValue<DObject*>(dntfs));
 }
 
@@ -340,20 +341,29 @@ DValue        NTFS::saveTree(Node* node) const
   if (!node || node->fsobj() != this || node == this->__bootSectorNode)
     return RealValue<DObject*>(DNone);
 
+  if (dynamic_cast<VLink*>(node)) //don't save vlink yet (& don't follow it, we will use the reparse point func later) or use it now but don't use reparse point func ... XXX
+    return RealValue<DObject*>(DNone);
+
   DValue nodeValue = node->save();
   DObject* dnode = nodeValue.get<DObject*>();
 
-  DObject* dchildren(dnode->getValue("children").get<DObject*>());
-  if (dchildren == DNone)
+  try
   {
-    dchildren = Destruct::DStructs::instance().generate("DVectorObject");
-    dnode->setValue("children", RealValue<DObject*>(dchildren));
+    DObject* dchildren(dnode->getValue("children").get<DObject*>());
+    if (dchildren == DNone) // ?
+    {
+      dchildren = Destruct::DStructs::instance().generate("DVectorObject");
+      dnode->setValue("children", RealValue<DObject*>(dchildren));
+    }
+    std::vector<Node*> children(node->children());
+    std::vector<Node*>::const_iterator child = children.begin();
+    for (; child != children.end(); ++child)
+      dchildren->call("push", this->saveTree(*child));
   }
-
-  std::vector<Node*> children(node->children());
-  std::vector<Node*>::const_iterator child = children.begin();
-  for (; child != children.end(); ++child)
-    dchildren->call("push", this->saveTree(*child));
+  catch (DException const& exception) //NTFS generate DVLink who didn't have children attribute
+  { 
+    std::cout << "Can't save children of node " << node->absolute() << std::endl; //XXX Error with reparse point
+  }
 
   dnode->destroy();
   return (nodeValue);
@@ -370,5 +380,4 @@ DNTFS::DNTFS(DStruct* dstruct, DValue const& args) : DCppObject<DNTFS>(dstruct, 
 
 DNTFS::~DNTFS()
 {
-  std::cout << "DNTFS DELETED " << std::endl;
 }
