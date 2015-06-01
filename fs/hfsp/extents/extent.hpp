@@ -27,11 +27,20 @@
 
 
 PACK_START
-typedef struct	s_extent_descriptor
+typedef struct	s_hfs_extent_descriptor
+{
+  uint16_t	startBlock;
+  uint16_t	blockCount;  
+}		hfs_extent;
+PACK_END
+
+
+PACK_START
+typedef struct	s_hfsp_extent_descriptor
 {
   uint32_t	startBlock;
   uint32_t	blockCount;  
-}		extent;
+}		hfsp_extent;
 PACK_END
 
 
@@ -42,7 +51,8 @@ private:
   uint64_t	__blockCount;
   uint64_t	__blockSize;
 public:
-  Extent(extent ext, uint64_t block_size);
+  Extent(hfs_extent ext, uint64_t block_size);
+  Extent(hfsp_extent ext, uint64_t block_size);
   ~Extent();
   uint64_t	startBlock();
   uint64_t	startOffset();

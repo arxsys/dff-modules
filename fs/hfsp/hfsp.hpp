@@ -27,32 +27,38 @@
 #include "extents/fork.hpp"
 #include "allocation.hpp"
 
+
+class HfsRootNode: public Node
+{
+private:
+  VolumeInformation*	__vinfo;
+public:
+  HfsRootNode(std::string name, uint64_t size, Node* parent, fso* fsobj) : Node(name, size, parent, fsobj) {}
+  HfsRootNode() {}
+  void		setVolumeInformation(VolumeInformation* vinfo);
+  Attributes	_attributes();
+};
+
+
 class Hfsp : public mfso
 {
 private:
-  void			__process() throw (std::string);
-  void			__setContext(std::map<std::string, Variant_p > args) throw (std::string);
   Node*			__parent;
-  class HfsRootNode*	__root;
-  ExtentsTree*		__createEtree(VolumeHeader* volume) throw (std::string);
-  AllocationFile*	__createAllocation(VolumeHeader* volume, ExtentsTree* etree) throw (std::string);
-  void			__createCatalog(VolumeHeader* volume, ExtentsTree* etree) throw (std::string);
+  VirtualNode*		__virtualParent;
+  HfsRootNode*		__root;
+  uint64_t		__vheaderOffset;
+  VolumeFactory*	__volumeFactory;
+  bool			__mountWrapper;
+  void			__setContext(std::map<std::string, Variant_p > args) throw (std::string);
+  void			__process() throw (std::string);
+  void			__createHfsHandler(Node* origin, VolumeInformation* vinfo) throw (std::string);
+  void			__createHfspHandler(Node* origin, VolumeInformation* vinfo) throw (std::string);
+  void		        __createWrappedHfspHandler(Node* origin, VolumeInformation* vinfo) throw (std::string);
 public:
   Hfsp();
   ~Hfsp();
   virtual void	start(std::map<std::string, Variant_p > args);
 };
 
-
-class HfsRootNode: public Node
-{
-private:
-  VolumeHeader*	__vheader;
-public:
-  HfsRootNode(std::string name, uint64_t size, Node* parent, fso* fsobj) : Node(name, size, parent, fsobj) {}
-  HfsRootNode() {}
-  void		setVolumeHeader(VolumeHeader* vheader);
-  Attributes	_attributes();
-};
 
 #endif

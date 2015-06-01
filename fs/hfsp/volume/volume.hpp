@@ -29,6 +29,7 @@
 #include "extents/fork.hpp"
 
 // Following defines are used in volume_header.signature
+#define HfsVolume	0x4244 // BD
 #define HfspVolume	0x482b // H+
 #define HfsxVolume	0x4858 // HX
 
@@ -46,6 +47,123 @@
 #define	CatalogNodeIDsReused	(1<<12)
 #define	VolumeJournaled		(1<<13)
 #define VolumeSoftwareLock	(1<<14)
+
+
+class VolumeInformation
+{
+public:
+  VolumeInformation() {}
+  virtual ~VolumeInformation() {}
+  virtual uint16_t	type() = 0;
+  virtual void		process(Node* origin, uint64_t offset, fso* fsobj) throw (std::string) = 0;
+  virtual bool		isWrapper() {return false;}
+  virtual Attributes	_attributes() = 0;
+  virtual uint32_t	blockSize() = 0;
+  virtual uint32_t	totalBlocks() = 0;
+  virtual fork_data	extentsFile() = 0;
+  virtual fork_data	catalogFile() = 0;
+};
+
+
+class VolumeFactory
+{
+private:
+  void			__readBuffer(Node* origin, uint64_t offset, uint8_t* buffer, uint16_t size) throw (std::string);
+public:
+  VolumeFactory();
+  ~VolumeFactory();
+  VolumeInformation*	createVolumeInformation(Node* origin, fso* fsobj) throw (std::string);
+};
+
+
+PACK_START
+typedef struct	s_master_dblock
+{
+  uint16_t	signature; // 0x4244 || 0xD2D7
+  uint32_t	createDate;
+  uint32_t	modifyDate;
+  
+  uint16_t	attributes;
+  uint16_t	rootdirFiles;
+  uint16_t	volumeBitmapBlock; // always 3?
+  uint16_t	nextAllocationBlock;
+  uint16_t	totalBlocks;
+  uint32_t	blockSize;
+  uint32_t	clumpSize;
+  uint16_t	firstAllocationBlock;
+  uint32_t	nextCatalogNodeId;
+  uint16_t	freeBlocks;
+  char		volumeName[28];
+  uint32_t	backupDate;
+  uint16_t	backupSeqNumber;
+  uint32_t	writeCount;
+  uint32_t	OverflowClumpSize;
+  uint32_t	CatalogClumpSize;
+  uint16_t	rootdirFolders;
+  uint32_t	fileCount;
+  uint32_t	folderCount;
+  uint32_t	finderInfo[8];
+  uint16_t	embedSignature;
+  hfs_extent	embedExtent;
+  uint32_t	overflowSize;
+  hfs_extent	overflowExtents[3];
+  uint32_t	catalogSize;
+  hfs_extent	catalogExtents[3];
+}		master_dblock;
+PACK_END
+
+
+class MasterDirectoryBlock : public VolumeInformation
+{
+private:
+  master_dblock	__mdb;
+
+public:
+  MasterDirectoryBlock();
+  ~MasterDirectoryBlock();
+  virtual uint16_t	type();
+  virtual void		process(Node* origin, uint64_t offset, fso* fsobj) throw (std::string);
+  virtual Attributes	_attributes();
+  virtual uint32_t	totalBlocks();
+  virtual uint32_t	blockSize();
+  virtual fork_data	extentsFile();
+  virtual fork_data	catalogFile();
+
+  void		sanitize() throw (std::string);
+  uint16_t	signature();
+  vtime*	createDate();
+  vtime*	modifyDate();
+  
+  uint16_t	attributes();
+  uint16_t	rootdirFiles();
+  uint16_t	volumeBitmapBlock();
+  uint16_t	nextAllocationBlock();
+  uint32_t	clumpSize();
+  uint16_t	firstAllocationBlock();
+  uint32_t	nextCatalogNodeId();
+  uint16_t	freeBlocks();
+
+  std::string	volumeName();
+
+  vtime*	backupDate();
+  uint16_t	backupSeqNumber();
+  uint32_t	writeCount();
+  uint32_t	OverflowClumpSize();
+  uint32_t	CatalogClumpSize();
+  uint16_t	rootdirFolders();
+  uint32_t	fileCount();
+  uint32_t	folderCount();
+  //uint32_t	finderInfo[8]();
+  uint16_t	embedSignature();
+  uint16_t	embedStartBlock();
+  uint16_t	embedBlockCount();
+  bool		isWrapper();
+  hfs_extent*	overflowExtents();  
+  uint32_t	overflowSize();
+  // extent	overflowExtents[3];
+  // uint32_t	catalogSize;
+  // extent	catalogExtents[3];
+};
 
 
 PACK_START
@@ -88,7 +206,7 @@ typedef struct s_volumeheader
 PACK_END
 
 
-class VolumeHeader
+class VolumeHeader : public VolumeInformation
 {
 private:
   volumeheader	__vheader;
@@ -96,9 +214,13 @@ private:
 public:
   VolumeHeader();
   ~VolumeHeader();
-  void		process(Node* origin, fso* fsobj) throw (std::string);
-  Attributes	_attributes();
+  virtual uint16_t	type();
+  virtual void		process(Node* origin, uint64_t offset, fso* fsobj) throw (std::string);
+  virtual Attributes	_attributes();
+  virtual fork_data	extentsFile();
+  virtual fork_data	catalogFile();
 
+  void		sanitize() throw (std::string);
   uint16_t	signature();
   uint16_t	version();
   uint32_t	attributes();
@@ -126,8 +248,6 @@ public:
   uint64_t	encodingsBitmap();
 
   fork_data	allocationFile();
-  fork_data	extentsFile();
-  fork_data	catalogFile();
   fork_data	attributesFile();
   fork_data	startupFile();
   

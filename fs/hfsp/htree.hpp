@@ -25,6 +25,7 @@
 #include "vfile.hpp"
 
 #include "endian.hpp"
+#include "bufferreader.hpp"
 
 #define MaxNodeSize	0x8000
 #define MinNodeSize	0x200
@@ -66,26 +67,16 @@ typedef struct s_header_node
 PACK_END
 
 
-class KeyedRecord
+class KeyedRecord : public BufferReader
 {
 private:
-  void		__clean();
-  void		__readBuffer() throw (std::string);
-protected:
-  Node*		_origin;
-  uint64_t	_offset;
-  uint16_t	_size;
-  uint8_t*	_buffer;
+  uint8_t	__klenfield;
 public:
   KeyedRecord();
   virtual ~KeyedRecord();
-  void		setOrigin(Node* origin);
-  void		setOffset(uint64_t offset);
-  void		setSize(uint16_t size);
-  Node*		origin();
-  uint64_t	offset();
-  uint16_t	size();
+  void		setSizeofKeyLengthField(uint8_t klenfield);
   void		process() throw (std::string);
+  virtual void	process(uint8_t *buffer, uint16_t size) throw (std::string);
   virtual void	process(Node* origin, uint64_t offset, uint16_t size) throw (std::string);
   bool		isValid();
   uint16_t	keyLength();
@@ -107,6 +98,7 @@ private:
   void			__clean();
   void			__readBuffer() throw (std::string);
 protected:
+  uint8_t		_klenfield;
   uint8_t*		_buffer;
   uint16_t*		_roffsets;
   Node*			_origin;
@@ -115,9 +107,7 @@ protected:
 public:
   HNode();
   virtual ~HNode();
-  void			setOrigin(Node* origin);
-  void			setOffset(uint64_t offset);
-  void			setSize(uint16_t size);
+  void			setSizeofKeyLengthField(uint8_t klenfield);
   void			process();
   void			process(Node* origin, uint64_t uid, uint16_t size) throw (std::string);
   void			dump(std::string tab);
@@ -144,7 +134,7 @@ class HTree
 {
 private:
   header_node	__hnode;
-  VFile*	__vfile;  
+  VFile*	__vfile;
 protected:
   enum HTreeTypes
     {

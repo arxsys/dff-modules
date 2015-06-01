@@ -33,7 +33,7 @@ typedef struct s_fork_data
   uint64_t	logicalSize;
   uint32_t	clumpSize;
   uint32_t	totalBlocks;
-  extent	extents[8];
+  hfsp_extent	extents[8];
 }		fork_data;
 PACK_END
 

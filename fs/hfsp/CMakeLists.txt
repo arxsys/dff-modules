@@ -17,13 +17,21 @@ dff_cpp_module(HFSP
   htree.cpp
   specialfile.cpp
   allocation.cpp
-  
+  hfshandlers.cpp
+  hfshandler.cpp
+  hfsphandler.cpp
+  bufferreader.cpp
   volume/volume.cpp
+  volume/volumeheader.cpp
+  volume/masterdirectoryblock.cpp
   extents/extent.cpp
   extents/fork.cpp
   extents/extentstree.cpp
-  catalog/catalogtree.cpp 
-  catalog/catalogrecords.cpp 
+  catalog/catalogtree.cpp
+  catalog/catalogrecords.cpp
+  catalog/hfsrecords.cpp
+  catalog/hfsprecords.cpp
+  catalog/permissions.cpp
   catalog/finder.cpp
 
   SWIG_FILE hfsp.i

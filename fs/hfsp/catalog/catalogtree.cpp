@@ -15,12 +15,12 @@
  */
 
 #include "catalogtree.hpp"
-#include <unicode/unistr.h>
+#include "hfsrecords.hpp"
+#include "hfsprecords.hpp"
 
 
-CatalogTreeNode::CatalogTreeNode()
+CatalogTreeNode::CatalogTreeNode(uint8_t version) : __version(version)
 {
-  
 }
 
 
@@ -35,6 +35,7 @@ void	CatalogTreeNode::process(Node* origin, uint64_t uid, uint16_t size) throw (
   HNode::process(origin, uid, size);
 }
 
+
 KeyedRecords	CatalogTreeNode::records()
 {
   std::string	error;
@@ -47,8 +48,19 @@ KeyedRecords	CatalogTreeNode::records()
     {
       for (i = this->numberOfRecords(); i > 0; i--)
 	{
-	  record = this->__createCatalogKey(bswap16(this->_roffsets[i]), bswap16(this->_roffsets[i-1]));
-	  records.push_back(record);
+	  try
+	    {
+	      record = this->__createCatalogKey(bswap16(this->_roffsets[i]), bswap16(this->_roffsets[i-1]));
+	      if (record != NULL)
+		records.push_back(record);
+	      //record->hexdump(1, 1);
+	    }
+	  catch (std::string err)
+	    {
+	      //std::cout << "[ERROR] " << err << std::endl;	      
+	      //record->hexdump(1, 1);
+	    }
+	  //std::cout << "Loop" << std::endl;
 	}
     }
   else
@@ -59,18 +71,26 @@ KeyedRecords	CatalogTreeNode::records()
 
 KeyedRecord*	CatalogTreeNode::__createCatalogKey(uint16_t start, uint16_t end)
 {
-  CatalogKey*	record;
+  CatalogEntry*	record;
   uint64_t	offset;
   uint16_t	size;
 
+  record = NULL;
   offset = this->offset() + start;
   size = 0;
   if (start < end)
     size = end - start;
-  record = new CatalogKey();
-  record->setOrigin(this->_origin);
-  record->setOffset(offset);
-  record->setSize(size);
+  if (this->__version == 0)
+    record = new HfsCatalogEntry();
+  else
+    record = new HfspCatalogEntry();
+  if (record != NULL)
+    {
+      record->setSizeofKeyLengthField(this->_klenfield);
+      // using the buffer version in order to not read the same buffer twice
+      record->process(this->_buffer+start, size);
+      record->setContext(this->_origin, offset, size);
+    }
   return record;
 }
 
@@ -78,18 +98,19 @@ KeyedRecord*	CatalogTreeNode::__createCatalogKey(uint16_t start, uint16_t end)
 //
 // Catalog HTree implementation
 //
-CatalogTree::CatalogTree()
+CatalogTree::CatalogTree(uint8_t version)
 {
-  this->__catalog = NULL;
-  this->__origin = NULL;
-  this->__mountpoint = NULL;
-  this->__fsobj = NULL;
-  this->__etree = NULL;
+  //this->__catalog = NULL;
+  //this->__fsobj = NULL;
+  //this->__etree = NULL;
   this->__allocatedBlocks = NULL;
+  this->__version = version;
   this->__fileCount = 0;
   this->__folderCount = 0;
   this->__fileThreadCount = 0;
   this->__folderThreadCount = 0;
+  this->__indexRecords = 0;
+  this->__effectiveLeafRecords = 0;
   this->__percent = 0;
 }
 
@@ -99,33 +120,11 @@ CatalogTree::~CatalogTree()
 }
 
 
-void	CatalogTree::setFso(fso* fsobj)
+void	CatalogTree::setHandler(HfsFileSystemHandler* handler) throw (std::string)
 {
-  this->__fsobj = fsobj;
-}
-
-
-void	CatalogTree::setOrigin(Node* origin) throw (std::string)
-{
-  if (origin == NULL)
-    throw std::string("Provided origin does not exist");
-  this->__origin = origin;
-}
-
-
-void	CatalogTree::setMountPoint(Node* mountpoint) throw (std::string)
-{
-  if (mountpoint == NULL)
-    throw std::string("Provided mount point does not exist");
-  this->__mountpoint = mountpoint;
-}
-
-
-void	CatalogTree::setExtentsTree(ExtentsTree* etree) throw (std::string)
-{
-  if (etree == NULL)
-    throw std::string("Cannot create Catalog tree because provided Extent tree does not exist");
-  this->__etree = etree;
+  if (handler == NULL)
+    throw std::string("Cannot create Catalog tree because provided handler does not exist");
+  this->__handler = handler;
 }
 
 
@@ -138,8 +137,9 @@ void			CatalogTree::process(Node* catalog, uint64_t offset) throw (std::string)
   std::stringstream			sstr;
 
   HTree::process(catalog, offset);
-  if ((cnode = new CatalogTreeNode()) == NULL)
+  if ((cnode = new CatalogTreeNode(this->__version)) == NULL)
     throw std::string("Cannot create catalog node");
+  cnode->setSizeofKeyLengthField(this->sizeOfKey());
   if ((this->__allocatedBlocks = new TwoThreeTree()) == NULL)
     throw std::string("Cannot create allocated blocks status");
   sstr << "Proceesing catalog tree";
@@ -154,7 +154,7 @@ void			CatalogTree::process(Node* catalog, uint64_t offset) throw (std::string)
 	}
       catch (std::string err)
 	{
-	  std::cout << "Error while making node" << err << std::endl;
+	  //std::cout << "Error while making node" << err << std::endl;
 	}
       this->__progress(idx);
     }
@@ -163,16 +163,44 @@ void			CatalogTree::process(Node* catalog, uint64_t offset) throw (std::string)
     {
       for (it = mit->second.begin(); it != mit->second.end(); it++)
 	{
-	  this->__mountpoint->addChild(*it);
-	  if ((*it)->hfsType() == HfsNode::Folder)
-	    this->__linkNodes((*it), (*it)->cnid());
+	  //CatalogEntry*		entry;
+	  //entry = this->catalogEntry((*it)->offset(), (*it)->entrySize());
+	  //std::cout << "Parent id: " << (*it)->parentId() << " -- id: " << (*it)->fsId() << std::endl;
+	  //entry->catalogKey()->hexdump(1, 1);
+	  this->__handler->mountPoint()->addChild(*it);
+	  if ((*it)->isDir())
+	    {
+	      std::cout << "Recurse on: " << (*it)->fsId() << std::endl;
+	      this->__linkNodes((*it), (*it)->fsId());
+	    }
 	}
       mit->second.clear();
     }
-  // XXX implement dedicated method to manage potential orphans
   for (mit = this->__nodes.begin(); mit != this->__nodes.end(); mit++)
     if (mit->second.size() > 0)
-      std::cout << "orphan entry found: " << mit->first << std::endl;
+      ;//std::cout << "orphan entry found: " << mit->first << std::endl;
+}
+
+
+CatalogEntry*		CatalogTree::catalogEntry(uint64_t offset, uint16_t size)
+{
+  CatalogEntry*		entry;
+
+  if (this->__version == 0)
+    entry = new HfsCatalogEntry();
+  else
+    entry = new HfspCatalogEntry();
+  entry->setSizeofKeyLengthField(this->sizeOfKey());
+  try
+    {
+      //std::cout << offset << " -- " << size << std::endl;
+      entry->process(this->_origin, offset, size);
+    }
+  catch (std::string err)
+    {
+      //std::cout << err << std::endl;
+    }
+  return entry;
 }
 
 
@@ -185,7 +213,8 @@ void			CatalogTree::__progress(uint64_t current)
   if (this->__percent < percent)
     {
       sstr << "Processing nodes in catalog tree: " << percent << "% (" << current << " / " << this->totalNodes() << ")" << std::endl;
-      this->__fsobj->stateinfo = sstr.str();
+      this->__handler->setStateInformation(sstr.str());
+      //this->__fsobj->stateinfo = sstr.str();
       sstr.str("");
       this->__percent = percent;
     }
@@ -196,33 +225,38 @@ void				CatalogTree::__makeNodes(Node* catalog, CatalogTreeNode* cnode)
 {
   KeyedRecords			records;
   KeyedRecords::iterator	rit;
-  CatalogKey*			ckey;
+  CatalogEntry*			ckey;
   HfsNode*			node;
 
   records = cnode->records();
   for (rit = records.begin(); rit != records.end(); rit++)
     {
-      (*rit)->process();
-      ckey = dynamic_cast<CatalogKey*>(*rit);
-      node = NULL;
-      if (ckey->type() == CatalogKey::FileRecord)
+      if (*rit != NULL)
 	{
-	  this->__fileCount++;
-	  node = new HfsFile(ckey->parentId(), ckey->name(), this->__fsobj);
-	  node->setFile();
+	  node = NULL;
+	  if ((ckey = dynamic_cast<CatalogEntry*>(*rit)) != NULL)
+	    {
+	      //ckey->catalogKey()->hexdump(1, 1);
+	      //ckey->catalogData()->hexdump(1, 1);
+	      //std::cout << "ParentId: " << ckey->parentId() << std::endl;
+	      //std::cout << "id: " << ckey->id() << " - " << std::hex << ckey->id() << std::endl;
+	      if (ckey->type() == CatalogEntry::FileRecord)
+	      	{
+	      	  this->__fileCount++;
+	      	  node = new HfsFile(ckey->name(), this->__handler, ckey->offset(), ckey->size());
+	      	  node->setFile();
+	      	}
+	      else if (ckey->type() == CatalogEntry::FolderRecord)
+	      	{
+	      	  this->__folderCount++;
+	      	  node = new HfsFolder(ckey->name(), this->__handler, ckey->offset(), ckey->size());
+	      	  node->setDir();
+	      	}
+	      if (node != NULL)
+		this->__nodes[ckey->parentId()].push_back(node);
+	    }
+	  delete *rit;
 	}
-      else if (ckey->type() == CatalogKey::FolderRecord)
-	{
-	  this->__folderCount++;
-	  node = new HfsFolder(ckey->parentId(), ckey->name(), this->__fsobj);
-	  node->setDir();
-	}
-      if (node != NULL)
-	{
-	  node->process(this->__origin, catalog, ckey->offset()+ckey->dataOffset(), this->__etree);
-	  this->__nodes[node->parentId()].push_back(node);
-	}
-      delete ckey;
     }
   records.clear();
 }
@@ -238,38 +272,41 @@ void	CatalogTree::__linkNodes(HfsNode* parent, uint32_t parentId)
       for (it = mit->second.begin(); it != mit->second.end(); it++)
 	{
 	  parent->addChild(*it);
-	  if ((*it)->hfsType() == HfsNode::Folder)
-	    this->__linkNodes((*it), (*it)->cnid());
-	  // else
-	  //   this->__registerAllocatedBlocks(*it);
+	  if ((*it)->isDir())
+	    this->__linkNodes((*it), (*it)->fsId());
+	  else
+	    ;//this->__registerAllocatedBlocks(*it);
 	}
       mit->second.clear();
+    }
+  else
+    {
+      std::cout << "Orphan entry detected" << std::endl;
     }
 }
 
 
 void	CatalogTree::__registerAllocatedBlocks(HfsNode* node)
 {
-  HfsFile*		file;
-  ForkData*		fork;
-  ExtentsList           extents;
-  ExtentsList::iterator it;
-  uint64_t		bcount;
-  uint64_t		sblock;
+  // HfsFile*		file;
+  // ForkData*		fork;
+  // ExtentsList           extents;
+  // ExtentsList::iterator it;
+  // uint64_t		bcount;
+  // uint64_t		sblock;
 
-  
-  if (node->hfsType() == HfsNode::File)
-    {
-      file = dynamic_cast<HfsFile*>(node);
-      fork = file->dataFork();
-      extents = fork->extents();
-      for (it = extents.begin(); it != extents.end(); it++)
-	{
-	  sblock = (*it)->startBlock();
-	  this->__allocatedBlocks->insert(sblock);
-	  for (bcount = 0; bcount != (*it)->blockCount(); ++bcount)
-	    this->__allocatedBlocks->insert(sblock++);
-	}
-      delete fork;
-    }
+  // if (node->isFile())
+  //   {
+  //     file = dynamic_cast<HfsFile*>(node);
+  //     fork = file->dataFork();
+  //     extents = fork->extents();
+  //     for (it = extents.begin(); it != extents.end(); it++)
+  // 	{
+  // 	  sblock = (*it)->startBlock();
+  // 	  this->__allocatedBlocks->insert(sblock);
+  // 	  for (bcount = 0; bcount != (*it)->blockCount(); ++bcount)
+  // 	    this->__allocatedBlocks->insert(sblock++);
+  // 	}
+  //     delete fork;
+  //   }
 }

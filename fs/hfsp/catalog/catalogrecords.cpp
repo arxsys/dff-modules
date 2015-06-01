@@ -15,427 +15,12 @@
  */
 
 #include "catalogrecords.hpp"
-#include <unicode/unistr.h>
+#include "hfsrecords.hpp"
+#include "hfsprecords.hpp"
+#include "hfshandlers.hpp"
 
 
-CatalogKey::CatalogKey()
-{
-}
-
-CatalogKey::~CatalogKey()
-{
-}
-
-
-void		CatalogKey::process(Node* origin, uint64_t offset, uint16_t size) throw (std::string)
-{
-  uint8_t*	key;
-
-  KeyedRecord::process(origin, offset, size);
-  key = NULL;
-  if (((key = this->key()) != NULL) && (this->keyDataLength() >= sizeof(catalog_key)))
-    memcpy(&this->__ckey, key, sizeof(catalog_key));
-  if (key != NULL)
-    free(key);
-}
-
-
-uint32_t	CatalogKey::parentId()
-{
-  return bswap32(this->__ckey.parentId);
-}
-
-
-uint16_t	CatalogKey::nameDataLength()
-{
-  return this->nameLength()*2;
-}
-
-
-uint16_t	CatalogKey::nameLength()
-{
-  return bswap16(this->__ckey.unistrlen);
-}
-
-
-std::string	CatalogKey::name()
-{
-  uint16_t	namelen;
-  uint8_t*	key;
-  std::string	utf8;
-  uint64_t	zero;
-  
-  key = NULL;
-  namelen = this->nameDataLength();
-  zero = 0;
-  if (((key = this->key()) != NULL) && (this->keyDataLength() >= namelen+CatalogKeyStrOffset))
-    {
-      utf8 = "";
-      UnicodeString us((char*)(key+CatalogKeyStrOffset), namelen, "UTF-16BE");
-      //XXX ugly but necessary condition to match HFS Private Data which starts with
-      // 4 utf-16 null char...
-      // https://developer.apple.com/legacy/library/technotes/tn/tn1150.html#HardLinks
-      if (this->parentId() == 2 && namelen > 8 && memcmp(&zero, key+CatalogKeyStrOffset, 8) == 0)
-	us.remove(0, 4);
-      std::string ret = us.trim().toUTF8String(utf8);
-    }
-  if (key != NULL)
-    free(key);
-  return utf8;
-}
-
-
-CatalogKey::Type	CatalogKey::type()
-{
-  uint8_t*		data;
-  uint16_t		_type;
-  
-  data = NULL;
-  _type = CatalogKey::BadRecord;
-  if ((data = this->data()) != NULL)
-    {
-      memcpy(&_type, data, 2);
-      _type = bswap16(_type);
-    }
-  if (data != NULL)
-    free(data);
-  return (CatalogKey::Type)_type;
-}
-
-
-HfsPermissions::HfsPermissions()
-{
-}
-
-
-HfsPermissions::~HfsPermissions()
-{
-}
-
-
-void		HfsPermissions::process(Node* origin, uint64_t offset) throw (std::string)
-{
-
-}
-
-
-void		HfsPermissions::process(uint8_t* buffer, uint16_t size) throw (std::string)
-{
-
-}
-
-
-void		HfsPermissions::process(perms permissions) throw (std::string)
-{
-  memcpy(&this->__permissions, &permissions, sizeof(perms));
-}
-
-
-uint32_t	HfsPermissions::ownerId()
-{
-  return bswap32(this->__permissions.uid);
-}
-
-
-uint32_t	HfsPermissions::groupId()
-{
-  return bswap32(this->__permissions.gid);
-}
-
-
-bool		HfsPermissions::isAdminArchived()
-{
-  return ((this->__permissions.adminFlags & SF_ARCHIVED) == SF_ARCHIVED);
-}
-
-
-bool		HfsPermissions::isAdminImmutable()
-{
-  return ((this->__permissions.adminFlags & SF_IMMUTABLE) == SF_IMMUTABLE);
-}
-
-
-bool		HfsPermissions::adminAppendOnly()
-{
-  return ((this->__permissions.adminFlags & SF_APPEND) == SF_APPEND);
-}
-
-
-bool		HfsPermissions::canBeDumped()
-{
-  return !((this->__permissions.userFlags & UF_NODUMP) == UF_NODUMP);
-}
-
-
-bool		HfsPermissions::isUserImmutable()
-{
-  return ((this->__permissions.userFlags & UF_IMMUTABLE) == UF_IMMUTABLE);
-}
-
-bool		HfsPermissions::userAppendOnly()
-{
-  return ((this->__permissions.userFlags & UF_APPEND) == UF_APPEND);
-}
-
-
-bool		HfsPermissions::isOpaque()
-{
-  return ((this->__permissions.userFlags & UF_OPAQUE) == UF_OPAQUE);
-}
-
-
-bool		HfsPermissions::isSuid()
-{
-  uint16_t	filemode;
-
-  filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_ISUID) == S_ISUID);
-}
-
-
-bool		HfsPermissions::isGid()
-{
-  uint16_t	filemode;
-
-  filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_ISGID) == S_ISGID);
-}
-
-
-bool		HfsPermissions::stickyBit()
-{
-  uint16_t	filemode;
-
-  filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_ISTXT) == S_ISTXT);
-}
-
-
-bool		HfsPermissions::isUserReadable()
-{
-  uint16_t	filemode;
-
-  filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IRUSR) == S_IRUSR);
-}
-
-
-bool		HfsPermissions::isUserWritable()
-{
-  uint16_t	filemode;
-
-  filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IWUSR) == S_IWUSR);
-}
-
-
-bool		HfsPermissions::isUserExecutable()
-{
-  uint16_t	filemode;
-
-  filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IXUSR) == S_IXUSR);
-}
-
-
-bool		HfsPermissions::isGroupReadable()
-{
-  uint16_t	filemode;
-
-  filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IRGRP) == S_IRGRP);
-}
-
-bool		HfsPermissions::isGroupWritable()
-{
-  uint16_t	filemode;
-
-  filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IWGRP) == S_IWGRP);
-}
-
-
-bool		HfsPermissions::isGroupExecutable()
-{
-  uint16_t	filemode;
-
-  filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IXGRP) == S_IXGRP);
-}
-
-
-bool		HfsPermissions::isOtherReadable()
-{
-  uint16_t	filemode;
-
-  filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IROTH) == S_IROTH);
-}
-
-
-bool		HfsPermissions::isOtherWritable()
-{
-  uint16_t	filemode;
-
-  filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IWOTH) == S_IWOTH);
-}
-
-
-bool		HfsPermissions::isOtherExecutable()
-{
-  uint16_t	filemode;
-
-  filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IXOTH) == S_IXOTH);
-}
-
-
-bool		HfsPermissions::isFifo()
-{
-  uint16_t	filemode;
-
-  filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IFIFO) == S_IFIFO);
-}
-
-
-bool		HfsPermissions::isCharacter()
-{
-  uint16_t	filemode;
-
-  filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IFCHR) == S_IFCHR);
-}
-
-
-bool		HfsPermissions::isDirectory()
-{
-  uint16_t	filemode;
-
-  filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IFDIR) == S_IFDIR);
-}
-
-
-bool		HfsPermissions::isBlock()
-{
-  uint16_t	filemode;
-
-  filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IFBLK) == S_IFBLK);
-}
-
-
-bool		HfsPermissions::isRegular()
-{
-  uint16_t	filemode;
-
-  filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IFREG) == S_IFREG);
-}
-
-
-bool		HfsPermissions::isSymbolicLink()
-{
-  uint16_t	filemode;
-
-  filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IFLNK) == S_IFLNK);
-}
-
-
-bool		HfsPermissions::isSocket()
-{
-  uint16_t	filemode;
-
-  filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IFSOCK) == S_IFSOCK);
-}
-
-
-bool		HfsPermissions::isWhiteout()
-{
-  uint16_t	filemode;
-
-  filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IFWHT) == S_IFWHT);
-}
-
-
-uint32_t	HfsPermissions::linkReferenceNumber()
-{
-  return bswap32(this->__permissions.special.inodeNum);
-}
-
-
-uint32_t	HfsPermissions::linkCount()
-{
-  return bswap32(this->__permissions.special.linkCount);
-}
-
-
-uint32_t	HfsPermissions::deviceNumber()
-{
-  return bswap32(this->__permissions.special.rawDevice);
-}
-
-
-Attributes	HfsPermissions::attributes()
-{
-  Attributes	attrs;
- 
-  attrs["uid"] = new Variant(this->ownerId());
-  attrs["gid"] = new Variant(this->groupId());
-  
-  Attributes	aflags;
-  aflags["Archived"] = new Variant(this->isAdminArchived());
-  aflags["Immutable"] = new Variant(this->isAdminImmutable());
-  aflags["Append only"] = new Variant(this->adminAppendOnly());
-  attrs["Admin flags"] = new Variant(aflags);
-
-  Attributes	uflags;
-  uflags["Dumpable"] = new Variant(this->canBeDumped());
-  uflags["Immutable"] = new Variant(this->isUserImmutable());
-  uflags["Append only"] = new Variant(this->userAppendOnly());
-  attrs["User flags"] = new Variant(uflags);
-
-  Attributes	rights;
-  Attributes	umode;
-  umode["Read"] = new Variant(this->isUserReadable());
-  umode["Write"] = new Variant(this->isUserWritable());
-  umode["Execute"] = new Variant(this->isUserExecutable());
-  rights["User"] = new Variant(umode);
-
-  Attributes	gmode;
-  gmode["Read"] = new Variant(this->isGroupReadable());
-  gmode["Write"] = new Variant(this->isGroupWritable());
-  gmode["Execute"] = new Variant(this->isGroupExecutable());
-  rights["Group"] = new Variant(gmode);
-
-  Attributes	omode;
-  omode["Read"] = new Variant(this->isOtherReadable());
-  omode["Write"] = new Variant(this->isOtherWritable());
-  omode["Execute"] = new Variant(this->isOtherExecutable());
-  rights["Other"] = new Variant(gmode);
-  attrs["Rights"] = new Variant(rights);
-
-  Attributes	ftype;
-  ftype["Named pipe"] = new Variant(this->isFifo());
-  ftype["Character"] = new Variant(this->isCharacter());
-  ftype["Directory"] = new Variant(this->isDirectory());
-  ftype["Block"] = new Variant(this->isBlock());
-  ftype["Regular"] = new Variant(this->isRegular());
-  ftype["Symbolic link"] = new Variant(this->isSymbolicLink());
-  ftype["Socket"] = new Variant(this->isSocket());
-  ftype["Whiteout"] = new Variant(this->isWhiteout());
-  attrs["File type"] = new Variant(ftype);
-
-  return attrs;
-}
-
-
-CatalogEntry::CatalogEntry()
+CatalogEntry::CatalogEntry() : __type(-1)
 {
 }
 
@@ -445,136 +30,199 @@ CatalogEntry::~CatalogEntry()
 }
 
 
-void		CatalogEntry::_readEntry() throw (std::string)
+int16_t		CatalogEntry::type()
 {
-  std::string	error;
-  VFile*	vfile;
-  
-  vfile = NULL;
-  try
+  uint8_t*	data;
+
+  data = NULL;
+  if (this->__type == -1)
     {
-      vfile = this->_origin->open();
-      vfile->seek(this->_offset);
-      if (vfile->read(&this->_entry, sizeof(catalog_entry)) != sizeof(catalog_entry))
-	error = std::string("Cannot read btree node");
+      this->__type = CatalogEntry::InvalidRecord;
+      if ((data = this->data()) != NULL)
+	{
+	  memcpy(&this->__type, data, 2);
+	  if ((this->__type & 0xff00) != 0)
+	    this->__type = bswap16(this->__type);
+	}
+      if (data != NULL)
+	free(data);
     }
-  catch (std::string& err)
-    {
-      error = err;
-    }
-  catch (vfsError& err)
-    {
-      error = err.error;
-    }
-  if (vfile != NULL)
-    {
-      vfile->close();
-      delete vfile;
-    }
-  if (!error.empty())
-    throw error;
+  return this->__type;
 }
 
 
-void		CatalogEntry::process(Node* origin, uint64_t offset) throw (std::string)
+void		CatalogEntry::process(Node* origin, uint64_t offset, uint16_t size) throw (std::string)
 {
-  this->_origin = origin;
-  this->_offset = offset;
-  this->_readEntry();
+  KeyedRecord::process(origin, offset, size);
 }
 
 
 void		CatalogEntry::process(uint8_t* buffer, uint16_t size) throw (std::string)
 {
-  if (size < sizeof(catalog_entry))
-    throw std::string("Cannot interpret catalog entry struct because provided buffer is too small");
-  memcpy(&this->_entry, buffer, sizeof(catalog_entry));
+  KeyedRecord::process(buffer, size);
 }
 
 
-int16_t		CatalogEntry::recordType()
+CatalogKey::CatalogKey()
 {
-  return bswap16(this->_entry.recordType);
 }
 
 
-Attributes	CatalogEntry::commonAttributes()
+CatalogKey::~CatalogKey()
 {
-  Attributes		attrs;
-  Attributes		aperms;
-  HfsPermissions*	perms;
-
-  attrs["created"] = new Variant(this->createDate());
-  attrs["content modified"] = new Variant(this->contentModDate());
-  attrs["attribute modified"] = new Variant(this->attributeModDate());
-  attrs["accessed"] = new Variant(this->accessDate());
-  attrs["backup"] = new Variant(this->backupDate());
-  perms = new HfsPermissions();
-  perms->process(this->_entry.permissions);
-  aperms = perms->attributes();  
-  attrs["Permissions"] = new Variant(aperms);
-  delete perms;
-  return attrs;
 }
 
 
-uint32_t	CatalogEntry::id()
+void		CatalogKey::process(Node* origin, uint64_t offset, uint16_t size) throw (std::string)
 {
-  return bswap32(this->_entry.id);
+  BufferReader::process(origin, offset, size);
 }
 
 
-vtime*	CatalogEntry::createDate()
+void		CatalogKey::process(uint8_t* buffer, uint16_t size) throw (std::string)
+{
+  BufferReader::process(buffer, size);
+}
+
+
+CatalogData::CatalogData()
+{
+}
+
+
+CatalogData::~CatalogData()
+{
+}
+
+
+void		CatalogData::process(Node* origin, uint64_t offset, uint16_t size) throw (std::string)
+{
+  BufferReader::process(origin, offset, size);
+}
+
+
+void		CatalogData::process(uint8_t* buffer, uint16_t size) throw (std::string)
+{
+  BufferReader::process(buffer, size);
+}
+
+
+vtime*		CatalogData::_timestampToVtime(uint32_t timestamp)
 {
   uint32_t	date;
 
-  date = bswap32(this->_entry.createDate);
+  date = bswap32(timestamp);
   return new HfsVtime(date);
 }
 
 
-vtime*	CatalogEntry::contentModDate()
-{
-  uint32_t	date;
-
-  date = bswap32(this->_entry.contentModDate);
-  return new HfsVtime(date);
-}
-
-
-vtime*	CatalogEntry::attributeModDate()
-{
-  uint32_t	date;
-
-  date = bswap32(this->_entry.attributeModDate);
-  return new HfsVtime(date);
-}
-
-
-vtime*	CatalogEntry::accessDate()
-{
-  uint32_t	date;
-
-  date = bswap32(this->_entry.accessDate);
-  return new HfsVtime(date);
-}
-
-
-vtime*	CatalogEntry::backupDate()
-{
-  uint32_t	date;
-
-  date = bswap32(this->_entry.backupDate);
-  return new HfsVtime(date);
-}
-
-
-HfsNode::HfsNode(HfsNode::Type type, uint32_t parentId, std::string name, fso* fsobj) : Node(name, 0, NULL, fsobj), _parentId(parentId), _type(type)
+CatalogFile::CatalogFile()
 {
 }
 
 
-bool	HfsNode::_readToBuffer(void* buffer, uint64_t offset, uint16_t size)
+CatalogFile::~CatalogFile()
+{
+}
+
+
+void		CatalogFile::process(Node* origin, uint64_t offset, uint16_t size) throw (std::string)
+{
+  CatalogData::process(origin, offset, size);
+}
+
+
+void		CatalogFile::process(uint8_t* buffer, uint16_t size) throw (std::string)
+{
+  CatalogData::process(buffer, size);
+}
+
+
+CatalogFolder::CatalogFolder()
+{
+}
+
+
+CatalogFolder::~CatalogFolder()
+{
+}
+
+
+void		CatalogFolder::process(Node* origin, uint64_t offset, uint16_t size) throw (std::string)
+{
+  CatalogData::process(origin, offset, size);
+}
+
+
+void		CatalogFolder::process(uint8_t* buffer, uint16_t size) throw (std::string)
+{
+  CatalogData::process(buffer, size);
+}
+
+
+CatalogThread::CatalogThread()
+{
+}
+
+
+CatalogThread::~CatalogThread()
+{
+}
+
+
+void		CatalogThread::process(Node* origin, uint64_t offset, uint16_t size) throw (std::string)
+{
+  CatalogData::process(origin, offset, size);
+}
+
+
+void		CatalogThread::process(uint8_t* buffer, uint16_t size) throw (std::string)
+{
+  CatalogData::process(buffer, size);
+}
+
+
+HfsNode::HfsNode(std::string name, HfsFileSystemHandler* handler, uint64_t offset, uint16_t size) : Node(name, 0, NULL, handler->fsObject()),  _entrySize(size), _offset(offset), _handler(handler)
+{
+}
+
+
+HfsNode::~HfsNode()
+{
+}
+
+
+uint32_t		HfsNode::fsId()
+{
+  CatalogEntry*	entry;
+  
+  entry = this->_handler->catalogTree()->catalogEntry(this->_offset, this->_entrySize);
+  return entry->id();
+}
+
+
+uint32_t		HfsNode::parentId()
+{
+  CatalogEntry*	entry;
+  
+  entry = this->_handler->catalogTree()->catalogEntry(this->_offset, this->_entrySize);
+  return entry->parentId();
+}
+
+
+uint16_t		HfsNode::entrySize()
+{
+  return this->_entrySize;
+}
+
+
+uint64_t		HfsNode::offset()
+{
+  return this->_offset;
+}
+
+
+bool		HfsNode::_readToBuffer(void* buffer, uint64_t offset, uint16_t size)
 {
   bool		success;
   VFile*	vfile;
@@ -583,7 +231,7 @@ bool	HfsNode::_readToBuffer(void* buffer, uint64_t offset, uint16_t size)
   success = true;
   try
     {
-      vfile = this->_catalog->open();
+      vfile = this->_handler->catalogNode()->open();
       vfile->seek(offset);
       if (vfile->read(buffer, size) != size)
 	success = false;
@@ -605,127 +253,86 @@ bool	HfsNode::_readToBuffer(void* buffer, uint64_t offset, uint16_t size)
 }
 
 
-HfsNode::~HfsNode()
-{
-}
+// void		HfspFile::process(Node* origin, Node* catalog, uint64_t offset, ExtentsTree* etree)
+// {
+//   ForkData*	fork;
+  
+//   HfsNode::process(origin, catalog, offset, etree);
+//   fork = this->dataFork();
+//   this->setSize(fork->logicalSize());
+//   delete fork;
+// }
 
-void		HfsNode::process(Node* origin, Node* catalog, uint64_t offset, ExtentsTree* etree)
-{
-  CatalogEntry*			centry;
-
-  this->_origin = origin;
-  this->_catalog = catalog;
-  this->_offset = offset;
-  this->_etree = etree;
-  centry = new CatalogEntry();
-  centry->process(catalog, offset);
-  this->_cnid = centry->id();
-  delete centry;
-}
-
-
-uint32_t	HfsNode::cnid()
-{
-  return this->_cnid;
-}
-
-
-uint32_t	HfsNode::parentId()
-{
-  return this->_parentId;
-}
-
-
-uint8_t		HfsNode::hfsType()
-{
-  return _type;
-}
-
-
-HfsFile::HfsFile(uint32_t parentId, std::string name, fso* fsobj) : HfsNode(HfsNode::File, parentId, name, fsobj)
-{
-}
-
-
-HfsFile::~HfsFile()
-{
-}
-
-
-void		HfsFile::process(Node* origin, Node* catalog, uint64_t offset, ExtentsTree* etree)
+HfsFile::HfsFile(std::string name, HfsFileSystemHandler* handler, uint64_t offset, uint16_t size) : HfsNode(name, handler, offset, size)
 {
   ForkData*	fork;
-  
-  HfsNode::process(origin, catalog, offset, etree);
-  fork = this->dataFork();
+  //CatalogEntry*	entry;
+
+  //HfsNode::process(origin, catalog, offset, etree);
+  //entry = this->_handler->catalogTree()->catalogEntry(this->_offset, this->_entrySize);
+  fork = this->forkData();
   this->setSize(fork->logicalSize());
   delete fork;
 }
 
 
-ForkData*	HfsFile::dataFork()
+HfsFile::~HfsFile() 
 {
-  ForkData*     fork;
-  uint64_t	offset;
-
-  offset = this->_offset+sizeof(catalog_entry);
-  fork = new ForkData(this->cnid(), this->_etree);
-  fork->process(this->_catalog, offset, ForkData::Data);
-  return fork;
-}
-
-
-
-ForkData*	HfsFile::resourceFork()
-{
-  ForkData*     fork;
-  uint64_t	offset;
-
-  offset = this->_offset+sizeof(catalog_entry)+sizeof(fork_data);
-  fork = new ForkData(this->cnid(), this->_etree);
-  fork->process(this->_catalog, offset, ForkData::Resource);
-  return fork;
 }
 
 
 Attributes	HfsFile::_attributes()
 {
-  CatalogEntry*	centry;
+  CatalogEntry*	entry;
   Attributes	common;
   Attributes	internals;
 
-  centry = new CatalogEntry();
-  centry->process(this->_catalog, this->_offset);
-  common = centry->commonAttributes();
+  entry = this->_handler->catalogTree()->catalogEntry(this->_offset, this->_entrySize);
+  common = entry->attributes();
   internals["offset"] = new Variant(this->_offset);
-  internals["id"] = new Variant(this->_cnid);
-  internals["parent id"] = new Variant(this->_parentId);
+  internals["id"] = new Variant(entry->id());
+  internals["parent id"] = new Variant(entry->parentId());
   common["Advanced"] = new Variant(internals);
-  delete centry;
+  delete entry;
   return common;
 }
 
+
+ForkData*	HfsFile::forkData()
+{
+  fork_data*		fork;
+  ForkData*		fdata;
+  CatalogEntry*		entry;
+  CatalogFile*		cfile;
+
+  entry = this->_handler->catalogTree()->catalogEntry(this->_offset, this->_entrySize);
+  cfile = dynamic_cast<CatalogFile* >(entry->catalogData());
+  fork = cfile->dataFork();
+  fdata = new ForkData(entry->id(), this->_handler->extentsTree());
+  fdata->process(*fork, ForkData::Data);  
+  return fdata;
+}
 
 void            HfsFile::fileMapping(FileMapping* fm)
 {
   ExtentsList           extents;
   ExtentsList::iterator it;
-  uint64_t              coffset;
   ForkData*		fork;
+  uint64_t              coffset;
 
-  fork = this->dataFork();
   coffset = 0;
+  fork = this->forkData();
   extents = fork->extents();
   for (it = extents.begin(); it != extents.end(); it++)
     {
       if (coffset + (*it)->size() < fork->logicalSize())
         {
-          fm->push(coffset, (*it)->size(), this->_origin, (*it)->startOffset());
+          fm->push(coffset, (*it)->size(), this->_handler->origin(), (*it)->startOffset());
           coffset += (*it)->size();
         }
       else
         {
-          fm->push(coffset, fork->logicalSize() - coffset, this->_origin, (*it)->startOffset());
+          fm->push(coffset, fork->logicalSize() - coffset, this->_handler->origin(), (*it)->startOffset());
           coffset += fork->logicalSize() - coffset;
         }
     }
@@ -733,7 +340,7 @@ void            HfsFile::fileMapping(FileMapping* fm)
 }
 
 
-HfsFolder::HfsFolder(uint32_t parentId, std::string name, fso* fsobj) : HfsNode(HfsNode::Folder, parentId, name, fsobj)
+HfsFolder::HfsFolder(std::string name, HfsFileSystemHandler* handler, uint64_t offset, uint16_t size) : HfsNode(name, handler, offset, size)
 {
 }
 
@@ -743,25 +350,19 @@ HfsFolder::~HfsFolder()
 }
 
 
-void		HfsFolder::process(Node* origin, Node* catalog, uint64_t offset, ExtentsTree* etree)
-{
-  HfsNode::process(origin, catalog, offset, etree);
-}
-
-
 Attributes	HfsFolder::_attributes()
 {
   CatalogEntry*	centry;
   Attributes	common;
   Attributes	internals;
 
-  centry = new CatalogEntry();
-  centry->process(this->_catalog, this->_offset);
-  common = centry->commonAttributes();
-  internals["offset"] = new Variant(this->_offset);
-  internals["id"] = new Variant(this->_cnid);
-  internals["parent id"] = new Variant(this->_parentId);
-  common["Advanced"] = new Variant(internals);
-  delete centry;
+  // centry = 
+  // centry->process(this->_catalog, this->_offset);
+  // common = centry->commonAttributes();
+  // internals["offset"] = new Variant(this->_offset);
+  // internals["id"] = new Variant(this->_cnid);
+  // internals["parent id"] = new Variant(this->_parentId);
+  // common["Advanced"] = new Variant(internals);
+  // delete centry;
   return common;
 }

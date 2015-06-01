@@ -18,291 +18,97 @@
 #include "vfile.hpp"
 #include "variant.hpp"
 
-//#include "hfsbtree.hpp"
 
-
-VolumeHeader::VolumeHeader()
+VolumeFactory::VolumeFactory()
 {
 }
 
 
-VolumeHeader::~VolumeHeader()
+VolumeFactory::~VolumeFactory()
 {
 }
 
 
-void	VolumeHeader::process(Node* origin, fso* fsobj) throw (std::string)
+VolumeInformation*	VolumeFactory::createVolumeInformation(Node* origin, fso* fsobj) throw (std::string)
 {
-  VFile*	vf;
+  std::string		error;
+  VolumeInformation*	vinfo;
+  uint16_t		signature;
+  uint8_t*		buffer;
+  uint64_t		offset;
 
-  memset(&this->__vheader, 0, sizeof(volumeheader));
+  vinfo = NULL;
+  buffer = NULL;
+  offset = 1024;
   if (origin == NULL)
-    throw std::string("Provided node does not exist");
+    throw std::string("Provided origin does not exist");
+  if ((buffer = (uint8_t*)malloc(sizeof(uint8_t)*512)) == NULL)
+    throw std::string("can't alloc memory");
   try
     {
-      vf = origin->open();
-      vf->seek(1024);
-      if (vf->read(&this->__vheader, sizeof(volumeheader)) != sizeof(volumeheader))
-	{
-	  vf->close();
-	  delete vf;
-	  throw std::string("Error while reading HFS Volume Header");
-	}
+      this->__readBuffer(origin, 1024, buffer, 512);
     }
-  catch (...)
+  catch (std::string e)
     {
+      error = e;
     }
+  memcpy(&signature, buffer, 2);
+  signature = bswap16(signature);
+  printf("%x\n", signature);
+  if (signature == HfsVolume)
+    vinfo = new MasterDirectoryBlock();
+  else if (signature == HfspVolume || signature == HfsxVolume)
+    vinfo = new VolumeHeader();
+  else
+    {
+      // reading at entry at the end of the volume
+      offset = origin->size()-1024;
+      this->__readBuffer(origin, offset, buffer, 512);
+      memcpy(&signature, buffer, 2);
+      signature = bswap16(signature);
+      if (signature == HfsVolume)
+	vinfo = new MasterDirectoryBlock();
+      else if (signature == HfspVolume || signature == HfsxVolume)
+	vinfo = new VolumeHeader();
+      else
+	error = std::string("Cannot find Hfs version");
+    }
+  if (buffer != NULL)
+    free(buffer);
+  if (!error.empty())
+    throw error;
+  if (vinfo != NULL)
+    vinfo->process(origin, offset, fsobj);
+  return vinfo;
 }
 
 
-Attributes	VolumeHeader::_attributes()
+void		VolumeFactory::__readBuffer(Node* origin, uint64_t offset, uint8_t* buffer, uint16_t size) throw (std::string)
 {
-  Attributes	vmap;
-
-  vmap["version"] = new Variant(this->version());
-  vmap["last mounted version"] = new Variant(this->lastMountedVersion());
-  vmap["created"] = new Variant(this->createDate());
-  vmap["modified"] = new Variant(this->modifyDate());
-  vmap["backup"] = new Variant(this->backupDate());
-  vmap["checked"] = new Variant(this->checkedDate());
-  vmap["Total number of files"] = new Variant(this->fileCount());
-  vmap["Total number of folders"] = new Variant(this->folderCount());
-  vmap["allocation block size"] = new Variant(this->blockSize());
-  vmap["total number of allocation blocks"] = new Variant(this->totalBlocks());
-  vmap["total number of free allocation blocks"] = new Variant(this->freeBlocks());
-  vmap["total mounted"] = new Variant(this->writeCount());
-  vmap["clump size for resource fork"] = new Variant(this->rsrcClumpSize());
-  vmap["clump size for data fork"] = new Variant(this->dataClumpSize());
-  return vmap;
-}
-
-
-uint16_t	VolumeHeader::signature()
-{
-  return bswap16(this->__vheader.signature);
-}
-
-
-uint16_t	VolumeHeader::version()
-{
-  return bswap16(this->__vheader.version);
-}
-
-
-uint32_t	VolumeHeader::attributes()
-{
-  return bswap32(this->__vheader.attributes);
-}
-
-
-uint32_t	VolumeHeader::lastMountedVersion()
-{
-  return bswap32(this->__vheader.lastMountedVersion);
-}
-
-
-uint32_t	VolumeHeader::journalInfoBlock()
-{
-  return bswap32(this->__vheader.journalInfoBlock);
-}
-
-
-vtime*		VolumeHeader::createDate()
-{
-  uint32_t	cdate;
-
-  cdate = bswap32(this->__vheader.createDate);
-  return new HfsVtime(cdate);  
-}
-
-
-vtime*		VolumeHeader::modifyDate()
-{
-  uint32_t	mdate;
-    
-  mdate = bswap32(this->__vheader.modifyDate);
-  return new HfsVtime(mdate);
-}
-
-
-vtime*		VolumeHeader::backupDate()
-{
-  uint32_t	bdate;
-
-  bdate = bswap32(this->__vheader.backupDate);
-  return new HfsVtime(bdate);
-}
-
-
-vtime*		VolumeHeader::checkedDate()
-{
-  uint32_t	chkdate;
-
-  chkdate = bswap32(this->__vheader.checkedDate);
-  return new HfsVtime(chkdate);
-}
- 
-
-uint32_t	VolumeHeader::fileCount()
-{
-  return bswap32(this->__vheader.fileCount);
-}
-
-
-uint32_t	VolumeHeader::folderCount()
-{
-  return bswap32(this->__vheader.folderCount);
-}
-
-
-uint32_t	VolumeHeader::blockSize()
-{
-  return bswap32(this->__vheader.blockSize);
-}
-
-
-uint32_t	VolumeHeader::totalBlocks()
-{
-  return bswap32(this->__vheader.totalBlocks);
-}
-
-
-uint32_t	VolumeHeader::freeBlocks()
-{
-  return bswap32(this->__vheader.freeBlocks);
-}
-
-
-uint32_t	VolumeHeader::nextAllocation()
-{
-  return bswap32(this->__vheader.nextAllocation);
-}
-
-
-uint32_t	VolumeHeader::rsrcClumpSize()
-{
-  return bswap32(this->__vheader.rsrcClumpSize);
-}
-
-
-
-uint32_t	VolumeHeader::dataClumpSize()
-{
-  return bswap32(this->__vheader.dataClumpSize);
-}
-
-
-uint32_t	VolumeHeader::nextCatalogID()
-{
-  return bswap32(this->__vheader.nextCatalogID);
-}
-
-
-uint32_t	VolumeHeader::writeCount()
-{
-  return bswap32(this->__vheader.writeCount);
-}
-
-
-uint64_t	VolumeHeader::encodingsBitmap()
-{
-  return bswap64(this->__vheader.encodingsBitmap);
-}
-
-
-fork_data	VolumeHeader::allocationFile()
-{
-  return this->__vheader.allocationFile;
-}
-
-
-fork_data	VolumeHeader::extentsFile()
-{
-  return this->__vheader.extentsFile;
-}
-
-
-fork_data	VolumeHeader::catalogFile()
-{
-  return this->__vheader.catalogFile;
-}
-
-
-fork_data	VolumeHeader::attributesFile()
-{
-  return this->__vheader.attributesFile;
-}
-
-
-fork_data	VolumeHeader::startupFile()
-{
-  return this->__vheader.startupFile;
-}
-
-
-bool	VolumeHeader::isHfspVolume()
-{
-  return (this->signature() == HfspVolume || this->version() == 4);
-}
-
-
-bool	VolumeHeader::isHfsxVolume()
-{
-  return (this->signature() == HfspVolume || this->version() == 5);
-}
-
-
-bool	VolumeHeader::createdByFsck()
-{
-  return (this->lastMountedVersion() == Fsck);
-}
-
-
-bool	VolumeHeader::isJournaled()
-{
-  return (this->lastMountedVersion() == Journaled 
-	  || ((this->attributes() & VolumeJournaled) == VolumeJournaled));
-}
-
-
-bool	VolumeHeader::isMacOsX()
-{
-  return (this->lastMountedVersion() == MacOsX);
-}
-
-
-bool	VolumeHeader::isMacOs()
-{
-  return (this->lastMountedVersion() == MacOs);
-}
-
-
-bool	VolumeHeader::correctlyUmount()
-{
-  return (((this->attributes() & VolumeUmounted) == VolumeUmounted)
-	  && ((this->attributes() & BootVolumeInconsistent) != BootVolumeInconsistent));
-}
-
-
-bool	VolumeHeader::hasBadBlocksExtents()
-{
-  return ((this->attributes() & VolumeSparedBlocks) == VolumeSparedBlocks);
-}
-
-
-bool	VolumeHeader::isRamDisk()
-{
-  return ((this->attributes() & VolumeNoCacheRequired) == VolumeNoCacheRequired);
-}
-
-
-bool	VolumeHeader::isCatalogIdReused()
-{
-  return ((this->attributes() & CatalogNodeIDsReused) == CatalogNodeIDsReused);
-}
-
-
-bool	VolumeHeader::isWriteProtected()
-{
-  return ((this->attributes() & VolumeSoftwareLock) == VolumeSoftwareLock);
+  std::string	error;
+  VFile*	vfile;
+  
+  vfile = NULL;
+  try
+    {
+      vfile = origin->open();
+      vfile->seek(offset);
+      if (vfile->read(buffer, size) != size)
+	error = std::string("Cannot read on node");
+    }
+  catch (std::string& err)
+    {
+      error = err;
+    }
+  catch (vfsError& err)
+    {
+      error = err.error;
+    }
+  if (vfile != NULL)
+    {
+      vfile->close();
+      delete vfile;
+    }
+  if (!error.empty())
+    throw error;
 }

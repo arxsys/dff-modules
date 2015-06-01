@@ -18,6 +18,50 @@
 #include "specialfile.hpp"
 
 
+VirtualNode::VirtualNode(fso* fsobj) : Node("Virtual", 0, NULL, fsobj)
+{
+}
+
+
+VirtualNode::~VirtualNode()
+{
+}
+
+
+void	VirtualNode::setContext(Node* origin, uint64_t voffset) throw (std::string)
+{
+  if (origin == NULL)
+    throw std::string("VirtualNode: origin node is null");
+  if (origin->size() < voffset)
+    throw std::string("VirtualNode: origin node size is smaller than provided offset");
+  this->__origin = origin;
+  this->__voffset = voffset;
+  this->setSize(this->__origin->size() - voffset);
+}
+
+
+void	VirtualNode::setContext(Node* origin, uint64_t voffset, uint64_t size) throw (std::string)
+{
+  this->setContext(origin, voffset);
+  this->setSize(size);
+}
+
+
+void		VirtualNode::fileMapping(FileMapping* fm)
+{
+  std::cout << "0 to " << this->size() << " mapped on "  << this->__origin->absolute() << " at " << this->__voffset << std::endl;
+  fm->push(0, this->size(), this->__origin, this->__voffset);
+}
+
+
+Attributes	VirtualNode::_attributes(void)
+{
+  Attributes	attr;
+
+  return attr;
+}
+
+
 SpecialFile::SpecialFile(std::string name, Node* parent, fso* fsobj) : Node(name, 0, parent, fsobj)
 {
   this->__origin = NULL;

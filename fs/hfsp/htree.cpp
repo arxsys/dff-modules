@@ -23,72 +23,31 @@
  *
 */
 
-KeyedRecord::KeyedRecord() : _origin(NULL), _offset(0), _size(0), _buffer(NULL)
+KeyedRecord::KeyedRecord() : __klenfield(2)
 {
 }
 
 
 KeyedRecord::~KeyedRecord()
 {
-  this->__clean();
 }
 
 
-void		KeyedRecord::setOrigin(Node* origin)
+void		KeyedRecord::setSizeofKeyLengthField(uint8_t klenfield)
 {
-  this->_origin = origin;
+  this->__klenfield = klenfield;
 }
 
 
-void		KeyedRecord::setOffset(uint64_t offset)
+void	KeyedRecord::process(uint8_t *buffer, uint16_t size) throw (std::string)
 {
-  this->_offset = offset;
+  BufferReader::process(buffer, size);
 }
 
 
-void		KeyedRecord::setSize(uint16_t size)
+void	KeyedRecord::process(Node* origin, uint64_t offset, uint16_t size) throw (std::string)
 {
-  this->_size = size;
-}
-
-
-Node*		KeyedRecord::origin()
-{
-  return this->_origin;
-}
-
-
-uint64_t	KeyedRecord::offset()
-{
-  return this->_offset;
-}
-
-
-uint16_t	KeyedRecord::size()
-{
-  return this->_size;
-}
-
-
-void		KeyedRecord::process() throw (std::string)
-{
-  this->process(this->_origin, this->_offset, this->_size);
-}
-
-
-void		KeyedRecord::process(Node* origin, uint64_t offset, uint16_t size) throw (std::string)
-{
-  this->__clean();
-  if (origin == NULL)
-    throw std::string("No node set. Cannot read information");
-  if (offset > origin->size())
-    throw std::string("Offset is greater than size of node");
-  if (size == 0)
-    throw std::string("Size setted to zero. cannot process anything");
-  this->_origin = origin;
-  this->_offset = offset;
-  this->_size = size;
-  this->__readBuffer();  
+  BufferReader::process(origin, offset, size);
 }
 
 
@@ -106,8 +65,14 @@ uint16_t	KeyedRecord::keyLength()
 {
   uint16_t	keylen;
 
-  memcpy(&keylen, this->_buffer, 2);
-  keylen = bswap16(keylen);
+  if (this->__klenfield == 1)
+    memcpy(&keylen, this->_buffer, 1);
+  else
+    {
+      //std::cout << this->_size << std::endl;
+      memcpy(&keylen, this->_buffer, 2);
+      keylen = bswap16(keylen);
+    }
   return keylen;
 }
 
@@ -118,7 +83,7 @@ uint16_t	KeyedRecord::keyDataLength()
   // XXX on HFS+ volumes size of key is always 2 bytes
   // but on HFS volume size is defined by kBTBigKeysMask
   // letting the field keyLength being one byte or 2 bytes.
-  return this->keyLength()+2;
+  return this->keyLength()+this->__klenfield;
 }
 
 
@@ -140,10 +105,7 @@ uint16_t	KeyedRecord::dataOffset()
   if ((this->keyDataLength() % 2) == 0)
     offset = this->keyDataLength();
   else // add pad byte offset
-    {
-      offset = this->keyDataLength() + 1;
-      std::cout << "[DEBUG] Odd catalog data offset: " << this->keyDataLength() << std::endl; 
-    }
+    offset = this->keyDataLength() + 1;
   return offset;
 }
 
@@ -178,54 +140,6 @@ uint8_t*	KeyedRecord::data()
   if (this->isValid() && ((data = (uint8_t*)malloc(sizeof(uint8_t)*asize)) != NULL))
     memcpy(data, (this->_buffer+offset), asize);
   return data;
-}
-
-
-void		KeyedRecord::__clean()
-{
-  this->_origin = NULL;
-  this->_offset = 0;
-  this->_size = 0;
-  if (this->_buffer != NULL)
-    free(this->_buffer);
-}
-
-
-void		KeyedRecord::__readBuffer() throw (std::string)
-{
-  std::string	error;
-  VFile*	vfile;
-  
-  vfile = NULL;
-  if ((this->_buffer = (uint8_t*)malloc(sizeof(uint8_t)*this->_size)) == NULL)
-    throw std::string("Cannot allocate node");
-  try
-    {
-      vfile = this->_origin->open();
-      vfile->seek(this->_offset);
-      if (vfile->read(this->_buffer, this->_size) != this->_size)
-	error = std::string("Cannot read btree node");
-    }
-  catch (std::string& err)
-    {
-      error = err;
-    }
-  catch (vfsError& err)
-    {
-      error = err.error;
-    }
-  if (vfile != NULL)
-    {
-      vfile->close();
-      delete vfile;
-    }
-  if (!error.empty())
-    {
-      if (this->_buffer != NULL)
-	free(this->_buffer);
-      this->_buffer = NULL;
-      throw error;
-    }
 }
 
 
@@ -280,6 +194,12 @@ void		HNode::process(Node* origin, uint64_t uid, uint16_t size) throw (std::stri
     throw std::string("Cannot allocate record offset array");
   memset(this->_roffsets, 0, asize);
   memcpy(this->_roffsets, this->_buffer+(this->_size-asize), asize);
+}
+
+
+void		HNode::setSizeofKeyLengthField(uint8_t klenfield)
+{
+  this->_klenfield = klenfield;
 }
 
 
@@ -462,10 +382,15 @@ void	HTree::process(Node* node, uint64_t offset) throw (std::string)
     {
       this->__vfile = node->open();
       this->__vfile->seek(offset);
+      std::cout << "Seeking to offset: " << this->__vfile->tell() << std::endl;
       if (this->__vfile->read(&this->__hnode, sizeof(header_node)) != sizeof(header_node))
 	throw std::string("Cannot read header node");
       if (((this->nodeSize() % 2) != 0) || (this->nodeSize() < 512) || (this->nodeSize() > 32768))
-	throw std::string("Size of node is not correct. Must be a power of 2 from 512 through 32768");
+	{
+	  this->dump("");
+	  std::cout << "Size of node is not correct. Must be a power of 2 from 512 through 32768" << std::endl;
+	  throw std::string("Size of node is not correct. Must be a power of 2 from 512 through 32768");
+	}
       this->_origin = node;
     }
   catch (...)
@@ -489,6 +414,7 @@ void		HTree::dump(std::string tab)
   std::cout << tab << "Total nodes: " << this->totalNodes() << std::endl;
   std::cout << tab << "Number of free nodes: " << this->freeNodes() << std::endl;
   std::cout << tab << "Size of clump: " << this->clumpSize() << std::endl;
+  std::cout << tab << "Size of key length field" << this->sizeOfKey() << std::endl;
 }
 
 

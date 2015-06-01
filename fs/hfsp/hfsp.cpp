@@ -15,10 +15,22 @@
  */
 
 #include "hfsp.hpp"
-#include "allocation.hpp"
-#include "catalog/catalogtree.hpp"
+#include "hfshandlers.hpp"
 
-Hfsp::Hfsp() : mfso("hfsp"), __parent(NULL), __root(NULL)
+
+void		HfsRootNode::setVolumeInformation(VolumeInformation* vinfo)
+{
+  this->__vinfo = vinfo;
+}
+
+
+Attributes	HfsRootNode::_attributes()
+{
+  return this->__vinfo->_attributes();
+}
+
+
+Hfsp::Hfsp() : mfso("hfsp"), __parent(NULL), __root(NULL), __vheaderOffset(0), __volumeFactory(NULL), __mountWrapper(false)
 {
 }
 
@@ -51,111 +63,6 @@ void		Hfsp::start(std::map<std::string, Variant_p > args)
 }
 
 
-void		Hfsp::__process() throw (std::string)
-{
-  VolumeHeader*		volume;
-  ExtentsTree*		etree;
-  AllocationFile*	afile;
-  
-  
-  volume = NULL;
-  etree = NULL;
-  afile = NULL;
-  try
-    {
-      volume = new VolumeHeader();
-      volume->process(this->__parent, this);
-      this->res["Volume header"] = new Variant(volume->_attributes());
-      if (volume->isHfspVolume())
-  	this->__root = new HfsRootNode("HFSP", 0, NULL, this);
-      else if (volume->isHfsxVolume())
-  	this->__root = new HfsRootNode("HFSX", 0, NULL, this);
-      else
-  	this->__root = new HfsRootNode("HFS?", 0, NULL, this);
-      this->__root->setVolumeHeader(volume);
-      etree = this->__createEtree(volume);
-      afile = this->__createAllocation(volume, etree);
-      this->__createCatalog(volume, etree);
-      this->registerTree(this->__parent, this->__root);
-      this->stateinfo = std::string("Successfully mounted");
-    }
-  catch(...)
-    {
-      if (this->__root != NULL)
-	delete this->__root;
-      if (volume != NULL)
-	delete volume;
-      if (etree != NULL)
-	delete etree;
-      if (afile != NULL)
-	delete afile;
-      throw(std::string("HFS module: error while processing"));
-      this->stateinfo = std::string("Error while mounting");
-    }
-  return;
-}
-
-
-ExtentsTree*	Hfsp::__createEtree(VolumeHeader* volume) throw (std::string)
-{
-  SpecialFile*	enode;
-  ForkData*	fork;
-  ExtentsTree*	etree;
-
-  enode = new SpecialFile("$ExtentsFile", this->__root, this);
-  fork = new ForkData(3, volume->blockSize());
-  fork->process(volume->extentsFile(), ForkData::Data);
-  enode->setContext(fork, this->__parent);
-  etree = new ExtentsTree();
-  etree->setBlockSize(volume->blockSize());
-  etree->process(enode, 0);
-  return etree;
-}
-
-
-void		Hfsp::__createCatalog(VolumeHeader* volume, ExtentsTree* etree) throw (std::string)
-{
-  SpecialFile*	enode;
-  ForkData*	fork;
-  CatalogTree*	ctree;
-  
-  enode = new SpecialFile("$CatalogFile", this->__root, this);
-  fork = new ForkData(4, etree);
-  fork->process(volume->catalogFile(), ForkData::Data);
-  enode->setContext(fork, this->__parent);
-  if (fork->initialForkSize() < fork->logicalSize())
-    std::cout << "MISSING EXTENTS FOR CATALOG !!!! " << std::endl;
-  ctree = new CatalogTree();
-  ctree->setFso(this);
-  ctree->setMountPoint(this->__root);
-  ctree->setExtentsTree(etree);
-  ctree->setOrigin(this->__parent);
-  ctree->process(enode, 0);
-}
-
-
-AllocationFile*		Hfsp::__createAllocation(VolumeHeader* volume, ExtentsTree* etree) throw (std::string)
-{
-  SpecialFile*		enode;
-  ForkData*		fork;
-  AllocationFile*	alloc;
-
-  enode = new SpecialFile("$AllocationFile", this->__root, this);
-  fork = new ForkData(6, etree);
-  fork->process(volume->allocationFile(), ForkData::Data);
-  enode->setContext(fork, this->__parent);
-  if (fork->initialForkSize() < fork->logicalSize())
-    std::cout << "MISSING EXTENTS FOR ALLOCATION FILE !!!! " << std::endl;
-  alloc = new AllocationFile();
-  alloc->setFso(this);
-  alloc->setMountPoint(this->__root);
-  alloc->setExtentsTree(etree);
-  alloc->setOrigin(this->__parent);
-  alloc->process(enode, 0, volume->totalBlocks());
-  return alloc;
-}
-
-
 void		Hfsp::__setContext(std::map<std::string, Variant_p > args) throw (std::string)
 {
   std::map<std::string, Variant_p >::iterator	it;
@@ -164,16 +71,142 @@ void		Hfsp::__setContext(std::map<std::string, Variant_p > args) throw (std::str
     this->__parent = it->second->value<Node*>();
   else
     throw(std::string("Hfsp module: no file provided"));
+  if ((it = args.find("mount-wrapper")) != args.end())
+    this->__mountWrapper = it->second->value<bool>();
+  else
+    this->__mountWrapper = false;
+  this->__virtualParent = new VirtualNode(this);
+  if ((it = args.find("vheader-offset")) != args.end())
+    {
+      this->__vheaderOffset = it->second->value<uint64_t>();
+      // XXX better solution is to provide a dedicated mapper which
+      // automatically creates missing bytes with sparse chunk.
+      if (this->__vheaderOffset >= 1024)
+	this->__vheaderOffset -= 1024;
+      else
+	throw(std::string("Hfsp module: Volume header should be at least 1024"));
+    }
+  else
+    this->__vheaderOffset = 0;
+  this->__volumeFactory = new VolumeFactory();
+  this->__virtualParent->setContext(this->__parent, this->__vheaderOffset);
   return;
 }
 
 
-void		HfsRootNode::setVolumeHeader(VolumeHeader* vheader)
+void			Hfsp::__createHfspHandler(Node* origin, VolumeInformation* vinfo)  throw (std::string)
 {
-  this->__vheader = vheader;
+  VolumeInformation*	volume;
+  VolumeHeader*		vheader;
+  HfsFileSystemHandler*	hfshandler;
+
+  if (vinfo == NULL)
+    volume = this->__volumeFactory->createVolumeInformation(origin, this);
+  else
+    volume = vinfo;
+  if ((vheader = dynamic_cast<VolumeHeader* >(volume)) == NULL)
+    throw std::string("Cannot get Volume Header on this volume");
+  this->res["Volume Header"] = new Variant(vheader->_attributes());
+  hfshandler = new HfspHandler();
+  hfshandler->setOrigin(origin);
+  hfshandler->setVolumeInformation(volume);
+  if (vheader->isHfsxVolume())
+    this->__root = new HfsRootNode("HFSX", 0, NULL, this);
+  else
+    this->__root = new HfsRootNode("HFSP", 0, NULL, this);
+  this->__root->setVolumeInformation(volume);
+  hfshandler->setMountPoint(this->__root);
+  hfshandler->process(origin, 0, this);
+  this->registerTree(this->__parent, this->__root);
 }
 
-Attributes	HfsRootNode::_attributes()
+
+void			Hfsp::__createWrappedHfspHandler(Node* origin, VolumeInformation* vinfo)  throw (std::string)
 {
-  return this->__vheader->_attributes();
+  uint64_t		volumesize;
+  uint64_t		startoffset;
+  VolumeInformation*	volume;
+  MasterDirectoryBlock*	mdb;
+  VirtualNode*		virtualParent;
+
+  if (vinfo == NULL)
+    volume = this->__volumeFactory->createVolumeInformation(origin, this);
+  else
+    volume = vinfo;
+  if ((mdb = dynamic_cast<MasterDirectoryBlock* >(volume)) == NULL)
+    throw std::string("Cannot get Master Directory Block on this volume");
+  virtualParent = new VirtualNode(this);
+  this->res["Master Directory Block"] = new Variant(mdb->_attributes());
+  volumesize = (uint64_t)mdb->embedBlockCount() * (uint64_t)volume->blockSize();
+  startoffset = (uint64_t)mdb->embedStartBlock() * (uint64_t)volume->blockSize() + (uint64_t)mdb->firstAllocationBlock() * 512;
+  virtualParent->setContext(this->__virtualParent, startoffset, volumesize);
+  this->__createHfspHandler(virtualParent, NULL);
+}
+
+
+void			Hfsp::__createHfsHandler(Node* origin, VolumeInformation* vinfo)  throw (std::string)
+{
+  uint64_t		volumesize;
+  uint64_t		startoffset;
+  VolumeInformation*	volume;
+  MasterDirectoryBlock*	mdb;
+  HfsFileSystemHandler*	hfshandler;
+  VirtualNode*		virtualParent;
+
+  if (vinfo == NULL)
+    volume = this->__volumeFactory->createVolumeInformation(origin, this);
+  else
+    volume = vinfo;
+  if ((mdb = dynamic_cast<MasterDirectoryBlock* >(volume)) == NULL)
+    throw std::string("Cannot get Master Directory Block on this volume");
+  this->res["Master Directory Block"] = new Variant(mdb->_attributes());
+  hfshandler = new HfsHandler();
+  hfshandler->setOrigin(origin);
+  hfshandler->setVolumeInformation(volume);
+  //this->__root = new HfsRootNode("HFS", 0, NULL, this);
+  this->__root = new HfsRootNode(mdb->volumeName(), 0, NULL, this);
+  this->__root->setVolumeInformation(volume);
+  hfshandler->setMountPoint(this->__root);
+  virtualParent = new VirtualNode(this);
+  volumesize = (uint64_t)mdb->totalBlocks() * (uint64_t)volume->blockSize();
+  startoffset = (uint64_t)mdb->firstAllocationBlock() * 512;
+  virtualParent->setContext(this->__virtualParent, startoffset, volumesize);
+  hfshandler->process(virtualParent, 0, this);
+  this->registerTree(this->__parent, this->__root);
+}
+
+
+void			Hfsp::__process() throw (std::string)
+{
+  VolumeInformation*	volume;
+
+  volume = NULL;
+  try
+    {
+      volume = this->__volumeFactory->createVolumeInformation(this->__virtualParent, this);
+      if (volume->type() == HfsVolume)
+	{
+	  if (volume->isWrapper())
+	    {
+	      if (this->__mountWrapper)
+		this->__createHfsHandler(this->__virtualParent, volume);
+	      //this->__createWrappedHfspHandler(this->__virtualParent, volume);
+	    }
+	  else
+	    this->__createHfsHandler(this->__virtualParent, volume);
+	}
+      else
+	this->__createHfspHandler(this->__virtualParent, volume);
+      this->stateinfo = std::string("Successfully mounted");
+    }
+  catch (std::string err)
+    {
+      if (this->__root != NULL)
+  	delete this->__root;
+      if (volume != NULL)
+  	delete volume;
+      this->stateinfo = std::string("Error while mounting\n") + err;
+      throw(std::string("HFS module: error while processing\n") + err);
+    }
+  return;
 }
