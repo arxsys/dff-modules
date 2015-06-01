@@ -26,9 +26,14 @@
 %exception;
 
 %{
+#include "fuse.hpp"
 #include "variant.hpp"
 #include "vtime.hpp"
-#include "fuse.hpp"
+#include "node.hpp"
+#include "vlink.hpp"
+#include "vfile.hpp"
+#include "mfso.hpp"
+#include "rootnode.hpp"
 %}
 
 %import "../../../api/vfs/libvfs.i"
@@ -45,12 +50,12 @@ from dff.api.module.module import Module
 from dff.api.types.libtypes import Argument, typeId
 
 class FUSE(Module):
-  """Mount DFF VFS directly under your OS VFS"""
+  """Mount DFF VFS directly on your system and use your traditional browser and tools on files"""
   def __init__(self):
     Module.__init__(self, 'fuse', fuse)
     self.conf.addArgument({"input": Argument.Required|Argument.Single|typeId.Path,
                            "name": "path",
-                           "description":"Path where to mount DFF VFS in your OS VFS."})
+                           "description":"Path where to mount DFF VFS in system."})
     self.conf.addArgument({"input": Argument.Optional|Argument.Single|typeId.String,
                            "name": "mount_options",
 	                    "description": """Specify fuse mount options. By default allow_other is set but be sure to 

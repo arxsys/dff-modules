@@ -54,7 +54,7 @@ class EWF(Module):
     Module.__init__(self, 'ewf', ewf)
     self.conf.addArgument({"input": Argument.Optional|Argument.Single|typeId.Node, 
                            "name": "parent", 
-                           "description": "Path where the EWF dump will be created",
+                           "description": "Path where the EWF dump will be mounted",
                        "parameters": {"type": Parameter.Editable,
                                           "predefined": [vfs.vfs().getnode("/")]}
                           })

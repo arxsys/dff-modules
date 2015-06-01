@@ -49,7 +49,7 @@ from dff.api.module.module import *
 from dff.api.types.libtypes import Argument, typeId
 
 class FATFS(Module):
-  """This module create the tree contained in a fat file system, for normal and deleted files."""
+  """This module creates the tree contained in a FAT file system, for normal and deleted files and folders."""
   def __init__(self):
     Module.__init__(self, 'fatfs', Fatfs)
     self.conf.addArgument({"name": "file",
@@ -59,7 +59,7 @@ class FATFS(Module):
                            "description": "carve directory entries in unallocated clusters (more accurate but slower)",
                            "input": Argument.Empty})
     self.conf.addArgument({"name": "fat_to_use",
-                           "description": "This option permits to chose the FAT to use when walking clusters)",
+                           "description": "This option permits to choose the FAT to use when walking clusters)",
 			   "input": Argument.Optional|Argument.Single|typeId.UInt16})
     self.conf.addArgument({"name": "fat_to_use",
                            "description": "This option permits to chose the FAT to use when walking clusters)",

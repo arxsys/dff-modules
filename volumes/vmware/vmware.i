@@ -47,7 +47,7 @@ from dff.api.module.module import *
 from dff.api.types.libtypes import Argument, typeId
 
 class VMWARE(Module):
-  """Reconstruct vmware volume"""
+  """Mounts vmware volume and manages snapshots"""
   def __init__(self):
     Module.__init__(self, 'vmware', VMware)
     self.conf.addArgument({"name": "vmdkroot",

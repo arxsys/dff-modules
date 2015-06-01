@@ -340,11 +340,11 @@ class LNK(Script):
       pass
 
 class lnk(Module): 
-  """This modules generate metadata for lnk files as attributes"""
+  """This module generates metadata for lnk files as attributes"""
   def __init__(self):
     Module.__init__(self, "lnk", LNK)
     self.conf.addArgument({"name": "file",
-                           "description": "file to extract metadata",
+                           "description": "Extract metadata from this file",
                            "input": Argument.Required|Argument.Single|typeId.Node})
     self.conf.addConstant({"name": "mime-type", 
  	                   "type": typeId.String,
