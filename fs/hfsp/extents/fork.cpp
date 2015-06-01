@@ -149,8 +149,7 @@ uint64_t	ForkData::allocatedBytes()
 {
   uint64_t	bytes;
 
-  bytes = (uint64_t)this->totalBlocks();
-  bytes *= 4096;
+  bytes = (uint64_t)this->totalBlocks() * this->__blockSize;
   return bytes;
 }
 
@@ -187,7 +186,6 @@ Extent*		ForkData::getExtent(uint32_t id)
 void		ForkData::dump(std::string tab)
 {
   unsigned int	i;
-  uint64_t	bcount;
   
   std::cout << tab << "logical size: " << this->logicalSize() << std::endl;
   std::cout << tab << "clump size: " << this->clumpSize() << std::endl;
@@ -195,15 +193,11 @@ void		ForkData::dump(std::string tab)
   std::cout << tab << "allocated bytes: " << this->allocatedBytes()  << std::endl;
   std::cout << tab << "slack size: " << this->slackSize()  << std::endl;
   std::cout << tab << "Extent information" << std::endl;
-  
-  bcount = 0;
   for (i = 0; i < this->__extents.size(); i++)
     {
-      //std::cout << tab << "Extent " << i << std::endl;
-      //this->__extents[i]->dump("\t\t");
-      bcount += this->__extents[i]->blockCount();
+      std::cout << tab << "Extent " << i << std::endl;
+      this->__extents[i]->dump("\t\t");
     }
-  std::cout << tab << "Missing blocks " << bcount << std::endl;
 }
 
 

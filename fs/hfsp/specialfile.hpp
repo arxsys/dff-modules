@@ -27,11 +27,27 @@
 #include "extents/fork.hpp"
 #include "extents/extent.hpp"
 
+
+class VirtualNode : public Node
+{
+private:
+  Node*			__origin;
+  uint64_t		__voffset;
+public:
+  VirtualNode(fso* fsobj);
+  ~VirtualNode();
+  void			setContext(Node* origin, uint64_t voffset) throw (std::string);
+  void			setContext(Node* origin, uint64_t voffset, uint64_t size) throw (std::string);
+  virtual void		fileMapping(FileMapping* fm);
+  virtual Attributes	_attributes(void);
+};
+
+
 class SpecialFile : public Node
 {
 private:
   class ForkData*	__fork;
-  Node*		__origin;
+  Node*			__origin;
 public:
   SpecialFile(std::string name, Node* parent, fso* fsobj);
   ~SpecialFile();

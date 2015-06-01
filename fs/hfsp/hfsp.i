@@ -55,6 +55,12 @@ class HFSP(Module):
     self.conf.addArgument({"name": "file",
                            "description": "file containing a HFS / HFS+ / HFSX file system",
                            "input": Argument.Required|Argument.Single|typeId.Node})
+    self.conf.addArgument({"name": "vheader-offset",
+                           "description": "Offset in bytes of the volume header",
+                           "input": Argument.Optional|Argument.Single|typeId.UInt64})
+    self.conf.addArgument({"name": "mount-wrapper",
+                           "description": "Also mount the HFS filesytem in case of wrapped hfs+",
+                           "input": Argument.Empty})
     self.conf.addConstant({"name": "mime-type",
                            "type": typeId.String,
                            "description": "managed mime type",

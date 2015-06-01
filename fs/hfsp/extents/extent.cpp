@@ -17,10 +17,18 @@
 #include "extent.hpp"
 
 
-Extent::Extent(extent ext, uint64_t block_size)
+Extent::Extent(hfsp_extent ext, uint64_t block_size)
 {
   this->__startBlock = (uint64_t)bswap32(ext.startBlock);
   this->__blockCount = (uint64_t)bswap32(ext.blockCount);
+  this->__blockSize = block_size;
+}
+
+
+Extent::Extent(hfs_extent ext, uint64_t block_size)
+{
+  this->__startBlock = (uint64_t)bswap16(ext.startBlock);
+  this->__blockCount = (uint64_t)bswap16(ext.blockCount);
   this->__blockSize = block_size;
 }
 

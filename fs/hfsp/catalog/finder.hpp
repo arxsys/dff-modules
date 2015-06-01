@@ -21,6 +21,17 @@
 
 #include "export.hpp"
 
+/* 
+ Fields are not the same depending on the source :
+   - https://developer.apple.com/legacy/library/technotes/tn/tn1150.html#FinderInfo
+   - http://www.opensource.apple.com/source/xnu/xnu-2782.1.97/bsd/hfs/hfs_format.h
+ Which on is the most up to date or relevant?
+ Finder flags (finderFlags, fdFlags and frFlags)
+ detailed information can be found in finder_interface.pdf
+ Extended flags (extendedFinderFlags, fdXFlags and frXFlags) 
+*/
+
+
 PACK_START
 typedef struct s_point
 {
@@ -41,19 +52,14 @@ typedef struct s_rect
 PACK_END
 
 
-/* Finder flags (finderFlags, fdFlags and frFlags) */
-/* detailed information can be found in finder_interface.pdf */
-
-/* Extended flags (extendedFinderFlags, fdXFlags and frXFlags) */
-
 PACK_START
 typedef struct s_file_info 
 {
   uint32_t	fileType;           /* The type of the file */
   uint32_t	fileCreator;        /* The file's creator */
-  uint16_t	finderFlags;
+  uint16_t	flags;
   point		location;           /* File's location in the folder. */
-  uint16_t	folder;
+  int16_t	opaque;
 }		file_info;
 PACK_END
 
@@ -61,10 +67,11 @@ PACK_END
 PACK_START
 typedef struct s_efile_info
 {
-  int16_t	reserved1[4];
-  uint16_t	extendedFinderFlags;
-  int16_t	reserved2;
-  int32_t	putAwayFolderId;
+  uint32_t	documentId;
+  uint32_t	dateAdded;
+  uint16_t	extendedFlags;
+  uint16_t	reserved2;
+  uint32_t	putAwayFolderId;
 }		efile_info;
 PACK_END
 
@@ -73,9 +80,9 @@ PACK_START
 typedef struct s_folder_info
 {
   rect		windowBounds;
-  uint16_t	finderFlags;
+  uint16_t	flags;
   point		location;
-  uint16_t	reservedField;
+  int16_t	opaque;
 }		folder_info;
 PACK_END
 
@@ -85,7 +92,7 @@ typedef struct s_efolder_info
 {
   point		scrollPosition;
   int32_t	reserved1;
-  uint16_t	extendedFinderFlags;
+  uint16_t	extendedFlags;
   int16_t	reserved2;
   int32_t	putAwayFolderID;
 }		efolder_info;

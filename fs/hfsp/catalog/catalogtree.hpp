@@ -26,15 +26,21 @@
 
 #include "htree.hpp"
 
+#include "hfshandlers.hpp"
 #include "catalogrecords.hpp"
+
+class HfsFileSystemHandler;
+class HfsNode;
+class CatalogEntry;
 
 
 class CatalogTreeNode : public HNode
 {
 private:
+  uint8_t	__version;
   KeyedRecord*	__createCatalogKey(uint16_t start, uint16_t end);
 public:
-  CatalogTreeNode();
+  CatalogTreeNode(uint8_t version);
   ~CatalogTreeNode();
   virtual void	process(Node* origin, uint64_t uid, uint16_t size) throw (std::string);
   virtual KeyedRecords	records();
@@ -43,16 +49,14 @@ public:
 
 typedef std::map<uint32_t, std::vector<HfsNode*> > HfsNodesMapping;
 
+
 class CatalogTree : public HTree
 {
 private:
-  Node*		__catalog;
-  Node*		__origin;
-  Node*		__mountpoint;
-  fso*		__fsobj;
-  ExtentsTree*	__etree;
-  TwoThreeTree*	__allocatedBlocks;
+  HfsFileSystemHandler*	__handler;
+  TwoThreeTree*		__allocatedBlocks;
   
+  uint8_t	__version;
   uint32_t	__fileCount;
   uint32_t	__folderCount;
   uint32_t	__fileThreadCount;
@@ -69,17 +73,12 @@ private:
   void			__registerAllocatedBlocks(HfsNode* node);
   void			__progress(uint64_t current);
 public:
-  CatalogTree();
+  CatalogTree(uint8_t version);
   ~CatalogTree();
   //void			setSlackNodeCarving(bool state);
-  void			setFso(fso* fsobj);
-  void			setOrigin(Node* origin) throw (std::string);
-  void			setMountPoint(Node* mountpoint) throw (std::string);
-  void			setExtentsTree(ExtentsTree* etree) throw (std::string);
+  void			setHandler(HfsFileSystemHandler* handler) throw (std::string);
   void			process(Node* catalog, uint64_t offset) throw (std::string);
-
-  //void			init(Node* catalog, uint64_t offset);
-  //virtual HNode*	getNode(uint32_t uid);
+  CatalogEntry*		catalogEntry(uint64_t offset, uint16_t size);
 };
 
 #endif
