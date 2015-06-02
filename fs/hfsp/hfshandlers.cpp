@@ -95,6 +95,15 @@ HfsFileSystemHandler::HfsFileSystemHandler() : _extentsTreeNode(NULL), _catalogN
 }
 
 
+uint64_t	HfsFileSystemHandler::blockSize()
+{
+  if (this->_volumeInformation != NULL)
+    return (uint64_t)this->_volumeInformation->blockSize();
+  else
+    return 0;
+}
+
+
 void		HfsFileSystemHandler::setVolumeInformation(VolumeInformation* vinfo)  throw (std::string)
 {
   if (vinfo != NULL)

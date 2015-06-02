@@ -18,7 +18,7 @@
 #include "specialfile.hpp"
 
 
-VirtualNode::VirtualNode(fso* fsobj) : Node("Virtual", 0, NULL, fsobj)
+VirtualNode::VirtualNode(fso* fsobj) : Node("Virtual", 0, NULL, fsobj), __origin(NULL), __voffset(0)
 {
 }
 
@@ -62,10 +62,8 @@ Attributes	VirtualNode::_attributes(void)
 }
 
 
-SpecialFile::SpecialFile(std::string name, Node* parent, fso* fsobj) : Node(name, 0, parent, fsobj)
+SpecialFile::SpecialFile(std::string name, Node* parent, fso* fsobj) : Node(name, 0, parent, fsobj), __fork(NULL), __origin(NULL)
 {
-  this->__origin = NULL;
-  this->__fork = NULL;
 }
 
 

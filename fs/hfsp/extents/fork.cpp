@@ -17,15 +17,17 @@
 #include "fork.hpp"
 
 
-ForkData::ForkData(uint32_t fileid, uint64_t blocksize) : __fileId(fileid), __blockSize(blocksize), __initialSize(0), __extendedSize(0), __etree(NULL)
+ForkData::ForkData(uint32_t fileid, uint64_t blocksize) : __fileId(fileid), __blockSize(blocksize), __initialSize(0), __extendedSize(0), __etree(NULL), __fork(), __extents()
 {
 }
 
-ForkData::ForkData(uint32_t fileid, ExtentsTree* etree) : __fileId(fileid), __blockSize(0), __initialSize(0), __extendedSize(0), __etree(etree)
+
+ForkData::ForkData(uint32_t fileid, ExtentsTree* etree) : __fileId(fileid), __blockSize(0), __initialSize(0), __extendedSize(0), __etree(etree), __fork(), __extents()
 {
   if (etree != NULL)
     this->__blockSize = this->__etree->blockSize();
 }
+
 
 ForkData::~ForkData()
 {

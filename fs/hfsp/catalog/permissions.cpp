@@ -18,88 +18,88 @@
 #include "permissions.hpp"
 
 
-HfsPermissions::HfsPermissions()
+HfspPermissions::HfspPermissions() : __permissions()
 {
 }
 
 
-HfsPermissions::~HfsPermissions()
+HfspPermissions::~HfspPermissions()
 {
 }
 
 
-void		HfsPermissions::process(Node* origin, uint64_t offset) throw (std::string)
-{
-
-}
-
-
-void		HfsPermissions::process(uint8_t* buffer, uint16_t size) throw (std::string)
+void		HfspPermissions::process(Node* origin, uint64_t offset) throw (std::string)
 {
 
 }
 
 
-void		HfsPermissions::process(perms permissions) throw (std::string)
+void		HfspPermissions::process(uint8_t* buffer, uint16_t size) throw (std::string)
+{
+
+}
+
+
+void		HfspPermissions::process(perms permissions) throw (std::string)
 {
   memcpy(&this->__permissions, &permissions, sizeof(perms));
 }
 
 
-uint32_t	HfsPermissions::ownerId()
+uint32_t	HfspPermissions::ownerId()
 {
   return bswap32(this->__permissions.uid);
 }
 
 
-uint32_t	HfsPermissions::groupId()
+uint32_t	HfspPermissions::groupId()
 {
   return bswap32(this->__permissions.gid);
 }
 
 
-bool		HfsPermissions::isAdminArchived()
+bool		HfspPermissions::isAdminArchived()
 {
   return ((this->__permissions.adminFlags & SF_ARCHIVED) == SF_ARCHIVED);
 }
 
 
-bool		HfsPermissions::isAdminImmutable()
+bool		HfspPermissions::isAdminImmutable()
 {
   return ((this->__permissions.adminFlags & SF_IMMUTABLE) == SF_IMMUTABLE);
 }
 
 
-bool		HfsPermissions::adminAppendOnly()
+bool		HfspPermissions::adminAppendOnly()
 {
   return ((this->__permissions.adminFlags & SF_APPEND) == SF_APPEND);
 }
 
 
-bool		HfsPermissions::canBeDumped()
+bool		HfspPermissions::canBeDumped()
 {
   return !((this->__permissions.userFlags & UF_NODUMP) == UF_NODUMP);
 }
 
 
-bool		HfsPermissions::isUserImmutable()
+bool		HfspPermissions::isUserImmutable()
 {
   return ((this->__permissions.userFlags & UF_IMMUTABLE) == UF_IMMUTABLE);
 }
 
-bool		HfsPermissions::userAppendOnly()
+bool		HfspPermissions::userAppendOnly()
 {
   return ((this->__permissions.userFlags & UF_APPEND) == UF_APPEND);
 }
 
 
-bool		HfsPermissions::isOpaque()
+bool		HfspPermissions::isOpaque()
 {
   return ((this->__permissions.userFlags & UF_OPAQUE) == UF_OPAQUE);
 }
 
 
-bool		HfsPermissions::isSuid()
+bool		HfspPermissions::isSuid()
 {
   uint16_t	filemode;
 
@@ -108,7 +108,7 @@ bool		HfsPermissions::isSuid()
 }
 
 
-bool		HfsPermissions::isGid()
+bool		HfspPermissions::isGid()
 {
   uint16_t	filemode;
 
@@ -117,7 +117,7 @@ bool		HfsPermissions::isGid()
 }
 
 
-bool		HfsPermissions::stickyBit()
+bool		HfspPermissions::stickyBit()
 {
   uint16_t	filemode;
 
@@ -126,7 +126,7 @@ bool		HfsPermissions::stickyBit()
 }
 
 
-bool		HfsPermissions::isUserReadable()
+bool		HfspPermissions::isUserReadable()
 {
   uint16_t	filemode;
 
@@ -135,7 +135,7 @@ bool		HfsPermissions::isUserReadable()
 }
 
 
-bool		HfsPermissions::isUserWritable()
+bool		HfspPermissions::isUserWritable()
 {
   uint16_t	filemode;
 
@@ -144,7 +144,7 @@ bool		HfsPermissions::isUserWritable()
 }
 
 
-bool		HfsPermissions::isUserExecutable()
+bool		HfspPermissions::isUserExecutable()
 {
   uint16_t	filemode;
 
@@ -153,7 +153,7 @@ bool		HfsPermissions::isUserExecutable()
 }
 
 
-bool		HfsPermissions::isGroupReadable()
+bool		HfspPermissions::isGroupReadable()
 {
   uint16_t	filemode;
 
@@ -161,7 +161,7 @@ bool		HfsPermissions::isGroupReadable()
   return ((filemode & S_IRGRP) == S_IRGRP);
 }
 
-bool		HfsPermissions::isGroupWritable()
+bool		HfspPermissions::isGroupWritable()
 {
   uint16_t	filemode;
 
@@ -170,7 +170,7 @@ bool		HfsPermissions::isGroupWritable()
 }
 
 
-bool		HfsPermissions::isGroupExecutable()
+bool		HfspPermissions::isGroupExecutable()
 {
   uint16_t	filemode;
 
@@ -179,7 +179,7 @@ bool		HfsPermissions::isGroupExecutable()
 }
 
 
-bool		HfsPermissions::isOtherReadable()
+bool		HfspPermissions::isOtherReadable()
 {
   uint16_t	filemode;
 
@@ -188,7 +188,7 @@ bool		HfsPermissions::isOtherReadable()
 }
 
 
-bool		HfsPermissions::isOtherWritable()
+bool		HfspPermissions::isOtherWritable()
 {
   uint16_t	filemode;
 
@@ -197,7 +197,7 @@ bool		HfsPermissions::isOtherWritable()
 }
 
 
-bool		HfsPermissions::isOtherExecutable()
+bool		HfspPermissions::isOtherExecutable()
 {
   uint16_t	filemode;
 
@@ -206,7 +206,7 @@ bool		HfsPermissions::isOtherExecutable()
 }
 
 
-bool		HfsPermissions::isFifo()
+bool		HfspPermissions::isFifo()
 {
   uint16_t	filemode;
 
@@ -215,7 +215,7 @@ bool		HfsPermissions::isFifo()
 }
 
 
-bool		HfsPermissions::isCharacter()
+bool		HfspPermissions::isCharacter()
 {
   uint16_t	filemode;
 
@@ -224,7 +224,7 @@ bool		HfsPermissions::isCharacter()
 }
 
 
-bool		HfsPermissions::isDirectory()
+bool		HfspPermissions::isDirectory()
 {
   uint16_t	filemode;
 
@@ -233,7 +233,7 @@ bool		HfsPermissions::isDirectory()
 }
 
 
-bool		HfsPermissions::isBlock()
+bool		HfspPermissions::isBlock()
 {
   uint16_t	filemode;
 
@@ -242,7 +242,7 @@ bool		HfsPermissions::isBlock()
 }
 
 
-bool		HfsPermissions::isRegular()
+bool		HfspPermissions::isRegular()
 {
   uint16_t	filemode;
 
@@ -251,7 +251,7 @@ bool		HfsPermissions::isRegular()
 }
 
 
-bool		HfsPermissions::isSymbolicLink()
+bool		HfspPermissions::isSymbolicLink()
 {
   uint16_t	filemode;
 
@@ -260,7 +260,7 @@ bool		HfsPermissions::isSymbolicLink()
 }
 
 
-bool		HfsPermissions::isSocket()
+bool		HfspPermissions::isSocket()
 {
   uint16_t	filemode;
 
@@ -269,7 +269,7 @@ bool		HfsPermissions::isSocket()
 }
 
 
-bool		HfsPermissions::isWhiteout()
+bool		HfspPermissions::isWhiteout()
 {
   uint16_t	filemode;
 
@@ -278,25 +278,25 @@ bool		HfsPermissions::isWhiteout()
 }
 
 
-uint32_t	HfsPermissions::linkReferenceNumber()
+uint32_t	HfspPermissions::linkReferenceNumber()
 {
   return bswap32(this->__permissions.special.inodeNum);
 }
 
 
-uint32_t	HfsPermissions::linkCount()
+uint32_t	HfspPermissions::linkCount()
 {
   return bswap32(this->__permissions.special.linkCount);
 }
 
 
-uint32_t	HfsPermissions::deviceNumber()
+uint32_t	HfspPermissions::deviceNumber()
 {
   return bswap32(this->__permissions.special.rawDevice);
 }
 
 
-Attributes	HfsPermissions::attributes()
+Attributes	HfspPermissions::attributes()
 {
   Attributes	attrs;
  

@@ -46,7 +46,7 @@ typedef struct s_perms_info
 PACK_END
 
 
-class HfsPermissions
+class HfspPermissions
 {
 private:
   perms		__permissions;
@@ -96,8 +96,8 @@ private:
     } FileMode;
 
 public:
-  HfsPermissions();
-  ~HfsPermissions();
+  HfspPermissions();
+  ~HfspPermissions();
   void		process(Node* origin, uint64_t offset) throw (std::string);
   void		process(uint8_t* buffer, uint16_t size) throw (std::string);
   void		process(perms permissions) throw (std::string);

@@ -33,8 +33,9 @@ class HfsRootNode: public Node
 private:
   VolumeInformation*	__vinfo;
 public:
-  HfsRootNode(std::string name, uint64_t size, Node* parent, fso* fsobj) : Node(name, size, parent, fsobj) {}
-  HfsRootNode() {}
+  HfsRootNode(std::string name, uint64_t size, Node* parent, fso* fsobj);
+  HfsRootNode();
+  ~HfsRootNode();
   void		setVolumeInformation(VolumeInformation* vinfo);
   Attributes	_attributes();
 };

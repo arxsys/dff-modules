@@ -126,7 +126,7 @@ void		HfspCatalogEntry::__createContext() throw (std::string)
 }
 
 
-HfspCatalogKey::HfspCatalogKey()
+HfspCatalogKey::HfspCatalogKey() : __ckey()
 {
 }
 
@@ -138,18 +138,34 @@ HfspCatalogKey::~HfspCatalogKey()
 
 void		HfspCatalogKey::process(Node* origin, uint64_t offset, uint16_t size) throw (std::string)
 {
+  std::stringstream	err;
+
   CatalogKey::process(origin, offset, size);
-  if ((this->_buffer != NULL) && (this->_size < sizeof(hfsp_catalog_key)))
-    throw std::string("HfspCatalogKey : size is too small");
-  memcpy(&this->__ckey, this->_buffer, sizeof(hfsp_catalog_key));  
+  if (this->_buffer == NULL)
+    throw std::string("HfspCatalogKey : buffer is null");
+  if (this->_size < sizeof(hfsp_catalog_key))
+    {
+      err << "HfspCatalogKey : size is too small got: " << this->_size << " bytes instead of " << sizeof(hfsp_catalog_key) << std::endl;
+      this->hexdump(1, 1);
+      throw std::string(err.str());
+    }
+  memcpy(&this->__ckey, this->_buffer, sizeof(hfsp_catalog_key));
 }
  
 
 void		HfspCatalogKey::process(uint8_t* buffer, uint16_t size) throw (std::string)
 {
+  std::stringstream	err;
+
   CatalogKey::process(buffer, size);
-  if ((this->_buffer != NULL) && (this->_size < sizeof(hfsp_catalog_key)))
-    throw std::string("HfspCatalogKey : size is too small");
+  if (this->_buffer == NULL)
+    throw std::string("HfspCatalogKey : buffer is null");
+  if (this->_size < sizeof(hfsp_catalog_key))
+    {
+      err << "HfspCatalogKey : size is too small got: " << this->_size << " bytes instead of " << sizeof(hfsp_catalog_key) << std::endl;
+      this->hexdump(1, 1);
+      throw std::string(err.str());
+    }
   memcpy(&this->__ckey, this->_buffer, sizeof(hfsp_catalog_key));
 }
 
@@ -184,7 +200,7 @@ uint32_t	HfspCatalogKey::parentId()
 }
 
 
-HfspCatalogFile::HfspCatalogFile()
+HfspCatalogFile::HfspCatalogFile() : __cfile()
 {
 }
 
@@ -196,18 +212,34 @@ HfspCatalogFile::~HfspCatalogFile()
 
 void		HfspCatalogFile::process(Node* origin, uint64_t offset, uint16_t size) throw (std::string)
 {
+  std::stringstream	err;
+
   CatalogFile::process(origin, offset, size);
-  if ((this->_buffer != NULL) && (this->_size < sizeof(hfsp_catalog_file)))
-    throw std::string("HfspCatalogFile : size is too small");
+  if (this->_buffer == NULL) 
+    throw std::string("HfspCatalogFile : buffer is null");
+  if (this->_size < sizeof(hfsp_catalog_file))
+    {
+      err << "HfspCatalogFile : size is too small got: " << this->_size << " bytes instead of " << sizeof(hfsp_catalog_file) << std::endl;
+      this->hexdump(1, 1);
+      throw std::string(err.str());
+    }
   memcpy(&this->__cfile, this->_buffer, sizeof(hfsp_catalog_file));
 }
 
 
 void		HfspCatalogFile::process(uint8_t* buffer, uint16_t size) throw (std::string)
 {
+  std::stringstream	err;
+
   CatalogFile::process(buffer, size);
-  if ((this->_buffer != NULL) && (this->_size < sizeof(hfsp_catalog_file)))
-    throw std::string("HfspCatalogFile : size is too small");
+  if (this->_buffer == NULL) 
+    throw std::string("HfspCatalogFile : buffer is null");
+  if (this->_size < sizeof(hfsp_catalog_file))
+    {
+      err << "HfspCatalogFile : size is too small got: " << this->_size << " bytes instead of " << sizeof(hfsp_catalog_file) << std::endl;
+      this->hexdump(1, 1);
+      throw std::string(err.str());
+    }
   memcpy(&this->__cfile, this->_buffer, sizeof(hfsp_catalog_file));
 }
 
@@ -227,8 +259,6 @@ uint32_t	HfspCatalogFile::id()
 fork_data*	HfspCatalogFile::dataFork()
 {
   fork_data*     fork;
-  uint64_t	offset;
-  
   
   if ((fork = (fork_data*)malloc(sizeof(fork_data))) == NULL)
     throw std::string("[HfspCatalogFile] Cannot alloc fork_data");
@@ -240,6 +270,7 @@ fork_data*	HfspCatalogFile::dataFork()
 
 ForkData*	HfspCatalogFile::resourceFork()
 {
+  return NULL;
   // ForkData*     fork;
   // uint64_t	offset;
 
@@ -254,14 +285,14 @@ Attributes	HfspCatalogFile::attributes()
 {
   Attributes		attrs;
   Attributes		aperms;
-  HfsPermissions*	perms;
+  HfspPermissions*	perms;
 
   attrs["created"] = new Variant(this->_timestampToVtime(this->__cfile.createDate));
   attrs["content modified"] = new Variant(this->_timestampToVtime(this->__cfile.contentModDate));
   attrs["attribute modified"] = new Variant(this->_timestampToVtime(this->__cfile.attributeModDate));
   attrs["accessed"] = new Variant(this->_timestampToVtime(this->__cfile.accessDate));
   attrs["backup"] = new Variant(this->_timestampToVtime(this->__cfile.backupDate));
-  perms = new HfsPermissions();
+  perms = new HfspPermissions();
   perms->process(this->__cfile.permissions);
   aperms = perms->attributes();
   attrs["Permissions"] = new Variant(aperms);
@@ -270,7 +301,7 @@ Attributes	HfspCatalogFile::attributes()
 }
 
 
-HfspCatalogFolder::HfspCatalogFolder()
+HfspCatalogFolder::HfspCatalogFolder() : __cfolder()
 {
 }
 
@@ -282,18 +313,34 @@ HfspCatalogFolder::~HfspCatalogFolder()
 
 void		HfspCatalogFolder::process(Node* origin, uint64_t offset, uint16_t size) throw (std::string)
 {
+  std::stringstream	err;
+
   CatalogFolder::process(origin, offset, size);
-  if ((this->_buffer != NULL) && (this->_size < sizeof(hfsp_catalog_folder)))
-    throw std::string("HfsCatalogFolder : size is too small");
+  if (this->_buffer == NULL) 
+    throw std::string("HfspCatalogFolder : buffer is null");
+  if (this->_size < sizeof(hfsp_catalog_folder))
+    {
+      err << "HfspCatalogFolder : size is too small got: " << this->_size << " bytes instead of " << sizeof(hfsp_catalog_folder) << std::endl;
+      this->hexdump(1, 1);
+      throw std::string(err.str());
+    }
   memcpy(&this->__cfolder, this->_buffer, sizeof(hfsp_catalog_folder));
 }
 
 
 void		HfspCatalogFolder::process(uint8_t* buffer, uint16_t size) throw (std::string)
 {
+  std::stringstream	err;
+
   CatalogFolder::process(buffer, size);
-  if ((this->_buffer != NULL) && (this->_size < sizeof(hfsp_catalog_folder)))
-    throw std::string("HfsCatalogFolder : size is too small");
+  if (this->_buffer == NULL) 
+    throw std::string("HfspCatalogFolder : buffer is null");
+  if (this->_size < sizeof(hfsp_catalog_folder))
+    {
+      err << "HfspCatalogFolder : size is too small got: " << this->_size << " bytes instead of " << sizeof(hfsp_catalog_folder) << std::endl;
+      this->hexdump(1, 1);
+      throw std::string(err.str());
+    }
   memcpy(&this->__cfolder, this->_buffer, sizeof(hfsp_catalog_folder));
 }
 
@@ -314,14 +361,14 @@ Attributes	HfspCatalogFolder::attributes()
 {
   Attributes		attrs;
   Attributes		aperms;
-  HfsPermissions*	perms;
+  HfspPermissions*	perms;
 
   attrs["created"] = new Variant(this->_timestampToVtime(this->__cfolder.createDate));
   attrs["content modified"] = new Variant(this->_timestampToVtime(this->__cfolder.contentModDate));
   attrs["attribute modified"] = new Variant(this->_timestampToVtime(this->__cfolder.attributeModDate));
   attrs["accessed"] = new Variant(this->_timestampToVtime(this->__cfolder.accessDate));
   attrs["backup"] = new Variant(this->_timestampToVtime(this->__cfolder.backupDate));
-  perms = new HfsPermissions();
+  perms = new HfspPermissions();
   perms->process(this->__cfolder.permissions);
   aperms = perms->attributes(); 
   attrs["Permissions"] = new Variant(aperms);
@@ -354,17 +401,22 @@ void		HfspCatalogThread::process(uint8_t* buffer, uint16_t size) throw (std::str
 
 uint8_t		HfspCatalogThread::type()
 {
+  return 0;
 }
 
 
 uint32_t	HfspCatalogThread::id()
 {
+  return 0;
 }
 
 
 
 std::string	HfspCatalogThread::name()
 {
+  std::string	ret;
+
+  return ret;
 }
 
 

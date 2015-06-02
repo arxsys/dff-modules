@@ -149,7 +149,7 @@ uint8_t*	KeyedRecord::data()
  *
 */
 
-HNode::HNode() : _buffer(NULL), _roffsets(NULL), _origin(NULL), _uid(0), _size(0)
+HNode::HNode() : __descriptor(), _buffer(NULL), _roffsets(NULL), _origin(NULL), _uid(0), _size(0)
 {
 }
 
@@ -356,9 +356,8 @@ uint64_t	HNode::offset()
  *
 */
 
-HTree::HTree()
+HTree::HTree() : __hnode(), __vfile(NULL)
 {
-  this->__vfile = NULL;
 }
 
 
@@ -498,7 +497,7 @@ bool		HTree::isReservedType()
 
 bool		HTree::isCaseSensitive()
 {
-  return ((this->__hnode.keyCompareType & 0xCF) == 0xBC);
+  return (this->__hnode.keyCompareType == 0xBC);
 }
 
 

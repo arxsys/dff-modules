@@ -127,7 +127,7 @@ void		HfsCatalogEntry::__createContext() throw (std::string)
 }
 
 
-HfsCatalogKey::HfsCatalogKey()
+HfsCatalogKey::HfsCatalogKey() : __ckey()
 {
 }
 
@@ -193,7 +193,7 @@ uint32_t	HfsCatalogKey::parentId()
 }
 
 
-HfsCatalogFile::HfsCatalogFile()
+HfsCatalogFile::HfsCatalogFile() : __cfile()
 {
 }
 
@@ -209,7 +209,7 @@ void		HfsCatalogFile::process(Node* origin, uint64_t offset, uint16_t size) thro
 
   CatalogFile::process(origin, offset, size);
   if (this->_buffer == NULL) 
-    throw std::string("HfsCatalogKey : buffer is null");
+    throw std::string("HfsCatalogFile : buffer is null");
   if (this->_size < sizeof(hfs_catalog_file))
     {
       err << "HfsCatalogFile : size is too small got: " << this->_size << " bytes instead of " << sizeof(hfs_catalog_file) << std::endl;
@@ -264,24 +264,15 @@ ForkData*	HfsCatalogFile::resourceFork()
 Attributes	HfsCatalogFile::attributes()
 {
   Attributes		attrs;
-  // Attributes		aperms;
-  // HfsPermissions*	perms;
 
-  // attrs["created"] = new Variant(this->_timestampToVtime(this->__cfile.createDate));
-  // attrs["content modified"] = new Variant(this->_timestampToVtime(this->__cfile.contentModDate));
-  // attrs["attribute modified"] = new Variant(this->_timestampToVtime(this->__cfile.attributeModDate));
-  // attrs["accessed"] = new Variant(this->_timestampToVtime(this->__cfile.accessDate));
-  // attrs["backup"] = new Variant(this->_timestampToVtime(this->__cfile.backupDate));
-  // perms = new HfsPermissions();
-  // perms->process(this->__cfile.permissions);
-  // aperms = perms->attributes();
-  // attrs["Permissions"] = new Variant(aperms);
-  // delete perms;
+  attrs["created"] = new Variant(this->_timestampToVtime(this->__cfile.createDate));
+  attrs["modified"] = new Variant(this->_timestampToVtime(this->__cfile.modifyDate));
+  attrs["backup"] = new Variant(this->_timestampToVtime(this->__cfile.backupDate));
   return attrs;
 }
 
 
-HfsCatalogFolder::HfsCatalogFolder()
+HfsCatalogFolder::HfsCatalogFolder() : __cfolder()
 {
 }
 
@@ -293,9 +284,17 @@ HfsCatalogFolder::~HfsCatalogFolder()
 
 void		HfsCatalogFolder::process(Node* origin, uint64_t offset, uint16_t size) throw (std::string)
 {
+  std::stringstream	err;
+
   CatalogFolder::process(origin, offset, size);
-  if ((this->_buffer == NULL) || (this->_size < sizeof(hfs_catalog_folder)))
-    throw std::string("HfsCatalogFolder : size is too small");
+  if (this->_buffer == NULL) 
+    throw std::string("HfsCatalogFolder : buffer is null");
+  if (this->_size < sizeof(hfs_catalog_folder))
+    {
+      err << "HfsCatalogFolder : size is too small got: " << this->_size << " bytes instead of " << sizeof(hfs_catalog_folder) << std::endl;
+      this->hexdump(1, 1);
+      throw std::string(err.str());
+    }
   memcpy(&this->__cfolder, this->_buffer, sizeof(hfs_catalog_folder));
 }
 
@@ -305,7 +304,9 @@ void		HfsCatalogFolder::process(uint8_t* buffer, uint16_t size) throw (std::stri
   std::stringstream	err;
 
   CatalogFolder::process(buffer, size);
-  if ((this->_buffer == NULL) || (this->_size < sizeof(hfs_catalog_folder)))
+  if (this->_buffer == NULL) 
+    throw std::string("HfsCatalogFolder : buffer is null");
+  if (this->_size < sizeof(hfs_catalog_folder))
     {
       err << "HfsCatalogFolder : size is too small got: " << this->_size << " bytes instead of " << sizeof(hfs_catalog_folder) << std::endl;
       this->hexdump(1, 1);
@@ -330,6 +331,9 @@ uint32_t	HfsCatalogFolder::id()
 
 Attributes	HfsCatalogFolder::attributes()
 {
+  Attributes	attrs;
+
+  return attrs;
 }
 
 

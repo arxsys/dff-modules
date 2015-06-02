@@ -38,46 +38,53 @@ void				HfsHandler::process(Node* origin, uint64_t offset, fso* fsobj) throw (st
 }
 
 
-
-
-
-uint64_t			HfsHandler::blockSize()
-{
-}
-
-
 std::list<uint64_t>		HfsHandler::detetedEntries()
 {
+  std::list<uint64_t>		deleted;
+  
+  return deleted;
 }
 
 
 std::list<uint64_t>		HfsHandler::orphanEntries()
 {
+  std::list<uint64_t>		orphaned;
+
+  return orphaned;
 }
 
 
 std::list<Node*>		HfsHandler::listFiles(uint64_t uid)
 {
+  std::list<Node*>		files;
+  
+  return files;
 }
 
 
 std::list<std::string>		HfsHandler::listNames(uint64_t uid)
 {
+  std::list<std::string>	names;
+  
+  return names;
 }
 
 
 Node*				HfsHandler::unallocatedSpace()
 {
+  return NULL;
 }
 
 
 Node*				HfsHandler::freeSpace()
 {
+  return NULL;
 }
 
 
 Node*				HfsHandler::slackSpace()
 {
+  return NULL;
 }
 
 

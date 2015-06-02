@@ -27,6 +27,7 @@ AllocationFile::AllocationFile()
   this->__vfile = NULL;
   this->__cache = NULL;
   this->__cacheOffset = 0;
+  this->__blocks = 0;
   this->__percent = 0;
 }
 
@@ -92,7 +93,7 @@ void		AllocationFile::__initCache()
 
 void			AllocationFile::__updateCache(uint64_t offset)
 {
-  uint64_t		size;
+  int64_t		size;
 
   if (offset + 10485760 > this->__allocation->size())
     size = this->__allocation->size() - offset;
@@ -198,7 +199,7 @@ void			AllocationFile::process(Node* allocation, uint64_t offset, uint64_t block
 }
 
 
-UnallocatedNode::UnallocatedNode(std::string name, uint64_t size, Node* parent, fso* fsobj) : Node(name, size, parent, fsobj)
+UnallocatedNode::UnallocatedNode(std::string name, uint64_t size, Node* parent, fso* fsobj) : Node(name, size, parent, fsobj), __freeBlocks(), __origin(NULL), __bsize(0) 
 {
 }
 
