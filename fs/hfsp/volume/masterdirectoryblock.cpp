@@ -18,7 +18,7 @@
 #include "volume.hpp"
 
 
-MasterDirectoryBlock::MasterDirectoryBlock()
+MasterDirectoryBlock::MasterDirectoryBlock() : __mdb()
 {
 }
 

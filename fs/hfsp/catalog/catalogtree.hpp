@@ -55,18 +55,15 @@ class CatalogTree : public HTree
 private:
   HfsFileSystemHandler*	__handler;
   TwoThreeTree*		__allocatedBlocks;
-  
-  uint8_t	__version;
-  uint32_t	__fileCount;
-  uint32_t	__folderCount;
-  uint32_t	__fileThreadCount;
-  uint32_t	__folderThreadCount;
-  uint32_t	__leafRecords;
-  uint32_t	__indexRecords;
-  uint32_t	__effectiveLeafRecords;
-  uint64_t	__percent;
-private:
-  bool			__carve;
+  uint8_t		__version;
+  uint32_t		__fileCount;
+  uint32_t		__folderCount;
+  uint32_t		__fileThreadCount;
+  uint32_t		__folderThreadCount;
+  uint32_t		__leafRecords;
+  uint32_t		__indexRecords;
+  uint32_t		__effectiveLeafRecords;
+  uint64_t		__percent;
   HfsNodesMapping	__nodes;
   void			__makeNodes(Node* catalog, CatalogTreeNode* cnode);
   void			__linkNodes(HfsNode* parent, uint32_t parentId);

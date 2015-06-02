@@ -52,6 +52,7 @@ std::map<uint32_t, fork_data *>		ExtentsTree::forksById(uint32_t fileid, uint8_t
   std::map<uint32_t, fork_data *>	forks;
   std::map<uint32_t, fork_data *>	nodeforks;
 
+  enode = NULL;
   if ((enode = new ExtentTreeNode(this->__version)) == NULL)
     throw std::string("Cannot create extent node");
   for (idx = 0; idx < this->totalNodes(); idx++)
@@ -67,6 +68,8 @@ std::map<uint32_t, fork_data *>		ExtentsTree::forksById(uint32_t fileid, uint8_t
   	  std::cout << "ERROR " << err << std::endl;
   	}
     }
+  if (enode != NULL)
+    delete enode;
   return forks;
 }
 
@@ -182,7 +185,7 @@ ExtentKey*	ExtentTreeNode::__createExtentKey(uint16_t start, uint16_t end)
 
 
 
-HfsExtentKey::HfsExtentKey()
+HfsExtentKey::HfsExtentKey() : __ekey()
 {
 }
 
@@ -230,6 +233,8 @@ fork_data*	HfsExtentKey::forkData()
       fork->totalBlocks = bswap32(blockCount);
       fork->clumpSize = 0;
     }
+  if (data != NULL)
+    free(data);
   return fork;
 }
 
@@ -253,7 +258,7 @@ uint32_t	HfsExtentKey::startBlock()
 
 
 
-HfspExtentKey::HfspExtentKey()
+HfspExtentKey::HfspExtentKey() : __ekey()
 {
 }
 

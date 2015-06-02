@@ -60,43 +60,53 @@ void			HfspHandler::__createAllocation() throw (std::string)
 }
 
 
-uint64_t			HfspHandler::blockSize()
-{
-}
-
-
 std::list<uint64_t>		HfspHandler::detetedEntries()
 {
+  std::list<uint64_t>		deleted;
+  
+  return deleted;
 }
 
 
 std::list<uint64_t>		HfspHandler::orphanEntries()
 {
+  std::list<uint64_t>		orphaned;
+
+  return orphaned;
 }
 
 
 std::list<Node*>		HfspHandler::listFiles(uint64_t uid)
 {
+  std::list<Node*>		files;
+  
+  return files;
 }
 
 
 std::list<std::string>		HfspHandler::listNames(uint64_t uid)
 {
+  std::list<std::string>	names;
+  
+  return names;
 }
 
 
 Node*				HfspHandler::unallocatedSpace()
 {
+  return NULL;
 }
 
 
 Node*				HfspHandler::freeSpace()
 {
+  return NULL;
 }
 
 
 Node*				HfspHandler::slackSpace()
 {
+  return NULL;
 }
 
 

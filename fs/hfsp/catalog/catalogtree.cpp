@@ -100,9 +100,6 @@ KeyedRecord*	CatalogTreeNode::__createCatalogKey(uint16_t start, uint16_t end)
 //
 CatalogTree::CatalogTree(uint8_t version)
 {
-  //this->__catalog = NULL;
-  //this->__fsobj = NULL;
-  //this->__etree = NULL;
   this->__allocatedBlocks = NULL;
   this->__version = version;
   this->__fileCount = 0;
@@ -158,6 +155,8 @@ void			CatalogTree::process(Node* catalog, uint64_t offset) throw (std::string)
 	}
       this->__progress(idx);
     }
+  if (cnode != NULL)
+    delete cnode;
   this->__progress(idx);
   if ((mit = this->__nodes.find(1)) != this->__nodes.end())
     {
@@ -193,7 +192,6 @@ CatalogEntry*		CatalogTree::catalogEntry(uint64_t offset, uint16_t size)
   entry->setSizeofKeyLengthField(this->sizeOfKey());
   try
     {
-      //std::cout << offset << " -- " << size << std::endl;
       entry->process(this->_origin, offset, size);
     }
   catch (std::string err)
@@ -281,7 +279,7 @@ void	CatalogTree::__linkNodes(HfsNode* parent, uint32_t parentId)
     }
   else
     {
-      std::cout << "Orphan entry detected" << std::endl;
+      //std::cout << "Orphan entry detected" << std::endl;
     }
 }
 

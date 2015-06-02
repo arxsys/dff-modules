@@ -14,8 +14,24 @@
  *  Frederic Baguelin <fba@digital-forensic.org>
  */
 
+
 #include "hfsp.hpp"
 #include "hfshandlers.hpp"
+
+
+HfsRootNode::HfsRootNode(std::string name, uint64_t size, Node* parent, fso* fsobj) : Node(name, size, parent, fsobj), __vinfo(NULL)
+{
+}
+
+
+HfsRootNode::HfsRootNode() : __vinfo(NULL)
+{
+}
+
+
+HfsRootNode::~HfsRootNode()
+{
+}
 
 
 void		HfsRootNode::setVolumeInformation(VolumeInformation* vinfo)
@@ -30,7 +46,7 @@ Attributes	HfsRootNode::_attributes()
 }
 
 
-Hfsp::Hfsp() : mfso("hfsp"), __parent(NULL), __root(NULL), __vheaderOffset(0), __volumeFactory(NULL), __mountWrapper(false)
+Hfsp::Hfsp() : mfso("hfsp"), __parent(NULL), __virtualParent(NULL), __root(NULL), __vheaderOffset(0), __volumeFactory(NULL), __mountWrapper(false)
 {
 }
 

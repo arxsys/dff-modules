@@ -305,8 +305,10 @@ ForkData*	HfsFile::forkData()
   CatalogEntry*		entry;
   CatalogFile*		cfile;
 
-  entry = this->_handler->catalogTree()->catalogEntry(this->_offset, this->_entrySize);
-  cfile = dynamic_cast<CatalogFile* >(entry->catalogData());
+  if ((entry = this->_handler->catalogTree()->catalogEntry(this->_offset, this->_entrySize)) == NULL)
+    return NULL;
+  if ((cfile = dynamic_cast<CatalogFile* >(entry->catalogData())) == NULL)
+    return NULL;
   fork = cfile->dataFork();
   fdata = new ForkData(entry->id(), this->_handler->extentsTree());
   fdata->process(*fork, ForkData::Data);  
@@ -352,9 +354,9 @@ HfsFolder::~HfsFolder()
 
 Attributes	HfsFolder::_attributes()
 {
-  CatalogEntry*	centry;
+  //CatalogEntry*	centry;
   Attributes	common;
-  Attributes	internals;
+  //Attributes	internals;
 
   // centry = 
   // centry->process(this->_catalog, this->_offset);

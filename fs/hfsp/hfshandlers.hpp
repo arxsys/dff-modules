@@ -76,6 +76,7 @@ public:
   HfsFileSystemHandler();
   virtual ~HfsFileSystemHandler() {}
   virtual void		process(Node* origin, uint64_t offset, fso* fsobj)  throw (std::string) = 0;
+  virtual uint64_t	blockSize();
   void			setVolumeInformation(VolumeInformation* volume) throw (std::string);
   VolumeInformation*	volumeInformation();
   ExtentsTree*		extentsTree();
@@ -90,7 +91,6 @@ public:
   HfsHandler();
   ~HfsHandler();
   virtual void				process(Node* origin, uint64_t offset, fso* fsobj) throw (std::string);
-  virtual uint64_t			blockSize();
   virtual std::list<uint64_t>		detetedEntries();
   virtual std::list<uint64_t>		orphanEntries();
   virtual std::list<Node*>		listFiles(uint64_t uid);
@@ -113,7 +113,6 @@ public:
   HfspHandler();
   ~HfspHandler();
   virtual void				process(Node* origin, uint64_t offset, fso* fsobj) throw (std::string);
-  virtual uint64_t			blockSize();
   virtual std::list<uint64_t>		detetedEntries();
   virtual std::list<uint64_t>		orphanEntries();
   virtual std::list<Node*>		listFiles(uint64_t uid);

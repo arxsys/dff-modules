@@ -18,7 +18,7 @@
 #include "volume.hpp"
 
 
-VolumeHeader::VolumeHeader()
+VolumeHeader::VolumeHeader() : __vheader()
 {
 }
 
@@ -34,6 +34,8 @@ uint16_t	VolumeHeader::type()
     return HfspVolume;
   else if (this->__vheader.signature == HfsxVolume)
     return HfsxVolume;
+  // return 0 if bad signature, backup volume will be read in volume.cpp
+  return 0;
 }
 
 

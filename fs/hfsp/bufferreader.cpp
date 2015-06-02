@@ -129,7 +129,7 @@ void		BufferReader::__dumpline(uint32_t rva, uint8_t* line, uint8_t length, uint
   std::stringstream	shex;
   std::stringstream	senc;
 
-  if (length <= 16)
+  if (length <= 16 && groupby > 0 && groupby <= 16 && groupby % 2)
     {
       gb = 0;
       for (idx = 0; idx != length; ++idx)
