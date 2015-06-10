@@ -260,8 +260,13 @@ uint64_t	DosPartition::lba(uint32_t which)
   if (which < this->__allocated.size())
     {
       count = 0;
+      // XXX Test, test, test
+      // enchance entry access ?
       while (count != which)
-	mit++;
+	{
+	  mit++;
+	  count++;
+	}
       return mit->first / this->__sectsize;
     }
   else
@@ -483,6 +488,7 @@ void	DosPartition::__readEbr(uint64_t csector, uint64_t shift) throw (vfsError)
 		    meta->type = LOGICAL;
 		  this->__allocated[this->__ebr_base + shift + pte->lba] = meta;
 		}
+	      delete pte;
 	    }
 	}
     }

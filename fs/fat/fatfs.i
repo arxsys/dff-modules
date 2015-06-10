@@ -61,9 +61,6 @@ class FATFS(Module):
     self.conf.addArgument({"name": "fat_to_use",
                            "description": "This option permits to choose the FAT to use when walking clusters)",
 			   "input": Argument.Optional|Argument.Single|typeId.UInt16})
-    self.conf.addArgument({"name": "fat_to_use",
-                           "description": "This option permits to chose the FAT to use when walking clusters)",
-			   "input": Argument.Optional|Argument.Single|typeId.UInt16})
     self.conf.addConstant({"name": "mime-type",
                            "type": typeId.String,
                            "description": "managed mime type",
