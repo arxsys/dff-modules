@@ -149,7 +149,7 @@ uint8_t*	KeyedRecord::data()
  *
 */
 
-HNode::HNode() : __descriptor(), _buffer(NULL), _roffsets(NULL), _origin(NULL), _uid(0), _size(0)
+HNode::HNode() : __descriptor(), _klenfield(1), _buffer(NULL), _roffsets(NULL), _origin(NULL), _uid(0), _size(0)
 {
 }
 
@@ -356,7 +356,7 @@ uint64_t	HNode::offset()
  *
 */
 
-HTree::HTree() : __hnode(), __vfile(NULL)
+HTree::HTree() : __hnode(), __vfile(NULL), _origin(NULL)
 {
 }
 

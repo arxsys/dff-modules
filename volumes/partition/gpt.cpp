@@ -17,11 +17,8 @@
 #include "gpt.hpp"
 #include "gpttypes.hpp"
 
-GptPartition::GptPartition()
+GptPartition::GptPartition() : __hidden(0), __sectsize(512), __offset(0), __allocated(std::map<uint64_t, gpt_meta*>()), __unallocated(std::map<uint64_t, uint64_t>()), __vfile(NULL), __origin(NULL), __header(gpt_header())
 {
-  this->__vfile = NULL;
-  this->__origin = NULL;
-  this->__hidden = 0;
 }
 
 GptPartition::~GptPartition()
@@ -199,9 +196,14 @@ uint64_t	GptPartition::lba(uint32_t which)
   mit = this->__allocated.begin();
   if (which < this->__allocated.size())
     {
+      // XXX Test, test, test
+      // enchance entry access ?
       count = 0;
       while (count != which)
-	mit++;
+	{
+	  mit++;
+	  which++;
+	}
       return mit->second->entry->firstLba();
     }
   else
@@ -216,6 +218,7 @@ void	GptPartition::__readHeader() throw (vfsError)
   this->__vfile->seek(this->__offset + this->__sectsize);
   if (this->__vfile->read(&this->__header, sizeof(gpt_header)) == sizeof(gpt_header))
     {
+      // XXX Todo
       // Hmm, there's something wrong but other fields could
       // be ok. Just warn user but let's continue processing
       if (this->__header.lastUsableLba() < this->__header.firstUsableLba())

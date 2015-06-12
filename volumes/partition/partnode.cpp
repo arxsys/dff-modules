@@ -16,7 +16,7 @@
 
 #include "partnode.hpp"
 
-PartitionNode::PartitionNode(std::string name, uint64_t size, Node* parent, fso* fsobj):  Node(name, size, parent, fsobj)
+PartitionNode::PartitionNode(std::string name, uint64_t size, Node* parent, fso* fsobj):  Node(name, size, parent, fsobj), __entry(), __type(0), __handler(NULL)
 {
 }
 

@@ -26,7 +26,7 @@
 // implies to preprocess each shift table
 // Test if faster or not
 
-CarvedNode::CarvedNode(std::string name, uint64_t size, Node* parent, fso* fsobj): Node(name, size, parent, fsobj)
+CarvedNode::CarvedNode(std::string name, uint64_t size, Node* parent, fso* fsobj): Node(name, size, parent, fsobj), __start(0), __origin(NULL)
 {
 }
 
@@ -49,7 +49,7 @@ void	CarvedNode::fileMapping(class FileMapping* fm)
   fm->push(0, this->size(), this->__origin, this->__start);
 }
 
-Carver::Carver(): mfso("carver")
+Carver::Carver(): mfso("carver"), inode(NULL), root(NULL), ifile(NULL), bm(NULL), ctx(std::vector<context*>()), maxNeedle(0), aligned(true), stop(false), Results(std::string())
 {
   //res = new results("empty");
 }
@@ -150,7 +150,6 @@ void		Carver::createContexts(std::list<Variant_p > patterns)
   description*				descr;
   unsigned int				ctxsize;
   
-  this->aligned = aligned;
   ctxsize = this->ctx.size();
   if (ctxsize)
     for (i = 0; i != ctxsize; i++)
@@ -198,7 +197,8 @@ void		Carver::mapper()
 
   e = new event;
   e1 = new event;
-  buffer = (char*)malloc(sizeof(char) * BUFFSIZE);
+  if ((buffer = (char*)malloc(sizeof(char) * BUFFSIZE)) == NULL)
+    return;
   int seek;
   e->type = Carver::Position;
   e1->type = Carver::Matches;
@@ -242,7 +242,6 @@ void		Carver::mapper()
 		{
 		  this->ctx[i]->footers.push_back(this->tell() - bytes_read + seek + this->ctx[i]->descr->footer->size);
 		  seek += ctx[i]->descr->footer->size;
-		  offpos = this->tell();
 		  if (seek + ctx[i]->descr->footer->size >= (uint64_t)bytes_read)
 		    break;
 		  else
@@ -261,6 +260,8 @@ void		Carver::mapper()
 	this->ifile->seek(this->tell() - this->maxNeedle, 0);
     }
   free(buffer);
+  delete e;
+  delete e1;
   this->createTree();
 }
 
