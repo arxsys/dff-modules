@@ -50,6 +50,7 @@ void	BlkList::stat(const std::string & blk_list)
   if (__end == 0)
     __end = __begin;
 
+  std::ios::fmtflags fmtflags(std::cout.flags());
   for (; __begin <= __end; ++__begin)
     {
       std::cout << __begin  << " | ";
@@ -61,6 +62,7 @@ void	BlkList::stat(const std::string & blk_list)
       std::cout << "Bit position : " << (int)__dec;
       std::cout << std::endl;
     }
+  std::cout.flags(fmtflags);
 }
 
 bool	BlkList::blk_allocation_status(uint64_t blk_nb)
