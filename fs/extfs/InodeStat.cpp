@@ -106,6 +106,7 @@ void    InodeStat::stat(uint32_t inode_nb)
     }
     block_list(inode.get());
     std::cout << std::endl;
+  delete attr;//
 }
 
 template <typename T>

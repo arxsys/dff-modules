@@ -45,14 +45,14 @@ void    CustomAttrib::setTime(Inode * _inode)
 
 void    CustomAttrib::setTime(time_t timestamp)
 {
-#ifndef WIN32
-  tm  * t;
+//#ifndef WIN32
+  //tm  * t;
 
-  time_t tmp = timestamp;
+  //time_t tmp = timestamp;
 
-  t = gmtime(&tmp);
+  //t = gmtime(&tmp);
   //new vtime(t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec, 0); XXX not finished ?
-#endif
+//#endif
 }
 
 void    CustomAttrib::setAttr(Inode * _inode)
