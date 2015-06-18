@@ -96,6 +96,8 @@ void	MfsoAttrib::__add_xtd_attr(Inode * inode, Attributes * attr)
   for (; user != xtd_attr->getUserXAttr().end(); user++)
     m["user." + (*user).second.first] = Variant_p(new Variant((*user).second.second));
   (*attr)[xtd] = Variant_p(new Variant(m));
+
+  delete xtd_attr;//
 }
 
 void	MfsoAttrib::__add_acl(Inode * inode, Attributes * attr)
