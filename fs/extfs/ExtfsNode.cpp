@@ -114,9 +114,16 @@ Attributes	BlockPointerAttributes::attributes(Node* node)
    {
      Inode * inode = enode->read_inode();
 
-     if (inode->type_mode(inode->file_mode())[0] != 'l') // file is not a symlink
-       this->__block_pointers(inode, &attr);
+     if (inode)
+     {
+       if (inode->type_mode(inode->file_mode())[0] != 'l') // file is not a symlink
+         this->__block_pointers(inode, &attr);
+
+       delete inode->inode(); //
+       delete inode; //
+     }
    }
+
    return (attr);
 }
 
