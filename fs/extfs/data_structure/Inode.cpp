@@ -33,8 +33,8 @@ Inode::Inode(Extfs * extfs, const SuperBlock * SB, GroupDescriptor * GD) : Inode
 Inode::Inode(const Inode * inode) : InodeUtils(inode->SB(), inode->GD()), __inode_nb(0), __offset_in_extent(0), _extfs(NULL), _current_block(0), _calculated_size(0), _head(NULL), _extent_nb(0), _blk_nb(0), _cur_extent_blk(0), __extents(false), __s_i_blk(0), __d_i_blk(0), __t_i_blk(0)
 
 {
-  if (inode)
-    _extfs = inode->extfs();
+  //if (inode) //already derefenced in constructor, check in constructor ?
+  _extfs = inode->extfs();
   for (int i = 0; i < 4; ++i)
     _blk_nb_l[i] = 0;
 }
@@ -135,7 +135,7 @@ uint32_t	Inode::nextBlock()
     {
       if (!_head)
 	init();
-      if (_head->depth)
+      if (_head && _head->depth)
 	addr = go_to_extent_blk();
       else if (_current_block > _blk_nb)
 	addr = 0;
@@ -175,7 +175,7 @@ uint32_t	Inode::goToBlock(uint32_t block_number)
     {
       if (!_head)
 	init();
-      if (_head->depth)
+      if (_head && _head->depth)
 	return go_to_extent_blk();
       if (_current_block > _blk_nb)
 	return 0;
