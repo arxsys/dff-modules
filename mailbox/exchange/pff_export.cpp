@@ -457,7 +457,8 @@ int pff::export_attachments(ItemInfo* itemInfo, Node* parent)
          if (result == -1)
 	 {
            check_error(pff_error)
-	   libpff_item_free(&attachment, &(pff_error));
+	   if (libpff_item_free(&attachment, &(pff_error)))
+             check_error(pff_error)
 	   delete[] attachment_filename;
 	   continue;
 	 }
