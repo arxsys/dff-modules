@@ -108,12 +108,15 @@ BlockPointerAttributes::BlockPointerAttributes(std::string name) : AttributesHan
 Attributes	BlockPointerAttributes::attributes(Node* node) 
 {
    Attributes	attr;
-
    ExtfsNode*  enode = dynamic_cast<ExtfsNode*>(node);
-   Inode * inode = enode->read_inode();
 
-   if (inode->type_mode(inode->file_mode())[0] != 'l') // file is not a symlink
-     this->__block_pointers(inode, &attr);
+   if (enode)
+   {
+     Inode * inode = enode->read_inode();
+
+     if (inode->type_mode(inode->file_mode())[0] != 'l') // file is not a symlink
+       this->__block_pointers(inode, &attr);
+   }
    return (attr);
 }
 
