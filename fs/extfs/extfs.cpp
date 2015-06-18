@@ -51,6 +51,7 @@ Extfs::~Extfs()
   delete __SB;
   delete __GD;
   delete __root_dir;
+  delete attributeHandler;
 }
 
 void    Extfs::start(std::map<std::string, Variant_p > args)
@@ -298,6 +299,8 @@ void		Extfs::__reserved_inodes()
 			     (inodes_t *)inode->inode());
 	node->set_i_nb(i);
       }
+  delete inode->inode();//
+  delete inode;//
 }
 
 void			Extfs::__add_meta_nodes()
@@ -317,7 +320,7 @@ void			Extfs::__add_meta_nodes()
 		       this, __SB->offset() - __BOOT_CODE_SIZE);
   new ExtfsRawDataNode("Superblock", 1024, __metadata_node, this,
 		       1024 + __SB->offset() - __BOOT_CODE_SIZE);
-  gd_size = __SB->group_number() * __GD->GD_size();
+  gd_size = (uint64_t)__SB->group_number() * (uint64_t)__GD->GD_size();
   gd_size += (__SB->block_size() - gd_size % __SB->block_size());
   new ExtfsRawDataNode("Group descriptor table", gd_size,
 		       __metadata_node, this,
