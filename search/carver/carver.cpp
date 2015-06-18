@@ -194,12 +194,13 @@ void		Carver::mapper()
   uint64_t	offpos;
   std::stringstream	percent;
   unsigned int		ctxsize;
+  int seek;
+
+  if ((buffer = (char*)malloc(sizeof(char) * BUFFSIZE)) == NULL)
+    return;
 
   e = new event;
   e1 = new event;
-  if ((buffer = (char*)malloc(sizeof(char) * BUFFSIZE)) == NULL)
-    return;
-  int seek;
   e->type = Carver::Position;
   e1->type = Carver::Matches;
   total_headers = 0;
