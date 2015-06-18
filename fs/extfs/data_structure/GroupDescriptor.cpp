@@ -93,7 +93,7 @@ void		GroupDescriptor::__check_inode_nb(uint32_t gr_number,
       uint8_t	byte;
       uint64_t	count = 0;
 
-      addr = inode_bitmap_addr(i) * block_size;
+      addr = (uint64_t)inode_bitmap_addr(i) * (uint64_t)block_size;
       vfile->seek(addr +  _SB_offset - __BOOT_CODE_SIZE);
       vfile->read(tab, block_size);
       if (unused_inodes_low(i) != __SB->inodes_in_group_number())
@@ -140,7 +140,7 @@ void		GroupDescriptor::__check_blk_nb(uint32_t gr_number,
       uint8_t	byte;
       uint64_t	count = 0;
 
-      addr = block_bitmap_addr(i) * block_size;
+      addr = (uint64_t)block_bitmap_addr(i) * (uint64_t)block_size;
       vfile->seek(addr + _SB_offset - __BOOT_CODE_SIZE);
       vfile->read(tab, block_size);
       for (unsigned int j = 0; j < __SB->block_in_groups_number() / 8; ++j)

@@ -39,7 +39,7 @@ void		ExtendedAttr::init(const Extfs * extfs)
 
   if (!extfs || !_block)
       return ;
-  addr = _block * extfs->SB()->block_size();
+  addr = (uint64_t)_block * (uint64_t)extfs->SB()->block_size();
   extfs->vfile()->seek(addr);
   extfs->vfile()->read(_xattr_block,
        extfs->SB()->block_size() * sizeof(uint8_t));
