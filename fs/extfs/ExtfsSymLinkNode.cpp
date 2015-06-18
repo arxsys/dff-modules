@@ -50,7 +50,7 @@ void	ExtfsSymLinkNode::fileMapping(FileMapping* fm)
 		    i_symlink->lower_size());	  
       else
 	{
-	  uint64_t blk = i_symlink->nextBlock() * __extfs->SB()->block_size();
+	  uint64_t blk = (uint64_t)i_symlink->nextBlock() * (uint64_t)__extfs->SB()->block_size();
 	  uint8_t * array = (uint8_t *)operator new(__extfs->SB()->block_size());
 	  __extfs->v_seek_read(blk, array, __extfs->SB()->block_size());	  
 	  path.insert(0, (char *)array, i_symlink->lower_size());
