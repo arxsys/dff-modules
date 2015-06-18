@@ -118,4 +118,6 @@ void		OrphansInodes::load(class Extfs * extfs)
 	    }
 	}
     }
+    delete inode->inode();
+    delete inode;
 }
