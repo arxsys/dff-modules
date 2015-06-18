@@ -19,10 +19,8 @@
 #include "extent.hpp"
 
 
-Extent::Extent(Node *nd, uint32_t id)
+Extent::Extent(Node *nd, uint32_t id) : vmdk(nd), id(id), footer(false), compression(0)
 {
-  this->vmdk = nd;
-  this->id = id;
   this->vfile = this->vmdk->open();
   this->readSparseHeader();
 }
@@ -120,9 +118,9 @@ int	Extent::createBackupHeader(int type)
 
   //capacity = ((First GT offset - GD offset) / 4) * (GRAIN_SIZE * SECTOR_SIZE)
   if (type == 0)
-    this->sectors = (((GTentry * SECTOR_SIZE) - (GDSTART_MONO * SECTOR_SIZE)) / 4) * (GRAIN_SIZE * SECTOR_SIZE);
+    this->sectors = ((((uint64_t)GTentry * SECTOR_SIZE) - (GDSTART_MONO * SECTOR_SIZE)) / 4) * (GRAIN_SIZE * SECTOR_SIZE);
   else
-    this->sectors = (((GTentry * SECTOR_SIZE) - (GDSTART_TWO * SECTOR_SIZE)) / 4) * (GRAIN_SIZE * SECTOR_SIZE);
+    this->sectors = ((((uint64_t)GTentry * SECTOR_SIZE) - (GDSTART_TWO * SECTOR_SIZE)) / 4) * (GRAIN_SIZE * SECTOR_SIZE);
   
   //  printf("gt entry offset: %x\n", GTentry * SECTOR_SIZE);
   //  printf("gd start offset: %x\n", GDSTART_MONO * SECTOR_SIZE);

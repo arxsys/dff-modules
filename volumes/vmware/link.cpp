@@ -19,12 +19,8 @@
 
 #include "link.hpp"
 
-Link::Link(diskDescriptor *desc, int type, Node *vmdkroot)
+Link::Link(diskDescriptor *desc, int type, Node *vmdkroot) : _type(type), _storageVolumeSize(0), _vmdkroot(vmdkroot), _descriptor(desc)
 {
-  this->_descriptor = desc;
-  this->_type = type;
-  this->_vmdkroot = vmdkroot;
-
   this->_cid = this->_descriptor->getCID();
   this->_pcid = this->_descriptor->getPCID();
 

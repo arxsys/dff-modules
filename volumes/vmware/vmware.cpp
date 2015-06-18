@@ -23,7 +23,7 @@
 #include "vmdk.hpp"
 #include "diskDescriptor.hpp"
 
-VMware::VMware() : mfso("vmware")
+VMware::VMware() : mfso("vmware"), _vmdkroot(NULL), _rootdir(NULL), _root(NULL), _baseroot(NULL), _snaproot(NULL), _vfile(NULL)
 {
   //    _forceVmdkReconstruction = false;
   //  _storageVolumeSize = 0;

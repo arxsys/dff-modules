@@ -149,7 +149,7 @@ uint64_t	VMNode::getGTOffset(uint64_t GDEOffset, Extent* ext)
       std::cerr << "Error reading Entry : arg->get(\"parent\", &_node) failed." << std::endl;
       throw e;
     }
-  GTOffset = GDEntry * SECTOR_SIZE;
+  GTOffset = (uint64_t)GDEntry * SECTOR_SIZE;
   return GTOffset;
 
 }

@@ -166,7 +166,8 @@ void	diskDescriptor::parseLineDiskDescriptor()
 	  svalue.erase(vend_pos, svalue.end());
 
 	  this->_map.insert(std::pair<std::string, std::string>(skey, svalue));
-
+          free(key);
+          free(value);
 	}
       //if = is not detected and line start with 'R'
       else if (!isKV && isEX)
@@ -177,6 +178,7 @@ void	diskDescriptor::parseLineDiskDescriptor()
 	  
 	  std::string sextent = extent;
 	  this->_extents.push_back(sextent);
+          free(extent);
 	}
     }
 
