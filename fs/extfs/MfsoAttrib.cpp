@@ -121,7 +121,7 @@ void	MfsoAttrib::__symlink_path(Inode * inode, Attributes * attr)
       uint64_t	addr;
 
       tab = (uint8_t *)operator new(size * sizeof(uint8_t));
-      addr = inode->block_pointers()[0] * inode->SB()->block_size();
+      addr = (uint64_t)inode->block_pointers()[0] * (uint64_t)inode->SB()->block_size();
       inode->extfs()->v_seek_read(addr, tab, size);
       path.insert(0, (char *)tab, size);
       (*attr)["Link block"] = Variant_p(new Variant(inode->block_pointers()[0]));
