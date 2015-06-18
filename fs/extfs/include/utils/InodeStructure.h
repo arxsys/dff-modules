@@ -29,7 +29,7 @@ class InodeStructure
 
 public:
     InodeStructure();
-    ~InodeStructure();
+    virtual ~InodeStructure();
 
     void    setInode(const inodes_t * inode);
 

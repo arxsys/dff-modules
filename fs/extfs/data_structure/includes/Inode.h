@@ -90,7 +90,7 @@ class Inode : public InodeStructure, public InodeUtils
   Inode(const Inode *);
 
   //! Desctructor, free resources.
-  ~Inode();
+  virtual ~Inode();
 
   /*! \brief Read the inode content.
     \param addr the address of the inode on the vfs.

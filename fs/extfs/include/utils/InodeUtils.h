@@ -48,7 +48,7 @@ public:
     InodeUtils(const SuperBlock * SB = NULL, GroupDescriptor * GD = NULL);
 
     //! Destructor. Do nothing.
-    ~InodeUtils();
+    virtual ~InodeUtils();
 
     /*! \brief File size.
 
