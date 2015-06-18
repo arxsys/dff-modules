@@ -51,8 +51,7 @@ void    CustomAttrib::setTime(time_t timestamp)
   time_t tmp = timestamp;
 
   t = gmtime(&tmp);
-  new vtime(t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
-	    t->tm_hour, t->tm_min, t->tm_sec, 0);
+  //new vtime(t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec, 0); XXX not finished ?
 #endif
 }
 
