@@ -120,6 +120,7 @@ void			JournalStat::jlist()
 	std::cout <<  _journal->currentBlock() - 1
 		  << " : Unknown block. " << std::endl;
     }
+  delete j_block;
 }
 
 unsigned int
