@@ -167,7 +167,7 @@ void            SuperBlock::file_system_sanity()
     return ;
   
   // otherwise, this is a backup and we need to verify some data consistency.
-  if ((current_block_group() * block_in_groups_number())
+  if (((uint64_t)current_block_group() * (uint64_t)block_in_groups_number())
       != (_offset /  block_size()))
     std::cout << "WARNING : the file system doesn't seem to be valid." << std::endl
 	      << "\t -> Are you sure you are analyzing an EXT file system?"
