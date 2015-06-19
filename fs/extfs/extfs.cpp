@@ -106,8 +106,8 @@ void		Extfs::launch(std::map<std::string, Variant_p > args)
   // initialization
   this->init(sb_check, sb_force_addr);
 
-  Option * opt = new Option(args, __SB, __vfile, __GD);
-  opt->parse(this);
+  Option opt(args, __SB, __vfile, __GD);
+  opt.parse(this);
 
   // parsing file system ?
   if ((it = args.find("dont_parse_fs")) != args.end())

@@ -139,7 +139,7 @@ uint32_t	Inode::nextBlock()
 	addr = go_to_extent_blk();
       else if (_current_block > _blk_nb)
 	addr = 0;
-      else
+      else if (_head)
 	addr = null_extent_depth(_current_block);
     }
   else
@@ -179,7 +179,8 @@ uint32_t	Inode::goToBlock(uint32_t block_number)
 	return go_to_extent_blk();
       if (_current_block > _blk_nb)
 	return 0;
-      return null_extent_depth(block_number);
+      if (_head)
+        return null_extent_depth(block_number);
     }
   if (block_number < 12)
     return block_pointers()[block_number];
