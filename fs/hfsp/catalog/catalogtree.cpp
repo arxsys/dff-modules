@@ -53,14 +53,12 @@ KeyedRecords	CatalogTreeNode::records()
 	      record = this->__createCatalogKey(bswap16(this->_roffsets[i]), bswap16(this->_roffsets[i-1]));
 	      if (record != NULL)
 		records.push_back(record);
-	      //record->hexdump(1, 1);
 	    }
 	  catch (std::string err)
 	    {
 	      //std::cout << "[ERROR] " << err << std::endl;	      
 	      //record->hexdump(1, 1);
 	    }
-	  //std::cout << "Loop" << std::endl;
 	}
     }
   else
@@ -98,17 +96,11 @@ KeyedRecord*	CatalogTreeNode::__createCatalogKey(uint16_t start, uint16_t end)
 //
 // Catalog HTree implementation
 //
-CatalogTree::CatalogTree(uint8_t version)
+
+CatalogTree::CatalogTree(uint8_t version) :  __handler(NULL), __allocatedBlocks(NULL), __version(version), __fileCount(0), __folderCount(0),
+					     __fileThreadCount(0), __folderThreadCount(0), __leafRecords(0), __indexRecords(0),
+					     __effectiveLeafRecords(0), __percent(0), __nodes()
 {
-  this->__allocatedBlocks = NULL;
-  this->__version = version;
-  this->__fileCount = 0;
-  this->__folderCount = 0;
-  this->__fileThreadCount = 0;
-  this->__folderThreadCount = 0;
-  this->__indexRecords = 0;
-  this->__effectiveLeafRecords = 0;
-  this->__percent = 0;
 }
 
 
@@ -151,6 +143,7 @@ void			CatalogTree::process(Node* catalog, uint64_t offset) throw (std::string)
 	}
       catch (std::string err)
 	{
+	  // catch exception and continue catalog parsing
 	  //std::cout << "Error while making node" << err << std::endl;
 	}
       this->__progress(idx);
@@ -162,22 +155,15 @@ void			CatalogTree::process(Node* catalog, uint64_t offset) throw (std::string)
     {
       for (it = mit->second.begin(); it != mit->second.end(); it++)
 	{
-	  //CatalogEntry*		entry;
-	  //entry = this->catalogEntry((*it)->offset(), (*it)->entrySize());
-	  //std::cout << "Parent id: " << (*it)->parentId() << " -- id: " << (*it)->fsId() << std::endl;
-	  //entry->catalogKey()->hexdump(1, 1);
 	  this->__handler->mountPoint()->addChild(*it);
 	  if ((*it)->isDir())
-	    {
-	      std::cout << "Recurse on: " << (*it)->fsId() << std::endl;
-	      this->__linkNodes((*it), (*it)->fsId());
-	    }
+	    this->__linkNodes((*it), (*it)->fsId());
 	}
       mit->second.clear();
     }
   for (mit = this->__nodes.begin(); mit != this->__nodes.end(); mit++)
     if (mit->second.size() > 0)
-      ;//std::cout << "orphan entry found: " << mit->first << std::endl;
+      std::cout << mit->second.size() << " orphan entries found with parent id " << mit->first << std::endl;
 }
 
 
@@ -196,7 +182,6 @@ CatalogEntry*		CatalogTree::catalogEntry(uint64_t offset, uint16_t size)
     }
   catch (std::string err)
     {
-      //std::cout << err << std::endl;
     }
   return entry;
 }
@@ -212,7 +197,6 @@ void			CatalogTree::__progress(uint64_t current)
     {
       sstr << "Processing nodes in catalog tree: " << percent << "% (" << current << " / " << this->totalNodes() << ")" << std::endl;
       this->__handler->setStateInformation(sstr.str());
-      //this->__fsobj->stateinfo = sstr.str();
       sstr.str("");
       this->__percent = percent;
     }
@@ -234,21 +218,29 @@ void				CatalogTree::__makeNodes(Node* catalog, CatalogTreeNode* cnode)
 	  node = NULL;
 	  if ((ckey = dynamic_cast<CatalogEntry*>(*rit)) != NULL)
 	    {
-	      //ckey->catalogKey()->hexdump(1, 1);
-	      //ckey->catalogData()->hexdump(1, 1);
-	      //std::cout << "ParentId: " << ckey->parentId() << std::endl;
-	      //std::cout << "id: " << ckey->id() << " - " << std::hex << ckey->id() << std::endl;
 	      if (ckey->type() == CatalogEntry::FileRecord)
 	      	{
 	      	  this->__fileCount++;
 	      	  node = new HfsFile(ckey->name(), this->__handler, ckey->offset(), ckey->size());
-	      	  node->setFile();
+		  try
+		    {
+		      node->setFile();
+		    }
+		  catch(char const *err)
+		    {
+		    }
 	      	}
 	      else if (ckey->type() == CatalogEntry::FolderRecord)
 	      	{
 	      	  this->__folderCount++;
 	      	  node = new HfsFolder(ckey->name(), this->__handler, ckey->offset(), ckey->size());
-	      	  node->setDir();
+		  try
+		    {
+		      node->setDir();
+		    }
+		  catch (char const *err)
+		    {
+		    }
 	      	}
 	      if (node != NULL)
 		this->__nodes[ckey->parentId()].push_back(node);

@@ -49,7 +49,7 @@ void	VirtualNode::setContext(Node* origin, uint64_t voffset, uint64_t size) thro
 
 void		VirtualNode::fileMapping(FileMapping* fm)
 {
-  std::cout << "0 to " << this->size() << " mapped on "  << this->__origin->absolute() << " at " << this->__voffset << std::endl;
+  //std::cout << "0 to " << this->size() << " mapped on "  << this->__origin->absolute() << " at " << this->__voffset << std::endl;
   fm->push(0, this->size(), this->__origin, this->__voffset);
 }
 
@@ -69,6 +69,7 @@ SpecialFile::SpecialFile(std::string name, Node* parent, fso* fsobj) : Node(name
 
 SpecialFile::~SpecialFile()
 {
+  delete this->__fork;
 }
 
 
@@ -112,7 +113,6 @@ Attributes	SpecialFile::_attributes(void)
   Attributes	attr;
 
   attr["logical size"] = new Variant(this->__fork->logicalSize());
-  attr["clump size"] = new Variant(this->__fork->clumpSize());
   attr["total blocks"] = new Variant(this->__fork->totalBlocks());
   attr["allocated bytes"] = new Variant(this->__fork->allocatedBytes());
   if (this->__fork->slackSize() > 0)

@@ -16,10 +16,8 @@
 
 #include "bootsector.hpp"
 
-BootSector::BootSector()
+BootSector::BootSector() : err(0), errlog(std::string("")), __bs(bootsector()), __attrs(Attributes())
 {
-  this->errlog = "";
-  this->err = 0;
 }
 
 BootSector::~BootSector()
@@ -184,7 +182,7 @@ void		BootSector::fillFatType()
   this->datasector = this->reserved + (this->numfat * this->sectperfat) + this->rootdirsector;
   this->totaldatasector = this->totalsector - (this->reserved + (this->numfat * this->sectperfat) + this->rootdirsector);
   this->totalcluster = this->totaldatasector / this->csize;
-  this->firstfatoffset = this->reserved * this->ssize;
+  this->firstfatoffset = (int32_t)this->reserved * (uint32_t)this->ssize;
 
   if(this->totalcluster < 4085)
     this->fattype = 12;
@@ -270,7 +268,7 @@ void	BootSector::fillCtx()
     }
 }
 
-BootSectorNode::BootSectorNode(std::string name, uint64_t size, Node* parent, fso* fsobj)  : Node(name, size, parent, fsobj)
+BootSectorNode::BootSectorNode(std::string name, uint64_t size, Node* parent, fso* fsobj)  : Node(name, size, parent, fsobj), __attrs(Attributes()), __offset(0), __origin(NULL)
 {
 }
 
@@ -305,7 +303,7 @@ Attributes	BootSectorNode::dataType()
 }
 
 
-ReservedSectors::ReservedSectors(std::string name, uint64_t size, Node* parent, fso* fsobj) : Node(name, size, parent, fsobj)
+ReservedSectors::ReservedSectors(std::string name, uint64_t size, Node* parent, fso* fsobj) : Node(name, size, parent, fsobj), __fsobj(NULL), __sreserved(0), __ssize(0), __origin(0)
 {
 }
 
@@ -343,7 +341,7 @@ Attributes	ReservedSectors::_attributes(void)
 }
 
 
-FileSystemSlack::FileSystemSlack(std::string name, uint64_t size, Node* parent, fso* fsobj) : Node(name, size, parent, fsobj)
+FileSystemSlack::FileSystemSlack(std::string name, uint64_t size, Node* parent, fso* fsobj) : Node(name, size, parent, fsobj), __totalsize(0), __ssize(0), __origin(NULL)
 {
 }
 

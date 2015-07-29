@@ -121,8 +121,9 @@ public:
   virtual void		process(uint8_t* buffer, uint16_t size) throw (std::string);
   virtual uint8_t	type();
   virtual uint32_t	id();
-  virtual fork_data*	dataFork();
-  virtual ForkData*	resourceFork();
+  virtual uint64_t	logicalSize();
+  virtual ExtentsList	dataExtents(uint64_t bsize);
+  virtual ExtentsList	resourceExtents(uint64_t bsize);
   virtual Attributes	attributes();
 };
 
@@ -130,7 +131,7 @@ public:
 class HfsCatalogFolder : public CatalogFolder
 {
 private:
-  hfs_catalog_file	__cfolder;
+  hfs_catalog_folder	__cfolder;
 public:
   HfsCatalogFolder();
   ~HfsCatalogFolder();

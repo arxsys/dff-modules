@@ -253,23 +253,10 @@ bool		HfsNode::_readToBuffer(void* buffer, uint64_t offset, uint16_t size)
 }
 
 
-// void		HfspFile::process(Node* origin, Node* catalog, uint64_t offset, ExtentsTree* etree)
-// {
-//   ForkData*	fork;
-  
-//   HfsNode::process(origin, catalog, offset, etree);
-//   fork = this->dataFork();
-//   this->setSize(fork->logicalSize());
-//   delete fork;
-// }
-
 HfsFile::HfsFile(std::string name, HfsFileSystemHandler* handler, uint64_t offset, uint16_t size) : HfsNode(name, handler, offset, size)
 {
   ForkData*	fork;
-  //CatalogEntry*	entry;
 
-  //HfsNode::process(origin, catalog, offset, etree);
-  //entry = this->_handler->catalogTree()->catalogEntry(this->_offset, this->_entrySize);
   fork = this->forkData();
   this->setSize(fork->logicalSize());
   delete fork;
@@ -300,7 +287,7 @@ Attributes	HfsFile::_attributes()
 
 ForkData*	HfsFile::forkData()
 {
-  fork_data*		fork;
+  ExtentsList		extents;
   ForkData*		fdata;
   CatalogEntry*		entry;
   CatalogFile*		cfile;
@@ -309,9 +296,9 @@ ForkData*	HfsFile::forkData()
     return NULL;
   if ((cfile = dynamic_cast<CatalogFile* >(entry->catalogData())) == NULL)
     return NULL;
-  fork = cfile->dataFork();
+  extents = cfile->dataExtents(this->_handler->blockSize());
   fdata = new ForkData(entry->id(), this->_handler->extentsTree());
-  fdata->process(*fork, ForkData::Data);  
+  fdata->process(extents, cfile->logicalSize(), ForkData::Data);  
   return fdata;
 }
 
@@ -323,7 +310,8 @@ void            HfsFile::fileMapping(FileMapping* fm)
   uint64_t              coffset;
 
   coffset = 0;
-  fork = this->forkData();
+  if ((fork = this->forkData()) == NULL)
+    return;
   extents = fork->extents();
   for (it = extents.begin(); it != extents.end(); it++)
     {
@@ -354,17 +342,16 @@ HfsFolder::~HfsFolder()
 
 Attributes	HfsFolder::_attributes()
 {
-  //CatalogEntry*	centry;
+  CatalogEntry*	entry;
   Attributes	common;
-  //Attributes	internals;
+  Attributes	internals;
 
-  // centry = 
-  // centry->process(this->_catalog, this->_offset);
-  // common = centry->commonAttributes();
-  // internals["offset"] = new Variant(this->_offset);
-  // internals["id"] = new Variant(this->_cnid);
-  // internals["parent id"] = new Variant(this->_parentId);
-  // common["Advanced"] = new Variant(internals);
-  // delete centry;
+  entry = this->_handler->catalogTree()->catalogEntry(this->_offset, this->_entrySize);
+  common = entry->attributes();
+  internals["offset"] = new Variant(this->_offset);
+  internals["id"] = new Variant(entry->id());
+  internals["parent id"] = new Variant(entry->parentId());
+  common["Advanced"] = new Variant(internals);
+  delete entry;
   return common;
 }

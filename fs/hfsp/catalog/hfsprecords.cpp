@@ -25,10 +25,8 @@ HfspCatalogEntry::HfspCatalogEntry() : __key(NULL), __data(NULL)
 
 HfspCatalogEntry::~HfspCatalogEntry()
 {
-  if (this->__key != NULL)
-    delete this->__key;
-  if (this->__data != NULL)
-    delete this->__data;
+  delete this->__key;
+  delete this->__data;
 }
 
 
@@ -146,7 +144,7 @@ void		HfspCatalogKey::process(Node* origin, uint64_t offset, uint16_t size) thro
   if (this->_size < sizeof(hfsp_catalog_key))
     {
       err << "HfspCatalogKey : size is too small got: " << this->_size << " bytes instead of " << sizeof(hfsp_catalog_key) << std::endl;
-      this->hexdump(1, 1);
+      //this->hexdump(1, 1);
       throw std::string(err.str());
     }
   memcpy(&this->__ckey, this->_buffer, sizeof(hfsp_catalog_key));
@@ -163,7 +161,7 @@ void		HfspCatalogKey::process(uint8_t* buffer, uint16_t size) throw (std::string
   if (this->_size < sizeof(hfsp_catalog_key))
     {
       err << "HfspCatalogKey : size is too small got: " << this->_size << " bytes instead of " << sizeof(hfsp_catalog_key) << std::endl;
-      this->hexdump(1, 1);
+      //this->hexdump(1, 1);
       throw std::string(err.str());
     }
   memcpy(&this->__ckey, this->_buffer, sizeof(hfsp_catalog_key));
@@ -220,7 +218,7 @@ void		HfspCatalogFile::process(Node* origin, uint64_t offset, uint16_t size) thr
   if (this->_size < sizeof(hfsp_catalog_file))
     {
       err << "HfspCatalogFile : size is too small got: " << this->_size << " bytes instead of " << sizeof(hfsp_catalog_file) << std::endl;
-      this->hexdump(1, 1);
+      //this->hexdump(1, 1);
       throw std::string(err.str());
     }
   memcpy(&this->__cfile, this->_buffer, sizeof(hfsp_catalog_file));
@@ -237,7 +235,7 @@ void		HfspCatalogFile::process(uint8_t* buffer, uint16_t size) throw (std::strin
   if (this->_size < sizeof(hfsp_catalog_file))
     {
       err << "HfspCatalogFile : size is too small got: " << this->_size << " bytes instead of " << sizeof(hfsp_catalog_file) << std::endl;
-      this->hexdump(1, 1);
+      //this->hexdump(1, 1);
       throw std::string(err.str());
     }
   memcpy(&this->__cfile, this->_buffer, sizeof(hfsp_catalog_file));
@@ -256,28 +254,45 @@ uint32_t	HfspCatalogFile::id()
 }
 
 
-fork_data*	HfspCatalogFile::dataFork()
+uint64_t	HfspCatalogFile::logicalSize()
 {
-  fork_data*     fork;
-  
-  if ((fork = (fork_data*)malloc(sizeof(fork_data))) == NULL)
-    throw std::string("[HfspCatalogFile] Cannot alloc fork_data");
-  else
-    memcpy(fork, &this->__cfile.data, sizeof(fork_data));
-  return fork;
+  return bswap64(this->__cfile.data.logicalSize);
 }
 
 
-ForkData*	HfspCatalogFile::resourceFork()
+ExtentsList	HfspCatalogFile::dataExtents(uint64_t bsize)
 {
-  return NULL;
-  // ForkData*     fork;
-  // uint64_t	offset;
+  int		i;
+  Extent*	extent;
+  ExtentsList	extents;
 
-  // offset = this->_offset+offsetof(hfsp_catalog_file, resource);
-  // fork = new ForkData(this->id(), this->_etree);
-  // fork->process(this->_catalog, offset, ForkData::Resource);
-  // return fork;
+  for (i = 0; i != 8; ++i)
+    {
+      if (this->__cfile.data.extents[i].blockCount > 0)
+	{
+	  extent = new Extent(this->__cfile.data.extents[i], bsize);
+	  extents.push_back(extent);
+	}
+    }
+  return extents;
+}
+
+
+ExtentsList	HfspCatalogFile::resourceExtents(uint64_t bsize)
+{
+  int		i;
+  Extent*	extent;
+  ExtentsList	extents;
+
+  for (i = 0; i != 8; ++i)
+    {
+      if (this->__cfile.resource.extents[i].blockCount > 0)
+	{
+	  extent = new Extent(this->__cfile.resource.extents[i], bsize);
+	  extents.push_back(extent);
+	}
+    }
+  return extents;
 }
 
 
@@ -321,7 +336,7 @@ void		HfspCatalogFolder::process(Node* origin, uint64_t offset, uint16_t size) t
   if (this->_size < sizeof(hfsp_catalog_folder))
     {
       err << "HfspCatalogFolder : size is too small got: " << this->_size << " bytes instead of " << sizeof(hfsp_catalog_folder) << std::endl;
-      this->hexdump(1, 1);
+      //this->hexdump(1, 1);
       throw std::string(err.str());
     }
   memcpy(&this->__cfolder, this->_buffer, sizeof(hfsp_catalog_folder));
@@ -338,7 +353,7 @@ void		HfspCatalogFolder::process(uint8_t* buffer, uint16_t size) throw (std::str
   if (this->_size < sizeof(hfsp_catalog_folder))
     {
       err << "HfspCatalogFolder : size is too small got: " << this->_size << " bytes instead of " << sizeof(hfsp_catalog_folder) << std::endl;
-      this->hexdump(1, 1);
+      //this->hexdump(1, 1);
       throw std::string(err.str());
     }
   memcpy(&this->__cfolder, this->_buffer, sizeof(hfsp_catalog_folder));

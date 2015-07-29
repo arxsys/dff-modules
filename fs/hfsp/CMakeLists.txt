@@ -14,16 +14,16 @@
 
 dff_cpp_module(HFSP
   CPP_FILES hfsp.cpp 
-  htree.cpp
-  specialfile.cpp
-  allocation.cpp
   hfshandlers.cpp
   hfshandler.cpp
   hfsphandler.cpp
-  bufferreader.cpp
   volume/volume.cpp
   volume/volumeheader.cpp
   volume/masterdirectoryblock.cpp
+  htree.cpp
+  specialfile.cpp
+  allocation.cpp
+  bufferreader.cpp
   extents/extent.cpp
   extents/fork.cpp
   extents/extentstree.cpp

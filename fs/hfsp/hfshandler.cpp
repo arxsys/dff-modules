@@ -34,7 +34,6 @@ void				HfsHandler::process(Node* origin, uint64_t offset, fso* fsobj) throw (st
   this->setFsObject(fsobj);
   this->_createEtree();
   this->_createCatalog();
-  this->_catalogTree->dump("");
 }
 
 

@@ -60,8 +60,10 @@ public:
   virtual Attributes	_attributes() = 0;
   virtual uint32_t	blockSize() = 0;
   virtual uint32_t	totalBlocks() = 0;
-  virtual fork_data	extentsFile() = 0;
-  virtual fork_data	catalogFile() = 0;
+  virtual ExtentsList	overflowExtents() = 0;
+  virtual uint64_t	overflowSize() = 0;
+  virtual ExtentsList	catalogExtents() = 0;
+  virtual uint64_t	catalogSize() = 0;
 };
 
 
@@ -126,8 +128,10 @@ public:
   virtual Attributes	_attributes();
   virtual uint32_t	totalBlocks();
   virtual uint32_t	blockSize();
-  virtual fork_data	extentsFile();
-  virtual fork_data	catalogFile();
+  virtual ExtentsList	overflowExtents();
+  virtual uint64_t	overflowSize();
+  virtual ExtentsList	catalogExtents();
+  virtual uint64_t	catalogSize();
 
   void		sanitize() throw (std::string);
   uint16_t	signature();
@@ -158,10 +162,6 @@ public:
   uint16_t	embedStartBlock();
   uint16_t	embedBlockCount();
   bool		isWrapper();
-  hfs_extent*	overflowExtents();  
-  uint32_t	overflowSize();
-  // extent	overflowExtents[3];
-  // uint32_t	catalogSize;
   // extent	catalogExtents[3];
 };
 
@@ -210,15 +210,17 @@ class VolumeHeader : public VolumeInformation
 {
 private:
   volumeheader	__vheader;
-
+  ExtentsList	__extentsList(fork_data fork);
 public:
   VolumeHeader();
   ~VolumeHeader();
   virtual uint16_t	type();
   virtual void		process(Node* origin, uint64_t offset, fso* fsobj) throw (std::string);
   virtual Attributes	_attributes();
-  virtual fork_data	extentsFile();
-  virtual fork_data	catalogFile();
+  virtual ExtentsList	overflowExtents();
+  virtual uint64_t	overflowSize();
+  virtual ExtentsList	catalogExtents();
+  virtual uint64_t	catalogSize();
 
   void		sanitize() throw (std::string);
   uint16_t	signature();
@@ -238,7 +240,7 @@ public:
   uint32_t	blockSize();
   uint32_t	totalBlocks();
   uint32_t	freeBlocks();
- 
+
   uint32_t	nextAllocation();
   uint32_t	rsrcClumpSize();
   uint32_t	dataClumpSize();
@@ -247,9 +249,11 @@ public:
   uint32_t	writeCount();
   uint64_t	encodingsBitmap();
 
-  fork_data	allocationFile();
-  fork_data	attributesFile();
-  fork_data	startupFile();
+  ExtentsList	allocationExtents();
+  uint64_t	allocationSize();
+
+  ExtentsList	attributesExtents();
+  ExtentsList	startupExtents();
   
   bool		isHfspVolume();
   bool		isHfsxVolume();

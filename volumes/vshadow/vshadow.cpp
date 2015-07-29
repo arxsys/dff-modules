@@ -144,43 +144,27 @@ void		Vshadow::__setContext() throw (vfsError)
  
   error = NULL;
   if (dff_libbfio_file_initialize(&this->__bfio_handle, &error, this->__parent) != 1)
-    {
-      throw vfsError(std::string("Unable to initialize input file IO handle."));
-    }
+    throw vfsError(std::string("Unable to initialize input file IO handle."));
   if (libvshadow_volume_initialize(&this->__volume, &error) != 1)
-    {
-      throw vfsError(std::string("Unable to initialize input volume."));
-    }
+    throw vfsError(std::string("Unable to initialize input volume."));
   result = libvshadow_check_volume_signature_file_io_handle(this->__bfio_handle, &error);
   if (result != 0)
     {
       if (libvshadow_volume_open_file_io_handle(this->__volume, this->__bfio_handle, LIBVSHADOW_OPEN_READ, &error) != 1)
-	{
-	  throw vfsError(std::string("Unable to open input volume."));
-	}
+	throw vfsError(std::string("Unable to open input volume."));
       if (libvshadow_volume_get_number_of_stores(this->__volume, &this->__stores_count, &error)  != 1)
-	{
-	  throw vfsError(std::string("Unable to retrieve number of stores."));
-	}
+	throw vfsError(std::string("Unable to retrieve number of stores."));
       if (this->__stores_count < 0 || this->__stores_count > 255)
-	{
-	  throw vfsError(std::string("Unsupported number of stores."));
-	}
+	throw vfsError(std::string("Unsupported number of stores."));
       if ((this->__input_stores = (libvshadow_store_t**) malloc(sizeof(libvshadow_store_t *) * this->__stores_count)) == NULL)
-	{
-	  throw vfsError(std::string("Unable to create input stores."));
-	}
+	throw vfsError(std::string("Unable to create input stores."));
       for (i = 0; i <= this->__stores_count; i++)
 	this->__input_stores[i] = NULL;
       if (libvshadow_volume_get_size(this->__volume, &this->__volume_size, &error) != 1)
-	{
-	  throw vfsError(std::string("unable to retrieve size from input volume."));
-	}
+	throw vfsError(std::string("unable to retrieve size from input volume."));
     }
   else
-    {
-      throw vfsError(std::string("Unable to determine if volume has a VSS signature."));
-    }
+    throw vfsError(std::string("Unable to determine if volume has a VSS signature."));
 }
 
 

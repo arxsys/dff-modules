@@ -61,10 +61,18 @@ void		MasterDirectoryBlock::process(Node* origin, uint64_t offset, fso* fsobj) t
 
 void		MasterDirectoryBlock::sanitize() throw (std::string)
 {
+  std::stringstream	sstr;
+
   if ((this->blockSize() % 512) != 0)
-    throw std::string("Block size is not a muliple of 512");
-  if (this->totalBlocks() < this->freeBlocks())
-    throw std::string("More free block than total blocks");
+    sstr << "Block size (" << this->blockSize() <<  ") is not a muliple of 512\n";
+  // In some odd cases it could happen that there are more free allocation blocks than
+  // total blocks. 
+  // Test case : create a dump with mkfs.hfs -h, mount it and copy more data than
+  // possible.
+  // if (this->totalBlocks() < this->freeBlocks())
+  //   sstr << "More free blocks (" << this->freeBlocks() << ") than total blocks (" << this->totalBlocks() << ")\n";
+  if (!sstr.str().empty())
+    throw (sstr.str());
 }
 
 
@@ -72,8 +80,7 @@ Attributes	MasterDirectoryBlock::_attributes()
 {
   Attributes	vmap;
 
-  //vmap["version"] = new Variant(this->version());
-  //vmap["last mounted version"] = new Variant(this->lastMountedVersion());
+  vmap["volume name"] = new Variant(this->volumeName());
   vmap["created"] = new Variant(this->createDate());
   vmap["modified"] = new Variant(this->modifyDate());
   vmap["backup"] = new Variant(this->backupDate());
@@ -106,54 +113,36 @@ uint32_t	MasterDirectoryBlock::blockSize()
 }
 
 
-fork_data	MasterDirectoryBlock::extentsFile()
+ExtentsList	MasterDirectoryBlock::overflowExtents()
 {
-  fork_data	fork;
   uint8_t	i;
-  uint64_t	logicalSize;
-  uint32_t	blockCount;
-
-  logicalSize = 0;
-  blockCount = 0;
-  memset(&fork, 0, sizeof(fork_data));
+  Extent*	extent;
+  ExtentsList	extents;
+  
+  extent = NULL;
   for (i = 0; i != 3; ++i)
     {
-      fork.extents[i].startBlock = bswap32((uint32_t)bswap16(this->__mdb.overflowExtents[i].startBlock));
-      fork.extents[i].blockCount = bswap32((uint32_t)bswap16(this->__mdb.overflowExtents[i].blockCount));
-      logicalSize += (((uint64_t)bswap16(this->__mdb.overflowExtents[i].blockCount)) * this->blockSize());
-      blockCount += (uint32_t)bswap16(this->__mdb.overflowExtents[i].blockCount);
+      extent = new Extent(this->__mdb.overflowExtents[i], this->blockSize());
+      extents.push_back(extent);
     }
-  fork.logicalSize = bswap64(logicalSize);
-  fork.totalBlocks = bswap32(blockCount);
-  fork.clumpSize = 0;
-  return fork;
+  return extents;
 }
 
 
-fork_data	MasterDirectoryBlock::catalogFile()
+ExtentsList	MasterDirectoryBlock::catalogExtents()
 {
-  fork_data	fork;
   uint8_t	i;
-  uint64_t	logicalSize;
-  uint32_t	blockCount;
-
-  logicalSize = 0;
-  blockCount = 0;
-  memset(&fork, 0, sizeof(fork_data));
+  Extent*	extent;
+  ExtentsList	extents;
+  
+  extent = NULL;
   for (i = 0; i != 3; ++i)
     {
-      fork.extents[i].startBlock = bswap32((uint32_t)bswap16(this->__mdb.catalogExtents[i].startBlock));
-      fork.extents[i].blockCount = bswap32((uint32_t)bswap16(this->__mdb.catalogExtents[i].blockCount));
-      logicalSize += (((uint64_t)bswap16(this->__mdb.catalogExtents[i].blockCount)) * this->blockSize());
-      blockCount += (uint32_t)bswap16(this->__mdb.catalogExtents[i].blockCount);
+      extent = new Extent(this->__mdb.catalogExtents[i], this->blockSize());
+      extents.push_back(extent);
     }
-  fork.logicalSize = bswap64(logicalSize);
-  fork.totalBlocks = bswap32(blockCount);
-  fork.clumpSize = 0;
-  return fork;
-
+  return extents;
 }
-
 
 
 uint16_t	MasterDirectoryBlock::signature()
@@ -284,9 +273,15 @@ uint32_t	MasterDirectoryBlock::folderCount()
 }
 
 
-uint32_t	MasterDirectoryBlock::overflowSize()
+uint64_t	MasterDirectoryBlock::overflowSize()
 {
-  return bswap32(this->__mdb.overflowSize);
+  return (uint64_t)bswap32(this->__mdb.overflowSize);
+}
+
+
+uint64_t	MasterDirectoryBlock::catalogSize()
+{
+  return (uint64_t)bswap32(this->__mdb.catalogSize);
 }
 
 
@@ -298,8 +293,7 @@ uint16_t	MasterDirectoryBlock::embedSignature()
 
 bool		MasterDirectoryBlock::isWrapper()
 {
-  printf("%x\n", this->__mdb.embedSignature);
-  return this->__mdb.embedSignature != HfsVolume;
+  return (bswap16(this->__mdb.embedSignature) == HfspVolume || bswap16(this->__mdb.embedSignature) == HfsxVolume);
 }
 
 

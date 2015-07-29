@@ -23,10 +23,8 @@
 #include "mfso.hpp"
 #include "node.hpp"
 
+#include "specialfile.hpp"
 #include "volume/volume.hpp"
-#include "extents/fork.hpp"
-#include "allocation.hpp"
-
 
 class HfsRootNode: public Node
 {

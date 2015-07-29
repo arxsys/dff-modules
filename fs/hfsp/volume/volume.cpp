@@ -54,7 +54,6 @@ VolumeInformation*	VolumeFactory::createVolumeInformation(Node* origin, fso* fso
     }
   memcpy(&signature, buffer, 2);
   signature = bswap16(signature);
-  printf("%x\n", signature);
   if (signature == HfsVolume)
     vinfo = new MasterDirectoryBlock();
   else if (signature == HfspVolume || signature == HfsxVolume)

@@ -35,7 +35,7 @@
 class HfsFileSystemHandler;
 class CatalogKey;
 class CatalogData;
-
+class ForkData;
 
 class CatalogEntry  : public KeyedRecord
 {
@@ -98,8 +98,9 @@ public:
   virtual ~CatalogFile();
   virtual void		process(Node* origin, uint64_t offset, uint16_t size) throw (std::string);
   virtual void		process(uint8_t* buffer, uint16_t size) throw (std::string);
-  virtual fork_data*	dataFork() = 0;
-  virtual ForkData*	resourceFork() = 0;
+  virtual uint64_t	logicalSize() = 0;
+  virtual ExtentsList	dataExtents(uint64_t bsize) = 0;
+  virtual ExtentsList	resourceExtents(uint64_t bsize) = 0;
   virtual Attributes	attributes() = 0;
 };
 

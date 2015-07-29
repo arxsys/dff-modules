@@ -17,7 +17,7 @@
 #include "extentstree.hpp"
 
 
-ExtentsTree::ExtentsTree(uint8_t version) : __version(version), __bsize(4096), __origin(NULL)
+ExtentsTree::ExtentsTree(uint8_t version) : __version(version), __origin(NULL), __handler(NULL)
 {
 }
 
@@ -27,54 +27,55 @@ ExtentsTree::~ExtentsTree()
 }
 
 
+void	ExtentsTree::setHandler(HfsFileSystemHandler* handler) throw (std::string)
+{
+  if (handler == NULL)
+    throw std::string("Cannot create Extent tree because provided handler does not exist");
+  this->__handler = handler;
+}
+
+
 void		ExtentsTree::process(Node* origin, uint64_t offset) throw (std::string)
 {
   HTree::process(origin, offset);
 }
 
 
-void	ExtentsTree::setBlockSize(uint64_t bsize)
+std::map<uint64_t, Extent*>		ExtentsTree::extentsById(uint32_t fileid, uint8_t type)
 {
-  this->__bsize = bsize;
-}
-
-
-uint64_t	ExtentsTree::blockSize()
-{
-  return this->__bsize;
-}
-
-
-std::map<uint32_t, fork_data *>		ExtentsTree::forksById(uint32_t fileid, uint8_t type)
-{
-  uint64_t				idx;
-  ExtentTreeNode*			enode;
-  std::map<uint32_t, fork_data *>	forks;
-  std::map<uint32_t, fork_data *>	nodeforks;
+  uint64_t			idx;
+  ExtentTreeNode*		enode;
+  std::map<uint64_t, Extent*>	extents;
+  std::map<uint64_t, Extent*>	nodeextents;
 
   enode = NULL;
-  if ((enode = new ExtentTreeNode(this->__version)) == NULL)
+  if ((enode = new ExtentTreeNode(this->__version, this->__handler->blockSize())) == NULL)
     throw std::string("Cannot create extent node");
   for (idx = 0; idx < this->totalNodes(); idx++)
     {
       try
    	{
    	  enode->process(this->_origin, idx, this->nodeSize());
-	  nodeforks = enode->forksById(fileid, type);
-	  forks.insert(nodeforks.begin(), nodeforks.end());
+	  nodeextents = enode->extentsById(fileid, type);
+	  extents.insert(nodeextents.begin(), nodeextents.end());
 	}
       catch (std::string err)
   	{
   	  std::cout << "ERROR " << err << std::endl;
   	}
     }
-  if (enode != NULL)
-    delete enode;
-  return forks;
+  delete enode;
+  return extents;
 }
 
 
-ExtentTreeNode::ExtentTreeNode(uint8_t version) : __version(version)
+uint64_t				ExtentsTree::blockSize()
+{
+  return this->__handler->blockSize();
+}
+
+
+ExtentTreeNode::ExtentTreeNode(uint8_t version, uint64_t bsize) : __version(version), __bsize(bsize)
 {
   
 }
@@ -114,12 +115,11 @@ KeyedRecords	ExtentTreeNode::records()
 }
 
 
-std::map<uint32_t, fork_data * >	ExtentTreeNode::forksById(uint32_t fileId, uint8_t type)
+std::map<uint64_t, Extent*>	ExtentTreeNode::extentsById(uint32_t fileId, uint8_t type)
 {
-  std::map<uint32_t, fork_data * >	forks;
-  fork_data*				fork;
-  ExtentKey*				record;
-  int					i;
+  int				i;
+  ExtentKey*			record;
+  std::map<uint64_t, Extent* >	extents;
 
   if (this->isLeafNode() && (this->numberOfRecords() > 0))
     {
@@ -128,15 +128,12 @@ std::map<uint32_t, fork_data * >	ExtentTreeNode::forksById(uint32_t fileId, uint
 	  if ((record = this->__createExtentKey(bswap16(this->_roffsets[i]), bswap16(this->_roffsets[i-1]))) != NULL)
 	    {
 	      if (record->fileId() == fileId && record->forkType() == type)
-		{
-		  if ((fork = record->forkData()) != NULL)
-		    forks[record->startBlock()] = fork;
-		}
+		extents = record->extents();
 	      delete record;
 	    }
 	}
     }
-  return forks;
+  return extents;
 }
 
 
@@ -176,16 +173,16 @@ ExtentKey*	ExtentTreeNode::__createExtentKey(uint16_t start, uint16_t end)
   if (start < end)
     size = end - start;
   if (this->__version == 0)
-    record = new HfsExtentKey();
+    record = new HfsExtentKey(this->__bsize);
   else //if (this->__version == 1)
-    record = new HfspExtentKey();
+    record = new HfspExtentKey(this->__bsize);
   record->process(this->_origin, offset, size);
   return record;
 }
 
 
 
-HfsExtentKey::HfsExtentKey() : __ekey()
+HfsExtentKey::HfsExtentKey(uint64_t bsize) : ExtentKey(bsize), __ekey()
 {
 }
 
@@ -208,34 +205,31 @@ void	HfsExtentKey::process(Node* origin, uint64_t offset, uint16_t size) throw (
 }
 
 
-fork_data*	HfsExtentKey::forkData()
+std::map<uint64_t, Extent*>	HfsExtentKey::extents()
 {
-  uint8_t*	data;
-  fork_data*	fork;
-  hfs_extent	extents[3];
-  uint8_t	i;
-  uint32_t	blockCount;
+  uint8_t			i;
+  uint64_t			sblock;
+  uint8_t*			data;
+  hfs_extent			exts[3];
+  std::map<uint64_t, Extent* >	extentsmap;
 
-  blockCount = 0; 
   data = NULL;
-  fork = NULL;
-  if ((this->dataLength() >= sizeof(hfs_extent)*3) && ((data = this->data()) != NULL)
-      && ((fork = (fork_data*)malloc(sizeof(fork_data))) != NULL))
+  sblock = (uint64_t)this->__ekey.startBlock;
+  if ((this->dataLength() >= sizeof(hfs_extent)*3) && ((data = this->data()) != NULL))
     {
+      memcpy(&exts, data, sizeof(hfs_extent)*3);
       for (i = 0; i != 3; ++i)
 	{
-	  memcpy(&extents, data, sizeof(hfs_extent)*3);
-	  fork->extents[i].startBlock = bswap32((uint32_t)bswap16(extents[i].startBlock));
-	  fork->extents[i].blockCount = bswap32((uint32_t)bswap16(extents[i].blockCount));
-	  blockCount += (uint32_t)bswap16(extents[i].blockCount);
+	  if (exts[i].blockCount > 0)
+	    {
+	      extentsmap[sblock] = new Extent(exts[i], this->_bsize);
+	      sblock += extentsmap[sblock]->blockCount();
+	    }
 	}
-      fork->logicalSize = 0;
-      fork->totalBlocks = bswap32(blockCount);
-      fork->clumpSize = 0;
     }
   if (data != NULL)
     free(data);
-  return fork;
+  return extentsmap;
 }
 
 
@@ -257,8 +251,7 @@ uint32_t	HfsExtentKey::startBlock()
 }
 
 
-
-HfspExtentKey::HfspExtentKey() : __ekey()
+HfspExtentKey::HfspExtentKey(uint64_t bsize) : ExtentKey(bsize), __ekey()
 {
 }
 
@@ -281,24 +274,31 @@ void	HfspExtentKey::process(Node* origin, uint64_t offset, uint16_t size) throw 
 }
 
 
-fork_data*	HfspExtentKey::forkData()
+std::map<uint64_t, Extent*>	HfspExtentKey::extents()
 {
-  uint8_t*	data;
-  fork_data*	fork;
- 
+  uint8_t			i;
+  uint64_t			sblock;
+  uint8_t*			data;
+  hfsp_extent			exts[8];
+  std::map<uint64_t, Extent* >	extentsmap;
+
   data = NULL;
-  fork = NULL;
-  if ((this->dataLength() >= sizeof(hfsp_extent)*8) && ((data = this->data()) != NULL)
-      && ((fork = (fork_data*)malloc(sizeof(fork_data))) != NULL))
+  sblock = (uint64_t)this->__ekey.startBlock;
+  if ((this->dataLength() >= sizeof(hfsp_extent)*8) && ((data = this->data()) != NULL))
     {
-      fork->logicalSize = 0;
-      fork->clumpSize = 0;
-      fork->totalBlocks = 0;
-      memcpy(fork->extents, data, sizeof(hfsp_extent)*8);
+      memcpy(&exts, data, sizeof(hfsp_extent)*8);
+      for (i = 0; i != 8; ++i)
+	{
+	  if (exts[i].blockCount > 0)
+	    {
+	      extentsmap[sblock] = new Extent(exts[i], this->_bsize);;
+	      sblock += extentsmap[sblock]->blockCount();
+	    }
+	}
     }
   if (data != NULL)
     free(data);
-  return fork;
+  return extentsmap;
 }
 
 

@@ -45,7 +45,7 @@ private:
   VFile*			__vfile;
   Node*				__origin;
   BootSector*			__bs;
-  fatcache**			__fatscache;
+  fatcache			__fatscache[MAX_FAT_COUNT];
   std::map<uint32_t, uint32_t>	__freeClustCount;
   std::map<uint32_t, uint32_t>	__allocClustCount;
   std::map<uint32_t, uint32_t>	__badClustCount;

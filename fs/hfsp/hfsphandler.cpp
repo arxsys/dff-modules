@@ -18,7 +18,7 @@
 #include "hfshandlers.hpp"
 
 
-HfspHandler::HfspHandler() : __allocationNode(NULL), __allocationFile(NULL), __fsobj(NULL)
+HfspHandler::HfspHandler() : __allocationNode(NULL), __allocationFile(NULL)
 {
 }
 
@@ -47,15 +47,10 @@ void			HfspHandler::__createAllocation() throw (std::string)
     throw std::string("Cannot get volume header on this HFS Volume");
   this->__allocationNode = new SpecialFile("$AllocationFile", this->_mountPoint, this->_fsobj);
   fork = new ForkData(6, this->_extentsTree);
-  fork->process(vheader->allocationFile(), ForkData::Data);
+  fork->process(vheader->allocationExtents(), vheader->allocationSize(), ForkData::Data);
   this->__allocationNode->setContext(fork, this->_origin);
-  if (fork->initialForkSize() < fork->logicalSize())
-    std::cout << "MISSING EXTENTS FOR ALLOCATION FILE !!!! " << std::endl;
   this->__allocationFile = new AllocationFile();
-  this->__allocationFile->setFso(this->_fsobj);
-  this->__allocationFile->setMountPoint(this->_mountPoint);
-  this->__allocationFile->setExtentsTree(this->_extentsTree);
-  this->__allocationFile->setOrigin(this->_origin);
+  this->__allocationFile->setHandler(this);
   this->__allocationFile->process(this->__allocationNode, 0, this->_volumeInformation->totalBlocks());
 }
 

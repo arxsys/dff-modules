@@ -228,33 +228,51 @@ uint64_t	VolumeHeader::encodingsBitmap()
 }
 
 
-fork_data	VolumeHeader::allocationFile()
+ExtentsList	VolumeHeader::allocationExtents()
 {
-  return this->__vheader.allocationFile;
+  return this->__extentsList(this->__vheader.allocationFile);
 }
 
 
-fork_data	VolumeHeader::extentsFile()
+uint64_t	VolumeHeader::allocationSize()
 {
-  return this->__vheader.extentsFile;
+  return bswap64(this->__vheader.allocationFile.logicalSize);
 }
 
 
-fork_data	VolumeHeader::catalogFile()
+ExtentsList	VolumeHeader::overflowExtents()
 {
-  return this->__vheader.catalogFile;
+  return this->__extentsList(this->__vheader.extentsFile);
 }
 
 
-fork_data	VolumeHeader::attributesFile()
+uint64_t	VolumeHeader::overflowSize()
 {
-  return this->__vheader.attributesFile;
+  return bswap64(this->__vheader.extentsFile.logicalSize);
 }
 
 
-fork_data	VolumeHeader::startupFile()
+ExtentsList	VolumeHeader::catalogExtents()
 {
-  return this->__vheader.startupFile;
+  return this->__extentsList(this->__vheader.catalogFile);
+}
+
+
+uint64_t	VolumeHeader::catalogSize()
+{
+  return bswap64(this->__vheader.catalogFile.logicalSize);
+}
+
+
+ExtentsList	VolumeHeader::attributesExtents()
+{
+  return this->__extentsList(this->__vheader.attributesFile);
+}
+
+
+ExtentsList	VolumeHeader::startupExtents()
+{
+  return this->__extentsList(this->__vheader.startupFile);
 }
 
 
@@ -323,4 +341,22 @@ bool	VolumeHeader::isCatalogIdReused()
 bool	VolumeHeader::isWriteProtected()
 {
   return ((this->attributes() & VolumeSoftwareLock) == VolumeSoftwareLock);
+}
+
+
+ExtentsList	VolumeHeader::__extentsList(fork_data fork)
+{
+  int		i;
+  Extent*	extent;
+  ExtentsList	extents;
+
+  for (i = 0; i != 8; ++i)
+    {
+      if (fork.extents[i].blockCount > 0)
+	{
+	  extent = new Extent(fork.extents[i], this->blockSize());
+	  extents.push_back(extent);
+	}
+    }
+  return extents;
 }

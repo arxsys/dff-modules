@@ -65,12 +65,6 @@ uint16_t	BufferReader::size()
 }
 
 
-// void		BufferReader::process() throw (std::string)
-// {
-//   this->process(this->_origin, this->_offset, this->_size);
-// }
-
-
 void		BufferReader::process(uint8_t *buffer, uint16_t size) throw (std::string)
 {
   this->__clean();
