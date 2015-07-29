@@ -59,7 +59,7 @@ class FATFS(Module):
                            "description": "carve directory entries in unallocated clusters (more accurate but slower)",
                            "input": Argument.Empty})
     self.conf.addArgument({"name": "fat_to_use",
-                           "description": "This option permits to chose the FAT to use when walking clusters)",
+                           "description": "This option permits to choose the FAT to use when walking clusters)",
 			   "input": Argument.Optional|Argument.Single|typeId.UInt16})
     self.conf.addConstant({"name": "mime-type",
                            "type": typeId.String,

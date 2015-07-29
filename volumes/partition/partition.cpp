@@ -66,17 +66,15 @@ void Partition::start(std::map<std::string, Variant_p > args)
 }
 
 
-Partition::Partition(): mfso("partition")
+Partition::Partition(): mfso("partition"), __parent(NULL), __root(NULL), __dos(new DosPartition()), __gpt(new GptPartition())
 {
-  this->__dos = new DosPartition();
-  this->__gpt = new GptPartition();
 }
 
 
 Partition::~Partition()
 {
-  //Free All Memory !!!
-  std::cout << "Dump Closed successfully" << std::endl;
+  delete this->__dos;
+  delete this->__gpt;
 }
 
 
@@ -88,7 +86,7 @@ PartitionsNode::PartitionsNode(Partition* fsobj) : Node("Partitions", 0, NULL, f
 
 PartitionsNode::~PartitionsNode()
 {
-  
+
 }
 
 
