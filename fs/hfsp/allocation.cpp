@@ -17,7 +17,7 @@
 #include "allocation.hpp"
 
 
-AllocationFile::AllocationFile() : __cacheOffset(0), __blocks(0), __percent(0), __cache(NULL), __handler(NULL), __allocation(NULL), __freeBlocks()
+AllocationFile::AllocationFile() : __cacheOffset(0), __blocks(0), __percent(0), __cache(NULL), __handler(NULL), __allocation(NULL), __vfile(NULL), __freeBlocks()
 {
 }
 

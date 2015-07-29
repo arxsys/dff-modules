@@ -595,6 +595,7 @@ Attributes		FatTree::attributes(FatNode* fnode)
 	  if (vf->read(entry, sizeof(dosentry)) != sizeof(dosentry))
 	    {
 	      free(entry);
+	      delete em;
 	      return attr;
 	    }
 	  dos = em->toDos(entry);
