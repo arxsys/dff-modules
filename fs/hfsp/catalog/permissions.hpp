@@ -65,34 +65,34 @@ private:
     } UserFlags;
   typedef enum
     {
-      S_ISUID2	= 0x800,     /* set user id on execution */
-      S_ISGID2	= 0x400,     /* set group id on execution */
-      S_ISTXT	= 0x200,     /* sticky bit */
+      HFS_ISUID	= 0x800,     /* set user id on execution */
+      HFS_ISGID	= 0x400,     /* set group id on execution */
+      HFS_ISTXT	= 0x200,     /* sticky bit */
 
-      S_IRWXU2	= 0x1c0,     /* RWX mask for owner */
-      S_IRUSR2	= 0x100,     /* R for owner */
-      S_IWUSR2	= 0x80,     /* W for owner */
-      S_IXUSR2	= 0x40,     /* X for owner */
+      HFS_IRWXU	= 0x1c0,     /* RWX mask for owner */
+      HFS_IRUSR	= 0x100,     /* R for owner */
+      HFS_IWUSR	= 0x80,     /* W for owner */
+      HFS_IXUSR	= 0x40,     /* X for owner */
 
-      S_IRWXG2	= 0x38,     /* RWX mask for group */
-      S_IRGRP2	= 0x20,     /* R for group */
-      S_IWGRP2	= 0x10,     /* W for group */
-      S_IXGRP2	= 0x08,     /* X for group */
+      HFS_IRWXG	= 0x38,     /* RWX mask for group */
+      HFS_IRGRP	= 0x20,     /* R for group */
+      HFS_IWGRP	= 0x10,     /* W for group */
+      HFS_IXGRP	= 0x08,     /* X for group */
 
-      S_IRWXO2	= 0x07,     /* RWX mask for other */
-      S_IROTH2	= 0x04,     /* R for other */
-      S_IWOTH2	= 0x02,     /* W for other */
-      S_IXOTH2	= 0x01,     /* X for other */
+      HFS_IRWXO	= 0x07,     /* RWX mask for other */
+      HFS_IROTH	= 0x04,     /* R for other */
+      HFS_IWOTH	= 0x02,     /* W for other */
+      HFS_IXOTH	= 0x01,     /* X for other */
 
-      S_IFMT2	= 0xf000,    /* type of file mask */
-      S_IFIFO2	= 0x1000,    /* named pipe (fifo) */
-      S_IFCHR2	= 0x2000,    /* character special */
-      S_IFDIR2	= 0x4000,    /* directory */
-      S_IFBLK2	= 0x6000,    /* block special */
-      S_IFREG2	= 0x8000,   /* regular */
-      S_IFLNK2	= 0xa000,    /* symbolic link */
-      S_IFSOCK2	= 0xc000,    /* socket */
-      S_IFWHT2	= 0xe000    /* whiteout */
+      HFS_IFMT	= 0xf000,    /* type of file mask */
+      HFS_IFIFO	= 0x1000,    /* named pipe (fifo) */
+      HFS_IFCHR	= 0x2000,    /* character special */
+      HFS_IFDIR	= 0x4000,    /* directory */
+      HFS_IFBLK	= 0x6000,    /* block special */
+      HFS_IFREG	= 0x8000,   /* regular */
+      HFS_IFLNK	= 0xa000,    /* symbolic link */
+      HFS_IFSOCK	= 0xc000,    /* socket */
+      HFS_IFWHT	= 0xe000    /* whiteout */
     } FileMode;
 
 public:
