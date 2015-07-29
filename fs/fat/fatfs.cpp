@@ -95,6 +95,6 @@ Fatfs::~Fatfs()
 {
 }
 
-Fatfs::Fatfs(): mfso("Fat File System"), __fat_to_use(0), __metacarve(false), __checkslack(false)
+Fatfs::Fatfs(): mfso("Fat File System"), __fat_to_use(0), __metacarve(false), __checkslack(false), __parent(NULL)
 {
 }
