@@ -23,9 +23,6 @@
 #include "export.hpp"
 
 #include "extent.hpp"
-#include "extentstree.hpp"
-
-#include "specialfile.hpp"
 
 PACK_START
 typedef struct s_fork_data 
@@ -37,49 +34,41 @@ typedef struct s_fork_data
 }		fork_data;
 PACK_END
 
-class ExtentsTree;
+#include "extentstree.hpp"
+#include "specialfile.hpp"
 
-typedef std::vector<Extent*> ExtentsList;
+class ExtentsTree;
 
 class ForkData
 {
 public:
-  ForkData(uint32_t fileid, uint64_t blocksize); // special case for ExtentsTree file
-  ForkData(uint32_t fileid, ExtentsTree* etree);
-  ~ForkData();
   typedef enum
     {
       Data	= 0x00,
       Resource	= 0xFF
     } Type;
-  void		setBlockSize(uint64_t blocksize);
-  void		setExtentsTree(ExtentsTree* efile);
-  void		setFileId(uint32_t fileId);
-  void		process(Node* origin, uint64_t offset, ForkData::Type type) throw (std::string);
-  void		process(fork_data fork, ForkData::Type type) throw (std::string);
-  uint64_t	initialForkSize();
+
+private:
+  uint32_t		__fileId;
+  uint64_t		__blockSize;
+  uint64_t		__logicalSize;
+  uint64_t		__totalBlocks;
+  ForkData::Type	__type;
+  class ExtentsTree*	__etree;
+  std::vector<Extent* >	__extents;
+  void			__clearExtents();
+public:
+  ForkData(uint32_t fileid, uint64_t blocksize); // special case for ExtentsTree file
+  ForkData(uint32_t fileid, ExtentsTree* etree);
+  ~ForkData();
+  void		process(ExtentsList initial, uint64_t logicalSize, ForkData::Type type) throw (std::string);
   void		dump(std::string tab);
   uint64_t	logicalSize();
-  uint32_t	clumpSize();
   uint32_t	totalBlocks();
   uint64_t	allocatedBytes();
   uint64_t	slackSize();
   Extent*	getExtent(uint32_t id);
   ExtentsList	extents();
-
-private:
-  uint32_t		__fileId;
-  uint64_t		__blockSize;
-  uint64_t		__initialSize;
-  uint64_t		__extendedSize;
-  ForkData::Type	__type;
-  class ExtentsTree*	__etree;
-  fork_data		__fork;
-  std::vector<Extent* >	__extents;
-
-  bool			__readToBuffer(void* buffer, uint16_t size, Node* origin, uint64_t offset);
-  void			__clearExtents();
-  uint64_t		__processFork(fork_data fork);
 };
 
 

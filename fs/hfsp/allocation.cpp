@@ -17,53 +17,93 @@
 #include "allocation.hpp"
 
 
-AllocationFile::AllocationFile()
+AllocationFile::AllocationFile() : __cacheOffset(0), __blocks(0), __percent(0), __cache(NULL), __handler(NULL), __allocation(NULL), __freeBlocks()
 {
-  this->__allocation = NULL;
-  this->__origin = NULL;
-  this->__mountpoint = NULL;
-  this->__fsobj = NULL;
-  this->__etree = NULL;
-  this->__vfile = NULL;
-  this->__cache = NULL;
-  this->__cacheOffset = 0;
-  this->__blocks = 0;
-  this->__percent = 0;
 }
 
 
 AllocationFile::~AllocationFile()
 {
+  this->__clearCache();
 }
 
 
-void	AllocationFile::setFso(fso* fsobj)
+void		AllocationFile::setHandler(HfsFileSystemHandler* handler) throw (std::string)
 {
-  this->__fsobj = fsobj;
+  if (handler == NULL)
+    throw std::string("Cannot create Catalog tree because provided handler does not exist");
+  this->__handler = handler;
 }
 
 
-void	AllocationFile::setOrigin(Node* origin) throw (std::string)
+void			AllocationFile::process(Node* allocation, uint64_t offset, uint64_t blocks) throw (std::string)
 {
-  if (origin == NULL)
-    throw std::string("Provided origin does not exist");
-  this->__origin = origin;
+  uint64_t		current;
+  uint64_t		nsize;
+  uint64_t		start;
+  bool			commit;
+  
+  if (this->__handler == NULL)
+    throw std::string("No handler provided");
+  if (allocation == NULL)
+    throw std::string("Provided allocation file does not exist");
+  if (offset > allocation->size())
+    throw std::string("Provided offset is greater than allocation file size");
+  this->__allocation = allocation;
+  this->__blocks = blocks;
+  this->__percent = 0;
+  try
+    {
+      this->__vfile = this->__allocation->open();
+    }
+  catch (vfsError& e)
+    {
+      throw std::string("Cannot open allocation file");
+    }
+  this->__initCache();
+  nsize = 0;
+  start = 0;
+  commit = false;
+  for (current = 0; current < this->__blocks; ++current)
+    {
+      if (!this->isBlockAllocated(current))
+	{
+	  if (commit == false)
+	    {
+	      start = current;
+	      commit = true;
+	    }
+	  nsize += this->__handler->blockSize();
+	}
+      else
+	{
+	  if (commit)
+	    {
+	      this->__freeBlocks[start] = current;
+	      commit = false;
+	    }
+	}
+    }
+  this->__progress(current);
+  UnallocatedNode* unalloc = new UnallocatedNode("$Unallocated space", nsize, this->__handler->mountPoint(), this->__handler->fsObject());
+  unalloc->setContext(this->__handler->origin(), this->__handler->blockSize(), this->__freeBlocks);
 }
 
 
-void	AllocationFile::setMountPoint(Node* mountpoint) throw (std::string)
+bool			AllocationFile::isBlockAllocated(uint64_t block) throw (std::string)
 {
-  if (mountpoint == NULL)
-    throw std::string("Provided mount point does not exist");
-  this->__mountpoint = mountpoint;
-}
+  uint64_t		offset;
+  uint64_t		coffset;
+  uint8_t		byte;
 
-
-void	AllocationFile::setExtentsTree(ExtentsTree* etree) throw (std::string)
-{
-  if (etree == NULL)
-    throw std::string("Cannot create Allocation tree because provided Extent tree does not exist");
-  this->__etree = etree;
+  offset = block / 8;
+  if (offset > this->__allocation->size())
+    throw std::string("Provided block is greater than possible range");
+  if (offset < this->__cacheOffset || offset > this->__cacheOffset+10485760)
+    this->__updateCache(offset);
+  coffset = offset - this->__cacheOffset;
+  byte = *(this->__cache+coffset);
+  return (byte & (1 << (7 - (block % 8)))) != 0;
 }
 
 
@@ -123,79 +163,10 @@ void			AllocationFile::__progress(uint64_t current)
   if (this->__percent < percent)
     {
       sstr << "Processing bitmap allocation block: " << percent << "% (" << current << " / " << this->__blocks << ")" << std::endl;
-      this->__fsobj->stateinfo = sstr.str();
+      this->__handler->fsObject()->stateinfo = sstr.str();
       sstr.str("");
       this->__percent = percent;
     }
-}
-
-
-bool			AllocationFile::isBlockAllocated(uint64_t block) throw (std::string)
-{
-  uint64_t		offset;
-  uint64_t		coffset;
-  uint8_t		byte;
-
-  offset = block / 8;
-  if (offset > this->__allocation->size())
-    throw std::string("Provided block is greater than possible range");
-  if (offset < this->__cacheOffset || offset > this->__cacheOffset+10485760)
-    this->__updateCache(offset);
-  coffset = offset - this->__cacheOffset;
-  byte = *(this->__cache+coffset);
-  return (byte & (1 << (7 - (block % 8)))) != 0;
-}
-
-
-void			AllocationFile::process(Node* allocation, uint64_t offset, uint64_t blocks) throw (std::string)
-{
-  uint64_t		current;
-  uint64_t		nsize;
-  uint64_t		start;
-  bool			commit;
-  
-  if (allocation == NULL)
-    throw std::string("Provided allocation file does not exist");
-  if (offset > allocation->size())
-    throw std::string("Provided offset is greater than allocation file size");
-  this->__allocation = allocation;
-  this->__blocks = blocks;
-  this->__percent = 0;
-  try
-    {
-      this->__vfile = this->__allocation->open();
-    }
-  catch (vfsError& e)
-    {
-      throw std::string("Cannot open allocation file");
-    }
-  this->__initCache();
-  nsize = 0;
-  start = 0;
-  commit = false;
-  for (current = 0; current < this->__blocks; ++current)
-    {
-      if (!this->isBlockAllocated(current))
-	{
-	  if (commit == false)
-	    {
-	      start = current;
-	      commit = true;
-	    }
-	  nsize += this->__etree->blockSize();
-	}
-      else
-	{
-	  if (commit)
-	    {
-	      this->__freeBlocks[start] = current;
-	      commit = false;
-	    }
-	}
-    }
-  this->__progress(current);
-  UnallocatedNode* unalloc = new UnallocatedNode("$Unallocated space", nsize, this->__mountpoint, this->__fsobj);
-  unalloc->setContext(this->__origin, this->__etree->blockSize(), this->__freeBlocks);
 }
 
 
@@ -215,7 +186,6 @@ void	UnallocatedNode::setContext(Node* origin, uint64_t bsize, const std::map<ui
   this->__bsize = bsize;
   this->__freeBlocks = freeBlocks;
 }
-
 
 
 void	UnallocatedNode::fileMapping(FileMapping* fm)

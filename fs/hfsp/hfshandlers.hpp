@@ -23,12 +23,18 @@
 #include "mfso.hpp"
 #include "node.hpp"
 
+#include "specialfile.hpp"
 #include "volume/volume.hpp"
+#include "extents/extentstree.hpp"
 #include "extents/fork.hpp"
 #include "allocation.hpp"
 #include "catalog/catalogtree.hpp"
 
+class SpecialFile;
 class CatalogTree;
+class AllocationFile;
+class ExtentsTree;
+class VolumeInformation;
 
 class FileSystemHandler
 {
@@ -107,7 +113,6 @@ class HfspHandler : public HfsFileSystemHandler
 private:
   SpecialFile*		__allocationNode;
   AllocationFile*	__allocationFile;
-  fso*			__fsobj;
   void			__createAllocation() throw (std::string);
 public:
   HfspHandler();

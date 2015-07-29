@@ -23,12 +23,10 @@
 #include "node.hpp"
 
 #include "endian.hpp"
-#include "fork.hpp"
+#include "hfshandlers.hpp"
+#include "extent.hpp"
 #include "htree.hpp"
 
-typedef struct s_fork_data fork_data;
-
-class ForkData;
 
 PACK_START
 typedef struct	s_hfs_extent_key
@@ -53,114 +51,50 @@ typedef struct	s_hfsp_extent_key
 PACK_END
 
 
-// class ExtentsTreeFactory
-// {
-// public:
-//   enum Version
-//     {
-//       Hfs	= 0,
-//       Hfsp	= 1,
-//     }
-//   ExtentsTreeFactory();
-//   ~ExtentsTreeFactory();
-//   ExtentsTree*	createExtentTree(Version version) throw (std::string);
-// };
+class HfsFileSystemHandler;
 
 
 class ExtentsTree : public HTree
 {
 private:
   uint8_t				__version;
-  uint64_t				__bsize;
   Node*					__origin;
+  HfsFileSystemHandler*			__handler;
 public:
   ExtentsTree(uint8_t version);
   ~ExtentsTree();
+  void					setHandler(HfsFileSystemHandler* handler) throw (std::string);
   virtual void				process(Node* origin, uint64_t offset) throw (std::string);
-  std::map<uint32_t, fork_data* >	forksById(uint32_t fileid, uint8_t type);
+  std::map<uint64_t, Extent*>	        extentsById(uint32_t fileid, uint8_t type);
   uint64_t				blockSize();
-  void					setBlockSize(uint64_t bsize);
 };
-
-
-// class ExtentsTree : public HTree
-// {
-// protected:
-//   Node*			_origin;
-//   uint64_t		_bsize;
-// public:
-//   virtual ~ExtentsTree();
-//   virtual void				process(Node* origin, uint64_t offset) throw (std::string);
-//   std::map<uint32_t, fork_data* >	forksById(uint32_t fileid, uint8_t type) = 0;
-//   uint64_t				blockSize();
-//   void					setBlockSize(uint64_t bsize);
-// };
-
-
-// class HfsExtentsTree : public ExtentsTree
-// {
-// public:
-//   HfsExtentsTree();
-//   ~HfsExtentsTree();
-//   virtual void				process(Node* origin, uint64_t offset) throw (std::string);
-// };
-
-
-// class HfspExtentsTree : public ExtentsTree
-// {
-// public:
-//   HfspExtentsTree();
-//   ~HfspExtentsTree();
-//   virtual void				process(Node* origin, uint64_t offset) throw (std::string);
-// };
 
 
 class ExtentTreeNode : public HNode
 {
 private:
   uint8_t				__version;
+  uint64_t				__bsize;
   class ExtentKey*			__createExtentKey(uint16_t start, uint16_t end);
 public:
-  ExtentTreeNode(uint8_t version);
+  ExtentTreeNode(uint8_t version, uint64_t bsize);
   ~ExtentTreeNode();
   void					process(Node* origin, uint64_t uid, uint16_t size) throw (std::string);
   KeyedRecords				records();
   bool					exists(uint32_t fileId, uint8_t type);
-  std::map<uint32_t, fork_data * >	forksById(uint32_t fileId, uint8_t type);
+  std::map<uint64_t, Extent* >		extentsById(uint32_t fileId, uint8_t type);
 };
-
-
-// class HfsExtentTreeNode : public ExtentTreeNode
-// {
-// private:
-//   ExtentKey*	__createExtentKey(uint16_t start, uint16_t end);
-// public:
-//   ExtentTreeNode();
-//   ~ExtentTreeNode();
-//   virtual void				process(Node* origin, uint64_t uid, uint16_t size) throw (std::string);
-//   virtual KeyedRecords			records();
-// };
-
-
-// class HfspExtentTreeNode : public ExtentTreeNode
-// {
-// private:
-//   ExtentKey*	__createExtentKey(uint16_t start, uint16_t end);
-// public:
-//   ExtentTreeNode();
-//   ~ExtentTreeNode();
-//   virtual void				process(Node* origin, uint64_t uid, uint16_t size) throw (std::string);
-//   virtual KeyedRecords			records();
-// };
 
 
 class ExtentKey : public KeyedRecord
 {
+protected:
+  uint64_t		_bsize;
 public:
-  ExtentKey() {}
+  ExtentKey(uint64_t bsize) : _bsize(bsize) {}
   virtual ~ExtentKey() {}
   virtual void		process(Node* origin, uint64_t offset, uint16_t size) throw (std::string) = 0;
-  virtual fork_data*	forkData() = 0;
+  virtual std::map<uint64_t, Extent*>	extents() = 0;
   virtual uint8_t	forkType() = 0;
   virtual uint32_t	fileId() = 0;
   virtual uint32_t	startBlock() = 0;
@@ -172,10 +106,10 @@ class HfsExtentKey : public ExtentKey
 private:
   hfs_extent_key	__ekey;
 public:
-  HfsExtentKey();
+  HfsExtentKey(uint64_t bsize);
   ~HfsExtentKey();
   virtual void		process(Node* origin, uint64_t offset, uint16_t size) throw (std::string);
-  virtual fork_data*	forkData();
+  virtual std::map<uint64_t, Extent*>	extents();
   virtual uint8_t	forkType();
   virtual uint32_t	fileId();
   virtual uint32_t	startBlock();
@@ -187,10 +121,10 @@ class HfspExtentKey : public ExtentKey
 private:
   hfsp_extent_key	__ekey;
 public:
-  HfspExtentKey();
+  HfspExtentKey(uint64_t bsize);
   ~HfspExtentKey();
   virtual void		process(Node* origin, uint64_t offset, uint16_t size) throw (std::string);
-  virtual fork_data*	forkData();
+  virtual std::map<uint64_t, Extent*>	extents();
   virtual uint8_t	forkType();
   virtual uint32_t	fileId();
   virtual uint32_t	startBlock();

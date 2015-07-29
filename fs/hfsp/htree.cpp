@@ -69,7 +69,6 @@ uint16_t	KeyedRecord::keyLength()
     memcpy(&keylen, this->_buffer, 1);
   else
     {
-      //std::cout << this->_size << std::endl;
       memcpy(&keylen, this->_buffer, 2);
       keylen = bswap16(keylen);
     }
@@ -149,7 +148,7 @@ uint8_t*	KeyedRecord::data()
  *
 */
 
-HNode::HNode() : __descriptor(), _buffer(NULL), _roffsets(NULL), _origin(NULL), _uid(0), _size(0)
+HNode::HNode() : __descriptor(), _klenfield(2), _buffer(NULL), _roffsets(NULL), _origin(NULL), _uid(0), _size(0)
 {
 }
 
@@ -356,7 +355,7 @@ uint64_t	HNode::offset()
  *
 */
 
-HTree::HTree() : __hnode(), __vfile(NULL)
+HTree::HTree() : __hnode(), __vfile(NULL), _origin(NULL)
 {
 }
 
@@ -381,15 +380,10 @@ void	HTree::process(Node* node, uint64_t offset) throw (std::string)
     {
       this->__vfile = node->open();
       this->__vfile->seek(offset);
-      std::cout << "Seeking to offset: " << this->__vfile->tell() << std::endl;
       if (this->__vfile->read(&this->__hnode, sizeof(header_node)) != sizeof(header_node))
 	throw std::string("Cannot read header node");
       if (((this->nodeSize() % 2) != 0) || (this->nodeSize() < 512) || (this->nodeSize() > 32768))
-	{
-	  this->dump("");
-	  std::cout << "Size of node is not correct. Must be a power of 2 from 512 through 32768" << std::endl;
-	  throw std::string("Size of node is not correct. Must be a power of 2 from 512 through 32768");
-	}
+	throw std::string("Size of node is not correct. Must be a power of 2 from 512 through 32768");
       this->_origin = node;
     }
   catch (...)

@@ -17,12 +17,12 @@
 #include "fork.hpp"
 
 
-ForkData::ForkData(uint32_t fileid, uint64_t blocksize) : __fileId(fileid), __blockSize(blocksize), __initialSize(0), __extendedSize(0), __etree(NULL), __fork(), __extents()
+ForkData::ForkData(uint32_t fileid, uint64_t blocksize) : __fileId(fileid), __blockSize(blocksize), __logicalSize(0), __totalBlocks(0), __type(Data), __etree(NULL), __extents()
 {
 }
 
 
-ForkData::ForkData(uint32_t fileid, ExtentsTree* etree) : __fileId(fileid), __blockSize(0), __initialSize(0), __extendedSize(0), __etree(etree), __fork(), __extents()
+ForkData::ForkData(uint32_t fileid, ExtentsTree* etree) : __fileId(fileid), __blockSize(0), __logicalSize(0), __totalBlocks(0), __type(Data), __etree(etree), __extents()
 {
   if (etree != NULL)
     this->__blockSize = this->__etree->blockSize();
@@ -35,124 +35,57 @@ ForkData::~ForkData()
 }
 
 
-void		ForkData::process(Node* origin, uint64_t offset, ForkData::Type type) throw (std::string)
+void		ForkData::process(ExtentsList initial, uint64_t logicalSize, ForkData::Type type) throw (std::string)
 {
-  fork_data	fork;
-
-  if (this->__readToBuffer(&fork, sizeof(fork_data), origin, offset))
-    this->process(fork, type);
-  else
-    throw std::string("ForkData: cannot read fork_data structure");
-}
-
-
-void		ForkData::process(fork_data initial, ForkData::Type type) throw (std::string)
-{
-  std::map<uint32_t, fork_data* >		forks;
-  std::map<uint32_t, fork_data* >::iterator	mit;
-  uint64_t					size;
+  unsigned int	i;
+  uint64_t	size;
+  std::map<uint64_t, Extent*>	extents;
+  std::map<uint64_t, Extent*>::iterator mit;
 
   if (this->__blockSize == 0)
     return;
-  this->__fork = initial;
   this->__clearExtents();
-  this->__type = type;
-  this->__initialSize = this->__processFork(initial);
-  this->__extendedSize = 0;
-  if (this->__initialSize < this->logicalSize())
+  this->__logicalSize = logicalSize;
+  this->__extents = initial;
+  size = 0;
+  for (i = 0; i < this->__extents.size(); i++)
+    size += this->__extents[i]->size();
+  if (size < this->__logicalSize)
     {
       if (this->__etree != NULL)
-      	{
-	  forks = this->__etree->forksById(this->__fileId, type);
-	  for (mit = forks.begin(); mit != forks.end(); mit++)
+	{
+	  extents = this->__etree->extentsById(this->__fileId, type);
+	  for (mit = extents.begin(); mit != extents.end(); mit++)
 	    {
 	      if (mit->second != NULL)
 		{
-		  size = this->__processFork(*(mit->second));
-		  this->__extendedSize += size;
+		  size = mit->second->size();
+		  this->__extents.push_back(mit->second);
+		  this->__totalBlocks += mit->second->blockCount();
 		}
 	    }
       	}
       else
       	std::cout << "[!] No Extents Overflow File set. Resulting data will be truncated" << std::endl;
     }
-  else
-    ; // too many forks !
-}
-
-
-void		ForkData::setBlockSize(uint64_t blocksize)
-{
-  //XXX check if coherent
-  this->__blockSize = blocksize;
-}
-
-
-void		ForkData::setExtentsTree(ExtentsTree* etree)
-{
-  if (etree != NULL)
-    this->__etree = etree;
-}
-
-
-void		ForkData::setFileId(uint32_t fileId)
-{
-  this->__fileId = fileId;
-}
-
-
-uint64_t	ForkData::__processFork(fork_data fork)
-{
-  int		i;
-  Extent*	ext;
-  uint64_t	size;
-
-  size = 0;
-  for (i = 0; i < 8; i++)
-    {
-      ext = new Extent(fork.extents[i], this->__blockSize);
-      if (ext->size() > 0)
-	{
-	  size += ext->size();
-	  this->__extents.push_back(ext);
-	}
-      else
-	delete ext;
-    }
-  return size;
-}
-
-
-uint64_t	ForkData::initialForkSize()
-{
-  return this->__initialSize;
 }
 
 
 uint64_t	ForkData::logicalSize()
 {
-  return bswap64(this->__fork.logicalSize);
-}
-
-
-uint32_t	ForkData::clumpSize()
-{
-  return bswap32(this->__fork.clumpSize);
+  return this->__logicalSize;
 }
 
 
 uint32_t	ForkData::totalBlocks()
 {
-  return bswap32(this->__fork.totalBlocks);
+  return this->__totalBlocks;
 }
 
 
 uint64_t	ForkData::allocatedBytes()
 {
-  uint64_t	bytes;
-
-  bytes = (uint64_t)this->totalBlocks() * this->__blockSize;
-  return bytes;
+  return this->__totalBlocks * this->__blockSize;
 }
 
 
@@ -190,7 +123,6 @@ void		ForkData::dump(std::string tab)
   unsigned int	i;
   
   std::cout << tab << "logical size: " << this->logicalSize() << std::endl;
-  std::cout << tab << "clump size: " << this->clumpSize() << std::endl;
   std::cout << tab << "total blocks: " << this->totalBlocks() << std::endl;
   std::cout << tab << "allocated bytes: " << this->allocatedBytes()  << std::endl;
   std::cout << tab << "slack size: " << this->slackSize()  << std::endl;
@@ -200,37 +132,6 @@ void		ForkData::dump(std::string tab)
       std::cout << tab << "Extent " << i << std::endl;
       this->__extents[i]->dump("\t\t");
     }
-}
-
-
-bool	ForkData::__readToBuffer(void* buffer, uint16_t size, Node* origin, uint64_t offset)
-{
-  bool		success;
-  VFile*	vfile;
-  
-  vfile = NULL;
-  success = true;
-  try
-    {
-      vfile = origin->open();
-      vfile->seek(offset);
-      if (vfile->read(buffer, size) != size)
-	success = false;
-    }
-  catch (std::string& err)
-    {
-      success = false;
-    }
-  catch (vfsError& err)
-    {
-      success = false;
-    }
-  if (vfile != NULL)
-    {
-      vfile->close();
-      delete vfile;
-    }
-  return success;
 }
 
 

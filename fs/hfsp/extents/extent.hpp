@@ -61,5 +61,6 @@ public:
   void		dump(std::string tab);
 };
 
+typedef std::vector<Extent*> ExtentsList;
 
 #endif

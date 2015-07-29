@@ -17,39 +17,28 @@
 #include "fattree.hpp"
 #include <unicode/unistr.h>
 
-FatTree::FatTree()
+FatTree::FatTree() :  __bs(NULL), __fat(NULL), __origin(NULL), __fsobj(NULL), __vfile(NULL), __emanager(NULL), __allocatedClusters(NULL),
+		      __usedfat(0), __depth(0), __allocount(0), __processed(0),	__volname(), __rootdir(), __deleted(), __slacknodes()
+
 {
-  this->__bs = NULL;
-  this->__fat = NULL;
-  this->__origin = NULL;
-  this->__fsobj = NULL;
-  this->__vfile = NULL;
-  this->__emanager = NULL;
-  this->__allocatedClusters = NULL;
-  this->__volname = "";
-  this->__depth = 0;
-  this->__usedfat = 0;
 }
 
 
 FatTree::~FatTree()
 {
-  if (this->__vfile != NULL)
-    {
-      this->__vfile->close();
-      delete this->__vfile;
-    }
-  if (this->__emanager != NULL)
-    delete this->__emanager;
-  if (this->__allocatedClusters != NULL)
-    delete this->__allocatedClusters;
+  delete this->__vfile;
+  delete this->__emanager;
+  delete this->__allocatedClusters;
 }
 
 
 void	FatTree::setBootSector(BootSector* bs) throw (std::string)
 {
   if (bs != NULL)
-    this->__bs = bs;
+    {
+      delete this->__bs;
+      this->__bs = bs;
+    }
   else
     {
       this->__bs = NULL;
@@ -61,7 +50,10 @@ void	FatTree::setBootSector(BootSector* bs) throw (std::string)
 void	FatTree::setFat(FileAllocationTable* fat) throw (std::string)
 {
   if (fat != NULL)
-    this->__fat = fat;
+    {
+      delete this->__fat;
+      this->__fat = fat;
+    }
   else
     {
       this->__fat = NULL;
@@ -110,7 +102,8 @@ void	FatTree::process(Node* origin, fso* fsobj, bool metacarve) throw (std::stri
       for (i = 0; i != this->__rootdir.size(); i++)
 	fsroot->addChild(this->__rootdir[i]);
       fsobj->registerTree(origin, fsroot);
-      this->walkMissingAlloc(origin);
+      if (this->__allocount > 0)
+	this->walkMissingAlloc(origin);
       if (metacarve)
 	this->walkFree(origin);
     }
@@ -587,6 +580,9 @@ Attributes		FatTree::attributes(FatNode* fnode)
   EntriesManager*	em;
   dosentry*		dos;
 
+  vf = NULL;
+  em = NULL;
+  dos = NULL;
   try
     {
       em = new EntriesManager(this->__bs->fattype);
@@ -607,13 +603,11 @@ Attributes		FatTree::attributes(FatNode* fnode)
 	  attr["accessed"] = Variant_p(new Variant(new vtime(0, dos->adate)));
 	  attr["created"] = Variant_p(new Variant(new vtime(dos->ctime, dos->cdate)));
 	  attr["dos name (8+3)"] = Variant_p(new Variant(em->formatDosname(dos)));
-	  delete em;
 	  attr["Read Only"] = Variant_p(new Variant(bool(dos->attributes & ATTR_READ_ONLY)));
 	  attr["Hidden"] = Variant_p(new Variant(bool(dos->attributes & ATTR_HIDDEN)));
 	  attr["System"] = Variant_p(new Variant(bool(dos->attributes & ATTR_SYSTEM)));
 	  attr["Archive"] = Variant_p(new Variant(bool(dos->attributes & ATTR_ARCHIVE)));
 	  attr["Volume"] = Variant_p(new Variant(bool(dos->attributes & ATTR_VOLUME)));
-	  delete dos;
 	  uint64_t clustsize = (uint64_t)this->__bs->csize * this->__bs->ssize;
 	  if (fnode->clustrealloc)
 	    attr["first cluster (!! reallocated to another existing entry)"] = Variant_p(new Variant(fnode->cluster));
@@ -650,11 +644,9 @@ Attributes		FatTree::attributes(FatNode* fnode)
   catch(vfsError e)
     {
     }
-  if (vf != NULL)
-    {
-      vf->close();
-      delete vf;
-    }
+  delete vf;
+  delete em;
+  delete dos;
   return attr;
 }
 
@@ -686,17 +678,11 @@ Attributes		FatTree::attributes(FatNode* fnode)
 
 void	FatTree::__reset()
 {
-  if (this->__vfile != NULL)
-    {
-      this->__vfile->close();
-      delete this->__vfile;
-    }
+  delete this->__vfile;
   this->__vfile = NULL;
-  if (this->__emanager != NULL)
-    delete this->__emanager;
+  delete this->__emanager;
   this->__emanager = new EntriesManager(this->__bs->fattype);
-  if (this->__allocatedClusters != NULL)
-    delete this->__allocatedClusters;
+  delete this->__allocatedClusters;
   this->__allocatedClusters = new TwoThreeTree();
   this->__depth = 0;
   this->__allocount = 0;
@@ -754,7 +740,7 @@ void	FatTree::__updateAllocatedClusters(uint32_t cluster)
   std::stringstream		sstr;
   double			percent;
 
-  if (cluster != 0 && !this->__fat->isBadCluster(cluster))
+  if (cluster != 0 && !this->__fat->isBadCluster(cluster) && this->__allocount > 0)
     {
       this->__allocatedClusters->insert(cluster);
       clusters = this->__fat->clusterChain(cluster, this->__usedfat);
@@ -782,7 +768,7 @@ void	FatTree::__updateDeletedItems(ctx* c, Node* parent)
 }
 
 
-FatNode::FatNode(std::string name, uint64_t size, Node* parent, fso* fsobj, FatTree* ftree): Node(name, size, parent, fsobj)										  
+FatNode::FatNode(std::string name, uint64_t size, Node* parent, fso* fsobj, FatTree* ftree): Node(name, size, parent, fsobj), clustrealloc(false), lfnmetaoffset(0), dosmetaoffset(0), cluster(0)			  
 {
   this->__ftree = ftree;
 }
@@ -823,7 +809,7 @@ void		FatNode::setCluster(uint32_t cluster, bool reallocated)
 }
 
 
-FileSlack::FileSlack(std::string name, uint64_t size, Node* parent, fso* fsobj, FatTree* ftree) : Node(name, size, parent, fsobj)
+FileSlack::FileSlack(std::string name, uint64_t size, Node* parent, fso* fsobj, FatTree* ftree) : Node(name, size, parent, fsobj), ocluster(0), originsize(0)
 {
   this->__ftree = ftree;
 }

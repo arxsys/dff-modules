@@ -179,8 +179,10 @@ void			Hfsp::__createHfsHandler(Node* origin, VolumeInformation* vinfo)  throw (
   hfshandler = new HfsHandler();
   hfshandler->setOrigin(origin);
   hfshandler->setVolumeInformation(volume);
-  //this->__root = new HfsRootNode("HFS", 0, NULL, this);
-  this->__root = new HfsRootNode(mdb->volumeName(), 0, NULL, this);
+  if (vinfo->isWrapper())
+    this->__root = new HfsRootNode("HFS Wrapper", 0, NULL, this);
+  else
+    this->__root = new HfsRootNode("HFS", 0, NULL, this);
   this->__root->setVolumeInformation(volume);
   hfshandler->setMountPoint(this->__root);
   virtualParent = new VirtualNode(this);
@@ -203,10 +205,10 @@ void			Hfsp::__process() throw (std::string)
       if (volume->type() == HfsVolume)
 	{
 	  if (volume->isWrapper())
-	    {
+	    {	      
 	      if (this->__mountWrapper)
 		this->__createHfsHandler(this->__virtualParent, volume);
-	      //this->__createWrappedHfspHandler(this->__virtualParent, volume);
+	      this->__createWrappedHfspHandler(this->__virtualParent, volume);
 	    }
 	  else
 	    this->__createHfsHandler(this->__virtualParent, volume);

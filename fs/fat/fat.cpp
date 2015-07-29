@@ -17,21 +17,9 @@
 #include "fat.hpp"
 
 
-FileAllocationTable::FileAllocationTable()
+FileAllocationTable::FileAllocationTable() : __vfile(NULL), __origin(NULL), __bs(NULL), __fatscache(), __freeClustCount(std::map<uint32_t, uint32_t>()), __allocClustCount(std::map<uint32_t, uint32_t>()), __badClustCount(std::map<uint32_t, uint32_t>())
 {
-  uint8_t	i;
-
-  this->__vfile = NULL;
-  this->__bs = NULL;
-  this->__origin = NULL;
   mutex_init(&this->__mutex);
-  if ((this->__fatscache = (fatcache**)malloc(sizeof(fatcache)*MAX_FAT_COUNT)) != NULL)
-    {
-      for (i = 0; i != MAX_FAT_COUNT; i++)
-	*(this->__fatscache+i) = NULL;
-    }
-  else
-    this->__fatscache = NULL;
 }
 
 
@@ -44,11 +32,7 @@ FileAllocationTable::~FileAllocationTable()
       this->__vfile->close();
       delete this->__vfile;
     }
-  if (this->__fatscache != NULL)
-    {
-      this->__clearCache();
-      free(this->__fatscache);
-    }
+  this->__clearCache();
 }
 
 void		FileAllocationTable::setBootSector(BootSector* bs) throw (std::string)
@@ -67,19 +51,13 @@ BootSector*	FileAllocationTable::bootSector()
 void		FileAllocationTable::__clearCache()
 {
   uint8_t	i;
-  fatcache*	fc;
 
-  if (this->__fatscache != NULL)
+  for (i = 0; i != this->__bs->numfat; i++)
     {
-      for (i = 0; i != this->__bs->numfat; i++)
+      if (this->__fatscache[i].cache != NULL)
 	{
-	  fc = *(this->__fatscache+i);
-	  if (fc != NULL)
-	    {
-	      if (fc->cache != NULL)
-		free(fc->cache);
-	      free(fc);
-	    }
+	  free(this->__fatscache[i].cache);
+	  this->__fatscache[i].cache = NULL;
 	}
     }
 }
@@ -89,32 +67,23 @@ bool		FileAllocationTable::__initCache()
 {
   uint8_t	i;
   uint64_t	baseoffset;
-  fatcache*	fc;
   
-  if (this->__fatscache == NULL)
-    return false;
   for (i = 0; i != this->__bs->numfat; i++)
     {
-      if ((fc = (fatcache*)malloc(sizeof(fatcache))) != NULL)
+      if ((this->__fatscache[i].cache = (void*)malloc(FAT_BUFF_CACHE*sizeof(uint8_t))) != NULL)
 	{
-	  *(this->__fatscache+i) = fc;
-	  if ((fc->cache = (void*)malloc(FAT_BUFF_CACHE*sizeof(uint8_t))) != NULL)
+	  this->__fatscache[i].off = 0;
+	  baseoffset = this->__bs->firstfatoffset + (uint64_t)i * (uint64_t)this->__bs->fatsize;
+	  try
 	    {
-	      baseoffset = this->__bs->firstfatoffset + (uint64_t)i * (uint64_t)this->__bs->fatsize;
-	      fc->off = 0;
-	      try
-		{
-		  this->__vfile->seek(baseoffset);
-		  if (this->__vfile->read(fc->cache, FAT_BUFF_CACHE) != FAT_BUFF_CACHE)
-		    return false;
-		}
-	      catch (vfsError e)
-		{
-		  return false;
-		}
+	      this->__vfile->seek(baseoffset);
+	      if (this->__vfile->read(this->__fatscache[i].cache, FAT_BUFF_CACHE) != FAT_BUFF_CACHE)
+		return false;
 	    }
-	  else
-	    return false;
+	  catch (vfsError e)
+	    {
+	      return false;
+	    }
 	}
       else
 	return false;
@@ -149,7 +118,14 @@ void	FileAllocationTable::process(Node* origin, fso* fsobj) throw (std::string)
     {
       sstr << "gathering information for FAT " << i+1 << " / " << this->__bs->numfat;
       fsobj->stateinfo = sstr.str();
-      this->__createNodes(origin, fsobj, i);
+      try
+	{
+	  this->__createNodes(origin, fsobj, i);
+	}
+      catch (vfsError err)
+	{
+	  throw std::string(err.error);
+	}
       sstr.str("");
     }
 }
@@ -162,6 +138,7 @@ uint64_t	FileAllocationTable::clusterOffsetInFat(uint64_t cluster, uint8_t which
   uint64_t	fatentryoffset;
 
   baseoffset = this->__bs->firstfatoffset + (uint64_t)which * (uint64_t)this->__bs->fatsize;
+  idx = 0;
   if (this->__bs->fattype == 12)
     idx = cluster + cluster / 2;
   if (this->__bs->fattype == 16)
@@ -218,27 +195,27 @@ uint32_t	FileAllocationTable::cluster12(uint32_t current, uint8_t which)
   uint64_t	absoffset;
   uint64_t	idx;
   uint16_t	next;
-  fatcache*	fc;
-
+  fatcache	fc;
 
   next = 0;
-  if (which < this->__bs->numfat && this->__fatscache != NULL && ((fc = *(this->__fatscache+which)) != NULL))
+  if (which < this->__bs->numfat && (this->__fatscache[which].cache != NULL))
     {
+      fc = this->__fatscache[which];
       idx = current + current / 2;
       idx = ((idx / this->__bs->ssize) * this->__bs->ssize) + (idx % this->__bs->ssize);
-      if (fc->off <= idx && (idx <= fc->off + FAT_BUFF_CACHE-2))
+      if (fc.off <= idx && (idx <= fc.off + FAT_BUFF_CACHE-2))
 	{
-	  idx = (FAT_BUFF_CACHE - (fc->off+FAT_BUFF_CACHE-idx));
-	  memcpy(&next, (uint8_t*)fc->cache+idx, 2);
+	  idx = (FAT_BUFF_CACHE - (fc.off+FAT_BUFF_CACHE-idx));
+	  memcpy(&next, (uint8_t*)fc.cache+idx, 2);
 	}
       else
 	{
 	  absoffset = this->clusterOffsetInFat((uint64_t)current, which);
 	  this->__vfile->seek(absoffset);
-	  if (this->__vfile->read(fc->cache, FAT_BUFF_CACHE) == FAT_BUFF_CACHE)
+	  if (this->__vfile->read(this->__fatscache[which].cache, FAT_BUFF_CACHE) == FAT_BUFF_CACHE)
 	    {
-	      fc->off = idx;
-	      memcpy(&next, (uint8_t*)fc->cache, 2);
+	      this->__fatscache[which].off = idx;
+	      memcpy(&next, (uint8_t*)fc.cache, 2);
 	    }
 	}
       if (current & 0x0001)
@@ -254,25 +231,26 @@ uint32_t	FileAllocationTable::cluster16(uint32_t current, uint8_t which)
   uint64_t	absoffset;
   uint64_t	idx;
   uint16_t	next;
-  fatcache*	fc;
+  fatcache	fc;
 
   next = 0;
-  if (which < this->__bs->numfat && this->__fatscache != NULL && ((fc = *(this->__fatscache+which)) != NULL))
+  if (which < this->__bs->numfat && (this->__fatscache[which].cache != NULL))
     {
+      fc = this->__fatscache[which];
       idx = current * 2;
-      if (fc->off <= idx && (idx <= fc->off + FAT_BUFF_CACHE-2))
+      if (fc.off <= idx && (idx <= fc.off + FAT_BUFF_CACHE-2))
 	{
-	  idx = (FAT_BUFF_CACHE - (fc->off+FAT_BUFF_CACHE-idx)) / 2;
-	  next = *((uint16_t*)fc->cache+idx);
+	  idx = (FAT_BUFF_CACHE - (fc.off+FAT_BUFF_CACHE-idx)) / 2;
+	  next = *((uint16_t*)fc.cache+idx);
 	}
       else
 	{
 	  absoffset = this->clusterOffsetInFat((uint64_t)current, which);
 	  this->__vfile->seek(absoffset);
-	  if (this->__vfile->read(fc->cache, FAT_BUFF_CACHE) == FAT_BUFF_CACHE)
+	  if (this->__vfile->read(this->__fatscache[which].cache, FAT_BUFF_CACHE) == FAT_BUFF_CACHE)
 	    {
-	      fc->off = idx;
-	      next = *((uint16_t*)fc->cache);
+	      this->__fatscache[which].off = idx;
+	      next = *((uint16_t*)fc.cache);
 	    }
 	}
     }
@@ -284,25 +262,26 @@ uint32_t	FileAllocationTable::cluster32(uint32_t current, uint8_t which)
   uint64_t	absoffset;
   uint64_t	idx;
   uint32_t	next;
-  fatcache*	fc;
+  fatcache	fc;
 
   next = 0;
-  if (which < this->__bs->numfat && this->__fatscache != NULL && ((fc = *(this->__fatscache+which)) != NULL))
+  if (which < this->__bs->numfat && (this->__fatscache[which].cache != NULL))
     {
+      fc = this->__fatscache[which];
       idx = current * 4;
-      if (fc->off <= idx && (idx <= fc->off + FAT_BUFF_CACHE-4))
+      if (fc.off <= idx && (idx <= fc.off + FAT_BUFF_CACHE-4))
 	{
-	  idx = (FAT_BUFF_CACHE - (fc->off+FAT_BUFF_CACHE-idx)) / 4;
-	  next = *((uint32_t*)fc->cache+idx);
+	  idx = (FAT_BUFF_CACHE - (fc.off+FAT_BUFF_CACHE-idx)) / 4;
+	  next = *((uint32_t*)fc.cache+idx);
 	}
       else
 	{
 	  absoffset = this->clusterOffsetInFat((uint64_t)current, which);
 	  this->__vfile->seek(absoffset);
-	  if (this->__vfile->read(fc->cache, FAT_BUFF_CACHE) == FAT_BUFF_CACHE)
+	  if (this->__vfile->read(this->__fatscache[which].cache, FAT_BUFF_CACHE) == FAT_BUFF_CACHE)
 	    {
-	      fc->off = idx;
-	      next = *((uint32_t*)fc->cache);
+	      this->__fatscache[which].off = idx;
+	      next = *((uint32_t*)fc.cache);
 	    }
 	}
       next &= 0x0FFFFFFF;
@@ -362,6 +341,7 @@ std::vector<uint32_t>	FileAllocationTable::clusterChain(uint32_t cluster, uint8_
     throw(vfsError(std::string("Fat module: provided cluster is too high")));
   else
     {
+      eoc = 2;
       if (this->__bs->fattype == 12)
 	eoc = 0x0FF8;
       if (this->__bs->fattype == 16)
@@ -722,7 +702,7 @@ Attributes			FileAllocationTable::attributes(uint8_t which)
 }
 
 
-FileAllocationTableNode::FileAllocationTableNode(std::string name, uint64_t size, Node* parent, fso* fsobj) : Node(name, size, parent, fsobj)
+FileAllocationTableNode::FileAllocationTableNode(std::string name, uint64_t size, Node* parent, fso* fsobj) : Node(name, size, parent, fsobj), __fat(NULL), __fatnum(0)
 {
 }
 
@@ -755,7 +735,7 @@ Attributes		FileAllocationTableNode::dataType(void)
 }
 
 
-ClustersChainNode::ClustersChainNode(std::string name, uint64_t size, Node* parent, fso* fsobj): Node(name, size, parent, fsobj)
+ClustersChainNode::ClustersChainNode(std::string name, uint64_t size, Node* parent, fso* fsobj): Node(name, size, parent, fsobj), __scluster(0), __count(0), __soffset(0), __origin(NULL)
 {
 }
 

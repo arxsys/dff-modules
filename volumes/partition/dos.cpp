@@ -27,17 +27,9 @@
  * ---------------------------------------------
 */
 
-DosPartition::DosPartition()
+DosPartition::DosPartition() : __logical(0), __primary(0), __extended(0), __hidden(0), __slot(1), __allocated(), __unallocated(), __origin(NULL),
+			       __vfile(NULL), __sectsize(0), __offset(0), __ebr_base(0), __protective(false)
 {
-  this->__vfile = NULL;
-  this->__origin = NULL;
-  this->__protective = false;
-  this->__ebr_base = 0;
-  this->__logical = 0;
-  this->__primary = 0;
-  this->__hidden = 0;
-  this->__extended = 0;
-  this->__slot = 1;
 }
 
 DosPartition::~DosPartition()

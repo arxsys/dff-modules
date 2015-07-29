@@ -274,7 +274,7 @@ bool		HfspPermissions::isWhiteout()
   uint16_t	filemode;
 
   filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IFWHT) == S_IFWHT);
+  return ((filemode & S_IFWHT2) == S_IFWHT2);
 }
 
 

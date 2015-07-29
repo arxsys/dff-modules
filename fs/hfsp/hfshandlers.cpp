@@ -143,14 +143,13 @@ void		HfsFileSystemHandler::_createEtree() throw (std::string)
   
   this->_extentsTreeNode = new SpecialFile("$ExtentsFile", this->_mountPoint, this->_fsobj);
   fork = new ForkData(3, this->_volumeInformation->blockSize());
-  fork->process(this->_volumeInformation->extentsFile(), ForkData::Data);
-  fork->dump("");
+  fork->process(this->_volumeInformation->overflowExtents(), this->_volumeInformation->overflowSize(), ForkData::Data);
   this->_extentsTreeNode->setContext(fork, this->_origin);
   if (this->_volumeInformation->type() == HfsVolume)
     this->_extentsTree = new ExtentsTree(0);
   else
     this->_extentsTree = new ExtentsTree(1);
-  this->_extentsTree->setBlockSize(this->_volumeInformation->blockSize());
+  this->_extentsTree->setHandler(this);
   this->_extentsTree->process(this->_extentsTreeNode, 0);
 }
 
@@ -161,19 +160,12 @@ void		HfsFileSystemHandler::_createCatalog() throw (std::string)
   
   this->_catalogNode = new SpecialFile("$CatalogFile", this->_mountPoint, this->_fsobj);
   fork = new ForkData(4, this->_extentsTree);
-  fork->process(this->_volumeInformation->catalogFile(), ForkData::Data);
+  fork->process(this->_volumeInformation->catalogExtents(), this->_volumeInformation->catalogSize(), ForkData::Data);
   this->_catalogNode->setContext(fork, this->_origin);
-  if (fork->initialForkSize() < fork->logicalSize())
-    std::cout << "MISSING EXTENTS FOR CATALOG !!!! " << std::endl;
   if (this->_volumeInformation->type() == HfsVolume)
     this->_catalogTree = new CatalogTree(0);
   else
     this->_catalogTree = new CatalogTree(1);
   this->_catalogTree->setHandler(this);
-  //this->_catalogTree->setFso(this->_fsobj);
-  //this->_catalogTree->setMountPoint(this->_mountPoint);
-  //this->_catalogTree->setExtentsTree(this->_extentsTree);
-  //this->_catalogTree->setOrigin(this->_origin);
   this->_catalogTree->process(this->_catalogNode, 0);
 }
-

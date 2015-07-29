@@ -24,37 +24,32 @@
 #include "vfile.hpp"
 
 #include "endian.hpp"
-#include "extents/fork.hpp"
+#include "hfshandlers.hpp"
 
+class HfsFileSystemHandler;
 
 class AllocationFile
 {
 private:
-  Node*		__allocation;
-  Node*		__origin;
-  Node*		__mountpoint;
-  fso*		__fsobj;
-  ExtentsTree*	__etree;
-  VFile*	__vfile;
-  uint8_t*	__cache;
-  uint64_t	__cacheOffset;
+  uint64_t			__cacheOffset;
+  uint64_t			__blocks;
+  uint64_t			__percent;
+  uint8_t*			__cache;
+  HfsFileSystemHandler*		__handler;
+  Node*				__allocation;
+  VFile*			__vfile;
   std::map<uint64_t, uint64_t>	__freeBlocks;
-  uint64_t	__blocks;
-  uint64_t	__percent;
 
-  void			__progress(uint64_t current);
-  void			__initCache();
-  void			__clearCache();
-  void			__updateCache(uint64_t offset);
+  void				__progress(uint64_t current);
+  void				__initCache();
+  void				__clearCache();
+  void				__updateCache(uint64_t offset);
 public:
   AllocationFile();
   ~AllocationFile();
-  void			setFso(fso* fsobj);
-  void			setOrigin(Node* origin) throw (std::string);
-  void			setMountPoint(Node* mountpoint) throw (std::string);
-  void			setExtentsTree(ExtentsTree* etree) throw (std::string);
-  void			process(Node* allocation, uint64_t offset, uint64_t blocks) throw (std::string);
-  bool			isBlockAllocated(uint64_t block) throw (std::string);
+  void				setHandler(HfsFileSystemHandler* handler) throw (std::string);
+  void				process(Node* allocation, uint64_t offset, uint64_t blocks) throw (std::string);
+  bool				isBlockAllocated(uint64_t block) throw (std::string);
 };
 
 

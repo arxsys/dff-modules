@@ -139,13 +139,7 @@ bool	EntriesManager::isDosName(uint8_t* buff)
 
 bool	EntriesManager::isDosEntry(uint8_t* buff)
 {
-  if (*(buff+11) & ATTR_NORMAL) 
-    {
-      if ((*(buff+11) & ATTR_VOLUME) ||
-	  (*(buff+11) & ATTR_DIRECTORY))
-	return false;
-    }
-  if (*(buff+11) & ATTR_VOLUME) 
+  if (*(buff+11) & ATTR_VOLUME)
     {
       if ((*(buff+11) & ATTR_DIRECTORY) ||
 	  (*(buff+11) & ATTR_READ_ONLY) ||
@@ -201,10 +195,11 @@ bool	EntriesManager::isChecksumValid(uint8_t* buff)
   uint8_t	sum;
   int		i;
 
+  sum = 0;
   if (this->c->lfnmetaoffset != 0)
-    { 
-      for (i = 11; i; i--)
-	sum = ((sum & 1) << 7) + (sum >> 1) + *buff++;
+    {
+      for (i = 11; i != 0 ; i--)
+	sum = ((sum & 1) ? 0x80 : 0) + (sum >> 1) + *buff++;
       if (sum == this->c->checksum)
 	return true;
       else
@@ -233,7 +228,7 @@ bool	EntriesManager::push(uint8_t* buff, uint64_t offset)
 	  lfn = this->toLfn(buff);
 	  if (this->c->lfnmetaoffset == 0)
 	    {
-	      //this->c->checksum = *(buff+13);
+	      this->c->checksum = *(buff+13);
 	      this->c->lfnmetaoffset = offset;
 	    }
 // 	  else if (this->c->checksum == *(buff+13))
@@ -253,11 +248,11 @@ bool	EntriesManager::push(uint8_t* buff, uint64_t offset)
     {
       if (this->isDosEntry(buff))
 	{
-// 	  if (this->isChecksumValid(buff))
-// 	    {
-// 	      this->c->lfnmetaoffset = 0;
-// 	      this->c->lfnname = "";
-// 	    }
+	  // if (this->isChecksumValid(buff))
+	  //   {
+ 	  //     this->c->lfnmetaoffset = 0;
+ 	  //     this->c->lfnname = "";
+ 	  //   }
 	  this->c->dosmetaoffset = offset;
 	  dos = this->toDos(buff);
 	  this->setDosName(dos);
