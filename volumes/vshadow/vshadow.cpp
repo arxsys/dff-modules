@@ -158,7 +158,7 @@ void		Vshadow::__setContext() throw (vfsError)
 	throw vfsError(std::string("Unsupported number of stores."));
       if ((this->__input_stores = (libvshadow_store_t**) malloc(sizeof(libvshadow_store_t *) * this->__stores_count)) == NULL)
 	throw vfsError(std::string("Unable to create input stores."));
-      for (i = 0; i <= this->__stores_count; i++)
+      for (i = 0; i < this->__stores_count; i++)
 	this->__input_stores[i] = NULL;
       if (libvshadow_volume_get_size(this->__volume, &this->__volume_size, &error) != 1)
 	throw vfsError(std::string("unable to retrieve size from input volume."));

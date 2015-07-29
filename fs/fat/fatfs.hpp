@@ -33,9 +33,9 @@ private:
   uint8_t	__fat_to_use;
   bool		__metacarve;
   bool		__checkslack;
+  Node*		__parent;
   void		__process() throw (std::string);
   void		__setContext(std::map<std::string, Variant_p > args) throw (std::string);
-  Node*		__parent;
 public:
   Fatfs();
   ~Fatfs();

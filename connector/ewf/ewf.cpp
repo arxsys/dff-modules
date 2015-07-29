@@ -102,7 +102,7 @@ void	ewf::__initHandle(libewf_handle_t** handle, libewf_error_t** error) throw (
     }
     else
       err = std::string("Ewf: Unable to initialize handle");
-      throw (err);
+    throw (err);
   }
   return;
 }
@@ -122,7 +122,7 @@ void	ewf::__openHandle(libewf_handle_t* handle, libewf_error_t** error) throw (s
     }
     else
       err = std::string("Can't open EWF files");
-      throw (err);
+    throw (err);
   }
   return;
 }
