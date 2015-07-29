@@ -104,7 +104,7 @@ bool		HfspPermissions::isSuid()
   uint16_t	filemode;
 
   filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_ISUID) == S_ISUID);
+  return ((filemode & HFS_ISUID) == HFS_ISUID);
 }
 
 
@@ -113,7 +113,7 @@ bool		HfspPermissions::isGid()
   uint16_t	filemode;
 
   filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_ISGID) == S_ISGID);
+  return ((filemode & HFS_ISGID) == HFS_ISGID);
 }
 
 
@@ -122,7 +122,7 @@ bool		HfspPermissions::stickyBit()
   uint16_t	filemode;
 
   filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_ISTXT) == S_ISTXT);
+  return ((filemode & HFS_ISTXT) == HFS_ISTXT);
 }
 
 
@@ -131,7 +131,7 @@ bool		HfspPermissions::isUserReadable()
   uint16_t	filemode;
 
   filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IRUSR) == S_IRUSR);
+  return ((filemode & HFS_IRUSR) == HFS_IRUSR);
 }
 
 
@@ -140,7 +140,7 @@ bool		HfspPermissions::isUserWritable()
   uint16_t	filemode;
 
   filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IWUSR) == S_IWUSR);
+  return ((filemode & HFS_IWUSR) == HFS_IWUSR);
 }
 
 
@@ -149,7 +149,7 @@ bool		HfspPermissions::isUserExecutable()
   uint16_t	filemode;
 
   filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IXUSR) == S_IXUSR);
+  return ((filemode & HFS_IXUSR) == HFS_IXUSR);
 }
 
 
@@ -158,7 +158,7 @@ bool		HfspPermissions::isGroupReadable()
   uint16_t	filemode;
 
   filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IRGRP) == S_IRGRP);
+  return ((filemode & HFS_IRGRP) == HFS_IRGRP);
 }
 
 bool		HfspPermissions::isGroupWritable()
@@ -166,7 +166,7 @@ bool		HfspPermissions::isGroupWritable()
   uint16_t	filemode;
 
   filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IWGRP) == S_IWGRP);
+  return ((filemode & HFS_IWGRP) == HFS_IWGRP);
 }
 
 
@@ -175,7 +175,7 @@ bool		HfspPermissions::isGroupExecutable()
   uint16_t	filemode;
 
   filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IXGRP) == S_IXGRP);
+  return ((filemode & HFS_IXGRP) == HFS_IXGRP);
 }
 
 
@@ -184,7 +184,7 @@ bool		HfspPermissions::isOtherReadable()
   uint16_t	filemode;
 
   filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IROTH) == S_IROTH);
+  return ((filemode & HFS_IROTH) == HFS_IROTH);
 }
 
 
@@ -193,7 +193,7 @@ bool		HfspPermissions::isOtherWritable()
   uint16_t	filemode;
 
   filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IWOTH) == S_IWOTH);
+  return ((filemode & HFS_IWOTH) == HFS_IWOTH);
 }
 
 
@@ -202,7 +202,7 @@ bool		HfspPermissions::isOtherExecutable()
   uint16_t	filemode;
 
   filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IXOTH) == S_IXOTH);
+  return ((filemode & HFS_IXOTH) == HFS_IXOTH);
 }
 
 
@@ -211,7 +211,7 @@ bool		HfspPermissions::isFifo()
   uint16_t	filemode;
 
   filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IFIFO) == S_IFIFO);
+  return ((filemode & HFS_IFIFO) == HFS_IFIFO);
 }
 
 
@@ -220,7 +220,7 @@ bool		HfspPermissions::isCharacter()
   uint16_t	filemode;
 
   filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IFCHR) == S_IFCHR);
+  return ((filemode & HFS_IFCHR) == HFS_IFCHR);
 }
 
 
@@ -229,7 +229,7 @@ bool		HfspPermissions::isDirectory()
   uint16_t	filemode;
 
   filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IFDIR) == S_IFDIR);
+  return ((filemode & HFS_IFDIR) == HFS_IFDIR);
 }
 
 
@@ -238,7 +238,7 @@ bool		HfspPermissions::isBlock()
   uint16_t	filemode;
 
   filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IFBLK) == S_IFBLK);
+  return ((filemode & HFS_IFBLK) == HFS_IFBLK);
 }
 
 
@@ -247,7 +247,7 @@ bool		HfspPermissions::isRegular()
   uint16_t	filemode;
 
   filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IFREG) == S_IFREG);
+  return ((filemode & HFS_IFREG) == HFS_IFREG);
 }
 
 
@@ -256,7 +256,7 @@ bool		HfspPermissions::isSymbolicLink()
   uint16_t	filemode;
 
   filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IFLNK) == S_IFLNK);
+  return ((filemode & HFS_IFLNK) == HFS_IFLNK);
 }
 
 
@@ -265,7 +265,7 @@ bool		HfspPermissions::isSocket()
   uint16_t	filemode;
 
   filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IFSOCK) == S_IFSOCK);
+  return ((filemode & HFS_IFSOCK) == HFS_IFSOCK);
 }
 
 
@@ -274,7 +274,7 @@ bool		HfspPermissions::isWhiteout()
   uint16_t	filemode;
 
   filemode = bswap16(this->__permissions.fileMode);
-  return ((filemode & S_IFWHT2) == S_IFWHT2);
+  return ((filemode & HFS_IFWHT2) == HFS_IFWHT2);
 }
 
 
