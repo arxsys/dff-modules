@@ -156,8 +156,12 @@ uint64_t        SuperBlock::most_recent_backup(VFile * vfile) throw(vfsError)
       }
   std::cout << "The most recent superblock backup has been located at offset "
 	    << offset << "." << std::endl;
-  _offset = offset - 56;
-  return read(vfile, _offset);
+  if (offset >= 56)
+  {
+    _offset = offset - 56;
+    return read(vfile, _offset);
+  }
+  throw vfsError("SuperBlock::most_recent_backup() : can't find backup");
 }
 
 void            SuperBlock::file_system_sanity()

@@ -129,7 +129,7 @@ uint32_t	Inode::tripleIndirectBlockContentAddr(uint32_t block_number)
 
 uint32_t	Inode::nextBlock()
 {
-  uint64_t	addr;
+  uint64_t	addr = 0;
 
   if (flags() & 0x80000) // uses extents
     {

@@ -75,25 +75,3 @@ uint32_t  JournalType<T>::_convert_htob32()
                 | (((_value) & 0x000000ffu) << 24));
     return _value;
 }
-
-template <typename T>
-uint64_t  JournalType<T>::_convert_htob64()
-{
-    if (_test())
-        return ((((_value) & 0xff00000000000000ull) >> 56)
-        | (((_value) & 0x00ff000000000000ull) >> 40)
-        | (((_value) & 0x0000ff0000000000ull) >> 24)
-        | (((_value) & 0x000000ff00000000ull) >> 8)
-        | (((_value) & 0x00000000ff000000ull) << 8)
-        | (((_value) & 0x0000000000ff0000ull) << 24)
-        | (((_value) & 0x000000000000ff00ull) << 40)
-        | (((_value) & 0x00000000000000ffull) << 56));
-    return _value;
-}
-
-template <typename T>
-void	JournalType<T>::setValue(T val)
-{
-  _value = val;
-  _convert();
-}
