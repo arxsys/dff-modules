@@ -179,7 +179,7 @@ void			Hfsp::__createHfsHandler(Node* origin, VolumeInformation* vinfo)  throw (
   hfshandler = new HfsHandler();
   hfshandler->setOrigin(origin);
   hfshandler->setVolumeInformation(volume);
-  if (vinfo->isWrapper())
+  if (volume->isWrapper())
     this->__root = new HfsRootNode("HFS Wrapper", 0, NULL, this);
   else
     this->__root = new HfsRootNode("HFS", 0, NULL, this);

@@ -15,6 +15,8 @@
 
 install_file(__init__.py)
 
+include_directories("${CMAKE_SOURCE_DIR}/dff/api/exceptions/breakpad")
+
 add_subdirectory (volumes)
 add_subdirectory (fs)
 add_subdirectory (builtins)
