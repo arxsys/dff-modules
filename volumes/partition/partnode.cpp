@@ -35,6 +35,12 @@ Attributes	PartitionNode::dataType()
 	dtype["partition"] = Variant_p(vptr);
       return dtype;
     }
+  else if (this->__entry == 0)
+    {
+      if ((vptr = new Variant(std::string("potentially ISO file"))) != NULL)
+	dtype["partition"] = Variant_p(vptr);
+      return dtype;
+    }
   else
     return Node::dataType();
 }
