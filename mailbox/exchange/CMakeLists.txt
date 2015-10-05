@@ -14,8 +14,8 @@
 #  Solal Jacob <sja@digital-forensic.org>
 
 if(WIN32)
-  set(definitions -DLIBPFF_HAVE_BFIO -D_LIBPFF_TYPES_H_INTEGERS -D_LIBBFIO_TYPES_H_INTEGERS)
-  set(pff_files ${PFF_DYN_LIBRARIES} ${BFIO_DYN_LIBRARIES})
+  set(definitions -DHAVE_INT8_T -DLIBPFF_HAVE_BFIO -D_LIBPFF_TYPES_H_INTEGERS -D_LIBBFIO_TYPES_H_INTEGERS)
+  set(pff_files ${PFF_DYN_LIBRARIES})
 endif()
 
 dff_cpp_module(PFF
@@ -34,10 +34,9 @@ dff_cpp_module(PFF
   pff_node_email_message.cpp
   pff_node_email_attributes.cpp
   pff_node_email_transport_headers.cpp
-  libbfio_wrapper.cpp
   SWIG_FILE pff.i
   DEFINITIONS ${definitions}
-  LINK_LIBRARIES exceptions types vfs ${PFF_LIBRARY} ${BFIO_LIBRARY}
+  LINK_LIBRARIES exceptions types vfs ${PFF_LIBRARY}
   INCLUDE_DIRS ${PFF_INCLUDE_DIR} ${BFIO_INCLUDE_DIR}
   EXTRA_FILES ${pff_files}
   )
