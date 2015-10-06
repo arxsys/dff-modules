@@ -24,12 +24,6 @@
 #include "typesconv.hpp"
 
 #include <libvshadow.h>
-#include <libvshadow/codepage.h>
-#include <libvshadow/definitions.h>
-#include <libvshadow/error.h>
-#include <libvshadow/extern.h>
-#include <libvshadow/features.h>
-#include <libvshadow/types.h>
 
 typedef struct s_mount_handle
 {

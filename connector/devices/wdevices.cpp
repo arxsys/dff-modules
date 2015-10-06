@@ -109,9 +109,9 @@ void                    devices::start(std::map<std::string, Variant_p > args)
 
   this->devicePath = lpath->path;
   sizeConverter.ull = size;
- 
-  HANDLE hnd = CreateFileA(this->devicePath.c_str(), GENERIC_READ, FILE_SHARE_READ,
-			   0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+
+  HANDLE hnd = CreateFile(this->devicePath.c_str(), GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE,
+			   NULL, OPEN_EXISTING, 0, NULL);
   if (((HANDLE)hnd) == INVALID_HANDLE_VALUE)
   {
     res["error"] = Variant_p(new Variant(std::string("Can't open devices.")));	
@@ -119,15 +119,11 @@ void                    devices::start(std::map<std::string, Variant_p > args)
   }
   else
   {
-    LPDWORD lpBytesReturned = 0;
-    DeviceIoControl(hnd, FSCTL_ALLOW_EXTENDED_DASD_IO, NULL, 0, NULL, 0, lpBytesReturned, NULL);
-    if (!size)
-    {	
-      GET_LENGTH_INFORMATION diskSize;
-      if (DeviceIoControl(hnd, IOCTL_DISK_GET_LENGTH_INFO, NULL, 0, &diskSize, sizeof(diskSize), lpBytesReturned,0))
-        size = (uint64_t)diskSize.Length.QuadPart;
-      CloseHandle(hnd);
-    }
+    DWORD bytes;
+    GET_LENGTH_INFORMATION diskSize;
+    if (DeviceIoControl(hnd, IOCTL_DISK_GET_LENGTH_INFO, NULL, 0, &diskSize, sizeof(diskSize), &bytes, NULL))
+      size = (uint64_t)diskSize.Length.QuadPart;
+    CloseHandle(hnd);
     this->__root = new DeviceNode(this->devicePath, sizeConverter.ull,  this, nname);
     this->__root->setFile();
     this->registerTree(this->__parent, this->__root);
@@ -142,8 +138,8 @@ int     devices::vopen(Node *node)
   if (node != NULL) 
   {
     fi = new fdinfo;
-    int hnd = (int)CreateFileA(((DeviceNode*)node)->__devname.c_str(), GENERIC_READ, FILE_SHARE_READ,
-			       0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    int hnd = (int)CreateFile(((DeviceNode*)node)->__devname.c_str(), GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE,
+			       NULL, OPEN_EXISTING, 0, NULL);
     fi->id = new Variant((void*) (new DeviceBuffer((HANDLE)hnd, 100 * sizeof(uint8_t), 4096, node->size())));
     fi->node = node;
     fi->offset = 0;

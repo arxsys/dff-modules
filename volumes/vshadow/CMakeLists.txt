@@ -14,16 +14,15 @@
 
 
 if(WIN32)
-  set(definitions -DLIBPFF_HAVE_BFIO -D_LIBPFF_TYPES_H_INTEGERS -D_LIBBFIO_TYPES_H_INTEGERS)
+  set(definitions -DHAVE_INT8_T -DLIBVSHADOW_HAVE_BFIO -D_LIBVSHADOW_TYPES_H_INTEGERS -D_LIBBFIO_TYPES_H_INTEGERS)
   set(vshadow_files ${VSHADOW_DYN_LIBRARIES} ${BFIO_DYN_LIBRARIES})
 endif()
 
 dff_cpp_module(VSHADOW
   CPP_FILES vshadow.cpp
-  libbfio_wrapper.cpp
   SWIG_FILE vshadow.i
   DEFINITIONS ${definitions}
-  LINK_LIBRARIES exceptions types vfs ${VSHADOW_LIBRARY} ${BFIO_LIBRARY}
+  LINK_LIBRARIES exceptions types vfs ${VSHADOW_LIBRARY}
   INCLUDE_DIRS ${VSHADOW_INCLUDE_DIR} ${BFIO_INCLUDE_DIR}
   EXTRA_FILES ${vshadow_files}
   )
