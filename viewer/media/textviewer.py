@@ -15,85 +15,55 @@
 
 __dff_module_cat_version__ = "1.0.0"
 
-from PyQt4.QtCore import Qt, QString, SIGNAL, QTextCodec
-from PyQt4.QtGui import QWidget, QTextCursor, QTextEdit, QTextOption, QScrollBar, QAbstractSlider, QHBoxLayout, QListWidget, QVBoxLayout, QSplitter, QSizePolicy
+from PyQt4.QtCore import Qt, QString, SIGNAL, QTextCodec, QPropertyAnimation, QRect, QEasingCurve
+from PyQt4.QtGui import QWidget, QTextCursor, QTextEdit, QTextOption, QScrollBar, QAbstractSlider, QHBoxLayout, QListWidget, QVBoxLayout, QSplitter, QSizePolicy, QMessageBox, QPushButton, QShortcut, QKeySequence, QLineEdit, QSizePolicy
 
 from dff.api.vfs import vfs 
 from dff.api.types.libtypes import Argument, typeId
 from dff.api.module.module import Module 
 from dff.api.module.script import Script
 
-class TextEdit(QTextEdit):
-  def __init__(self, cat):
-    QTextEdit.__init__(self)
-    self.cat = cat
-    self.scroll = self.cat.scroll
-    self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-    self.setReadOnly(1)
 
-    self.setWordWrapMode(QTextOption.NoWrap)
+class FindBar(QWidget):
+  def __init__(self, parent):
+    QWidget.__init__(self, parent)
+    self.query = QLineEdit(self)
+    self.query.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+    self.connect(self.query, SIGNAL("textChanged(const QString &)"), self.queryChanged)
+    self.previous = QPushButton("^", self)
+    self.previous.setMaximumSize(20, 30)
+    self.previous.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+    self.connect(self.previous, SIGNAL("clicked()"), self.previousClicked)
+    self.next = QPushButton("v", self)
+    self.next.setMaximumSize(20, 30)
+    self.next.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+    self.connect(self.previous, SIGNAL("clicked()"), self.nextClicked)
+    self.close = QPushButton("x", self)
+    self.close.setMaximumSize(20, 30)
+    self.close.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+    self.connect(self.close, SIGNAL("clicked()"), self.hideBar)
+    hbox = QHBoxLayout(self)
+    hbox.setSpacing(0)
+    hbox.addWidget(self.query)
+    hbox.addWidget(self.previous)
+    hbox.addWidget(self.next)
+    hbox.addWidget(self.close)
 
-  def wheelEvent(self, event):
-    v = self.scroll.value()
-    if event.delta() > 0:
-      trig = v - 5
-      if trig >= self.scroll.min:
-        self.cat.read(trig)
-        self.scroll.setValue(trig)
-    else:
-      trig = v + 5
-      if trig < self.scroll.max:
-        self.cat.read(trig)
-        self.scroll.setValue(trig)
+
+  def hideBar(self):
+    self.setGeometry(0, 0, 0, 0)
 
 
-class Scroll(QScrollBar):
-    def __init__(self, parent):
-      QScrollBar.__init__(self, parent)
-      self.cat = parent
-      self.init()
-      self.initCallBacks()
-      self.setValues()
+  def previousClicked(self):
+    self.emit(SIGNAL("previous"))
 
-    def init(self):
-      self.min = 0
-      self.single = 1
-      self.page = 32
-      self.max = self.cat.lines - 1
 
-    def initCallBacks(self):
-      self.connect(self, SIGNAL("sliderMoved(int)"), self.moved) 
-      self.connect(self, SIGNAL("actionTriggered(int)"), self.triggered) 
+  def nextClicked(self):
+    self.emit(SIGNAL("next"))
 
-    def setValues(self):
-      self.setMinimum(self.min)
-      self.setMaximum(self.max)
-      self.setSingleStep(self.single)
-      self.setPageStep(self.page)
-      self.setRange(self.min, self.max)
 
-    def triggered(self, action):
-      if action == QAbstractSlider.SliderSingleStepAdd:
-        trig = self.value() + 1
-        if trig <= self.max:
-          self.cat.read(trig)
-      elif action == QAbstractSlider.SliderSingleStepSub:
-        trig = self.value() - 1
-        if trig >= self.min:
-          self.cat.read(trig)
-      elif action == QAbstractSlider.SliderPageStepSub:
-        trig = self.value() - 5
-        if trig >= self.min:
-          self.cat.read(trig)
-      elif action == QAbstractSlider.SliderPageStepAdd:
-        trig = self.value() + 5
-        if trig <= self.max:
-          self.cat.read(trig)
-
-    def moved(self, value):
-      if value == self.max:
-        value -= 5
-      self.cat.read(value)
+  def queryChanged(self):
+    self.emit(SIGNAL("queryChanged"), self.query.text())
 
 
 class CAT(QSplitter, Script):
@@ -104,24 +74,39 @@ class CAT(QSplitter, Script):
     self.icon = None
     self.currentCodec = "UTF-8"
  
+
   def start(self, args):
     self.args = args
+    try :
+      self.preview = args["preview"].value()
+    except IndexError:
+      self.preview = False
     try:
       self.node = args["file"].value()
-      self.offsets = self.linecount()
     except:
       pass
 
+
   def g_display(self):
     QSplitter.__init__(self)
+    process = False
     self.initShape()
+    if self.node.size() > 30*(1024**2):
+      if self.preview:
+        self.renderButton.show()
+        self.text.setText("The document you are trying to read is greater than 30MiB.\nIt will consume memory and take some time to process.\nif you really want to open it, click on Render button.")
+      else:
+        warn = "The document you are trying to read is greater than 30MiB.\nIt will consume memory and take some time to process.\nAre you sure you want to open it?"
+        ret = QMessageBox.warning(self, self.tr("Text reader"), self.tr(warn), QMessageBox.Yes|QMessageBox.No)
+        if ret == QMessageBox.Yes:
+          process = True
+    else:
+      process = True
+    if process:
+      self.render()
 
-    self.read(0)
 
   def initShape(self):
-    self.hbox = QHBoxLayout()
-    self.hbox.setContentsMargins(0, 0, 0, 0)
-
     self.listWidget = QListWidget()
     self.listWidget.setSortingEnabled(True)
     for codec in QTextCodec.availableCodecs():
@@ -129,51 +114,83 @@ class CAT(QSplitter, Script):
     item = self.listWidget.findItems('UTF-8', Qt.MatchExactly)[0]
     self.listWidget.setCurrentItem(item)
     self.listWidget.scrollToItem(item)
-
-    textAreaWidget = QWidget()
-    self.hbox.addWidget(self.listWidget) 
     self.connect(self.listWidget, SIGNAL("itemSelectionChanged()"), self.codecChanged)
 
-    self.scroll = Scroll(self)
-    self.text = TextEdit(self)
+    self.renderButton = QPushButton("Render", self)
+    self.renderButton.hide()
+    self.connect(self.renderButton, SIGNAL("clicked()"), self.forceRendering)
 
-    self.hbox.addWidget(self.text)
-    self.hbox.addWidget(self.scroll)
+    vbox = QVBoxLayout()
+    vbox.addWidget(self.listWidget)
+    vbox.addWidget(self.renderButton)
+    lwidget = QWidget(self)
+    lwidget.setLayout(vbox)
 
-    textAreaWidget.setLayout(self.hbox)
+    self.text = QTextEdit(self)
+    self.text.setReadOnly(1)
+    self.text.setWordWrapMode(QTextOption.NoWrap)
 
-    self.addWidget(self.listWidget)
-    self.addWidget(textAreaWidget) 
+
+    self.findBar = FindBar(self.text)
+    shortcut = QShortcut(QKeySequence(self.tr("Ctrl+f", "Search")), self)
+    self.findBar.setGeometry(0, 0, 0, 0)
+    self.connect(shortcut, SIGNAL("activated()"), self.toggleSearch)
+    self.connect(self.findBar, SIGNAL("queryChanged"), self.search)
+    #self.searchButton.hide()
+    
+    self.addWidget(lwidget)
+    self.addWidget(self.text)
+    #self.addWidget(self.searchButton)
     self.setStretchFactor(0, 0)  
     self.setStretchFactor(1, 1)  
  
+
+  def search(self, text):
+    print "Looking for", text
+
+
   def codecChanged(self):
      self.currentCodec = self.listWidget.selectedItems()[0].text()
-     self.read(self.scroll.value())
+     self.render()
 
-  def read(self, line):
-    self.vfile = self.node.open()
-    padd = 0
-    if line > padd:
-      padd = 1
-    self.vfile.seek(self.offsets[line]+padd)
-    self.text.clear()
+
+  def forceRendering(self):
+    self.renderButton.hide()
+    self.render()
+
+
+  def toggleSearch(self):
+    self.showAnimation = QPropertyAnimation(self.findBar, "geometry")
+    self.showAnimation.setDuration(200)
+    parentGeometry = self.text.geometry()
+    startGeometry = QRect(parentGeometry.width() - 300, 0, 300, 0)
+    endGeometry = QRect(parentGeometry.width() - 300, 0, 300, 40)
+    self.showAnimation.setStartValue(startGeometry)
+    self.showAnimation.setEndValue(endGeometry)
+    self.showAnimation.start()
+    
+
+  def render(self):
+    try:
+      vfile = self.node.open()
+      buff = vfile.read()
+      vfile.close()
+    except:
+      QMessageBox.critical(self, self.tr("Text reader"), 
+                           self.tr("Cannot open or read the content of ") + self.node.absolute(),  
+                           QMessageBox.Ok)
+      return
     codec = QTextCodec.codecForName(self.currentCodec)
     decoder = codec.makeDecoder()
-    self.text.textCursor().insertText(decoder.toUnicode(self.vfile.read(1024*10)))
+    unicodeText = decoder.toUnicode(buff)
+    self.text.clear()
+    self.text.textCursor().insertText(unicodeText)
     self.text.moveCursor(QTextCursor.Start)
-    self.vfile.close()
 
-  def linecount(self):
-    offsets = [0]
-    self.vfile = self.node.open()
-    offsets.extend(self.vfile.indexes('\n'))
-    self.vfile.close()
-    self.lines = len(offsets)
-    return offsets
 
   def updateWidget(self):
 	pass
+
 
   def c_display(self):
     file = self.node.open()
@@ -196,6 +213,7 @@ class CAT(QSplitter, Script):
     if len(self.buff): 
      return self.buff
 
+
 class textviewer(Module):
   """Displays content of files as text
 ex:cat /myfile.txt"""
@@ -204,6 +222,9 @@ ex:cat /myfile.txt"""
     self.conf.addArgument({"name": "file",
                            "description": "Text file to display",
                            "input": Argument.Required|Argument.Single|typeId.Node})
+    self.conf.addArgument({"name": "preview",
+			   "description": "Preview mode",
+			   "input": Argument.Empty})
     self.conf.addConstant({"name": "mime-type", 
  	                   "type": typeId.String,
  	                   "description": "managed mime type",
