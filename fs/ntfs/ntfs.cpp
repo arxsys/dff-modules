@@ -26,8 +26,9 @@
 /**
  *  NTFS 
  */
-NTFS::NTFS() : mfso("NTFS"), __opt(NULL), __bootSectorNode(NULL), __mftManager(NULL), __rootDirectoryNode(new Node("NTFS")), __orphansNode(new Node("orphans")), __unallocatedNode(new Node("unallocated"))
+NTFS::NTFS() : mfso("ntfs"), __opt(NULL), __bootSectorNode(NULL), __mftManager(NULL), __rootDirectoryNode(new Node("NTFS", 0, NULL, this)), __orphansNode(new Node("orphans")), __unallocatedNode(new Node("unallocated", 0, NULL, this))
 {
+  
 }
 
 NTFS::~NTFS()
