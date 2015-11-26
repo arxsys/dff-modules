@@ -510,14 +510,19 @@ class HASH(Script):
       self.__lock.acquire()
       try:
         v  = Variant(self.attributeHash.count())
+        v.thisown = False 
         self.res["hashed files"] = v
         v = Variant(self.__knownGoodFiles)
+        v.thisown = False
         self.res["known good files"] = v
         v = Variant(self.__knownBadFiles)
+        v.thisown = False
         self.res["known bad files"] = v
         v = Variant(self.__skippedFiles)
+        v.thisown = False
         self.res["skipped files"] = v
         v =  Variant(self.__errorFiles)
+        v.thisown = False
         self.res["Errors"] = v
       except:
         pass
