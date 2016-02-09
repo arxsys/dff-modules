@@ -61,7 +61,7 @@ template <typename T>
 uint16_t  JournalType<T>::_convert_htob16()
 {
     if (_test())
-         return ((((_value) >> 8) & 0xffu) | (((_value) & 0xffu) << 8));
+         return ((uint16_t)(((uint16_t)(_value) >> 8) & 0xff00u) | (((uint16_t)(_value) & 0x00ffu) << 8));
     return _value;
 }
 
@@ -69,10 +69,10 @@ template <typename T>
 uint32_t  JournalType<T>::_convert_htob32()
 {
     if (_test())
-        return ((((_value) & 0xff000000u) >> 24)
-                | (((_value) & 0x00ff0000u) >>  8)
-                | (((_value) & 0x0000ff00u) <<  8)
-                | (((_value) & 0x000000ffu) << 24));
+        return ((uint32_t)((((uint32_t)(_value) & 0xff000000u) >> 24)
+                | (((uint32_t)(_value) & 0x00ff0000u) >>  8)
+                | (((uint32_t)(_value) & 0x0000ff00u) <<  8)
+                | (((uint32_t)(_value) & 0x000000ffu) << 24)));
     return _value;
 }
 
@@ -80,14 +80,14 @@ template <typename T>
 uint64_t  JournalType<T>::_convert_htob64()
 {
     if (_test())
-        return ((((_value) & 0xff00000000000000ull) >> 56)
-        | (((_value) & 0x00ff000000000000ull) >> 40)
-        | (((_value) & 0x0000ff0000000000ull) >> 24)
-        | (((_value) & 0x000000ff00000000ull) >> 8)
-        | (((_value) & 0x00000000ff000000ull) << 8)
-        | (((_value) & 0x0000000000ff0000ull) << 24)
-        | (((_value) & 0x000000000000ff00ull) << 40)
-        | (((_value) & 0x00000000000000ffull) << 56));
+        return ((uint64_t)((((uint64_t)(_value) & 0xff00000000000000ull) >> 56)
+        | (((uint64_t)(_value) & 0x00ff000000000000ull) >> 40)
+        | (((uint64_t)(_value) & 0x0000ff0000000000ull) >> 24)
+        | (((uint64_t)(_value) & 0x000000ff00000000ull) >> 8)
+        | (((uint64_t)(_value) & 0x00000000ff000000ull) << 8)
+        | (((uint64_t)(_value) & 0x0000000000ff0000ull) << 24)
+        | (((uint64_t)(_value) & 0x000000000000ff00ull) << 40)
+        | (((uint64_t)(_value) & 0x00000000000000ffull) << 56)));
     return _value;
 }
 

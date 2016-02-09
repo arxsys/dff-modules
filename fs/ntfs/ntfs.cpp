@@ -245,10 +245,10 @@ bool                    NTFS::load(DValue value)
     VLink::load(vlinks->call("get", RealValue<DUInt64>(index)));
 
 
-  std::cout << "status at end      dntfs : " << dntfs->refCount() << std::endl
-            << "                   dntfs->opt " << ((DObject*)dntfs->opt)->refCount() << std::endl
-            << "                   dntfs->entries " << (((DObject*)dntfs->entries)->refCount()) << std::endl
-            << "                   dntfs->reparsePoints " << ((DObject*)dntfs->reparsePoints)->refCount() << std::endl;
+  //std::cout << "status at end      dntfs : " << dntfs->refCount() << std::endl
+  //<< "                   dntfs->opt " << ((DObject*)dntfs->opt)->refCount() << std::endl
+  //<< "                   dntfs->entries " << (((DObject*)dntfs->entries)->refCount()) << std::endl
+  //<< "                   dntfs->reparsePoints " << ((DObject*)dntfs->reparsePoints)->refCount() << std::endl;
 
   //((DObject*)dntfs->entries)->destroy(); //pu utiliser
   //((DObject*)dntfs->reparsePoints)->destroy(); //pu utiliser
@@ -258,11 +258,11 @@ bool                    NTFS::load(DValue value)
   //dntfs->destroy();
   //dntfs->destroy();
   //dntfs->destroy(); //faire une copy est destroy i lest a 5 ref lui c spe
-  std::cout << "status at end      dntfs : " << dntfs->refCount() << std::endl
-            << "                   dntfs->opt " << ((DObject*)dntfs->opt)->refCount() << std::endl
-            << "                   dntfs->entries " << (((DObject*)dntfs->entries)->refCount()) << std::endl
-            << "                   dntfs->reparsePoints " << ((DObject*)dntfs->reparsePoints)->refCount() << std::endl;
-
+  //std::cout << "status at end      dntfs : " << dntfs->refCount() << std::endl
+  //<< "                   dntfs->opt " << ((DObject*)dntfs->opt)->refCount() << std::endl
+  //<< "                   dntfs->entries " << (((DObject*)dntfs->entries)->refCount()) << std::endl
+  //<< "                   dntfs->reparsePoints " << ((DObject*)dntfs->reparsePoints)->refCount() << std::endl;
+  //
 
   this->setStateInfo("Finished successfully");
   this->res["Result"] = Variant_p(new Variant(std::string("NTFS parsed successfully.")));
@@ -332,7 +332,7 @@ DValue        NTFS::save(void) const
   for (; vlink != vlinks.end(); ++vlink)
      reparsePoints->call("push", (*vlink)->save());
 
-  std::cout << "save ntfs " << this->rootDirectoryNode()->absolute() << std::endl;
+  //std::cout << "save ntfs " << this->rootDirectoryNode()->absolute() << std::endl;
   return (RealValue<DObject*>(dntfs));
 }
 
