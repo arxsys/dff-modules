@@ -329,4 +329,5 @@ void	Extfs::__orphan_inodes()
   this->__orphans_i = new ExtfsNode("Orphans inodes", 0, __first_node, this, 0,
 				    false, this->addBlockPointers);
   orphans_i->load(this);
+  delete orphans_i;
 }
