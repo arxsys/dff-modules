@@ -61,7 +61,7 @@ template <typename T>
 uint16_t  JournalType<T>::_convert_htob16()
 {
     if (_test())
-         return ((uint16_t)(((uint16_t)(_value) >> 8) & 0xff00u) | (((uint16_t)(_value) & 0x00ffu) << 8));
+         return ((uint16_t)((((uint16_t)(_value) >> 8) & 0xff00u) | (((uint16_t)(_value) & 0x00ffu) << 8)));
     return _value;
 }
 
