@@ -120,6 +120,6 @@ class metaexif(Module):
     self.conf.addConstant({"name": "mime-type", 
  	                   "type": typeId.String,
  	                   "description": "managed mime type",
- 	                   "values": ["jpeg", "TIFF"]})
+ 	                   "values": ["image/jpeg", "image/tiff"]})
     self.flags = ["single"]
     self.tags = "Metadata"

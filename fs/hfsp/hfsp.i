@@ -64,7 +64,7 @@ class HFSP(Module):
     self.conf.addConstant({"name": "mime-type",
                            "type": typeId.String,
                            "description": "managed mime type",
-			   "values": ["HFS"]})
+	                   "values": ["filesystem/hfs", "filesystem/hfsp"]})
     self.tags = "File systems"
 %}
 

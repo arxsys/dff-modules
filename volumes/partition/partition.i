@@ -67,7 +67,7 @@ class PARTITION(Module):
     self.conf.addConstant({"name": "mime-type", 
  	                   "type": typeId.String,
  	                   "description": "managed mime type",
- 	                   "values": ["partition"]})
+	                   "values": ["volume/dos-partition", "volume/gpt"]})
     self.tags = "Volumes"
     self.icon = ":disksfilesystems"
 %}

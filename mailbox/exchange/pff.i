@@ -65,7 +65,7 @@ class PFF(Module):
     self.conf.addConstant({"name":"mime-type",
                            "type":typeId.String,
                            "description":"managed mime type",
-                           "values":["Outlook"]})
+                           "values":["outlook"]})
     self.tags = "Mailbox"
     self.icon = ":mailbox" 
 %}

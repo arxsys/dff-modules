@@ -206,9 +206,13 @@ class prefetch(Module):
     self.conf.addArgument({"name": "file",
                            "description": "parses metadata of this file",
                            "input": Argument.Required|Argument.Single|typeId.Node})
-    self.conf.addConstant({"name": "extension-type", 
+    #self.conf.addConstant({"name": "extension-type", 
+    #	                   "type": typeId.String,
+    # 	                   "description": "compatible extension",
+    # 	                   "values": ["pf"]})
+    self.conf.addConstant({"name": "mime-type", 
  	                   "type": typeId.String,
  	                   "description": "compatible extension",
- 	                   "values": ["pf"]})
+ 	                   "values": ["windows/prefetch"]})
     self.flags = ["single"]
     self.tags = "Metadata"

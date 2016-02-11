@@ -66,32 +66,32 @@ PACK_END
 class BootSectorNode : public Node
 {
 private:
-  NTFS*		 	__ntfs;
-  BootSector		__bootSector;
-  uint64_t		__state; 
+  NTFS*				__ntfs;
+  BootSector			__bootSector;
+  uint64_t			__state; 
 public:
-                	BootSectorNode(NTFS* ntfs);
-                	~BootSectorNode();
-  virtual void  	fileMapping(FileMapping *fm);
-  virtual uint64_t	fileMappingState(void);	
-  virtual uint64_t	_attributesState(void);
-  virtual Attributes 	_attributes(void);
-  virtual Attributes 	dataType(void);
-  uint64_t		OEMDID(void) const;
-  uint16_t		bytesPerSector(void) const;
-  uint8_t		sectorsPerCluster(void) const;
-  uint32_t		clusterSize(void) const;
-  uint8_t		mediaDescriptor(void) const;
-  uint64_t		totalSectors(void) const;
-  uint64_t		MFTLogicalClusterNumber(void) const;
-  uint64_t		MFTMirrorLogicalClusterNumber(void) const;
-  int8_t		clustersPerMFTRecord(void) const;
-  uint32_t		MFTRecordSize(void) const;
-  int8_t		clustersPerIndexRecord(void) const;  
-  uint32_t              indexRecordSize(void) const;
-  uint64_t		volumeSerialNumber(void) const;
-  uint16_t		endOfSector(void) const;
-  void			validate(void) const;
+				BootSectorNode(NTFS* ntfs);
+				~BootSectorNode();
+  virtual void			fileMapping(FileMapping *fm);
+  virtual uint64_t		fileMappingState(void);	
+  virtual uint64_t		_attributesState(void);
+  virtual Attributes		_attributes(void);
+  virtual const std::string 	dataType(void);
+  uint64_t			OEMDID(void) const;
+  uint16_t			bytesPerSector(void) const;
+  uint8_t			sectorsPerCluster(void) const;
+  uint32_t			clusterSize(void) const;
+  uint8_t			mediaDescriptor(void) const;
+  uint64_t			totalSectors(void) const;
+  uint64_t			MFTLogicalClusterNumber(void) const;
+  uint64_t			MFTMirrorLogicalClusterNumber(void) const;
+  int8_t			clustersPerMFTRecord(void) const;
+  uint32_t			MFTRecordSize(void) const;
+  int8_t			clustersPerIndexRecord(void) const;  
+  uint32_t			indexRecordSize(void) const;
+  uint64_t			volumeSerialNumber(void) const;
+  uint16_t			endOfSector(void) const;
+  void				validate(void) const;
 };
 
 #endif

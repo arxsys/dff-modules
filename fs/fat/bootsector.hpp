@@ -167,10 +167,10 @@ private:
 public:
   BootSectorNode(std::string name, uint64_t size, Node* parent, fso* fsobj);
   ~BootSectorNode();
-  void			setContext(Node* origin, Attributes attrs, uint64_t offset);
-  virtual void		fileMapping(FileMapping* fm);
-  virtual Attributes	_attributes();
-  virtual Attributes	dataType();
+  void				setContext(Node* origin, Attributes attrs, uint64_t offset);
+  virtual void			fileMapping(FileMapping* fm);
+  virtual Attributes		_attributes();
+  virtual const std::string	dataType();
 };
 
 
@@ -187,7 +187,7 @@ public:
   void				setContext(uint64_t reserved, uint64_t ssize, Node* origin);
   virtual void			fileMapping(FileMapping* fm);
   virtual Attributes		_attributes(void);
-  virtual Attributes		dataType();
+  virtual const std::string	dataType();
 };
 
 
@@ -203,7 +203,7 @@ public:
   void				setContext(uint64_t totalsize, uint16_t ssize, Node* origin);
   virtual void			fileMapping(FileMapping* fm);
   virtual Attributes		_attributes(void);
-  virtual Attributes		dataType();
+  virtual const std::string	dataType();
 };
 
 #endif

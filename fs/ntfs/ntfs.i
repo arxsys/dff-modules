@@ -67,7 +67,7 @@ class ntfs(Module):
     self.conf.addConstant({"name": "mime-type",
                            "description": "managed mime type",
                            "type" : typeId.String,
-                           "values" : ["NTFS"]})
+                           "values" : ["filesystem/ntfs"]})
     self.conf.addArgument({"name" : "drive-name",
                           "description": "Use this drive name to link reparse point and symlink",
                           "input" : Argument.Optional|Argument.Single|typeId.String,

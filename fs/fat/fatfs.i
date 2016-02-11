@@ -64,7 +64,7 @@ class FATFS(Module):
     self.conf.addConstant({"name": "mime-type",
                            "type": typeId.String,
                            "description": "managed mime type",
-			   "values": ["FAT"]})
+			   "values": ["filesystem/fat"]})
     self.tags = "File systems"
 %}
 

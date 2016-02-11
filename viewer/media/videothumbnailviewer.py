@@ -89,6 +89,6 @@ class videothumbnailviewer(Module):
     self.conf.addConstant({"name": "mime-type", 
  	                   "type": typeId.String,
  	                   "description": "managed mime type",
- 	                   "values": ["avi", "video"]})
+ 	                   "values": ["video"]})
     self.tags = "Viewers"
     self.icon = ":movie"

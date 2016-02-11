@@ -98,12 +98,9 @@ Attributes      BootSectorNode::_attributes(void)
   return attrs;
 }
 
-Attributes	BootSectorNode::dataType(void)
+const std::string	BootSectorNode::dataType(void)
 {
-  Attributes    attrs;
-
-  MAP_ATTR("ntfs", std::string("ntfs bootsector"))
-  return (attrs);
+  return std::string("ntfs/bootsector");
 }
 
 uint64_t 	BootSectorNode::OEMDID(void) const
