@@ -14,6 +14,7 @@
  *  Solal Jacob <sja@digital-forensic.org>
  */
 
+#include <stdlib.h>
 #include "pff.hpp"
 
 PffNodeContact::PffNodeContact(std::string name, Node* parent, pff* fsobj, ItemInfo* itemInfo) : PffNodeEmailMessageText(name, parent, fsobj, itemInfo)

@@ -15,6 +15,7 @@
  */
 
 #include "pff.hpp"
+#include "filemapping.hpp"
 
 PffNodeUnallocatedBlocks::PffNodeUnallocatedBlocks(std::string name, Node *parent, pff* fsobj, Node* root, int block_type) : Node(name, 0, parent, fsobj)
 {

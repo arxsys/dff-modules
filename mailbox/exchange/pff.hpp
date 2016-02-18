@@ -23,7 +23,9 @@
 #include "pff_item_info.hpp"
 #include "libbfio_wrapper.hpp"
 
-class pff : public mfso
+using namespace DFF;
+
+class pff : public DFF::mfso
 {
 private:
   Node*			parent;

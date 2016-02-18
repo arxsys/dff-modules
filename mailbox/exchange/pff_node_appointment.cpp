@@ -14,7 +14,9 @@
  *  Solal Jacob <sja@digital-forensic.org>
  */
 
+#include <stdlib.h>
 #include "pff.hpp"
+#include "vtime.hpp"
 
 PffNodeAppointment::PffNodeAppointment(std::string name, Node* parent, pff* fsobj, ItemInfo* itemInfo) : PffNodeEMail(name, parent, fsobj, itemInfo)
 {

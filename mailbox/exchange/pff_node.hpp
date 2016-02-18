@@ -19,6 +19,8 @@
 
 #include "pff.hpp"
 
+using namespace DFF;
+
 class pff;
 class ItemInfo;
 

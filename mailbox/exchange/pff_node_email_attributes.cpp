@@ -14,7 +14,9 @@
  *  Solal Jacob <sja@digital-forensic.org>
  */
 
+#include <stdlib.h>
 #include "pff.hpp"
+#include "vtime.hpp"
 
 libpff_macro32_s LIBPFF_MESSAGE_FLAG[9] = 
 {
