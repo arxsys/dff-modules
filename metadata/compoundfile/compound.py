@@ -172,7 +172,7 @@ class compound(Module):
     self.conf.addConstant({"name": "mime-type", 
  	                   "type": typeId.String,
  	                   "description": "compatible extension",
- 	                   "values": ["Composite Document File V2"]})
+ 	                   "values": ["windows/compound"]})
     self.conf.addArgument({"name": "no-extraction",	
 			   "description" : "Don't create nodes for files stored inside compound documents",
 			   "input": Argument.Empty})

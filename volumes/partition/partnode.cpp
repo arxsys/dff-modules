@@ -24,23 +24,12 @@ PartitionNode::~PartitionNode()
 {
 }
 
-Attributes	PartitionNode::dataType()
+const std::string	PartitionNode::dataType()
 {
-  Attributes	dtype;
-  Variant*	vptr;
-
   if (this->__type == UNALLOCATED)
-    {
-      if ((vptr = new Variant(std::string("unallocated"))) != NULL)
-	dtype["partition"] = Variant_p(vptr);
-      return dtype;
-    }
+    return std::string("partition/unallocated");
   else if (this->__entry == 0)
-    {
-      if ((vptr = new Variant(std::string("potentially ISO file"))) != NULL)
-	dtype["partition"] = Variant_p(vptr);
-      return dtype;
-    }
+    return std::string("partition/unknown");
   else
     return Node::dataType();
 }

@@ -294,12 +294,9 @@ Attributes	BootSectorNode::_attributes()
   return this->__attrs;
 }
 
-Attributes	BootSectorNode::dataType()
+const std::string	BootSectorNode::dataType()
 {
-  Attributes	dtype;
-
-  dtype["fatfs"] = Variant_p(new Variant(std::string("boot sector")));
-  return dtype;
+  return std::string("fat/bootsector");
 }
 
 
@@ -318,12 +315,9 @@ void		ReservedSectors::setContext(uint64_t reserved, uint64_t ssize, Node* origi
   this->__origin = origin;
 }
 
-Attributes	ReservedSectors::dataType()
+const std::string	ReservedSectors::dataType()
 {
-  Attributes	dtype;
-
-  dtype["fatfs"] = Variant_p(new Variant(std::string("reserved sectors")));
-  return dtype;
+  return std::string("fat/reserved-sectors");
 }
 
 void		ReservedSectors::fileMapping(FileMapping* fm)
@@ -383,10 +377,7 @@ Attributes	FileSystemSlack::_attributes(void)
 }
 
 
-Attributes	FileSystemSlack::dataType()
+const std::string	FileSystemSlack::dataType()
 {
-  Attributes	dtype;
-  
-  dtype["fatfs"] = Variant_p(new Variant(std::string("file system slack")));
-  return dtype;
+  return std::string("fat/slackspace");
 }

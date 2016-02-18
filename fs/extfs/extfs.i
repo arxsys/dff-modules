@@ -126,6 +126,6 @@ class EXTFS(Module):
     self.conf.addConstant({"name": "mime-type", 
                            "type": typeId.String,
                            "description": "managed mime type",
-                           "values": ["ext2", "ext3", "ext4"]})
+                           "values": ["filesystem/ext"]})
     self.tags = "File systems"
 %}

@@ -52,7 +52,7 @@ class VMWARE(Module):
     self.conf.addConstant({"name": "mime-type", 
                            "type": typeId.String,
                            "description": "managed mime type",
-                           "values": ["vmdk"]})
+                           "values": ["volume/vmdk"]})
     self.conf.addConstant({"name": "extension-type",
                            "type": typeId.String,
                            "description" : "compatible extension",

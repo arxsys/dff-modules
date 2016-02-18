@@ -38,11 +38,11 @@ private:
 public:
   PartitionNode(std::string name, uint64_t size, Node* parent, fso* fsobj);
   ~PartitionNode();
-  void			setCtx(PartInterface* handler, uint64_t entry, uint8_t type);
-  virtual void		fileMapping(FileMapping* fm);
-  virtual Attributes	_attributes(void);
-  virtual Attributes	dataType();
-  virtual std::string	icon();
+  void				setCtx(PartInterface* handler, uint64_t entry, uint8_t type);
+  virtual void			fileMapping(FileMapping* fm);
+  virtual Attributes		_attributes(void);
+  virtual const std::string	dataType();
+  virtual std::string		icon();
 };
 
 #endif

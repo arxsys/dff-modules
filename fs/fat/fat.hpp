@@ -113,10 +113,10 @@ private:
 public:
   FileAllocationTableNode(std::string name, uint64_t size, Node* parent, fso* fsobj);
   ~FileAllocationTableNode();
-  void			setContext(FileAllocationTable* fat, uint8_t fatnum);
-  virtual void		fileMapping(FileMapping* fm);
-  virtual Attributes	_attributes(void);
-  virtual Attributes	dataType();
+  void				setContext(FileAllocationTable* fat, uint8_t fatnum);
+  virtual void			fileMapping(FileMapping* fm);
+  virtual Attributes		_attributes(void);
+  virtual const std::string	dataType();
 };
 
 
@@ -130,10 +130,10 @@ private:
 public:
   ClustersChainNode(std::string name, uint64_t size, Node* parent, fso* fs);
   ~ClustersChainNode();
-  void			setContext(uint32_t scluster, uint32_t count, uint64_t offset, Node* origin);
-  virtual void		fileMapping(FileMapping* fm);
-  virtual Attributes	_attributes(void);
-  virtual Attributes	dataType();
+  void				setContext(uint32_t scluster, uint32_t count, uint64_t offset, Node* origin);
+  virtual void			fileMapping(FileMapping* fm);
+  virtual Attributes		_attributes(void);
+  virtual const std::string	dataType();
 };
 
 

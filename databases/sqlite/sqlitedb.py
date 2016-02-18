@@ -58,5 +58,5 @@ class sqlitedb(Module):
 	self.conf.addConstant({"name": "mime-type", 
  	                   "type": typeId.String,
  	                   "description": "managed mime type",
- 	                   "values": ["SQLite"]})
+ 	                   "values": ["database/sqlite"]})
         self.tags = "Databases"

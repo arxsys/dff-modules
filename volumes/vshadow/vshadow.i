@@ -53,11 +53,10 @@ class VSHADOW(Module):
     self.conf.addArgument({"name":"offset",
                            "description":"define volume offset",
                            "input": Argument.Optional|Argument.Single|typeId.UInt64})
-#    currently not set, have to find a better match than NTFS
-#    self.conf.addConstant({"name":"mime-type",
-#                           "type":typeId.String,
-#                           "description":"managed mime type",
-#	                   "values":["NTFS"]})
+    self.conf.addConstant({"name":"mime-type",
+                           "type":typeId.String,
+                           "description":"managed mime type",
+	                   "values":["volume/vshadow"]})
     self.tags = "Volumes"
     self.icon = ":disksfilesystems"
 %}

@@ -371,6 +371,6 @@ class imageviewer(Module):
     self.conf.addConstant({"name": "mime-type", 
  	                   "type": typeId.String,
  	                   "description": "managed mime type",
- 	                   "values": ["JPEG", "GIF", "PNG", "PC bitmap", "TIFF", "PBM", "PGM", "PPM", "XBM", "XPM"]})
+ 	                   "values": ["image/jpeg", "image/gif", "image/png", "image/bmp", "image/tiff", "PBM", "PGM", "PPM", "XBM", "XPM"]})
     self.tags = "Viewers"
     self.icon = ":lphoto"

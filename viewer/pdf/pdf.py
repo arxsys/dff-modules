@@ -67,7 +67,7 @@ class pdf(Module):
     self.conf.addConstant({"name": "mime-type", 
  	                   "type": typeId.String,
  	                   "description": "managed mime type",
- 	                   "values": ["PDF"]})
+ 	                   "values": ["document/pdf"]})
     self.tags = "Viewers"
     self.flags = ["gui"]
     self.icon = ":pdf"

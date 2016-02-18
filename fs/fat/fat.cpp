@@ -728,12 +728,9 @@ Attributes		FileAllocationTableNode::_attributes(void)
   return this->__fat->attributes(this->__fatnum);
 }
 
-Attributes		FileAllocationTableNode::dataType(void)
+const std::string	FileAllocationTableNode::dataType(void)
 {
-  Attributes	dtype;
-
-  dtype["fatfs"] = Variant_p(new Variant(std::string("File allocation table")));
-  return dtype;
+  return std::string("fat/file-allocation-table");
 }
 
 
@@ -769,10 +766,7 @@ Attributes	ClustersChainNode::_attributes(void)
 }
 
 
-Attributes	ClustersChainNode::dataType()
+const std::string	ClustersChainNode::dataType()
 {
-  Attributes	dtype;
-
-  dtype["fatfs"] = Variant_p(new Variant(std::string("unallocated space")));
-  return dtype;
+  return std::string("fat/unallocated-space");
 }
