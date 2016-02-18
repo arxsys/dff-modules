@@ -14,9 +14,10 @@
  *  Frederic Baguelin <fba@digital-forensic.org>
  */
 
+#include <stdlib.h>
 #include <sstream>
 #include "vshadow.hpp"
-
+#include "fdmanager.hpp"
 
 Vshadow::Vshadow() : mfso("vshadow")
 {

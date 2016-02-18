@@ -24,14 +24,8 @@
 %include "windows.i"
 
 %{
-#include "variant.hpp"
-#include "vtime.hpp"
-#include "fso.hpp"
-#include "mfso.hpp"
-#include "node.hpp"
-#include "vlink.hpp"
-#include "vfile.hpp"
 #include "rootnode.hpp"
+#include "exceptions.hpp"
 #include "vshadow.hpp"
 %}
 
@@ -56,7 +50,7 @@ class VSHADOW(Module):
     self.conf.addConstant({"name":"mime-type",
                            "type":typeId.String,
                            "description":"managed mime type",
-	                   "values":["volume/vshadow"]})
+                           "values":["volume/vshadow"]})
     self.tags = "Volumes"
     self.icon = ":disksfilesystems"
 %}
