@@ -16,10 +16,13 @@
  *
  */
 
+#include "exceptions.hpp"
 #include "extent.hpp"
 
+#include "node.hpp"
 
-Extent::Extent(Node *nd, uint32_t id)
+
+Extent::Extent(DFF::Node *nd, uint32_t id)
 {
   this->vmdk = nd;
   this->id = id;
@@ -82,7 +85,7 @@ int	Extent::createBackupHeader(int type)
   
   unsigned int	GTentry;
 
-  printf("Reconstruct Extent\n");
+  //std::cout << "Reconstruct Extent" << std::endl;
 
   //  this->id = _extents.size();
   this->version = 1;

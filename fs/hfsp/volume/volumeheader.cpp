@@ -142,7 +142,7 @@ vtime*		VolumeHeader::createDate()
   uint32_t	cdate;
 
   cdate = bswap32(this->__vheader.createDate);
-  return new HfsVtime(cdate);  
+  return new HFSDateTime(cdate);  
 }
 
 
@@ -151,7 +151,7 @@ vtime*		VolumeHeader::modifyDate()
   uint32_t	mdate;
     
   mdate = bswap32(this->__vheader.modifyDate);
-  return new HfsVtime(mdate);
+  return new HFSDateTime(mdate);
 }
 
 
@@ -160,7 +160,7 @@ vtime*		VolumeHeader::backupDate()
   uint32_t	bdate;
 
   bdate = bswap32(this->__vheader.backupDate);
-  return new HfsVtime(bdate);
+  return new HFSDateTime(bdate);
 }
 
 
@@ -169,7 +169,7 @@ vtime*		VolumeHeader::checkedDate()
   uint32_t	chkdate;
 
   chkdate = bswap32(this->__vheader.checkedDate);
-  return new HfsVtime(chkdate);
+  return new HFSDateTime(chkdate);
 }
  
 

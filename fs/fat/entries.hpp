@@ -49,6 +49,7 @@
 #define FATFS_IS_83_EXT(c)              \
   (FATFS_IS_83_NAME((c)) && ((c) < 0x7f))
 
+using namespace DFF;
 
 typedef struct s_dosentry
 {

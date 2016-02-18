@@ -25,6 +25,8 @@
 #include "../../include/utils/SuperblockStructure.h"
 #include "../../include/utils/SuperBlockUtils.h"
 
+using namespace DFF;
+
 class	Extfs;
 class	SuperBlock : public SuperBlockStructure, public SuperBlockUtils
 {

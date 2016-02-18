@@ -24,21 +24,15 @@
 %include "windows.i"
 
 %{
-#include "variant.hpp"
-#include "vtime.hpp"
-#include "fso.hpp"
 #include "mfso.hpp"
-#include "node.hpp"
-#include "vlink.hpp"
-#include "vfile.hpp"
 #include "rootnode.hpp"
+#include "exceptions.hpp"
 #include "aff.hpp"
 %}
 
 %import "../../../api/vfs/libvfs.i"
 
 %include "aff.hpp"
-
 
 %pythoncode
 %{

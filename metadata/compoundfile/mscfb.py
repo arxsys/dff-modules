@@ -16,7 +16,7 @@
 from struct import unpack
 
 from dff.api.vfs.libvfs import Node
-from dff.api.types.libtypes import Variant, VMap, VList, Argument, typeId, vtime, TIME_MS_64
+from dff.api.types.libtypes import Variant, VMap, VList, Argument, typeId, MS64DateTime 
 
 from dff.modules.structparser import Struct, Header, ResolveAttributesMap, AttributesVMap
 from dff.modules.lnk.lnkitem import UUID
@@ -349,8 +349,8 @@ class DirectoryEntry(Node, Struct):
   AttributesMap = {
    "Object type" : ("objectType", str),
    "CLSID" : ("CLSID", str),
-   "Creation time" : (("creationTime", TIME_MS_64), vtime),
-   "Modified time" : (("modifiedTime", TIME_MS_64), vtime),
+   "Creation time" : ("creationTime", MS64DateTime), #TIME_FIX FIX_TIME ?
+   "Modified time" : ("modifiedTime", MS64DateTime),
    "Starting sector" : ("startingSectorLocation", int),
    "Child ID" : ("childID", int),
    "Right Sibling ID" : ("rightSiblingID", int),

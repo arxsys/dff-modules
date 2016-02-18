@@ -25,22 +25,14 @@
 %include "windows.i"
 
 %{
-#include "variant.hpp"
-#include "vtime.hpp"
-#include "fso.hpp"
-#include "mfso.hpp"
-#include "node.hpp"
-#include "vlink.hpp"
-#include "vfile.hpp"
+#include "vfs.hpp"
+#include "exceptions.hpp"
 #include "carver.hpp"
-#include "common.hpp"
 #include "rootnode.hpp"
 #include "../../../api/search/pattern.hpp"
 %}
 
-
 %import "../../../api/vfs/libvfs.i"
-
 
 %typemap(in) unsigned char *
 {
@@ -68,7 +60,7 @@ else
 	   {
 		$1 = (unsigned char)PyString_AsString($input)[0];
    	   }
-	else
+        else
 	  {
 		$1 = (unsigned char)PyString_AsString($input)[0];
 	  }
@@ -97,7 +89,7 @@ class CARVER(Module):
         Module.__init__(self, 'carver', Carver)
 
         self.conf.addArgument({"name": "file",
-	                       "description": "file used by carver",
+                               "description": "file used by carver",
                                "input": Argument.Required|Argument.Single|typeId.Node})
         needle = Argument("needle", Argument.Required|Argument.Single|typeId.String, "represents the needle to search in the haystack")
         needle.thisown = False
@@ -112,7 +104,7 @@ class CARVER(Module):
         header.addSubArgument(needle)
         header.addSubArgument(wildcard)
         header.addSubArgument(size)
-	header.thisown = False
+        header.thisown = False
 
         needle = Argument("needle", Argument.Required|Argument.Single|typeId.String, "represents the needle to search in the haystack")
         needle.thisown = False
@@ -127,7 +119,7 @@ class CARVER(Module):
         footer.addSubArgument(needle)
         footer.addSubArgument(wildcard)
         footer.addSubArgument(size)
-	footer.thisown = False
+        footer.thisown = False
 
         filetype = Argument("filetype", Argument.Required|Argument.Single|typeId.String, "name of the filetype corresponding to the current pattern automaton")
         filetype.thisown = False
@@ -159,8 +151,8 @@ class CARVER(Module):
         patterns.addSubArgument(pattern)
 
         self.conf.addArgument(patterns)
-	self.conf.addArgument({"name": "start-offset",
-	                       "input": Argument.Single|Argument.Optional|typeId.UInt64,
-                      	       "description": "offset where to start carving"})
-	self.tags = "builtins"
+        self.conf.addArgument({"name": "start-offset",
+                               "input": Argument.Single|Argument.Optional|typeId.UInt64,
+                               "description": "offset where to start carving"})
+        self.tags = "builtins"
 %}

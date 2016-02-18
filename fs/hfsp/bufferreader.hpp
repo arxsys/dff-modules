@@ -23,6 +23,8 @@
 #include "node.hpp"
 #include "vfile.hpp"
 
+using namespace DFF;
+
 class BufferReader
 {
 private:

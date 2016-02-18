@@ -14,6 +14,8 @@
  *  Frederic Baguelin <fba@digital-forensic.org>
  */
 
+#include "exceptions.hpp"
+
 #include "fatfs.hpp"
 
 void		Fatfs::__process() throw (std::string)

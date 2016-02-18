@@ -17,33 +17,29 @@
 #ifndef __AFF_HH__
 #define __AFF_HH__
 
-#include "fso.hpp"
-#include "node.hpp"
-#include <string>
-#include <iostream>
-#include <stdio.h>
-#include <list>
-#include <vector>
 #include "variant.hpp"
-#include "vfs.hpp"
-#include "path.hpp"
-#include "fdmanager.hpp"
-#include "threading.hpp"
-#include <fcntl.h>
+#include "fso.hpp"
+
 #include <afflib/afflib.h>
 #include <afflib/afflib_i.h>
 
-class aff : public fso
+namespace DFF
+{
+class Node;
+class FdManager;
+}
+
+class aff : public DFF::fso
 {
 private:
   mutex_def(__io_mutex);
-  Node*                 __parent;
-  FdManager*	        __fdm;
+  DFF::Node*            __parent;
+  DFF::FdManager*	__fdm;
   std::string           __cacheSize;
 public:
   aff();
   ~aff();
-  int32_t		vopen(Node* handle);
+  int32_t		vopen(DFF::Node* handle);
   int32_t 		vread(int fd, void *buff, unsigned int size);
   int32_t 		vclose(int fd);
   uint64_t 		vseek(int fd, uint64_t offset, int whence);

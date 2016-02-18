@@ -18,9 +18,7 @@
 #define __PARTITION_HPP__
 
 #include <map>
-#include "variant.hpp"
-#include "mfso.hpp"
-#include "vfile.hpp"
+
 
 #include "gpt.hpp"
 #include "dos.hpp"
@@ -29,11 +27,14 @@
 #include <iomanip>
 #include <sstream>
 
-class Partition : public mfso
+#include "node.hpp"
+#include "mfso.hpp"
+
+class Partition : public DFF::mfso
 {
 private:
-  Node*				__parent;
-  Node*				__root;
+  DFF::Node*		        __parent;
+  DFF::Node*		        __root;
   DosPartition*			__dos;
   GptPartition*			__gpt;  
 public:
@@ -42,7 +43,7 @@ public:
   virtual void		start(std::map<std::string, Variant_p > args);
 };
 
-class PartitionsNode : public Node
+class PartitionsNode : public DFF::Node
 {
 private:
   Partition*	__part;

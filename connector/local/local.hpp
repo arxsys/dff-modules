@@ -19,22 +19,26 @@
 
 
 #include "fso.hpp"
-#include "node.hpp"
 #include <string>
 #include <iostream>
 #include <stdio.h>
 #include <list>
 #include <vector>
 #include "variant.hpp"
-#include "vfs.hpp"
-#include "path.hpp"
 #ifdef WIN32
 #include "wlocalnode.hpp"
 #else
 #include "ulocalnode.hpp"
 #endif
 
-class local : public fso
+namespace DFF
+{
+class Node;
+}
+
+using namespace DFF;
+
+class local : public DFF::fso
 {
 private:
   unsigned int	        nfd;

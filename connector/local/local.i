@@ -24,15 +24,10 @@
 %include "windows.i"
 
 %{
-#include "variant.hpp"
-#include "vtime.hpp"
-#include "fso.hpp"
-#include "mfso.hpp"
-#include "node.hpp"
-#include "vlink.hpp"
-#include "vfile.hpp"
-#include "local.hpp"
 #include "rootnode.hpp"
+#include "mfso.hpp"
+#include "exceptions.hpp"
+#include "local.hpp"
 %}
 
 %import "../../../api/vfs/libvfs.i"
@@ -52,13 +47,13 @@ class LOCAL(Module):
   def __init__(self):
     Module.__init__(self, 'local', local)
     self.conf.addArgument({"input": Argument.Optional|Argument.Single|typeId.Node, 
-	                   "name": "parent", 
-	                   "description": "files or folders will be added as child(ren) of this node or as the root node by default",
-                       "parameters": {"type": Parameter.Editable,
-                                          "predefined": [vfs.vfs().getnode("/")]}
+                           "name": "parent", 
+                           "description": "files or folders will be added as child(ren) of this node or as the root node by default",
+                           "parameters": {"type": Parameter.Editable,
+                           "predefined": [vfs.vfs().getnode("/")]}
                           })
     self.conf.addArgument({"input": Argument.Required|Argument.List|typeId.Path,  
-	                   "name": "path", 
-	                   "description": "Path to the files or folders located on your drives."})
+                           "name": "path", 
+                           "description": "Path to the files or folders located on your drives."})
     self.tags = "Connectors"
 %}

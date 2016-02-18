@@ -48,6 +48,7 @@
 #define	VolumeJournaled		(1<<13)
 #define VolumeSoftwareLock	(1<<14)
 
+using namespace DFF;
 
 class VolumeInformation
 {

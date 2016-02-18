@@ -24,14 +24,9 @@
 %include "windows.i"
 
 %{
-#include "variant.hpp"
-#include "vtime.hpp"
-#include "fso.hpp"
-#include "mfso.hpp"
-#include "node.hpp"
-#include "vlink.hpp"
-#include "vfile.hpp"
+#include "exceptions.hpp"
 #include "rootnode.hpp"
+#include "mfso.hpp"
 #include "ewf.hpp"
 %}
 

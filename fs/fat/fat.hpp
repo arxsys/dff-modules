@@ -29,6 +29,8 @@
 #define FAT_BUFF_CACHE	8192
 #define MAX_FAT_COUNT	255
 
+using namespace DFF;
+
 class FileAllocationTable;
 
 typedef struct	s_fatcache

@@ -18,6 +18,9 @@
 
 #include <sstream>
 
+#include "filemapping.hpp"
+#include "vfile.hpp"
+
 #include "includes/SuperBlock.h"
 #include "../extfs.hpp"
 

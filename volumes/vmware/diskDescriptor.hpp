@@ -19,30 +19,38 @@
 #ifndef __DISKDESCRIPTOR_HPP__
 #define __DISKDESCRIPTOR_HPP__
 
-#include <algorithm> // remove function in string operations
-
-#include <sstream>
-#include <iostream>
-#include <string>
-#include <list>
-#include <map>
-#include "node.hpp"
+#ifndef WIN32
+  #include <stdint.h>
+#elif _MSC_VER >= 1600
+  #include <stdint.h>
+#else
+  #include "wstdint.h"
+#endif
 
 #define CID "CID"
 #define PCID "parentCID"
 #define PARENT_FILE_NAME "parentFileNameHint"
 #define CID_NOPARENT "ffffffff"
 
+#include <string>
+#include <list>
+#include <map>
+
+namespace DFF
+{
+class Node;
+}
+
 class	diskDescriptor
 {
 public:
   // type: 0=Sparse 2Gb extent text descriptor, 1=descriptor embeded into extent
-  diskDescriptor(Node	*nodeDesc, int type);
+  diskDescriptor(DFF::Node	*nodeDesc, int type);
   ~diskDescriptor();
 
   /* Read disk descriptor from and fill _descData buffer*/
-  void	readDiskDescriptor(Node *nodeDesc, uint32_t offset, uint32_t size);
-  void	readMonoDiskDescriptor(Node *nodeDesc);
+  void	readDiskDescriptor(DFF::Node *nodeDesc, uint32_t offset, uint32_t size);
+  void	readMonoDiskDescriptor(DFF::Node *nodeDesc);
 
   /* Split _descData into lines*/
   void	getLinesDiskDescriptor(char *descData);
@@ -66,7 +74,7 @@ public:
 
 private:
 
-  Node			*_nodeDesc;
+  DFF::Node			*_nodeDesc;
 
   int			_type;
   // Text Disk Description 

@@ -26,10 +26,7 @@
 
 
 %{
-#include "variant.hpp"
-#include "vlink.hpp"
-#include "vtime.hpp"
-#include "export.hpp"
+#include "mfso.hpp"
 #include "devices.hpp"
 #include "rootnode.hpp"
 %}
@@ -52,14 +49,14 @@ class DEVICES(Module):
     Module.__init__(self, 'devices', devices)
     self.tags = "Connectors"  
     self.conf.addArgument({"input": Argument.Required|Argument.Single|typeId.Node, 
-	                   "name": "parent", 
-	                   "description": "Devices will be mount as child of this node or at root node by default.",
-                       "parameters": {"type": Parameter.Editable,
+                           "name": "parent", 
+                           "description": "Devices will be mount as child of this node or at root node by default.",
+                           "parameters": {"type": Parameter.Editable,
                                           "predefined": [vfs.vfs().getnode("/")]}
                           })
     self.conf.addArgument({"input": Argument.Required|Argument.Single|typeId.Path,  
-	                   "name": "path", 
-	                   "description": "Path to the local device on your operating system."})
+                           "name": "path", 
+                           "description": "Path to the local device on your operating system."})
     self.conf.addArgument({"input": Argument.Required|Argument.Single|typeId.UInt64,
                         "name": "size",
                         "description": "Size of the device."})

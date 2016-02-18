@@ -27,6 +27,8 @@
 #include "filemapping.hpp"
 #include "variant.hpp"
 
+using namespace DFF;
+
 typedef struct
 {
   uint8_t	f1[3];

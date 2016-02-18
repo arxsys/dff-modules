@@ -17,11 +17,12 @@
 #ifndef __VMNODE_HPP__
 #define __VMNODE_HPP__
 
-#include "variant.hpp"
 #include "node.hpp"
 #include "vmware.hpp"
 #include "vmdk.hpp"
 #include "link.hpp"
+
+using namespace DFF;
 
 class VMNode: public Node
 {

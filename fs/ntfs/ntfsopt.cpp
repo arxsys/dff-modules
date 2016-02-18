@@ -16,14 +16,14 @@
 
 #include "ntfsopt.hpp"
 
-NTFSOpt::NTFSOpt(Attributes args) : __fsNode(NULL), __validateBootSector(false), __recovery(false)
+NTFSOpt::NTFSOpt(DFF::Attributes args) : __fsNode(NULL), __validateBootSector(false), __recovery(false)
 {
-  Attributes::iterator arg;
+  DFF::Attributes::iterator arg;
 
   if (args.find("file") != args.end())
-    this->__fsNode = args["file"]->value<Node* >();
+    this->__fsNode = args["file"]->value<DFF::Node* >();
   else
-    throw envError("NTFS module need a file argument.");
+    throw DFF::envError("NTFS module need a file argument.");
   if (args.find("no-bootsector-check") != args.end())
     this->__validateBootSector = false;
   if (args.find("recovery") != args.end())
@@ -41,7 +41,7 @@ NTFSOpt::~NTFSOpt(void)
 {
 }
 
-Node*           NTFSOpt::fsNode(void) const
+DFF::Node*      NTFSOpt::fsNode(void) const
 {
   return (this->__fsNode);
 }

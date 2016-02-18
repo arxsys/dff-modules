@@ -195,7 +195,7 @@ class LS(Script):
         if val[0].type() == typeId.VTime:
           vtime = val[0].value()
           if vtime:
-            attrlen = len(str(vtime.get_time()))
+            attrlen = len(str(vtime))
         else:
           attrlen = len(val[0].toString())
       if attrlen > lstat.extattrs[attr]:
@@ -212,7 +212,7 @@ class LS(Script):
         if val[0].type() == typeId.VTime:
           vtime = val[0].value()
           if vtime:
-            attrval = str(vtime.get_time())
+            attrval = str(vtime)
         else:
           attrval = val[0].toString()
       lattrs.append(attrval)

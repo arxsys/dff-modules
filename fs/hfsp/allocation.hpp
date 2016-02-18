@@ -26,6 +26,8 @@
 #include "endian.hpp"
 #include "hfshandlers.hpp"
 
+using namespace DFF;
+
 class HfsFileSystemHandler;
 
 class AllocationFile

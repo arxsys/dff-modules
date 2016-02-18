@@ -15,10 +15,14 @@
  */
 
 #include "carver.hpp"
+
 #include <iostream>
 #include <iomanip>
 #include <sstream>
 
+#include "exceptions.hpp"
+#include "filemapping.hpp"
+#include "vfile.hpp"
 // Next gen: process like scalpel
 //   for each BUFFER
 //     for each (header => footer)

@@ -17,7 +17,7 @@ from struct import unpack
 from ctypes import pointer, byref, create_string_buffer, c_uint32, c_bool
 
 from dff.api.vfs.libvfs import Node
-from dff.api.types.libtypes import Variant, VList, VMap, vtime, TIME_MS_64
+from dff.api.types.libtypes import Variant, VList, VMap, MS64DateTime 
 
 from dff.modules.winreg.pathmanager import pathManager
 from dff.modules.winreg.regtype import regtype
@@ -215,7 +215,7 @@ class KeyNode(Node):
 
   def _attributes(self):
      attr = VMap()
-     vt = vtime(self.timestamp, TIME_MS_64)
+     vt = MS64DateTime(self.timestamp)
      vt.thisown = False
      vmodified = Variant(vt)
      attr["modified"] = vmodified

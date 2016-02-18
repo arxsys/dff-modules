@@ -28,14 +28,7 @@
 %include "windows.i"
 
 %{
-#include "variant.hpp"
-#include "vtime.hpp"
-#include "mfso.hpp"
-#include "node.hpp"
-#include "vfile.hpp"
-#include "vlink.hpp"
 #include "extfs.hpp"
-#include "rootnode.hpp"
 %}
 
 %import "../../../api/vfs/libvfs.i"
@@ -71,19 +64,19 @@ class EXTFS(Module):
 
     self.conf.addArgument({"name": "dont_parse_fs",
                            "description": "Parse the entire file system.",
-	  "input": Argument.Empty})
+                           "input": Argument.Empty})
 
     self.conf.addArgument({"name": "ils",
                            "description": "List inodes",
-	  "input": Argument.Optional|typeId.String|Argument.Single,
-	  "parameters":{"type":Parameter.Editable}
-      })
+                           "input": Argument.Optional|typeId.String|Argument.Single,
+                           "parameters":{"type":Parameter.Editable}
+                         })
 
     self.conf.addArgument({"name": "blk",
                            "description": "Block allocation status",
-	  "input": Argument.Optional|typeId.String|Argument.Single,
-	  "parameters":{"type":Parameter.Editable}
-	  })
+                           "input": Argument.Optional|typeId.String|Argument.Single,
+                           "parameters":{"type":Parameter.Editable}
+                          })
 
     self.conf.addArgument({"name": "fsstat",
                            "description": "File system statistic",
@@ -91,13 +84,13 @@ class EXTFS(Module):
 
     self.conf.addArgument({"name": "istat",
                            "description": "Inode statistics",
-		  "input": Argument.Optional|typeId.String|Argument.Single,
-	  "parameters": {"type": Parameter.Editable}
-      })
+                           "input": Argument.Optional|typeId.String|Argument.Single,
+                           "parameters": {"type": Parameter.Editable}
+                          })
 
     self.conf.addArgument({"name": "fsck",
-	  "description": "check if the number of allocated block matches inode's size",
-	  "input": Argument.Empty})
+                           "description": "check if the number of allocated block matches inode's size",
+                           "input": Argument.Empty})
   
 
     self.conf.addArgument({"name": "jstat",
@@ -117,7 +110,7 @@ class EXTFS(Module):
                            "input": Argument.Empty})
 
     self.conf.addArgument({"name": "root_inode",
-	                   "description": "Root inode number",
+                           "description": "Root inode number",
                            "input": Argument.Optional|Argument.Single|typeId.UInt64,
                            "parameters": {"type": Parameter.Editable,
                                           "predefined": [2]}
@@ -133,6 +126,6 @@ class EXTFS(Module):
     self.conf.addConstant({"name": "mime-type", 
                            "type": typeId.String,
                            "description": "managed mime type",
-	                   "values": ["ext2", "ext3", "ext4"]})
+                           "values": ["ext2", "ext3", "ext4"]})
     self.tags = "File systems"
 %}

@@ -16,6 +16,8 @@
  *
  */
 
+#include "vfile.hpp"
+
 #include "includes/ExtendedAttr.h"
 
 ExtendedAttr::ExtendedAttr(uint32_t block, uint32_t block_size)

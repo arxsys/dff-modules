@@ -14,6 +14,9 @@
  *  Solal Jacob <sja@digital-forensic.org>
  */
 
+#include "vfile.hpp"
+#include "filemapping.hpp"
+
 #include "bootsector.hpp"
 #include "ntfs.hpp"
 #include "ntfsopt.hpp"

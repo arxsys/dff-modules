@@ -20,6 +20,13 @@
 #include "local.hpp"
 #include "node.hpp"
 
+namespace DFF
+{
+  class  vtime;
+}
+
+using namespace DFF;
+
 class ULocalNode: public Node
 {
 private:

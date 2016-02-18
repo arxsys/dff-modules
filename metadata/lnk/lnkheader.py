@@ -15,7 +15,7 @@
 from struct import unpack
 
 from dff.api.vfs.libvfs import VLink
-from dff.api.types.libtypes import vtime, TIME_MS_64
+from dff.api.types.libtypes import MS64DateTime 
 
 class LPWSTR():
   def __init__(self, data):
@@ -337,9 +337,9 @@ LnkAttributesMap = {
        "LinkCLSID" : ("shellLink.LinkCLSID", str),
        "LinkFlags" : ("shellLink.LinkFlags", list),
        "FileAttributes": ("shellLink.FileAttributes", list),
-       "CreationTime" : (("shellLink.CreationTime", TIME_MS_64,), vtime),
-       "AccessTime" : (("shellLink.AccessTime", TIME_MS_64,), vtime),
-       "WriteTime" : (("shellLink.WriteTime", TIME_MS_64,), vtime),
+       "CreationTime" : ("shellLink.CreationTime", MS64DateTime), #TIME_FIX
+       "AccessTime" : ("shellLink.AccessTime", MS64DateTime),
+       "WriteTime" : ("shellLink.WriteTime", MS64DateTime),
        "FileSize" : ("shellLink.FileSize", int),
        "IconIndex" : ("shellLink.IconIndex", int),
        "ShowCommand" : ("shellLink.ShowCommand", str),

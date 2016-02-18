@@ -20,7 +20,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "exceptions.hpp"
 #include "vfile.hpp"
+
 #include "includes/DirEntry.h"
 
 DirEntry::DirEntry()
@@ -42,12 +44,12 @@ uint8_t * DirEntry::allocName()
     _name = (uint8_t *)operator new ((name_length_v2() + 1)
                                    * sizeof(uint8_t));
     if (!_name)
-        throw vfsError("DirEntry::allocName() : "
+        throw DFF::vfsError("DirEntry::allocName() : "
                        "cannot alocate enough memory.\n");
     return _name;
 }
 
-void    DirEntry::read(uint64_t content_addr, VFile * vfile)
+void    DirEntry::read(uint64_t content_addr, DFF::VFile * vfile)
 {
   vfile->seek(content_addr);
   vfile->read(getDir(), sizeof(dir_entry_v2));

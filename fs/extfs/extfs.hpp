@@ -35,7 +35,7 @@
 #define DRIVER_NAME     "extfs"
 #define ROOT_INODE	2
 
-class	Extfs : public mfso
+class	Extfs : public DFF::mfso
 {
   /*! \class Extfs.
     \brief Implementation of the API.

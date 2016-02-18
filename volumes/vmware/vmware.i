@@ -24,13 +24,9 @@
 %include "std_map.i"
 %include "windows.i"
 
-
 %{
-#include "variant.hpp"
-#include "vtime.hpp"
-#include "export.hpp"
+#include "exceptions.hpp"
 #include "vmware.hpp"
-#include "rootnode.hpp"
 %}
 
 %import "../../../api/vfs/libvfs.i"

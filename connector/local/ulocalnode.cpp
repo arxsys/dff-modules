@@ -15,10 +15,15 @@
  */
 
 #include "ulocalnode.hpp"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <stdlib.h>
 
+#include "vtime.hpp"
+#include "exceptions.hpp"
+#include "variant.hpp"
 
 Attributes	ULocalNode::_attributes()
 {
@@ -27,18 +32,18 @@ Attributes	ULocalNode::_attributes()
 
   vmap["original path"] =  Variant_p(new Variant(this->originalPath));
   if ((st = this->localStat()) != NULL)
-    {
-      vmap["uid"] =  Variant_p(new Variant(st->st_uid));
-      vmap["gid"] =  Variant_p(new Variant(st->st_gid));
-      vmap["inode"] = Variant_p(new Variant(st->st_ino));
-      vmap["modified"] = Variant_p(new Variant(this->utimeToVtime(&(st->st_mtime))));
-      vmap["accessed"] = Variant_p(new Variant(this->utimeToVtime(&(st->st_atime))));
-      vmap["changed"] = Variant_p(new Variant(this->utimeToVtime(&(st->st_ctime))));
-      free(st);
-    }
-  return vmap;
-}
+  {
+    vmap["uid"] =  Variant_p(new Variant(st->st_uid));
+    vmap["gid"] =  Variant_p(new Variant(st->st_gid));
+    vmap["inode"] = Variant_p(new Variant(st->st_ino));
+    vmap["modified"] = Variant_p(new Variant(new vtime(st->st_mtime)));
+    vmap["accessed"] = Variant_p(new Variant(new vtime(st->st_atime)));
+    vmap["changed"] = Variant_p(new Variant(new vtime(st->st_ctime)));
+    free(st);
+  }
 
+  return (vmap);
+}
 
 struct stat*	ULocalNode::localStat(void)
 {
@@ -49,42 +54,17 @@ struct stat*	ULocalNode::localStat(void)
   if (lstat(this->originalPath.c_str(), st) != -1)
     return st;
   else
-    {
-      free(st);
-      return NULL;
-    }
+  {
+    free(st);
+    return (NULL);
+  }
 }
-
-vtime*		ULocalNode::utimeToVtime(time_t* tt) 
-{
-  struct tm*	t;
-  vtime	*vt = new vtime;
-
-  if (tt != NULL)
-    {
-      if ((t = gmtime(tt)) != NULL)
-	{
-	  vt->year = t->tm_year + 1900;
-	  vt->month = t->tm_mon + 1;
-	  vt->day = t->tm_mday;
-	  vt->hour = t->tm_hour;
-	  vt->minute = t->tm_min;
-	  vt->second = t->tm_sec;
-	  vt->dst = t->tm_isdst;
-	  vt->wday = t->tm_wday;
-	  vt->yday = t->tm_yday;
-	  vt->usecond = 0;
-	}
-    }
-   return vt;
-}
-
 
 ULocalNode::ULocalNode(std::string Name, uint64_t size, Node* parent, local* fsobj, uint8_t type, std::string origPath): Node(Name, size, parent, fsobj)
 {
   this->originalPath = origPath;
   switch (type)
-    {
+  {
     case DIR:
       this->setDir();
       break;
@@ -93,10 +73,9 @@ ULocalNode::ULocalNode(std::string Name, uint64_t size, Node* parent, local* fso
       break;
     default:
       break;
-    }
+  }
 }
 
 ULocalNode::~ULocalNode()
 {
 }
-

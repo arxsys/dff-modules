@@ -15,6 +15,9 @@
  *  Romain Bertholon <rbe@digital-forensic.org>
  *
  */
+#include "vtime.hpp"
+#include "vfile.hpp"
+#include "filemapping.hpp"
 
 #include "include/ExtfsNode.h"
 #include "data_structure/includes/Inode.h"
@@ -221,9 +224,9 @@ Attributes 	ExtfsNode::_attributes()
       MfsoAttrib * c_attr = new MfsoAttrib;
       c_attr->setAttrs(inode, &attr, this->__i_nb, this->__inode_addr);
 
-      attr["modified"] = Variant_p(new Variant(new vtime(inode->modif_time(), TIME_UNIX)));
-      attr["accessed"] = Variant_p(new Variant(new vtime(inode->access_time(), TIME_UNIX)));
-      attr["changed"] = Variant_p(new Variant(new vtime(inode->change_time(), TIME_UNIX)));
+      attr["modified"] = Variant_p(new Variant(new vtime(inode->modif_time()))); //TIME_FIX
+      attr["accessed"] = Variant_p(new Variant(new vtime(inode->access_time()))); //TIME_FIX
+      attr["changed"] = Variant_p(new Variant(new vtime(inode->change_time()))); //TIME_FIX
 
       if (inode->SB()->inodes_struct_size() > sizeof(inodes_t))
       {
@@ -231,7 +234,7 @@ Attributes 	ExtfsNode::_attributes()
 	__inode_reminder_t * i_reminder = (__inode_reminder_t *)tab;
 
 	inode->extfs()->vfile()->read(tab, sizeof(__inode_reminder_t));
-	attr["creation"] = Variant_p(new Variant(new vtime(i_reminder->creation_time, TIME_UNIX))); 
+	attr["creation"] = Variant_p(new Variant(new vtime(i_reminder->creation_time))); //TIME_FIX
       }
       delete c_attr;
     }

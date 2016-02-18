@@ -19,6 +19,8 @@
 
 #include "ntfs_common.hpp"
 
+using namespace DFF;
+
 class NTFS;
 class MFTEntryNode;
 class MFTAttributeContent;

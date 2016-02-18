@@ -13,6 +13,8 @@
  * Author(s):
  *  Solal Jacob <sja@digital-forensic.org>
  */
+#include "filemapping.hpp"
+#include "vfile.hpp"
 
 #include "mftattributecontent.hpp"
 #include "mftattribute.hpp"

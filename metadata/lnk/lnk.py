@@ -20,7 +20,7 @@ from struct import unpack
 from dff.api.module.script import Script 
 from dff.api.module.module import Module
 from dff.api.module.manager import ModuleProcessusHandler
-from dff.api.types.libtypes import Variant, VMap, VList, Argument, typeId, vtime, TIME_MS_64
+from dff.api.types.libtypes import Variant, VMap, VList, Argument, typeId
 from dff.api.vfs.libvfs import AttributesHandler, VFS, VLink
 
 from dff.modules.structparser import Struct, Header, FlagsList, ResolveAttributesMap, AttributesVMap 

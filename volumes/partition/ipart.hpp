@@ -17,11 +17,14 @@
 #ifndef __IPART_HPP__
 #define __IPART_HPP__
 
+#include "exceptions.hpp"
 #include "fso.hpp"
 #include "filemapping.hpp"
 #include "node.hpp"
 
 #include <stdint.h>
+
+using namespace DFF;
 
 class PartInterface
 {

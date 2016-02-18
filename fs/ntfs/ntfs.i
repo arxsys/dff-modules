@@ -31,14 +31,7 @@
 %ignore NTFS::unallocatedNode;
 
 %{
-#include "variant.hpp"
-#include "vtime.hpp"
-#include "node.hpp"
-#include "vlink.hpp"
-#include "vfile.hpp"
-#include "mfso.hpp"
 #include "ntfs.hpp"
-#include "rootnode.hpp"
 %}
 
 %import "../../../api/vfs/libvfs.i"
@@ -56,10 +49,10 @@ class ntfs(Module):
                            "description": "Path to a file containing NTFS",
                            "input": Argument.Required|Argument.Single|typeId.Node})
     self.conf.addArgument({"name" : "recovery",
-	                   "description" : "If set the module will try to recover files and folders by carving MFT in unallocated clusters",
+                           "description" : "If set the module will try to recover files and folders by carving MFT in unallocated clusters",
                            "input": Argument.Empty})
     self.conf.addArgument({"name" : "advanced-attributes",
-	                   "description" : "Provides advanced attributes for nodes",
+                           "description" : "Provides advanced attributes for nodes",
                            "input": Argument.Empty})
     self.conf.addArgument({"name" : "no-bootsector-check",
                            "description" : "If set the module will continue even if the bootsector is corrupted",

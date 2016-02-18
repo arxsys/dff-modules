@@ -15,8 +15,9 @@
  */
 
 #include <iostream>
-#include "htree.hpp"
+#include "exceptions.hpp"
 
+#include "htree.hpp"
 
 /*
  * Keyed record common implementation

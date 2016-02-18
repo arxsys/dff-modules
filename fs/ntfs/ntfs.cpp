@@ -13,6 +13,8 @@
  * Author(s):
  *  Solal Jacob <sja@digital-forensic.org>
  */
+#include "fdmanager.hpp"
+
 #include "ntfs.hpp"
 #include "ntfsopt.hpp"
 #include "bootsector.hpp"
@@ -22,7 +24,6 @@
 #include "mftattribute.hpp"
 #include "mftmanager.hpp"
 #include "attributes/data.hpp"
-
 /**
  *  NTFS 
  */

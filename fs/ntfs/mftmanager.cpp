@@ -12,7 +12,7 @@
  * Author(s):
  *  Solal Jacob <sja@digital-forensic.org>
  */
-
+#include "vfile.hpp"
 #include "vlink.hpp"
 
 #include "mftmanager.hpp"
@@ -428,18 +428,21 @@ void    MFTEntryManager::linkOrphanEntries(void)
         MFTNode* parent = this->node(parentId);
         if (parent)
         {
-          if (fileName->parentSequence() != parent->mftEntryNode()->sequence()) //XXX check for $SDS:?
+          if (fileName->parentSequence() != parent->mftEntryNode()->sequence())
             this->__ntfs->orphansNode()->addChild(*mftNode);
           else 
             parent->addChild(*mftNode);
         }
+        else
+          this->__ntfs->orphansNode()->addChild(*mftNode);
+
         delete fileName;
       }
       else
         this->__ntfs->orphansNode()->addChild(*mftNode);
    
-      for (; attribute != attributes.end(); ++attribute)
-        delete (*attribute);
+      for (; attribute != attributes.end(); ++attribute) //not in case anymore ?
+        delete (*attribute); 
     }
   }
 }

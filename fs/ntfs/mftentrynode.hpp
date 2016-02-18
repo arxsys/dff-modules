@@ -20,6 +20,8 @@
 #include "ntfs_common.hpp"
 #include "attributes/indexroot.hpp"
 
+using namespace DFF;
+
 class NTFS;
 class MFTAttribute;
 typedef std::vector<MFTAttribute* > MFTAttributes;

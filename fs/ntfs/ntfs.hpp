@@ -24,26 +24,26 @@ class BootSectorNode;
 class MFTNode;
 class MFTEntryManager;
 
-class NTFS : public mfso
+class NTFS : public DFF::mfso
 {
 private:
   NTFSOpt*              __opt;
   BootSectorNode*       __bootSectorNode;
   MFTEntryManager*      __mftManager;
-  Node*                 __rootDirectoryNode;
-  Node*                 __orphansNode;
-  Node*                 __unallocatedNode;
+  DFF::Node*            __rootDirectoryNode;
+  DFF::Node*            __orphansNode;
+  DFF::Node*            __unallocatedNode;
 public:
                         NTFS();
                         ~NTFS();
-  virtual void          start(Attributes args);
+  virtual void          start(DFF::Attributes args);
   void                  setStateInfo(const std::string&);
   NTFSOpt*              opt(void) const;
-  Node*                 fsNode(void) const;
-  Node*                 rootDirectoryNode(void) const;
+  DFF::Node*            fsNode(void) const;
+  DFF::Node*            rootDirectoryNode(void) const;
   BootSectorNode*       bootSectorNode(void) const;
-  Node*                 orphansNode(void) const;
-  Node*                 unallocatedNode(void) const;
+  DFF::Node*            orphansNode(void) const;
+  DFF::Node*            unallocatedNode(void) const;
   MFTEntryManager*      mftManager(void) const;
   int32_t 	        vread(int fd, void *buff, unsigned int size);
 };

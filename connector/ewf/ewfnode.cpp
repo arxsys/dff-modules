@@ -16,6 +16,10 @@
 
 #include "ewfnode.hpp"
 
+#include <iostream>
+
+#include "typesconv.hpp"
+
 std::string	EWFNode::__getHashIdentifier(uint32_t index) throw()
 {
   size_t	id_size;

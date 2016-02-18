@@ -27,6 +27,8 @@
 #include "node.hpp"
 #include "fso.hpp"
 
+using namespace DFF;
+
 class PartitionNode : public Node
 {
 private:

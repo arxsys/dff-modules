@@ -18,6 +18,8 @@
 
 #include <memory>
 
+#include "vfile.hpp"
+
 #include "include/Journal.h"
 #include "include/JournalType.h"
 

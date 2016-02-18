@@ -53,6 +53,7 @@
 #define GRAIN_SIZE 0x80
 #define GTE_PER_GT 0x200
 
+using namespace DFF;
 
 #pragma pack(1)
 typedef struct sparseExtentHeader

@@ -21,7 +21,7 @@ from struct import unpack
 from dff.api.module.script import Script 
 from dff.api.module.module import Module
 from dff.api.module.manager import ModuleProcessusHandler
-from dff.api.types.libtypes import Variant, VMap, VList, Argument, typeId, vtime, TIME_MS_64
+from dff.api.types.libtypes import Variant, VMap, VList, Argument, typeId, MS64DateTime
 from dff.api.vfs.libvfs import AttributesHandler, VFS
 
 from dff.modules.structparser import Struct, Header, ResolveAttributesMap, AttributesVMap
@@ -81,10 +81,10 @@ class PrefetchParser():
 
   PrefetchAttributesMap = {
 	"Version" : ("version_name", str),
-	"Last execution" : (("prefetch.LastExecutionTime", TIME_MS_64), vtime),
+	"Last execution" : ("prefetch.LastExecutionTime", MS64DateTime), #TIME_FIX
 	"Number of execution" : ("prefetch.NumberOfExecution", int),
 	"Prefetch list" : ("prefetchFileList", list),
-	"Volume creation" : (("prefetch.Standard.VolumeInformationBlock.VolumeCreationDate", TIME_MS_64), vtime),
+	"Volume creation" : ("prefetch.Standard.VolumeInformationBlock.VolumeCreationDate", MS64DateTime),
 	"Number of folder paths" : ("prefetch.Standard.VolumeInformationBlock.NumberOfFolderPaths", int),
 	"Serial number" : ("prefetch.Standard.VolumeInformationBlock.VolumeSerialNumber", int),
 	"Volume path" : ("volumePath", str),

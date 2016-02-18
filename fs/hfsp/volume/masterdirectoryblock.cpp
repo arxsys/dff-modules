@@ -156,7 +156,7 @@ vtime*		MasterDirectoryBlock::createDate()
   uint32_t	cdate;
 
   cdate = bswap32(this->__mdb.createDate);
-  return new HfsVtime(cdate);
+  return new HFSDateTime(cdate);
 }
 
 
@@ -165,7 +165,7 @@ vtime*		MasterDirectoryBlock::modifyDate()
   uint32_t	mdate;
 
   mdate = bswap32(this->__mdb.modifyDate);
-  return new HfsVtime(mdate);
+  return new HFSDateTime(mdate);
 }
   
 
@@ -227,7 +227,7 @@ vtime*		MasterDirectoryBlock::backupDate()
   uint32_t	bdate;
 
   bdate = bswap32(this->__mdb.backupDate);
-  return new HfsVtime(bdate);
+  return new HFSDateTime(bdate);
 }
 
 

@@ -38,7 +38,7 @@ void	MfsoAttrib::setAttrs(Inode * inode, Attributes * attr, uint64_t i_nb,
 {
   if (inode->delete_time())
       (*attr)["Deletion time"] =
-	Variant_p(new Variant(new vtime(inode->delete_time(), TIME_UNIX)));
+	Variant_p(new Variant(new vtime(inode->delete_time()))); //TIME_FIX
   if (!i_nb)
     return ;
   (*attr)["Number"] = Variant_p(new Variant(i_nb));

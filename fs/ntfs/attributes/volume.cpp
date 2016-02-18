@@ -18,6 +18,8 @@
 #include <iostream>
 #include <list>
 
+#include "vfile.hpp"
+
 #include "volume.hpp"
 #include "mftattribute.hpp"
 #include "mftentrynode.hpp"

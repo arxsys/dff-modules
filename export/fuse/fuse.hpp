@@ -16,32 +16,12 @@
 
 #ifndef __FUSE_HH__
 #define __FUSE_HH__
-#include <string>
-#include <iostream>
-#include <stdio.h>
-#include <list>
-#include "vfs.hpp"
-#include "mfso.hpp"
-#include "path.hpp"
-#include "variant.hpp"
 
 #define FUSE_USE_VERSION 26
-
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
 #include <fuse.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <dirent.h>
-#include <errno.h>
-#include <sys/time.h>
-#ifdef HAVE_SETXATTR
-#include <sys/xattr.h>
-#endif
+#include "mfso.hpp"
+
+using namespace DFF;
 
 class fuse : public mfso
 {

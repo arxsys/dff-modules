@@ -23,7 +23,7 @@ VOLATILITY_PATH = os.path.expanduser("~/sources/volatility-trunk")
 
 from dff.api.module.module import Module
 from dff.api.vfs.libvfs import mfso, AttributesHandler, Node, FileMapping
-from dff.api.types.libtypes import Variant, VMap, VList, typeId, Argument, Parameter, vtime, TIME_MS_64
+from dff.api.types.libtypes import Variant, VMap, VList, typeId, Argument, Parameter, vtime, MS64DateTime 
 
 from collections import namedtuple
 from sets import Set
@@ -150,12 +150,12 @@ class WinRootNode(Node):
                            vm = self._aspace)
             if k:
                stime = k.SystemTime
-               vtstime = vtime(stime.as_windows_timestamp(), TIME_MS_64)
+               vtstime = MS64DateTime(stime.as_windows_timestamp())
                vtstime.thisown = False
                attribs["Image date and time"] = Variant(vtstime)
                tz = timefmt.OffsetTzInfo(-k.TimeZoneBias.as_windows_timestamp() / 10000000)
                lsystime = stime.as_datetime().astimezone(tz)
-               vtlstime = vtime(lsystime.year, lsystime.month, lsystime.day, lsystime.hour, lsystime.minute, lsystime.second, 0)
+               vtlstime = vtime(lsystime.year, lsystime.month, lsystime.day, lsystime.hour, lsystime.minute, lsystime.second)
                vtlstime.thisown = False
                attribs["Image local date and time"] = Variant(vtlstime)
       else:

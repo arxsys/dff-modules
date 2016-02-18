@@ -17,7 +17,7 @@ import sys, traceback
 from struct import unpack
 
 from dff.api.vfs.libvfs import Node
-from dff.api.types.libtypes import Variant, VMap, VList, Argument, typeId, vtime, TIME_MS_64
+from dff.api.types.libtypes import Variant, VMap, VList, Argument, typeId
 
 from dff.modules.structparser import Struct, Header, ResolveAttributesMap, AttributesVMap
 

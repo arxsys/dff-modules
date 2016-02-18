@@ -13,9 +13,8 @@
  * Author(s):
  *  Solal Jacob <sja@digital-forensic.org>
  */
+#include "vfile.hpp"
 
-//#include <list>
-//#include <unicode/unistr.h>
 #include "indexroot.hpp"
 #include "mftattributecontent.hpp"
 #include "mftattribute.hpp"

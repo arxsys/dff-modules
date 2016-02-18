@@ -23,7 +23,11 @@
 
 #include "extfs_struct/directory_entry.h"
 
+namespace DFF
+{
 class VFile;
+}
+
 
 class	DirEntry
 {
@@ -89,7 +93,7 @@ public:
     \param vfile the vfs, necessary to seek and read
     \sa allocName
   */
-  void            read(uint64_t content_addr, VFile * vfile);
+  void            read(uint64_t content_addr, DFF::VFile * vfile);
 
   /*! \brief Next directory entry.
     \return what \e \b SHOULD be the size of the current dir entry.
