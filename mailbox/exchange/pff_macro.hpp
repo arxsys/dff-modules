@@ -56,7 +56,7 @@ maximum_entry_value_string_size, &pff_error); \
   result = func(item, &entry_value_64bit, &pff_error); \
   if (result != -1 && result != 0) \
   { \
-     vtime* 	value_time = new MS64DateTime(entry_value_64bit); \
+     DateTime* 	value_time = new MS64DateTime(entry_value_64bit); \
      Variant*  variant_time = new Variant(value_time); \
      (*attr)[key] = variant_time; \
   }\

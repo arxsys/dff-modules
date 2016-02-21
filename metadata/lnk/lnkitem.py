@@ -14,7 +14,7 @@
 
 from struct import unpack
 
-from dff.api.types.libtypes import vtime, MS64DateTime, DosDateTime 
+from dff.api.types.libtypes import MS64DateTime, DosDateTime 
 
 from dff.modules.structparser import FlagsList
 
@@ -67,7 +67,7 @@ def ItemFileUnicode(data, isUnicode = True):
    if size:
      directoryMap["size"] = (size, int)
    time, date = unpack("HH", data[6:10])
-   directoryMap["modified time"] = ((date, time,), DosDateTime) #XXX modified time ? TIME_FIX 
+   directoryMap["modified time"] = ((date, time,), DosDateTime)
    directoryMap["File attributes"] = (FlagsList(unpack("H", data[10:12])[0], FileAttributesFlags), list)
 
    data = data[12:]
@@ -150,7 +150,7 @@ def ItemWebFolder(data, isUnicode = True):
    idmap = {}	    
    data = data[6:]
    tm = unpack("<Q", data[:8])[0]
-   idmap["modified"] = (tm, MS64DateTime) #FIX ? TIME_FIX 
+   idmap["modified"] = (tm, MS64DateTime)
    data = data[20:]
    (name, size) = ShortSizeString(data, isUnicode) 
    idmap["name"] = (name, str)

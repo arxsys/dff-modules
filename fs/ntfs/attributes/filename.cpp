@@ -17,7 +17,7 @@
 #include <list>
 #include <unicode/unistr.h>
 
-#include "vtime.hpp"
+#include "datetime.hpp"
 #include "vfile.hpp"
 
 #include "filename.hpp"
@@ -119,22 +119,22 @@ uint16_t        FileName::parentSequence(void) const
   return (this->__fileName.parentSequence);
 }
 
-vtime*          FileName::creationTime(void) const
+DateTime*       FileName::creationTime(void) const
 {
   return (new MS64DateTime(this->__fileName.creationTime));
 }
 
-vtime*          FileName::modificationTime(void) const
+DateTime*       FileName::modificationTime(void) const
 {
   return (new MS64DateTime(this->__fileName.modificationTime));
 }
 
-vtime*          FileName::mftModificationTime(void) const
+DateTime*       FileName::mftModificationTime(void) const
 {
   return (new MS64DateTime(this->__fileName.mftModificationTime));
 }
 
-vtime*          FileName::accessedTime(void) const
+DateTime*       FileName::accessedTime(void) const
 {
   return (new MS64DateTime(this->__fileName.accessedTime));
 }

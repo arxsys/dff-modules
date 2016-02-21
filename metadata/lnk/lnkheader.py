@@ -337,7 +337,7 @@ LnkAttributesMap = {
        "LinkCLSID" : ("shellLink.LinkCLSID", str),
        "LinkFlags" : ("shellLink.LinkFlags", list),
        "FileAttributes": ("shellLink.FileAttributes", list),
-       "CreationTime" : ("shellLink.CreationTime", MS64DateTime), #TIME_FIX
+       "CreationTime" : ("shellLink.CreationTime", MS64DateTime),
        "AccessTime" : ("shellLink.AccessTime", MS64DateTime),
        "WriteTime" : ("shellLink.WriteTime", MS64DateTime),
        "FileSize" : ("shellLink.FileSize", int),

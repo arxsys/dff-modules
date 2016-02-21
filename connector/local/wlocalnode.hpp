@@ -25,7 +25,7 @@ using namespace DFF;
 class WLocalNode: public Node
 {
 private:
-  vtime*			wtimeToVtime(FILETIME *);
+  DateTime*			wtimeToDateTime(FILETIME *);
 public:
   std::string	originalPath;
   enum Type

@@ -16,7 +16,7 @@
 
 #include <list>
 
-#include "vtime.hpp"
+#include "datetime.hpp"
 #include "vfile.hpp"
 
 #include "standardinformation.hpp"
@@ -108,22 +108,22 @@ Attributes	StandardInformation::_attributes(void)
   return (attrs);
 }
 
-vtime*		StandardInformation::creationTime(void) const
+DateTime*	StandardInformation::creationTime(void) const
 {
   return (new MS64DateTime(this->__standardInformation.creationTime));
 }
 
-vtime*		StandardInformation::alteredTime(void) const
+DateTime*	StandardInformation::alteredTime(void) const
 {
   return (new MS64DateTime(this->__standardInformation.alteredTime));
 }
 
-vtime*		StandardInformation::mftAlteredTime(void) const
+DateTime*	StandardInformation::mftAlteredTime(void) const
 {
   return (new MS64DateTime(this->__standardInformation.mftAlteredTime));
 }
 
-vtime*		StandardInformation::accessedTime(void) const
+DateTime*	StandardInformation::accessedTime(void) const
 {
   return (new MS64DateTime(this->__standardInformation.accessedTime));
 }

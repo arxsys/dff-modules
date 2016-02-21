@@ -81,7 +81,7 @@ class PrefetchParser():
 
   PrefetchAttributesMap = {
 	"Version" : ("version_name", str),
-	"Last execution" : ("prefetch.LastExecutionTime", MS64DateTime), #TIME_FIX
+	"Last execution" : ("prefetch.LastExecutionTime", MS64DateTime),
 	"Number of execution" : ("prefetch.NumberOfExecution", int),
 	"Prefetch list" : ("prefetchFileList", list),
 	"Volume creation" : ("prefetch.Standard.VolumeInformationBlock.VolumeCreationDate", MS64DateTime),

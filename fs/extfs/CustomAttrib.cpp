@@ -46,13 +46,13 @@ void    CustomAttrib::setTime(Inode * _inode)
 void    CustomAttrib::setTime(time_t timestamp)
 {
 #ifndef WIN32
-  tm  * t;
+  //tm  * t;
 
-  time_t tmp = timestamp;
+  //time_t tmp = timestamp;
 
-  t = gmtime(&tmp);
-  //XXX not set anywhere TIME_FIX
-  //new vtime(t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
+  //t = gmtime(&tmp);
+  //XXX not set anywhere
+  //new DateTime(t->tm_year + 1900, t->tm_mon + 1, t->tm_mday,
   //t->tm_hour, t->tm_min, t->tm_sec, 0);
 #endif
 }

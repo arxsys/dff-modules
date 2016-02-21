@@ -274,9 +274,9 @@ Attributes	HfsCatalogFile::attributes()
 {
   Attributes		attrs;
 
-  attrs["created"] = new Variant(this->_timestampToVtime(this->__cfile.createDate));
-  attrs["modified"] = new Variant(this->_timestampToVtime(this->__cfile.modifyDate));
-  attrs["backup"] = new Variant(this->_timestampToVtime(this->__cfile.backupDate));
+  attrs["created"] = new Variant(this->_timestampToDateTime(this->__cfile.createDate));
+  attrs["modified"] = new Variant(this->_timestampToDateTime(this->__cfile.modifyDate));
+  attrs["backup"] = new Variant(this->_timestampToDateTime(this->__cfile.backupDate));
   return attrs;
 }
 
@@ -342,9 +342,9 @@ Attributes	HfsCatalogFolder::attributes()
 {
   Attributes		attrs;
 
-  attrs["created"] = new Variant(this->_timestampToVtime(this->__cfolder.createDate));
-  attrs["modified"] = new Variant(this->_timestampToVtime(this->__cfolder.modifyDate));
-  attrs["backup"] = new Variant(this->_timestampToVtime(this->__cfolder.backupDate));
+  attrs["created"] = new Variant(this->_timestampToDateTime(this->__cfolder.createDate));
+  attrs["modified"] = new Variant(this->_timestampToDateTime(this->__cfolder.modifyDate));
+  attrs["backup"] = new Variant(this->_timestampToDateTime(this->__cfolder.backupDate));
   return attrs;
 }
 

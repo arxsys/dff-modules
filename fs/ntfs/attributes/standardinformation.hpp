@@ -45,10 +45,10 @@ private:
 public:
 		        StandardInformation(MFTAttribute* mftAttribute);
 			~StandardInformation();
-  vtime*		creationTime(void) const;
-  vtime*		alteredTime(void) const;
-  vtime*		mftAlteredTime(void) const;
-  vtime*		accessedTime(void) const;
+  DateTime*		creationTime(void) const;
+  DateTime*		alteredTime(void) const;
+  DateTime*		mftAlteredTime(void) const;
+  DateTime*		accessedTime(void) const;
   std::list<Variant_p>	flags(void) const;
   uint32_t		versionsMaximumNumber(void) const;
   uint32_t		versionNumber(void) const;

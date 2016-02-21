@@ -151,7 +151,7 @@ uint16_t	MasterDirectoryBlock::signature()
 }
 
 
-vtime*		MasterDirectoryBlock::createDate()
+DateTime*	MasterDirectoryBlock::createDate()
 {
   uint32_t	cdate;
 
@@ -160,7 +160,7 @@ vtime*		MasterDirectoryBlock::createDate()
 }
 
 
-vtime*		MasterDirectoryBlock::modifyDate()
+DateTime*	MasterDirectoryBlock::modifyDate()
 {
   uint32_t	mdate;
 
@@ -222,7 +222,7 @@ std::string	MasterDirectoryBlock::volumeName()
 }
 
 
-vtime*		MasterDirectoryBlock::backupDate()
+DateTime*	MasterDirectoryBlock::backupDate()
 {
   uint32_t	bdate;
 

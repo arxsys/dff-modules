@@ -112,8 +112,8 @@ class DataThread(QThread):
                       break
                     except TypeError:
                       break
-                    if a.type() == typeId.VTime and a.value() != None:
-                      d = a.value().asPyDateTime() #TIME_FIX
+                    if a.type() == typeId.DateTime and a.value() != None:
+                      d = a.value().asPyDateTime() 
                       if d.year == 0 and d.month == 0 and d.day == 0:
                         continue
                       try:

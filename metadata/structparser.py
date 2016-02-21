@@ -16,7 +16,7 @@ import sys, traceback
 from struct import unpack
 
 from dff.api.vfs.libvfs import VLink
-from dff.api.types.libtypes import Variant, VMap, VList, Argument, typeId, vtime, MS64DateTime, DosDateTime 
+from dff.api.types.libtypes import Variant, VMap, VList, Argument, typeId, DateTime, MS64DateTime, DosDateTime 
 
 def getRecAttr(parent, attr):
    for attr in attr.split('.'):
@@ -52,8 +52,8 @@ def ResolveAttributesMap(obj, attributesMap):
    return attr
 
 def attributesTypes(values, types):
-   if (types == vtime):  #TIME_FIX FIX_TIME 
-     val = vtime(values)
+   if (types == DateTime):
+     val = DateTime(values)
      val.thisown = False
    elif (types == MS64DateTime):
      val = MS64DateTime(values)

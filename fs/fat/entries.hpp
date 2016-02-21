@@ -107,9 +107,9 @@ typedef struct	s_decodedentry
   bool		archive;
   bool		deleted;
   bool		orphaned;
-  vtime*	mtime;
-  vtime*	atime;
-  vtime*	ctime;
+  DateTime*	mtime;
+  DateTime*	atime;
+  DateTime*	ctime;
   uint32_t	cluster;
   uint32_t	size;
   uint64_t	lfnstart;

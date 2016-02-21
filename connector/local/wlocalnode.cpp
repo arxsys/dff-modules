@@ -47,22 +47,22 @@ Attributes		WLocalNode::_attributes(void)
   if (!GetFileAttributesExA(this->originalPath.c_str(), GetFileExInfoStandard, &info))
     return (attr);
 	
-  attr["modified"] = Variant_p(new Variant(this->wtimeToVtime(&(info.ftLastWriteTime))));
-  attr["accessed"] = Variant_p(new Variant(this->wtimeToVtime(&(info.ftLastAccessTime))));
-  attr["creation"] = Variant_p(new Variant(this->wtimeToVtime(&(info.ftCreationTime))));
+  attr["modified"] = Variant_p(new Variant(this->wtimeToDateTime(&(info.ftLastWriteTime))));
+  attr["accessed"] = Variant_p(new Variant(this->wtimeToDateTime(&(info.ftLastAccessTime))));
+  attr["creation"] = Variant_p(new Variant(this->wtimeToDateTime(&(info.ftCreationTime))));
 
   return (attr);
 }
 
 
-vtime*				WLocalNode::wtimeToVtime(FILETIME *tt)
+DateTime*				WLocalNode::wtimeToDateTime(FILETIME *tt)
 {
   if (tt == NULL)
-    return (new vtime(0));
+    return (new DateTime(0));
 
   SYSTEMTIME	st;
   if (FileTimeToSystemTime(tt, &st) == 0)
-    return (new vtime(0));
+    return (new DateTime(0));
 
-  return (new vtime(st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond));
+  return (new DateTime(st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond));
 }

@@ -49,7 +49,7 @@ int             AffNode::addSegmentAttribute(DFF::Attributes* vmap, AFFILE* af, 
         //int minutes = (arg / 60) % 60;
         //int seconds = arg % 60;
 
-        //vtime*	time = new vtime;
+        //DateTime*	time = new DateTime;
         //time->hour = hours;
         //time->minute = minutes;
         //time->second = seconds;

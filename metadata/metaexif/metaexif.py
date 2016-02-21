@@ -23,7 +23,7 @@ from PIL.ExifTags import TAGS
 from dff.api.module.script import Script 
 from dff.api.module.module import Module
 from dff.api.module.manager import ModuleProcessusHandler
-from dff.api.types.libtypes import Variant, VMap, VList, Argument, typeId, vtime
+from dff.api.types.libtypes import Variant, VMap, VList, Argument, typeId, DateTime 
 from dff.api.vfs.libvfs import AttributesHandler, VFS
 
 class EXIFHandler(AttributesHandler, ModuleProcessusHandler):
@@ -78,7 +78,7 @@ class EXIFHandler(AttributesHandler, ModuleProcessusHandler):
 	    dt = strptime(values[:-6], "%Y-%m-%dT%H:%M:%S")
 	  except ValueError:
 	    dt = strptime(values.rstrip(' '),  "%a %b %d %H:%M:%S")
-	vt = vtime(dt.tm_year, dt.tm_mon, dt.tm_mday, dt.tm_hour, dt.tm_min, dt.tm_sec, 0)
+	vt = DateTime(dt.tm_year, dt.tm_mon, dt.tm_mday, dt.tm_hour, dt.tm_min, dt.tm_sec)
         vt.thisown = False
 	attr[decoded] = Variant(vt) 	
        except Exception as e:

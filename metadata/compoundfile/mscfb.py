@@ -349,7 +349,7 @@ class DirectoryEntry(Node, Struct):
   AttributesMap = {
    "Object type" : ("objectType", str),
    "CLSID" : ("CLSID", str),
-   "Creation time" : ("creationTime", MS64DateTime), #TIME_FIX FIX_TIME ?
+   "Creation time" : ("creationTime", MS64DateTime),
    "Modified time" : ("modifiedTime", MS64DateTime),
    "Starting sector" : ("startingSectorLocation", int),
    "Child ID" : ("childID", int),

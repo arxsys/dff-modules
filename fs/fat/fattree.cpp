@@ -14,7 +14,7 @@
  *  Frederic Baguelin <fba@digital-forensic.org>
  */
 
-#include "vtime.hpp"
+#include "datetime.hpp"
 #include "exceptions.hpp"
 
 #include "fattree.hpp"
@@ -603,9 +603,9 @@ Attributes		FatTree::attributes(FatNode* fnode)
 	    }
 	  dos = em->toDos(entry);
 	  free(entry);
-	  attr["modified"] = Variant_p(new Variant(new DosDateTime(dos->mtime, dos->mdate))); //TIME_FIX
-	  attr["accessed"] = Variant_p(new Variant(new DosDateTime(0, dos->adate))); //TIME_FIX
-	  attr["created"] = Variant_p(new Variant(new DosDateTime(dos->ctime, dos->cdate))); //TIME_FIX
+	  attr["modified"] = Variant_p(new Variant(new DosDateTime(dos->mtime, dos->mdate)));
+	  attr["accessed"] = Variant_p(new Variant(new DosDateTime(0, dos->adate)));
+	  attr["created"] = Variant_p(new Variant(new DosDateTime(dos->ctime, dos->cdate)));
 	  attr["dos name (8+3)"] = Variant_p(new Variant(em->formatDosname(dos)));
 	  attr["Read Only"] = Variant_p(new Variant(bool(dos->attributes & ATTR_READ_ONLY)));
 	  attr["Hidden"] = Variant_p(new Variant(bool(dos->attributes & ATTR_HIDDEN)));

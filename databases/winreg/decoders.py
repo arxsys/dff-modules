@@ -15,13 +15,13 @@
 import string
 from struct import unpack
 
-from dff.api.types.libtypes import Argument, typeId, vtime, MS64DateTime
+from dff.api.types.libtypes import Argument, typeId, DateTime, MS64DateTime
 
 #class DateDecoder():
 #    def __init__(self, data, keyname):
 #        self.data = None
 #        if str(keyname) == 'InstallDate':
-#        self.data = str(vtime(data, TIME_UNIX))
+#        self.data = str(DateTime(data, TIME_UNIX))
 #        else:
 #         self.data = data
 
@@ -32,9 +32,9 @@ class DateDecoder():
     def __init__(self, data):
         self.data = data
         if type(data) == bytearray:
-            self.data = str(MS64DateTime(unpack('Q', str(data))[0])) #TIME_FIX
+            self.data = str(MS64DateTime(unpack('Q', str(data))[0]))
         else:
-            self.data = str(vtime(data))
+            self.data = str(DateTime(data))
 
     def decode(self):
         return self.data

@@ -108,7 +108,7 @@ void		CatalogData::process(uint8_t* buffer, uint16_t size) throw (std::string)
 }
 
 
-vtime*		CatalogData::_timestampToVtime(uint32_t timestamp)
+DateTime*	CatalogData::_timestampToDateTime(uint32_t timestamp)
 {
   uint32_t	date;
 

@@ -21,7 +21,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#include "vtime.hpp"
+#include "datetime.hpp"
 #include "exceptions.hpp"
 #include "variant.hpp"
 
@@ -36,9 +36,9 @@ Attributes	ULocalNode::_attributes()
     vmap["uid"] =  Variant_p(new Variant(st->st_uid));
     vmap["gid"] =  Variant_p(new Variant(st->st_gid));
     vmap["inode"] = Variant_p(new Variant(st->st_ino));
-    vmap["modified"] = Variant_p(new Variant(new vtime(st->st_mtime)));
-    vmap["accessed"] = Variant_p(new Variant(new vtime(st->st_atime)));
-    vmap["changed"] = Variant_p(new Variant(new vtime(st->st_ctime)));
+    vmap["modified"] = Variant_p(new Variant(new DateTime(st->st_mtime)));
+    vmap["accessed"] = Variant_p(new Variant(new DateTime(st->st_atime)));
+    vmap["changed"] = Variant_p(new Variant(new DateTime(st->st_ctime)));
     free(st);
   }
 

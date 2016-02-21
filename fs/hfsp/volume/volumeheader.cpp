@@ -137,7 +137,7 @@ uint32_t	VolumeHeader::journalInfoBlock()
 }
 
 
-vtime*		VolumeHeader::createDate()
+DateTime*       VolumeHeader::createDate()
 {
   uint32_t	cdate;
 
@@ -146,7 +146,7 @@ vtime*		VolumeHeader::createDate()
 }
 
 
-vtime*		VolumeHeader::modifyDate()
+DateTime*	VolumeHeader::modifyDate()
 {
   uint32_t	mdate;
     
@@ -155,7 +155,7 @@ vtime*		VolumeHeader::modifyDate()
 }
 
 
-vtime*		VolumeHeader::backupDate()
+DateTime*	VolumeHeader::backupDate()
 {
   uint32_t	bdate;
 
@@ -164,7 +164,7 @@ vtime*		VolumeHeader::backupDate()
 }
 
 
-vtime*		VolumeHeader::checkedDate()
+DateTime*	VolumeHeader::checkedDate()
 {
   uint32_t	chkdate;
 

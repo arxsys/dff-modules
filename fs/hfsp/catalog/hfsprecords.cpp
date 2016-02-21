@@ -302,11 +302,11 @@ Attributes	HfspCatalogFile::attributes()
   Attributes		aperms;
   HfspPermissions*	perms;
 
-  attrs["created"] = new Variant(this->_timestampToVtime(this->__cfile.createDate));
-  attrs["content modified"] = new Variant(this->_timestampToVtime(this->__cfile.contentModDate));
-  attrs["attribute modified"] = new Variant(this->_timestampToVtime(this->__cfile.attributeModDate));
-  attrs["accessed"] = new Variant(this->_timestampToVtime(this->__cfile.accessDate));
-  attrs["backup"] = new Variant(this->_timestampToVtime(this->__cfile.backupDate));
+  attrs["created"] = new Variant(this->_timestampToDateTime(this->__cfile.createDate));
+  attrs["content modified"] = new Variant(this->_timestampToDateTime(this->__cfile.contentModDate));
+  attrs["attribute modified"] = new Variant(this->_timestampToDateTime(this->__cfile.attributeModDate));
+  attrs["accessed"] = new Variant(this->_timestampToDateTime(this->__cfile.accessDate));
+  attrs["backup"] = new Variant(this->_timestampToDateTime(this->__cfile.backupDate));
   perms = new HfspPermissions();
   perms->process(this->__cfile.permissions);
   aperms = perms->attributes();
@@ -378,11 +378,11 @@ Attributes	HfspCatalogFolder::attributes()
   Attributes		aperms;
   HfspPermissions*	perms;
 
-  attrs["created"] = new Variant(this->_timestampToVtime(this->__cfolder.createDate));
-  attrs["content modified"] = new Variant(this->_timestampToVtime(this->__cfolder.contentModDate));
-  attrs["attribute modified"] = new Variant(this->_timestampToVtime(this->__cfolder.attributeModDate));
-  attrs["accessed"] = new Variant(this->_timestampToVtime(this->__cfolder.accessDate));
-  attrs["backup"] = new Variant(this->_timestampToVtime(this->__cfolder.backupDate));
+  attrs["created"] = new Variant(this->_timestampToDateTime(this->__cfolder.createDate));
+  attrs["content modified"] = new Variant(this->_timestampToDateTime(this->__cfolder.contentModDate));
+  attrs["attribute modified"] = new Variant(this->_timestampToDateTime(this->__cfolder.attributeModDate));
+  attrs["accessed"] = new Variant(this->_timestampToDateTime(this->__cfolder.accessDate));
+  attrs["backup"] = new Variant(this->_timestampToDateTime(this->__cfolder.backupDate));
   perms = new HfspPermissions();
   perms->process(this->__cfolder.permissions);
   aperms = perms->attributes(); 
