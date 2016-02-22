@@ -14,6 +14,7 @@
  *  Frederic Baguelin <fba@digital-forensic.org>
  */
 
+#include "exceptions.hpp"
 
 #include "hfsp.hpp"
 #include "hfshandlers.hpp"

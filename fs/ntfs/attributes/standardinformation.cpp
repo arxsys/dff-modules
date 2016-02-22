@@ -15,6 +15,10 @@
  */
 
 #include <list>
+
+#include "datetime.hpp"
+#include "vfile.hpp"
+
 #include "standardinformation.hpp"
 #include "mftattributecontent.hpp"
 #include "mftattribute.hpp"
@@ -104,24 +108,24 @@ Attributes	StandardInformation::_attributes(void)
   return (attrs);
 }
 
-vtime*		StandardInformation::creationTime(void) const
+DateTime*	StandardInformation::creationTime(void) const
 {
-  return (new vtime(this->__standardInformation.creationTime, TIME_MS_64));
+  return (new MS64DateTime(this->__standardInformation.creationTime));
 }
 
-vtime*		StandardInformation::alteredTime(void) const
+DateTime*	StandardInformation::alteredTime(void) const
 {
-  return (new vtime(this->__standardInformation.alteredTime, TIME_MS_64));
+  return (new MS64DateTime(this->__standardInformation.alteredTime));
 }
 
-vtime*		StandardInformation::mftAlteredTime(void) const
+DateTime*	StandardInformation::mftAlteredTime(void) const
 {
-  return (new vtime(this->__standardInformation.mftAlteredTime, TIME_MS_64));
+  return (new MS64DateTime(this->__standardInformation.mftAlteredTime));
 }
 
-vtime*		StandardInformation::accessedTime(void) const
+DateTime*	StandardInformation::accessedTime(void) const
 {
-  return (new vtime(this->__standardInformation.accessedTime, TIME_MS_64));
+  return (new MS64DateTime(this->__standardInformation.accessedTime));
 }
 
 std::list<Variant_p>	StandardInformation::flags(void) const

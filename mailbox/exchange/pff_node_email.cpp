@@ -15,6 +15,7 @@
  */
 
 #include "pff.hpp"
+#include "fdmanager.hpp"
 
 PffNodeEMail::PffNodeEMail(std::string name, Node* parent, pff* fsobj) : PffNodeData(name, parent, fsobj)
 {

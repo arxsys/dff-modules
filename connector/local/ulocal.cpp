@@ -15,6 +15,7 @@
  */
 
 #include "local.hpp"
+
 #include <fcntl.h>
 #include <dirent.h>
 #include <sys/types.h>
@@ -25,6 +26,10 @@
 #include <iostream>
 #include <sstream>
 #include <errno.h>
+
+#include "path.hpp"
+#include "vfs.hpp"
+#include "exceptions.hpp"
 
 local::local(): fso("local"), nfd(0), parent(NULL)
 {

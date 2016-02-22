@@ -13,6 +13,7 @@
  * Author(s):
  *  Solal Jacob <sja@digital-forensic.org>
  */
+#include "vfile.hpp"
 
 #include "indexentry.hpp"
 

@@ -16,6 +16,8 @@
  *
  */
 
+#include "filemapping.hpp"
+
 #include "extfs.hpp"
 #include "include/ExtfsRawDataNode.h"
 

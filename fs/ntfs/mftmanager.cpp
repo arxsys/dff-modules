@@ -12,7 +12,7 @@
  * Author(s):
  *  Solal Jacob <sja@digital-forensic.org>
  */
-
+#include "vfile.hpp"
 #include "vlink.hpp"
 
 #include "mftmanager.hpp"
@@ -419,7 +419,6 @@ void    MFTEntryManager::linkOrphanEntries(void)
         }
         else  //we forgot this one : no parent is found but can be a tree of files 
           this->__ntfs->orphansNode()->addChild(*dataNode);
- 
         delete fileName;
       }
       else

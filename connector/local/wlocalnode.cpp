@@ -20,7 +20,7 @@
 WLocalNode::WLocalNode(std::string Name, uint64_t size, Node* parent, fso* fsobj, uint8_t type, std::string origPath): Node(Name, size, parent, fsobj)
 {
   switch (type)
-    {
+  {
     case DIR:
       this->setDir();
       break;
@@ -29,7 +29,7 @@ WLocalNode::WLocalNode(std::string Name, uint64_t size, Node* parent, fso* fsobj
       break;
     default:
       break;
-    }
+  }
   this->originalPath = origPath;
 }
 
@@ -37,45 +37,32 @@ WLocalNode::~WLocalNode()
 {
 }
 
-
 Attributes		WLocalNode::_attributes(void)
 {
-	WIN32_FILE_ATTRIBUTE_DATA	info;
-	Attributes					attr;
+  WIN32_FILE_ATTRIBUTE_DATA	info;
+  Attributes                    attr;
    
 	
-	attr["original path"] = Variant_p(new Variant(this->originalPath));
-    if(!GetFileAttributesExA(this->originalPath.c_str(), GetFileExInfoStandard, &info))
-		return attr;
+  attr["original path"] = Variant_p(new Variant(this->originalPath));
+  if (!GetFileAttributesExA(this->originalPath.c_str(), GetFileExInfoStandard, &info))
+    return (attr);
 	
-    attr["modified"] = Variant_p(new Variant(this->wtimeToVtime(&(info.ftLastWriteTime))));
-    attr["accessed"] = Variant_p(new Variant(this->wtimeToVtime(&(info.ftLastAccessTime))));
-    attr["creation"] = Variant_p(new Variant(this->wtimeToVtime(&(info.ftCreationTime))));
-    return attr;
+  attr["modified"] = Variant_p(new Variant(this->wtimeToDateTime(&(info.ftLastWriteTime))));
+  attr["accessed"] = Variant_p(new Variant(this->wtimeToDateTime(&(info.ftLastAccessTime))));
+  attr["creation"] = Variant_p(new Variant(this->wtimeToDateTime(&(info.ftCreationTime))));
+
+  return (attr);
 }
 
 
-vtime*				WLocalNode::wtimeToVtime(FILETIME *tt)
+DateTime*				WLocalNode::wtimeToDateTime(FILETIME *tt)
 {
-	SYSTEMTIME	stUTC;
-	vtime*	vt = new vtime;
+  if (tt == NULL)
+    return (new DateTime(0));
 
-	if (tt == NULL)
-		return vt;
-		
-	if (FileTimeToSystemTime(tt, &stUTC) == 0)
-		return vt;
+  SYSTEMTIME	st;
+  if (FileTimeToSystemTime(tt, &st) == 0)
+    return (new DateTime(0));
 
-  	vt->year = stUTC.wYear;
-	vt->month = stUTC.wMonth;
-	vt->day = stUTC.wDay;
-	vt->hour = stUTC.wHour;
-	vt->minute = stUTC.wMinute;
-	vt->second = stUTC.wSecond;
-	vt->dst = 0;
-	vt->wday = stUTC.wDayOfWeek;
-	vt->yday = 0;
-	vt->usecond = stUTC.wMilliseconds;
-
-	return vt;
+  return (new DateTime(st.wYear, st.wMonth, st.wDay, st.wHour, st.wMinute, st.wSecond));
 }

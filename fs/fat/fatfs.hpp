@@ -21,13 +21,12 @@
 
 #include "variant.hpp"
 #include "mfso.hpp"
-#include "node.hpp"
 
 #include "bootsector.hpp"
 #include "fat.hpp"
 #include "fattree.hpp"
 
-class Fatfs : public mfso
+class Fatfs : public DFF::mfso
 {
 private:
   uint8_t	__fat_to_use;

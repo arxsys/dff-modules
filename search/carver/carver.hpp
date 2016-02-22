@@ -26,7 +26,9 @@
 //Let the possibility to modify the matching footer or to dynamically set the window
 //representing the carved file.
 
-class CarvedNode: public Node
+using namespace DFF;
+
+class CarvedNode: public DFF::Node
 {
 private:
   uint64_t	__start;
@@ -39,7 +41,7 @@ public:
   virtual void	fileMapping(class FileMapping* fm);
 };
 
-class Carver: public mfso, public EventHandler
+class Carver: public DFF::mfso, public DFF::EventHandler
 {
 private:
   Node			*inode;

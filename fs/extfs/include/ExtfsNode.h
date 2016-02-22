@@ -25,6 +25,8 @@
 #include "data_structure/includes/extfs_struct/ext4/extents.h"
 #include "node.hpp"
 
+using namespace DFF;
+
 class Extfs;
 class Inode;
 

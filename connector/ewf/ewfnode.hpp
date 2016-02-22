@@ -17,9 +17,10 @@
 #ifndef __EWFNODE_HPP__
 #define __EWFNODE_HPP__
 
-#include "typesconv.hpp"
 #include "ewf.hpp"
-#include <iostream>
+#include "node.hpp"
+
+using namespace DFF;
 
 class EWFNode : public Node
 {

@@ -15,6 +15,8 @@
  */
 #include <iostream>
 
+#include "vfile.hpp"
+
 #include "objectid.hpp"
 #include "mftattribute.hpp"
 #include "mftentrynode.hpp"

@@ -19,6 +19,8 @@
 #include <time.h>
 #include <string.h>
 
+#include "exceptions.hpp"
+#include "link.hpp"
 #include "vmware.hpp"
 #include "vmdk.hpp"
 #include "diskDescriptor.hpp"

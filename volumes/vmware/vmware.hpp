@@ -19,29 +19,15 @@
 #ifndef __VMWARE_HPP__
 #define __VMWARE_HPP__
 
-#include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <string>
-#include <sstream>
-
 #include <list>
-//#include <algorithm> // remove function in string operations
 
-
-#include "vfs.hpp"
-#include "node.hpp"
-#include "vfile.hpp"
-#include "vmnode.hpp"
-#include "link.hpp"
-#include "variant.hpp"
-//#include "swap.hpp"
-#include "mfso.hpp"
-#include "vlink.hpp"
 #include "vmdk.hpp"
+#include "vmnode.hpp"
+#include "mfso.hpp"
 
-class	VMware : public mfso
+class Link;
+
+class	VMware : public DFF::mfso
 {
 public:
   VMware();

@@ -192,10 +192,10 @@ class LS(Script):
       attrlen = 3 # N/A
       val = node.attributesByName(attr, ABSOLUTE_ATTR_NAME)
       if len(val):
-        if val[0].type() == typeId.VTime:
-          vtime = val[0].value()
-          if vtime:
-            attrlen = len(str(vtime.get_time()))
+        if val[0].type() == typeId.DateTime:
+          dateTime = val[0].value()
+          if dateTime:
+            attrlen = len(str(dateTime))
         else:
           attrlen = len(val[0].toString())
       if attrlen > lstat.extattrs[attr]:
@@ -209,10 +209,10 @@ class LS(Script):
       attrval = "N/A"
       val = node.attributesByName(attr, ABSOLUTE_ATTR_NAME)
       if len(val):
-        if val[0].type() == typeId.VTime:
-          vtime = val[0].value()
-          if vtime:
-            attrval = str(vtime.get_time())
+        if val[0].type() == typeId.DateTime:
+          DateTime = val[0].value()
+          if DateTime:
+            attrval = str(DateTime)
         else:
           attrval = val[0].toString()
       lattrs.append(attrval)

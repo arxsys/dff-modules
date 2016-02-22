@@ -53,10 +53,10 @@ public:
 			~FileName();
   uint64_t		parentMFTEntryId(void) const;
   uint16_t              parentSequence(void) const;
-  vtime*		creationTime(void) const;
-  vtime*		modificationTime(void) const;
-  vtime*		mftModificationTime(void) const;
-  vtime*		accessedTime(void) const;
+  DateTime*		creationTime(void) const;
+  DateTime*		modificationTime(void) const;
+  DateTime*		mftModificationTime(void) const;
+  DateTime*		accessedTime(void) const;
   uint64_t		allocatedSize(void) const;
   uint64_t		realSize(void) const;
   std::list<Variant_p>	flags(void) const;

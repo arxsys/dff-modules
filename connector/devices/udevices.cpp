@@ -14,7 +14,9 @@
  *  Solal Jacob <sja@digital-forensic.org>
  */
 
+#include "path.hpp"
 #include "devices.hpp"
+
 #include <fcntl.h>
 #include <dirent.h>
 #include <sys/types.h>

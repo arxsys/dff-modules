@@ -13,9 +13,17 @@
  * Author(s):
  *  Solal Jacob <sja@digital-forensic.org>
  */
+#include <string>
+#include <iostream>
+#include <stdlib.h>
 
 #include "ewf.hpp"
 #include "ewfnode.hpp"
+
+#include "vfs.hpp"
+#include "path.hpp"
+#include "fdmanager.hpp"
+#include "node.hpp"
 
 ewf::ewf() : fso("ewf"), parent(NULL), __fdm(new FdManager), volumeSize(0), files(NULL), nfiles(0), __ewf_error(NULL), ewf_ghandle(NULL)
 {

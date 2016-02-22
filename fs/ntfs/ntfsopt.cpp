@@ -15,9 +15,11 @@
  */
 
 #include "ntfsopt.hpp"
+#include "node.hpp"
+#include "variant.hpp"
 
 
-NTFSOpt::NTFSOpt(Attributes args, Destruct::DStruct* dstruct) : DCppObject<NTFSOpt>(dstruct), __validateBootSector(false), __recovery(false), __fsNode(NULL) 
+NTFSOpt::NTFSOpt(DFF::Attributes args, Destruct::DStruct* dstruct) : DCppObject<NTFSOpt>(dstruct), __validateBootSector(false), __recovery(false), __fsNode(NULL) 
 {
   Attributes::iterator arg;
   this->init();
@@ -28,7 +30,7 @@ NTFSOpt::NTFSOpt(Attributes args, Destruct::DStruct* dstruct) : DCppObject<NTFSO
     this->__fsNode = new NodeContainer(Destruct::DStructs::instance().find("NodeContainer"), node);
   }
   else
-    throw envError("NTFS module need a file argument.");
+    throw DFF::envError("NTFS module need a file argument.");
   if (args.find("no-bootsector-check") != args.end())
     this->__validateBootSector = false;
   if (args.find("recovery") != args.end())
@@ -52,7 +54,7 @@ NTFSOpt::~NTFSOpt(void)
 {
 }
 
-Node*           NTFSOpt::fsNode(void) const
+DFF::Node*      NTFSOpt::fsNode(void) const
 {
   return (static_cast<NodeContainer*>(static_cast<Destruct::DObject*>(this->__fsNode))->node());
 }

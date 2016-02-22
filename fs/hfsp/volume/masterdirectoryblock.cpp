@@ -151,21 +151,21 @@ uint16_t	MasterDirectoryBlock::signature()
 }
 
 
-vtime*		MasterDirectoryBlock::createDate()
+DateTime*	MasterDirectoryBlock::createDate()
 {
   uint32_t	cdate;
 
   cdate = bswap32(this->__mdb.createDate);
-  return new HfsVtime(cdate);
+  return new HFSDateTime(cdate);
 }
 
 
-vtime*		MasterDirectoryBlock::modifyDate()
+DateTime*	MasterDirectoryBlock::modifyDate()
 {
   uint32_t	mdate;
 
   mdate = bswap32(this->__mdb.modifyDate);
-  return new HfsVtime(mdate);
+  return new HFSDateTime(mdate);
 }
   
 
@@ -222,12 +222,12 @@ std::string	MasterDirectoryBlock::volumeName()
 }
 
 
-vtime*		MasterDirectoryBlock::backupDate()
+DateTime*	MasterDirectoryBlock::backupDate()
 {
   uint32_t	bdate;
 
   bdate = bswap32(this->__mdb.backupDate);
-  return new HfsVtime(bdate);
+  return new HFSDateTime(bdate);
 }
 
 

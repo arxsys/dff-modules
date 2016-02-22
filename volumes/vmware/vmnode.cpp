@@ -15,7 +15,9 @@
  *  Jeremy MOUNIER <jmo@digital-forensic.org>
  */
 
+#include "exceptions.hpp"
 #include "vmnode.hpp"
+#include "filemapping.hpp"
 
 VMNode::VMNode(std::string Name, uint64_t size, Node* parent, VMware* vm, Link *lnk): Node(Name, size, parent, vm)
 {

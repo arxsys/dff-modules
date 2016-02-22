@@ -79,14 +79,14 @@ private:
   RealValue<DUInt8>         __version;
 };
 
-class NTFS : public mfso
+class NTFS : public DFF::mfso
 {
 private:
   MFTEntryManager       __mftManager;
   NTFSOpt*              __opt;
   BootSectorNode*       __bootSectorNode;
-  Node*                 __rootDirectoryNode;
-  Node*                 __orphansNode;
+  DFF::Node*            __rootDirectoryNode;
+  DFF::Node*            __orphansNode;
   Unallocated*          __unallocatedNode;
 public:
                         NTFS();
@@ -94,7 +94,7 @@ public:
 
   static                void declare(void); // # XXX ///called from Python Module 
 
-  void                  start(Attributes args);
+  void                  start(DFF::Attributes args);
   bool                  load(DValue value);
   DValue                save(void) const;
   DValue                saveTree(Node* node) const;
@@ -102,10 +102,10 @@ public:
 
   void                  setStateInfo(const std::string&);
   NTFSOpt*              opt(void) const;
-  Node*                 fsNode(void) const;
-  Node*                 rootDirectoryNode(void) const;
+  DFF::Node*            fsNode(void) const;
+  DFF::Node*            rootDirectoryNode(void) const;
   BootSectorNode*       bootSectorNode(void) const;
-  Node*                 orphansNode(void) const;
+  DFF::Node*            orphansNode(void) const;
   Unallocated*          unallocatedNode(void) const;
   MFTEntryManager&      mftManager(void); 
   const MFTEntryManager&      mftManager(void) const;

@@ -16,7 +16,7 @@ import traceback
 
 from dff.api.vfs.libvfs import Node, FileMapping
 from dff.api.vfs.vfs import vfs
-from dff.api.types.libtypes import VMap, Variant, VList, vtime, TIME_MS_64, typeId
+from dff.api.types.libtypes import VMap, Variant, VList, MS64DateTime, typeId
 
 import volatility.constants as constants
 import volatility.obj as obj
@@ -253,14 +253,14 @@ class WinProcNode(WinMapper):
     def _setTimestamp(self, obj, attrs):
         if obj.ExitTime:
             exit_datetime = obj.ExitTime.as_windows_timestamp()
-            vt = vtime(exit_datetime, TIME_MS_64)
+            vt = MS64DateTime(exit_datetime)
             vt.thisown = False
             attrs["State"] = Variant("Exited")
             attrs["Exit time"] = Variant(vt)
         else:
             attrs["State"] = Variant("Running")
         create_datetime = obj.CreateTime.as_windows_timestamp()
-        vt = vtime(create_datetime, TIME_MS_64)
+        vt = MS64DateTime(create_datetime)
         vt.thisown = False
         attrs["Create time"] = Variant(vt)
 
@@ -321,7 +321,7 @@ class WinProcNode(WinMapper):
                 conn["Protocol type"] = Variant(conn_obj.type)
                 if conn_obj.ctime is not None:
                     create_datetime = conn_obj.ctime.as_windows_timestamp()
-                    vt = vtime(create_datetime, TIME_MS_64)
+                    vt = MS64DateTime(create_datetime)
                     vt.thisown = False
                     conn["Create time"] = Variant(vt)
                 if conn_obj.remoteAddr is not None:

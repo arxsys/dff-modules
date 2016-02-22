@@ -16,10 +16,12 @@
  *
  */
 
+#include "exceptions.hpp"
 #include "extent.hpp"
 
+#include "node.hpp"
 
-Extent::Extent(Node *nd, uint32_t id) : vmdk(nd), id(id), footer(false), compression(0)
+Extent::Extent(DFF::Node *nd, uint32_t id) : vmdk(nd), id(id), footer(false), compression(0)
 {
   this->vfile = this->vmdk->open();
   this->readSparseHeader();
@@ -80,7 +82,7 @@ int	Extent::createBackupHeader(int type)
   
   unsigned int	GTentry;
 
-  printf("Reconstruct Extent\n");
+  //std::cout << "Reconstruct Extent" << std::endl;
 
   //  this->id = _extents.size();
   this->version = 1;

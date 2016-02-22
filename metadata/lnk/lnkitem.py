@@ -14,7 +14,7 @@
 
 from struct import unpack
 
-from dff.api.types.libtypes import vtime, TIME_MS_64
+from dff.api.types.libtypes import MS64DateTime, DosDateTime 
 
 from dff.modules.structparser import FlagsList
 
@@ -67,7 +67,7 @@ def ItemFileUnicode(data, isUnicode = True):
    if size:
      directoryMap["size"] = (size, int)
    time, date = unpack("HH", data[6:10])
-   directoryMap["modified time"] = ((date, time,), vtime) #XXX modified time ? 
+   directoryMap["modified time"] = ((date, time,), DosDateTime)
    directoryMap["File attributes"] = (FlagsList(unpack("H", data[10:12])[0], FileAttributesFlags), list)
 
    data = data[12:]
@@ -82,9 +82,9 @@ def ItemFileUnicode(data, isUnicode = True):
    	data = data[1:]
      raw_bytes = unpack("6B", data[2:8]) #ENF OF UNICODE STR ??\03\00\04\00
      time, date = unpack("HH", data[8:12])
-     directoryMap["creation time"] = ((date, time,), vtime)
+     directoryMap["creation time"] = ((date, time,), DosDateTime)
      time, date = unpack("HH", data[12:16])
-     directoryMap["access time"] = ((date, time,), vtime)
+     directoryMap["access time"] = ((date, time,), DosDateTime)
      length_next = unpack("H", data[18:20])[0]
      unicode_name = UnicodeBuff(data[20:])
      directoryMap["unicode name"] = (unicode_name, str)
@@ -105,7 +105,7 @@ def ItemDirectory(data, isUnicode = True):
    if size:
      directoryMap["size"] = (size, int)
    time, date = unpack("HH", data[6:10])
-   directoryMap["modified time"] = ((date, time,), vtime) #XXX modified time ? 
+   directoryMap["modified time"] = ((date, time,), DosDateTime) #XXX modified time ? 
    directoryMap["File attributes"] = (FlagsList(unpack("H", data[10:12])[0], FileAttributesFlags), list)
 
    pos =  data[12:].find('\x00')
@@ -119,9 +119,9 @@ def ItemDirectory(data, isUnicode = True):
    	data = data[1:]
      raw_bytes = unpack("6B", data[2:8]) #ENF OF UNICODE STR ??\03\00\04\00
      time, date = unpack("HH", data[8:12])
-     directoryMap["creation time"] = ((date, time,), vtime)
+     directoryMap["creation time"] = ((date, time,), DosDateTime)
      time, date = unpack("HH", data[12:16])
-     directoryMap["access time"] = ((date, time,), vtime)
+     directoryMap["access time"] = ((date, time,), DosDateTime)
      length_next = unpack("H", data[18:20])[0]
      unicode_name = UnicodeBuff(data[20:])
      directoryMap["unicode name"] = (unicode_name, str)
@@ -150,7 +150,7 @@ def ItemWebFolder(data, isUnicode = True):
    idmap = {}	    
    data = data[6:]
    tm = unpack("<Q", data[:8])[0]
-   idmap["modified"] = ((tm, TIME_MS_64,), vtime) #FIX ?  
+   idmap["modified"] = (tm, MS64DateTime)
    data = data[20:]
    (name, size) = ShortSizeString(data, isUnicode) 
    idmap["name"] = (name, str)

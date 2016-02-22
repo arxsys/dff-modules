@@ -14,6 +14,8 @@
  *  Frederic Baguelin <fba@digital-forensic.org>
  */
 
+#include "exceptions.hpp"
+
 #include "fatfs.hpp"
 
 void		Fatfs::__process() throw (std::string)
@@ -95,6 +97,6 @@ Fatfs::~Fatfs()
 {
 }
 
-Fatfs::Fatfs(): mfso("Fat File System"), __fat_to_use(0), __metacarve(false), __checkslack(false), __parent(NULL)
+Fatfs::Fatfs(): mfso("fatfs"), __fat_to_use(0), __metacarve(false), __checkslack(false), __parent(NULL)
 {
 }

@@ -32,12 +32,6 @@
 %ignore DNTFS;
 
 %{
-#include "variant.hpp"
-#include "vtime.hpp"
-#include "node.hpp"
-#include "vlink.hpp"
-#include "vfile.hpp"
-#include "mfso.hpp"
 #include "ntfs.hpp"
 #include "rootnode.hpp"
 #include "../../../api/destruct/python/py_dobject.hpp"
@@ -73,7 +67,7 @@ class ntfs(Module):
     self.conf.addConstant({"name": "mime-type",
                            "description": "managed mime type",
                            "type" : typeId.String,
-                           "values" : ["NTFS"]})
+                           "values" : ["filesystem/ntfs"]})
     self.conf.addArgument({"name" : "drive-name",
                           "description": "Use this drive name to link reparse point and symlink",
                           "input" : Argument.Optional|Argument.Single|typeId.String,

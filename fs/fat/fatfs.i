@@ -26,14 +26,8 @@
 %include "windows.i"
 
 %{
-#include "variant.hpp"
-#include "vtime.hpp"
-#include "node.hpp"
-#include "vlink.hpp"
-#include "vfile.hpp"
-#include "mfso.hpp"
+#include "exceptions.hpp"
 #include "fatfs.hpp"
-#include "rootnode.hpp"
 %}
 
 %import "../../../api/vfs/libvfs.i"
@@ -64,7 +58,6 @@ class FATFS(Module):
     self.conf.addConstant({"name": "mime-type",
                            "type": typeId.String,
                            "description": "managed mime type",
-                           "values": ["FAT"]})
+                           "values": ["filesystem/fat"]})
     self.tags = "File systems"
 %}
-

@@ -16,6 +16,10 @@
 
 #include <list>
 #include <unicode/unistr.h>
+
+#include "datetime.hpp"
+#include "vfile.hpp"
+
 #include "filename.hpp"
 #include "mftattributecontent.hpp"
 #include "mftattribute.hpp"
@@ -115,24 +119,24 @@ uint16_t        FileName::parentSequence(void) const
   return (this->__fileName.parentSequence);
 }
 
-vtime*          FileName::creationTime(void) const
+DateTime*       FileName::creationTime(void) const
 {
-  return (new vtime(this->__fileName.creationTime, TIME_MS_64));
+  return (new MS64DateTime(this->__fileName.creationTime));
 }
 
-vtime*          FileName::modificationTime(void) const
+DateTime*       FileName::modificationTime(void) const
 {
-  return (new vtime(this->__fileName.modificationTime, TIME_MS_64));
+  return (new MS64DateTime(this->__fileName.modificationTime));
 }
 
-vtime*          FileName::mftModificationTime(void) const
+DateTime*       FileName::mftModificationTime(void) const
 {
-  return (new vtime(this->__fileName.mftModificationTime, TIME_MS_64));
+  return (new MS64DateTime(this->__fileName.mftModificationTime));
 }
 
-vtime*          FileName::accessedTime(void) const
+DateTime*       FileName::accessedTime(void) const
 {
-  return (new vtime(this->__fileName.accessedTime, TIME_MS_64));
+  return (new MS64DateTime(this->__fileName.accessedTime));
 }
 
 uint64_t	FileName::allocatedSize(void) const

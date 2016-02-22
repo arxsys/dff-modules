@@ -16,6 +16,8 @@
 
 #include "pff.hpp"
 
+#include "datetime.hpp"
+
 PffNodeTask::PffNodeTask(std::string name, Node* parent, pff* fsobj, ItemInfo* itemInfo) : PffNodeEmailMessageText(name, parent, fsobj, itemInfo)
 {
 }

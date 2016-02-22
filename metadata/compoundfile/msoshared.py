@@ -17,7 +17,7 @@ import sys, traceback
 from struct import unpack
 
 from dff.api.vfs.libvfs import Node
-from dff.api.types.libtypes import Variant, VMap, VList, Argument, typeId, vtime, TIME_MS_64
+from dff.api.types.libtypes import Variant, VMap, VList, Argument, typeId, MS64DateTime 
 
 from dff.modules.structparser import Struct, Header, ResolveAttributesMap, AttributesVMap
 from dff.modules.lnk.lnkheader import PropertyType
@@ -167,7 +167,7 @@ class VT_FILETIME(Variant):
      #MS didn't differentiate absolute and relative time (time/datetime) 
      #so use ugly trick heare
      if data >= 116444736000000000: #a date time should be superior than the lep between unix & ms epoch
-       vt = vtime(data, TIME_MS_64)
+       vt = MS64DateTime(data)
        vt.thisown = False
        Variant.__init__(self, vt) 
      else:

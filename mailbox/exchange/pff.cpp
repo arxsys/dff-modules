@@ -15,8 +15,11 @@
  */
 
 #include <sstream>
+
 #include "pff.hpp"
 #include "pff_macro.hpp"
+
+#include "fdmanager.hpp"
 
 pff::pff() : mfso("exchange"), parent(NULL), __pff_file(NULL)
 {

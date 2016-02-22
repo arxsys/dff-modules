@@ -25,7 +25,14 @@ class MFTNode;
 class MFTEntryInfo;
 class Unallocated;
 
+namespace DFF
+{
+class Node;
+class VLink;
+}
+
 using namespace Destruct;
+using namespace DFF;
 
 class MFTEntryManager
 {

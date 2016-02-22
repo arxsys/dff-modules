@@ -13,10 +13,12 @@
  * Author(s):
  *  Solal Jacob <sja@digital-forensic.org>
  */
+#include "fcntl.h"
+#include "stdlib.h"
 
 #include "affnode.hpp"
 
-int		AffNode::addSegmentAttribute(Attributes* vmap, AFFILE* af, const char* segname)
+int             AffNode::addSegmentAttribute(DFF::Attributes* vmap, AFFILE* af, const char* segname)
 {
 #ifdef NEW_AFF_LIB
     uint32_t arg;
@@ -42,15 +44,16 @@ int		AffNode::addSegmentAttribute(Attributes* vmap, AFFILE* af, const char* segn
    
     if(strcmp(segname, AF_ACQUISITION_SECONDS) == 0)
     {
-	int hours = arg / 3600;
-	int minutes = (arg / 60) % 60;
-	int seconds = arg % 60;
+        //XXX FIXME TIME_FIX
+        //int hours = arg / 3600;
+        //int minutes = (arg / 60) % 60;
+        //int seconds = arg % 60;
 
-	vtime*	time = new vtime;
-	time->hour = hours;
-	time->minute = minutes;
-	time->second = seconds;
-	(*vmap)[std::string(segname)] = Variant_p(new Variant(time));
+        //DateTime*	time = new DateTime;
+        //time->hour = hours;
+        //time->minute = minutes;
+        //time->second = seconds;
+        //(*vmap)[std::string(segname)] = Variant_p(new Variant(time));
 	free(data);
 	return (1);
     }
@@ -60,20 +63,20 @@ int		AffNode::addSegmentAttribute(Attributes* vmap, AFFILE* af, const char* segn
 	switch(data_len)
         {
 	 case 8:
-	   (*vmap)[segname] = Variant_p(new Variant(af_decode_q(data)));
+	   (*vmap)[segname] = Variant_p(new DFF::Variant(af_decode_q(data)));
 	    break;
 	case 0:
-	  (*vmap)[segname] = Variant_p(new Variant(0));
+	  (*vmap)[segname] = Variant_p(new DFF::Variant(0));
 	    break;
 	default:
-	  (*vmap)[segname] = Variant_p(new Variant(std::string("Cannot decode segment")));
+	  (*vmap)[segname] = Variant_p(new DFF::Variant(std::string("Cannot decode segment")));
 	}
 	free(data);
 	return (1);
     }
     if (data_len == 0 && arg != 0)
     {
-      (*vmap)[std::string(segname)] = Variant_p(new Variant((uint64_t)arg));
+      (*vmap)[std::string(segname)] = Variant_p(new DFF::Variant((uint64_t)arg));
        free(data);
        return (1);
     }
@@ -83,40 +86,40 @@ int		AffNode::addSegmentAttribute(Attributes* vmap, AFFILE* af, const char* segn
         char buf[80];
 
 	af_hexbuf(buf, sizeof(buf), data, data_len, AF_HEXBUF_NO_SPACES); 
-	(*vmap)[std::string(segname)] = Variant_p(new Variant(std::string(buf)));
+	(*vmap)[std::string(segname)] = Variant_p(new DFF::Variant(std::string(buf)));
     	free(data);
     	return (1);
     }
     else 
     {
-      (*vmap)[segname] = Variant_p(new Variant(std::string((char *)data)));
+      (*vmap)[segname] = Variant_p(new DFF::Variant(std::string((char *)data)));
         free(data);
         return (1);
     }
 }
 
 
-Attributes	AffNode::_attributes()
+DFF::Attributes	AffNode::_attributes()
 {
-  Attributes 	vmap;
+  DFF::Attributes 	vmap;
   struct af_vnode_info vni;
-    unsigned long total_segs = 0;
-    unsigned long total_pages = 0;
-    unsigned long total_hashes = 0;
-    unsigned long total_signatures =0;
-    unsigned long total_nulls = 0;
+  unsigned long total_segs = 0;
+  unsigned long total_pages = 0;
+  unsigned long total_hashes = 0;
+  unsigned long total_signatures =0;
+  unsigned long total_nulls = 0;
 
-    vmap["orignal path"] =  Variant_p(new Variant(this->originalPath));
-    AFFILE*  affile = af_open(this->originalPath.c_str(), O_RDONLY, 0);
+  vmap["orignal path"] =  Variant_p(new DFF::Variant(this->originalPath));
+  AFFILE*  affile = af_open(this->originalPath.c_str(), O_RDONLY, 0);
   if (affile)
   {
-    vmap["dump type"] = Variant_p(new Variant(std::string(af_identify_file_name(this->originalPath.c_str(), 1))));
+    vmap["dump type"] = Variant_p(new DFF::Variant(std::string(af_identify_file_name(this->originalPath.c_str(), 1))));
     if (af_vstat(affile, &vni) == 0)
     {
 	if (vni.segment_count_encrypted > 0 || vni.segment_count_signed > 0)
         {
-	  vmap["encrypted segments"] = Variant_p(new Variant(vni.segment_count_encrypted));
-	  vmap["signed segments"] = Variant_p(new Variant(vni.segment_count_signed));
+	  vmap["encrypted segments"] = Variant_p(new DFF::Variant(vni.segment_count_encrypted));
+	  vmap["signed segments"] = Variant_p(new DFF::Variant(vni.segment_count_signed));
 	}
       std::vector<std::string> segments;
       char segname[AF_MAX_NAME_LEN];
@@ -150,15 +153,15 @@ Attributes	AffNode::_attributes()
 		continue; 
 	this->addSegmentAttribute(&vmap, affile, segname); 
       }
-      vmap["Total segments"] = Variant_p(new Variant((uint64_t)total_segs));
-      vmap["Total segments real"] = Variant_p(new Variant((uint64_t)(total_segs - total_nulls)));
+      vmap["Total segments"] = Variant_p(new DFF::Variant((uint64_t)total_segs));
+      vmap["Total segments real"] = Variant_p(new DFF::Variant((uint64_t)(total_segs - total_nulls)));
       if (aes_segs)
-	vmap["Encrypted segments"] = Variant_p(new Variant(aes_segs));
-      vmap["Page segments"] = Variant_p(new Variant((uint64_t)total_pages));
-      vmap["Hash segments"] = Variant_p(new Variant((uint64_t)total_hashes));
-      vmap["Signature segments"] = Variant_p(new Variant((uint64_t)total_signatures)); 	 
-      vmap["Null segments"] = Variant_p(new Variant((uint64_t)total_nulls));
-      vmap["Total data bytes"] = Variant_p(new Variant((uint64_t)total_datalen));
+	vmap["Encrypted segments"] = Variant_p(new DFF::Variant(aes_segs));
+      vmap["Page segments"] = Variant_p(new DFF::Variant((uint64_t)total_pages));
+      vmap["Hash segments"] = Variant_p(new DFF::Variant((uint64_t)total_hashes));
+      vmap["Signature segments"] = Variant_p(new DFF::Variant((uint64_t)total_signatures)); 	 
+      vmap["Null segments"] = Variant_p(new DFF::Variant((uint64_t)total_nulls));
+      vmap["Total data bytes"] = Variant_p(new DFF::Variant((uint64_t)total_datalen));
     } 
 
   } 
@@ -169,7 +172,7 @@ Attributes	AffNode::_attributes()
 }
 
 
-AffNode::AffNode(std::string Name, uint64_t size, Node* parent, aff* fsobj, std::string origPath, AFFILE* _affile): Node(Name, size, parent, fsobj)
+AffNode::AffNode(std::string Name, uint64_t size, DFF::Node* parent, aff* fsobj, std::string origPath, AFFILE* _affile): DFF::Node(Name, size, parent, fsobj)
 {
   this->originalPath = origPath;
   this->affile = _affile;

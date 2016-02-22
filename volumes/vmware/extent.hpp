@@ -20,7 +20,12 @@
 #define __EXTENT_HPP__
 
 #include "vmdk.hpp"
-#include "node.hpp"
+
+namespace DFF
+{
+class Node;
+class VFile;
+}
 
 class	Extent
 {

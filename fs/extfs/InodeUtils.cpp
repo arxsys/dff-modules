@@ -18,6 +18,7 @@
 
 #include <sstream>
 
+#include "vfile.hpp"
 #include "data_structure/includes/Inode.h"
 #include "include/utils/InodeUtils.h"
 

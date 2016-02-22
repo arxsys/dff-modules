@@ -15,6 +15,25 @@
  */
 
 #include "fuse.hpp"
+#include "vfile.hpp"
+#include "node.hpp"
+#include "vfs.hpp"
+#include "path.hpp"
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <dirent.h>
+#include <errno.h>
+#include <sys/time.h>
+#ifdef HAVE_SETXATTR
+#include <sys/xattr.h>
+#endif
 
 extern "C" 
 {

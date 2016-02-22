@@ -17,6 +17,8 @@
 #include <list>
 #include <unicode/unistr.h>
 
+#include "vfile.hpp"
+
 #include "bootsector.hpp"
 #include "ntfs.hpp"
 #include "attributelist.hpp"

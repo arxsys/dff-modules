@@ -17,7 +17,21 @@
 #include "aff.hpp"
 #include "affnode.hpp"
 
-aff::aff() : fso("aff"), __parent(NULL), __fdm(new FdManager())
+#include "node.hpp"
+#include "fdmanager.hpp"
+#include "vfs.hpp"
+#include "path.hpp"
+
+#include <stdlib.h>
+#include <string>
+#include <iostream>
+#include <stdio.h>
+#include <list>
+#include <vector>
+#include <fcntl.h>
+
+
+aff::aff() : fso("aff"), __parent(NULL), __fdm(new DFF::FdManager())
 {
   mutex_init(&this->__io_mutex);
 }
@@ -35,13 +49,13 @@ void aff::start(std::map<std::string, Variant_p > args)
   AffNode*					 node;
 
   if (args.find("parent") != args.end())
-    this->__parent = args["parent"]->value<Node* >();
+    this->__parent = args["parent"]->value<DFF::Node* >();
   else
-    this->__parent = VFS::Get().GetNode("/");
+    this->__parent = DFF::VFS::Get().GetNode("/");
   if (args.find("path") != args.end())
     vl = args["path"]->value<std::list<Variant_p > >();
   else
-    throw(envError("aff module requires path argument"));
+    throw(DFF::envError("aff module requires path argument"));
   if (args.find("cache size") != args.end())
   {
     std::ostringstream cs;
@@ -58,21 +72,21 @@ void aff::start(std::map<std::string, Variant_p > args)
 
   for (vpath = vl.begin(); vpath != vl.end(); vpath++)
   {
-    std::string path = (*vpath)->value<Path* >()->path;
+    std::string path = (*vpath)->value<DFF::Path* >()->path;
     AFFILE* affile = af_open(path.c_str(), O_RDONLY, 0);
     if (affile)
     {
       std::string nname = path.substr(path.rfind('/') + 1);
       node = new AffNode(nname, af_get_imagesize(affile), NULL, this, path, affile);
       this->registerTree(this->__parent, node);   
-      this->res[path] = Variant_p(new Variant(std::string("added successfully by aff module")));
+      this->res[path] = Variant_p(new DFF::Variant(std::string("added successfully by aff module")));
     }
     else 
-      this->res[path] = Variant_p(new Variant(std::string("can't be added by aff module")));
+      this->res[path] = Variant_p(new DFF::Variant(std::string("can't be added by aff module")));
   }
 }
 
-int aff::vopen(Node *node)
+int aff::vopen(DFF::Node *node)
 {
   AffNode* affNode = dynamic_cast<AffNode* >(node);
   if (!affNode)
@@ -80,7 +94,7 @@ int aff::vopen(Node *node)
 
   if (affNode->affile)
   {
-    fdinfo* fi = new fdinfo();
+    DFF::fdinfo* fi = new DFF::fdinfo();
     fi->node = node;
     fi->offset = 0;
     return (this->__fdm->push(fi));
@@ -92,7 +106,7 @@ int aff::vopen(Node *node)
 int aff::vread(int fd, void *buff, unsigned int size)
 {
   int	 	result;
-  fdinfo*	fi;
+  DFF::fdinfo*	fi;
   AffNode*	affNode = NULL;
 
   try
@@ -126,8 +140,8 @@ int aff::vclose(int fd)
 
 uint64_t aff::vseek(int fd, uint64_t offset, int whence)
 {
-  Node*	node;
-  fdinfo* fi;
+  DFF::Node*node;
+  DFF::fdinfo* fi;
 
   try
   {
@@ -166,7 +180,7 @@ uint64_t aff::vseek(int fd, uint64_t offset, int whence)
 
 uint64_t	aff::vtell(int32_t fd)
 {
-  fdinfo*	fi;
+  DFF::fdinfo*	fi;
 
   try
   {

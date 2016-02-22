@@ -20,6 +20,8 @@
 #include "vshadow_common.hpp"
 #include "libbfio_wrapper.hpp"
 
+using namespace DFF;
+
 class VshadowNode : public Node
 {
 private:
@@ -33,7 +35,7 @@ public:
 };
 
 
-class Vshadow : public mfso
+class Vshadow : public DFF::mfso
 {
 private:
   Node*			__parent;

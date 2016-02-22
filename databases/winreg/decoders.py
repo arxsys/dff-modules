@@ -15,13 +15,13 @@
 import string
 from struct import unpack
 
-from dff.api.types.libtypes import Argument, typeId, TIME_UNIX, TIME_MS_64, vtime
+from dff.api.types.libtypes import Argument, typeId, DateTime, MS64DateTime
 
 #class DateDecoder():
 #    def __init__(self, data, keyname):
 #        self.data = None
 #        if str(keyname) == 'InstallDate':
-#        self.data = str(vtime(data, TIME_UNIX).get_time())
+#        self.data = str(DateTime(data, TIME_UNIX))
 #        else:
 #         self.data = data
 
@@ -32,14 +32,12 @@ class DateDecoder():
     def __init__(self, data):
         self.data = data
         if type(data) == bytearray:
-            self.data = str(vtime(unpack('Q', str(data))[0], TIME_MS_64).get_time())
+            self.data = str(MS64DateTime(unpack('Q', str(data))[0]))
         else:
-            self.data = str(vtime(data, TIME_UNIX).get_time())
+            self.data = str(DateTime(data))
 
     def decode(self):
         return self.data
-
-
 
 class Rot13decoder():
     def __init__(self, data):
@@ -56,7 +54,6 @@ class Rot13decoder():
                 buff += c
         return buff.encode('UTF-8').decode('UTF-8')
 
-
 class UTF16LEDecoder():
     def __init__(self, data):
         self.data = data
@@ -65,7 +62,6 @@ class UTF16LEDecoder():
         buff = unicode()
         return self.data.decode('UTF-16LE').encode("UTF8")
 
-
 class UTF16BEDecoder():
     def __init__(self, data):
         self.data = data
@@ -73,7 +69,6 @@ class UTF16BEDecoder():
     def decode(self):
         buff = unicode()
         return self.data.decode('UTF-16BE').encode("UTF8")
-
 
 class UserAssistDecoder():
     def __init__(self, data, keyname):
@@ -88,13 +83,13 @@ class UserAssistDecoder():
                     self.count -= 5
                 else:
                     self.count = 0
-                self.lastUpdate = vtime(unpack("<Q", str(data[8:16]))[0], TIME_MS_64).get_time()
+                self.lastUpdate = MS64DateTime(unpack("<Q", str(data[8:16]))[0])
             except :
                 pass
         elif len(data) == 72:
             try:
                 self.count = unpack("<I", str(data[4:8]))[0]
-                self.lastUpdate = vtime(unpack("<Q", str(data[60:68]))[0], TIME_MS_64).get_time()
+                self.lastUpdate = MS64DateTime(unpack("<Q", str(data[60:68]))[0])
             except :
                 pass
  

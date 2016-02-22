@@ -16,6 +16,9 @@
 
 #include <unicode/unistr.h>
 
+#include "vfile.hpp"
+#include "filemapping.hpp"
+
 #include "ntfs_common.hpp"
 #include "ntfs.hpp"
 #include "mftentrynode.hpp"

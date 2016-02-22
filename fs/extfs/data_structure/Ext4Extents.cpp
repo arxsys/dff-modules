@@ -15,9 +15,11 @@
  *  Romain Bertholon <rbe@digital-forensic.org>
  *
  */
+#include "vfile.hpp"
+#include "filemapping.hpp"
+#include "node.hpp"
 
 #include "../extfs.hpp"
-#include "node.hpp"
 #include "includes/Ext4Extents.h"
 
 Ext4Extents::Ext4Extents(FileMapping * file_mapping)  : __mapping(file_mapping), __size(0), __offset(0), __block_size(0), __node(NULL), __extfs(NULL),  __c_size(0), __inode(NULL)

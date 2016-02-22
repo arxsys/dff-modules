@@ -21,6 +21,8 @@
 
 #include "ntfs_common.hpp"
 
+using namespace DFF;
+
 PACK_START
 typedef struct s_IndexEntry_s
 {

@@ -14,7 +14,7 @@
  *  Solal Jacob <sja@digital-forensic.org>
  */
 #include "vlink.hpp"
-
+#include "fdmanager.hpp"
 #include "ntfs.hpp"
 #include "ntfsopt.hpp"
 #include "bootsector.hpp"
@@ -90,6 +90,7 @@ void    NTFS::declare(void)
  */
 NTFS::NTFS() : mfso("NTFS"), __opt(NULL), __bootSectorNode(NULL), __rootDirectoryNode(new Node("NTFS", 0, NULL, this)), __orphansNode(new Node("orphans", 0, NULL, this)), __unallocatedNode(NULL)
 {
+  
 }
 
 NTFS::~NTFS()

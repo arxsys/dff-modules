@@ -24,14 +24,8 @@
 %include "windows.i"
 
 %{
-#include "variant.hpp"
-#include "vtime.hpp"
-#include "fso.hpp"
-#include "mfso.hpp"
-#include "node.hpp"
-#include "vlink.hpp"
-#include "vfile.hpp"
 #include "rootnode.hpp"
+#include "exceptions.hpp"
 #include "vshadow.hpp"
 %}
 
@@ -53,11 +47,10 @@ class VSHADOW(Module):
     self.conf.addArgument({"name":"offset",
                            "description":"define volume offset",
                            "input": Argument.Optional|Argument.Single|typeId.UInt64})
-#    currently not set, have to find a better match than NTFS
-#    self.conf.addConstant({"name":"mime-type",
-#                           "type":typeId.String,
-#                           "description":"managed mime type",
-#	                   "values":["NTFS"]})
+    self.conf.addConstant({"name":"mime-type",
+                           "type":typeId.String,
+                           "description":"managed mime type",
+                           "values":["volume/vshadow"]})
     self.tags = "Volumes"
     self.icon = ":disksfilesystems"
 %}

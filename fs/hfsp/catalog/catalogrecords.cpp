@@ -19,6 +19,7 @@
 #include "hfsprecords.hpp"
 #include "hfshandlers.hpp"
 
+#include "exceptions.hpp"
 
 CatalogEntry::CatalogEntry() : __type(-1)
 {
@@ -107,12 +108,12 @@ void		CatalogData::process(uint8_t* buffer, uint16_t size) throw (std::string)
 }
 
 
-vtime*		CatalogData::_timestampToVtime(uint32_t timestamp)
+DateTime*	CatalogData::_timestampToDateTime(uint32_t timestamp)
 {
   uint32_t	date;
 
   date = bswap32(timestamp);
-  return new HfsVtime(date);
+  return new HFSDateTime(date);
 }
 
 

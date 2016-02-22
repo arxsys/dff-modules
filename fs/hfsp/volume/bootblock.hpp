@@ -22,7 +22,7 @@
 
 #include "export.hpp"
 #include "node.hpp"
-#include "vtime.hpp"
+#include "datetime.hpp"
 
 #include "endian.hpp"
 
@@ -44,10 +44,10 @@ public:
   uint32_t	lastMountedVersion();
   uint32_t	journalInfoBlock();
 
-  vtime*	createDate();
-  vtime*	modifyDate();
-  vtime*	backupDate();
-  vtime*	checkedDate();
+  DateTime*	createDate();
+  DateTime*	modifyDate();
+  DateTime*	backupDate();
+  DateTime*	checkedDate();
  
   uint32_t	fileCount();
   uint32_t	folderCount();

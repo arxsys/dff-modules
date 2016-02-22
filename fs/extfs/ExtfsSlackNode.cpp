@@ -15,6 +15,7 @@
  *  Romain Bertholon <rbe@digital-forensic.org>
  *
  */
+#include "filemapping.hpp"
 
 #include "include/ExtfsSlackNode.hpp"
 #include "data_structure/includes/Inode.h"

@@ -14,6 +14,9 @@
  *  Solal Jacob <sja@digital-forensic.org>
  */
 
+#include "vfile.hpp"
+#include "filemapping.hpp"
+
 #include "bootsector.hpp"
 #include "ntfs.hpp"
 #include "ntfsopt.hpp"
@@ -98,12 +101,9 @@ Attributes      BootSectorNode::_attributes(void)
   return attrs;
 }
 
-Attributes	BootSectorNode::dataType(void)
+const std::string	BootSectorNode::dataType(void)
 {
-  Attributes    attrs;
-
-  MAP_ATTR("ntfs", std::string("ntfs bootsector"))
-  return (attrs);
+  return std::string("ntfs/bootsector");
 }
 
 uint64_t 	BootSectorNode::OEMDID(void) const

@@ -116,9 +116,9 @@ class CountThread(QThread):
           countMe, timesCount = self.attrRecCount(tab + ' ', attr[key].value(), countMe, timesCount, key)
       elif attr[key] and attr[key].type() == typeId.List:
         for i in xrange(attr[key].value().size()):
-          if attr[key].value()[i].type() == typeId.VTime:
+          if attr[key].value()[i].type() == typeId.DateTime:
             countMe, timesCount = self.timeFound(timesCount, mod, attrPath + [key])
-      elif attr[key] and attr[key].type() == typeId.VTime:
+      elif attr[key] and attr[key].type() == typeId.DateTime:
         countMe, timesCount = self.timeFound(timesCount, mod, attrPath + [key])
     return countMe, timesCount
 

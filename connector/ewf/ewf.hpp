@@ -18,28 +18,28 @@
 #define __EWF_HH__
 
 #if defined( _MSC_VER )
-	#if defined( _WIN64 )
-		typedef __int64			ssize_t;
-	#else
-		typedef __int32			ssize_t;
-	#endif
+  #if defined( _WIN64 )
+     typedef __int6     ssize_t;
+  #else
+     typedef __int32    ssize_t;
+  #endif
 #endif
 
-#include "fso.hpp"
-#include "node.hpp"
-#include <string>
-#include <iostream>
-#include <list>
-#include <vector>
-#include "variant.hpp"
-#include "vfs.hpp"
-#include "path.hpp"
-#include "fdmanager.hpp"
-#include "threading.hpp"
 #include <libewf.h>
 
+#include <list>
+#include "fso.hpp"
+#include "threading.hpp"
 
-class ewf : public fso
+namespace DFF
+{
+  class Node;
+  class FdManager;
+}
+
+using namespace DFF;
+
+class ewf : public DFF::fso
 {
 private:
   mutex_def(__io_mutex);

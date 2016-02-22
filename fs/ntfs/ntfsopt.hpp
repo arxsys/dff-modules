@@ -21,13 +21,17 @@
 
 #include "protocol/dcppobject.hpp"
 
+using namespace Destruct;
+using namespace DFF;
+
+
 class NTFSOpt : public Destruct::DCppObject<NTFSOpt>
 {
 public:
-                NTFSOpt(Attributes args, Destruct::DStruct* dstruct);
+                NTFSOpt(DFF::Attributes args, Destruct::DStruct* dstruct);
                 NTFSOpt(Destruct::DStruct* dstruct, Destruct::DValue const& args);
                 ~NTFSOpt();
-  Node*         fsNode(void) const;
+  DFF::Node*    fsNode(void) const;
   bool          recovery(void) const;
   std::string   driveName(void) const;
   bool          validateBootSector(void) const;

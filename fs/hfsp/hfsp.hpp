@@ -26,7 +26,9 @@
 #include "specialfile.hpp"
 #include "volume/volume.hpp"
 
-class HfsRootNode: public Node
+using namespace DFF;
+
+class HfsRootNode: public DFF::Node
 {
 private:
   VolumeInformation*	__vinfo;
@@ -39,7 +41,7 @@ public:
 };
 
 
-class Hfsp : public mfso
+class Hfsp : public DFF::mfso
 {
 private:
   Node*			__parent;

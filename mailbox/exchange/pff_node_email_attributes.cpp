@@ -14,7 +14,9 @@
  *  Solal Jacob <sja@digital-forensic.org>
  */
 
+#include <stdlib.h>
 #include "pff.hpp"
+#include "datetime.hpp"
 
 libpff_macro32_s LIBPFF_MESSAGE_FLAG[9] = 
 {
@@ -344,7 +346,7 @@ int PffNodeEMail::attributesMessageConversationIndex(Attributes* attr, libpff_it
   *(((uint8_t*)&entry_value_64bit) + 1) = 0;
 
   current_time = entry_value_64bit;
-  vtime*  value_filetime = new vtime(entry_value_64bit, TIME_MS_64);
+  DateTime*  value_filetime = new MS64DateTime(entry_value_64bit);
   Variant* variant_filetime = new Variant(value_filetime);
   headerBlock["File time"] = variant_filetime;
 
@@ -371,7 +373,7 @@ int PffNodeEMail::attributesMessageConversationIndex(Attributes* attr, libpff_it
        entry_value_64bit <<= 23;
      current_time += entry_value_64bit;
 
-     childBlock["File time"] = new Variant(new vtime(current_time, TIME_MS_64));
+     childBlock["File time"] = new Variant(new MS64DateTime(current_time));
      childBlock["Random number"] = new Variant((*(entry_value + entry_value_index + 4) & 0xf0) >> 4);
      childBlock["Sequence count"] = new Variant(*(entry_value + entry_value_index + 4) & 0x0f);
      childBlockId << "Child block " << list_iterator; 

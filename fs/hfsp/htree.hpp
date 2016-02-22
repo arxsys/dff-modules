@@ -30,6 +30,7 @@
 #define MaxNodeSize	0x8000
 #define MinNodeSize	0x200
 
+using namespace DFF;
 
 PACK_START
 typedef struct s_node_descriptor

@@ -20,11 +20,18 @@
 #include "local.hpp"
 #include "node.hpp"
 
+namespace DFF
+{
+  class  DateTime;
+}
+
+using namespace DFF;
+
 class ULocalNode: public Node
 {
 private:
   struct stat*		localStat(void);
-  vtime*		utimeToVtime(time_t* t1);
+  DateTime*		utimeToDateTime(time_t* t1);
 public:
   std::string           originalPath;
   enum Type

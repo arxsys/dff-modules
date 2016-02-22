@@ -21,6 +21,7 @@
 #include "attributes/indexroot.hpp"
 
 #include "datanode.hpp"
+using namespace DFF;
 
 class NTFS;
 class MFTAttribute;

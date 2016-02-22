@@ -20,6 +20,7 @@
 #include <sstream>
 #include <memory>
 
+#include "vfile.hpp"
 #include "node.hpp"
 #include "include/FsStat.h"
 #include "include/CustomResults.h"

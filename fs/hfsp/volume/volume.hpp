@@ -22,7 +22,7 @@
 
 #include "export.hpp"
 #include "node.hpp"
-#include "vtime.hpp"
+#include "datetime.hpp"
 
 #include "endian.hpp"
 
@@ -48,6 +48,7 @@
 #define	VolumeJournaled		(1<<13)
 #define VolumeSoftwareLock	(1<<14)
 
+using namespace DFF;
 
 class VolumeInformation
 {
@@ -135,8 +136,8 @@ public:
 
   void		sanitize() throw (std::string);
   uint16_t	signature();
-  vtime*	createDate();
-  vtime*	modifyDate();
+  DateTime*	createDate();
+  DateTime*	modifyDate();
   
   uint16_t	attributes();
   uint16_t	rootdirFiles();
@@ -149,7 +150,7 @@ public:
 
   std::string	volumeName();
 
-  vtime*	backupDate();
+  DateTime*	backupDate();
   uint16_t	backupSeqNumber();
   uint32_t	writeCount();
   uint32_t	OverflowClumpSize();
@@ -229,10 +230,10 @@ public:
   uint32_t	lastMountedVersion();
   uint32_t	journalInfoBlock();
 
-  vtime*	createDate();
-  vtime*	modifyDate();
-  vtime*	backupDate();
-  vtime*	checkedDate();
+  DateTime*	createDate();
+  DateTime*	modifyDate();
+  DateTime*	backupDate();
+  DateTime*	checkedDate();
  
   uint32_t	fileCount();
   uint32_t	folderCount();

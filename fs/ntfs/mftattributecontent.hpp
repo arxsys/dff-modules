@@ -22,6 +22,8 @@
 
 #include "ntfs_common.hpp"
 
+using namespace DFF;
+
 class MFTAttribute;
 
 struct RunListInfo 

@@ -16,9 +16,15 @@
  *
  */
 
-#include "diskDescriptor.hpp"
-#include "vmdk.hpp"
+#include <algorithm>
 
+#include "vmdk.hpp"
+#include "diskDescriptor.hpp"
+
+#include "exceptions.hpp"
+#include "node.hpp"
+
+using namespace DFF;
 
 diskDescriptor::diskDescriptor(Node *nodeDesc, int type)
 {

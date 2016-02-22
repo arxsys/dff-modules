@@ -15,6 +15,8 @@
  */
 
 #include "volume.hpp"
+
+#include "exceptions.hpp"
 #include "vfile.hpp"
 #include "variant.hpp"
 

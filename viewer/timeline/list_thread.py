@@ -17,7 +17,7 @@ from datetime import datetime
 
 from PyQt4.QtCore import QString, QThread, SIGNAL
 
-from dff.api.types.libtypes import vtime, typeId
+from dff.api.types.libtypes import typeId
 
 class DataThread(QThread):
     def __init__(self, parent, callback):
@@ -112,8 +112,8 @@ class DataThread(QThread):
                       break
                     except TypeError:
                       break
-                    if a.type() == typeId.VTime and a.value() != None:
-                      d = a.value().get_time()
+                    if a.type() == typeId.DateTime and a.value() != None:
+                      d = a.value().asPyDateTime() 
                       if d.year == 0 and d.month == 0 and d.day == 0:
                         continue
                       try:

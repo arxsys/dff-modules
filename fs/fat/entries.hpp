@@ -49,6 +49,7 @@
 #define FATFS_IS_83_EXT(c)              \
   (FATFS_IS_83_NAME((c)) && ((c) < 0x7f))
 
+using namespace DFF;
 
 typedef struct s_dosentry
 {
@@ -106,9 +107,9 @@ typedef struct	s_decodedentry
   bool		archive;
   bool		deleted;
   bool		orphaned;
-  vtime*	mtime;
-  vtime*	atime;
-  vtime*	ctime;
+  DateTime*	mtime;
+  DateTime*	atime;
+  DateTime*	ctime;
   uint32_t	cluster;
   uint32_t	size;
   uint64_t	lfnstart;

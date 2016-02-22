@@ -15,6 +15,7 @@
  *  Romain Bertholon <rbe@digital-forensic.org>
  *
  */
+#include "vfile.hpp"
 
 #include "includes/Inode.h"
 #include "includes/GroupDescriptor.h"

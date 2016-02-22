@@ -27,6 +27,7 @@
 #include "extents/fork.hpp"
 #include "extents/extent.hpp"
 
+using namespace DFF;
 
 class VirtualNode : public Node
 {

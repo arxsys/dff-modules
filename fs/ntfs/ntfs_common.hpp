@@ -28,7 +28,6 @@
 #include "dobject.hpp"
 #include "dnullobject.hpp"
 #include "protocol/dcppobject.hpp"
-
 #include "export.hpp"
 #include "vfs.hpp"
 #include "mfso.hpp"

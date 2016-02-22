@@ -17,16 +17,16 @@
 #ifndef __WINDEVICES_HH__
 #define __WINDEVICES_HH__
 
-#include "variant.hpp"
-#include "mfso.hpp"
 #include <string>
 #include <iostream>
 #include <stdio.h>
 #include <list>
 #include <vector>
+
+#include "fdmanager.hpp"
+#include "variant.hpp"
 #include "node.hpp"
-#include "vfs.hpp"
-#include "path.hpp"
+#include "fso.hpp"
 
 #ifdef WIN32
 #pragma comment(lib, "advapi32.lib")
@@ -52,27 +52,28 @@ public:
 };
 #endif
 
-class DeviceNode : public Node
+using namespace DFF;
+
+class DeviceNode : public DFF::Node
 {
 public:
-  DeviceNode(std::string devname, uint64_t size, fso* fsobj,std::string name);
+  DeviceNode(std::string devname, uint64_t size, DFF::fso* fsobj, std::string name);
   std::string		icon();
   std::string		__devname;	
 };
 
-
-class devices : public fso
+class devices : public DFF::fso
 {
 private:
-  Node*                 __parent;
-  class Node*		__root;
-  FdManager*		__fdm;
+  DFF::Node*            __parent;
+  DFF::Node*		__root;
+  DFF::FdManager*       __fdm;
 public:
   devices();
   ~devices();
   std::string           devicePath;
   virtual void	        start(std::map<std::string, Variant_p > args);
-  int32_t	        vopen(Node* handle);
+  int32_t	        vopen(DFF::Node* handle);
   int32_t 	        vread(int fd, void *buff, unsigned int size);
   int32_t 	        vclose(int fd);
   uint64_t 	        vseek(int fd, uint64_t offset, int whence);

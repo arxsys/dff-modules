@@ -14,7 +14,9 @@
  *  Solal Jacob <sja@digital-forensic.org>
  */
 
+#include <stdlib.h>
 #include <sstream>
+
 #include "pff.hpp"
 
 void pff::export_sub_items(libpff_item_t *item, Node* parent)

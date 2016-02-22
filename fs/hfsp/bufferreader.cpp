@@ -19,6 +19,7 @@
 #include <iostream>
 #include <sstream>
 
+#include "exceptions.hpp"
 
 BufferReader::BufferReader() : __allocated(false), _origin(NULL), _offset(0), _size(0), _buffer(NULL)
 {

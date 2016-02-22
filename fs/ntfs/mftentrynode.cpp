@@ -13,6 +13,8 @@
  * Author(s):
  *  Solal Jacob <sja@digital-forensic.org>
  */
+#include "vfile.hpp"
+#include "filemapping.hpp"
 
 #include "ntfsopt.hpp"
 #include "mftentrynode.hpp"

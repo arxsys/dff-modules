@@ -14,10 +14,12 @@
  *  Solal Jacob <sja@digital-forensic.org>
  */
 
+#include "vfile.hpp"
+#include "filemapping.hpp"
+
 #include "indexallocation.hpp"
 #include "mftattributecontent.hpp"
 #include "mftattribute.hpp"
-
 #include "mftentrynode.hpp"
 #include "datanode.hpp"
 #include "ntfs.hpp"

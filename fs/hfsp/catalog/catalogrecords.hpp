@@ -79,7 +79,7 @@ public:
 class CatalogData : public BufferReader
 {
 protected:
-  vtime*		_timestampToVtime(uint32_t timestamp);
+  DateTime*		_timestampToDateTime(uint32_t timestamp);
 public:
   CatalogData();
   virtual ~CatalogData();

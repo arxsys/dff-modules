@@ -102,7 +102,7 @@ class winreg(Module):
     self.conf.addConstant({"name": "mime-type", 
  	                   "type": typeId.String,
  	                   "description": "managed mime type",
- 	                   "values": ["registry file"]})
+ 	                   "values": ["windows/registry"]})
     self.tags = "Databases"
     self.flags = ["noscan"]
     self.scanFilter = 'path in [$*Users*$, $*Documents and Settings*$] and name matches "NTUSER.DAT" or path matches $*system32/config*$'

@@ -16,6 +16,9 @@
 
 //#include <list>
 #include <unicode/unistr.h>
+
+#include "vfile.hpp"
+
 #include "reparsepoint.hpp"
 #include "mftattributecontent.hpp"
 #include "mftattribute.hpp"

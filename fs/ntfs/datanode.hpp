@@ -24,6 +24,7 @@ class DataNode;
 class NTFS;
 
 using namespace Destruct;
+using namespace DFF;
 
 class MappingAttributes
 {
