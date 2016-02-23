@@ -102,7 +102,11 @@ int32_t         DataNode::readCompressed(void* buff, unsigned int size, uint64_t
     MFTAttributeContent* content(dataAttribute->content());
     Data* data(dynamic_cast<Data*>(content));
     if (!data)
-     return (0);
+    {
+      delete content;
+      delete dataAttribute;
+      return (0);
+    }
 
     if (!compressionBlockSize)
       compressionBlockSize = dataAttribute->compressionBlockSize();
@@ -120,11 +124,17 @@ int32_t         DataNode::readCompressed(void* buff, unsigned int size, uint64_t
         //std::cout << "DataNode::readCompressed data uncompression error : " << error << std::endl;
       }
       if (read  <= 0)
+      {
+        delete data;
+        delete dataAttribute;
         break;
+      }
       if (*offset + read > this->size())
       {
         readed += this->size() - *offset;
         *offset = this->size();
+        delete data;
+        delete dataAttribute;
         break;
       }
       *offset += read;
