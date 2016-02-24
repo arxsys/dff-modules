@@ -95,6 +95,15 @@ HfsFileSystemHandler::HfsFileSystemHandler() : _extentsTreeNode(NULL), _catalogN
 }
 
 
+HfsFileSystemHandler::~HfsFileSystemHandler()
+{
+  delete this->_extentsTreeNode;
+  delete this->_catalogNode;
+  delete this->_extentsTree;
+  delete this->_catalogTree;
+}
+
+
 uint64_t	HfsFileSystemHandler::blockSize()
 {
   if (this->_volumeInformation != NULL)

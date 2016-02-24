@@ -223,10 +223,10 @@ class ImageView(QWidget, Script):
   def isImage(self, node):
     if node.size() != 0:
       try:
-        type = node.dataType()
+        _type = node.dataType()
       except (IndexError, AttributeError, IOError):
 	return False
-      if  self.reg_viewer.search(str(type)):
+      if self.reg_viewer.search(_type):
         return True
     return False
 

@@ -56,9 +56,10 @@ std::map<uint64_t, Extent*>		ExtentsTree::extentsById(uint32_t fileid, uint8_t t
       try
    	{
    	  enode->process(this->_origin, idx, this->nodeSize());
-	  nodeextents = enode->extentsById(fileid, type);
-	  extents.insert(nodeextents.begin(), nodeextents.end());
-	}
+  	  nodeextents = enode->extentsById(fileid, type);
+  	  extents.insert(nodeextents.begin(), nodeextents.end());
+  	  nodeextents.clear();
+  	}
       catch (std::string err)
   	{
   	  std::cout << "ERROR " << err << std::endl;

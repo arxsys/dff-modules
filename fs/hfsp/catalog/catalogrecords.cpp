@@ -196,18 +196,30 @@ HfsNode::~HfsNode()
 uint32_t		HfsNode::fsId()
 {
   CatalogEntry*	entry;
-  
-  entry = this->_handler->catalogTree()->catalogEntry(this->_offset, this->_entrySize);
-  return entry->id();
+  uint32_t	id;
+
+  id = 0;
+  if ((entry = this->_handler->catalogTree()->catalogEntry(this->_offset, this->_entrySize)) != NULL)
+    {
+      id = entry->id();
+      delete entry;
+    }
+  return id;
 }
 
 
 uint32_t		HfsNode::parentId()
 {
   CatalogEntry*	entry;
-  
-  entry = this->_handler->catalogTree()->catalogEntry(this->_offset, this->_entrySize);
-  return entry->parentId();
+  uint32_t	pid;
+
+  pid = 0;
+  if ((entry = this->_handler->catalogTree()->catalogEntry(this->_offset, this->_entrySize)) != NULL)
+    {
+      pid = entry->parentId();
+      delete entry;
+    }
+  return pid;
 }
 
 
@@ -289,6 +301,7 @@ Attributes	HfsFile::_attributes()
 ForkData*	HfsFile::forkData()
 {
   ExtentsList		extents;
+  ExtentsList::iterator	it;
   ForkData*		fdata;
   CatalogEntry*		entry;
   CatalogFile*		cfile;
@@ -299,7 +312,8 @@ ForkData*	HfsFile::forkData()
     return NULL;
   extents = cfile->dataExtents(this->_handler->blockSize());
   fdata = new ForkData(entry->id(), this->_handler->extentsTree());
-  fdata->process(extents, cfile->logicalSize(), ForkData::Data);  
+  fdata->process(extents, cfile->logicalSize(), ForkData::Data);
+  delete entry;
   return fdata;
 }
 

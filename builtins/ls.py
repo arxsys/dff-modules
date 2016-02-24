@@ -44,7 +44,7 @@ class LS(Script):
               "name": lambda Node: Node.name().lower(),
               "deleted": lambda Node: Node.isDeleted(),
               "extension": lambda Node: Node.extension(),
-              "mime": lambda Node: Node.dataType()["magic mime"].toString() if Node.dataType().has_key("magic mime") else "N/A"}
+              "mime": lambda Node: Node.dataType()}
   
 
   def __init__(self) :
@@ -183,11 +183,9 @@ class LS(Script):
       lstat.size = len(size)
     if len(str(node.childCount())) > lstat.children:
       lstat.children = len(str(node.childCount()))
-    dt = node.dataType()
-    if dt.has_key("magic mime"):
-      mime = dt["magic mime"].toString()
-      if len(mime) > lstat.mime:
-        lstat.mime = len(mime)
+    mime = node.dataType()
+    if len(mime) > lstat.mime:
+      lstat.mime = len(mime)
     for attr in self.attributes:
       attrlen = 3 # N/A
       val = node.attributesByName(attr, ABSOLUTE_ATTR_NAME)
@@ -241,11 +239,7 @@ class LS(Script):
         size = str(node.size())
     else:
       size = str(0)
-    dt = node.dataType()
-    if dt.has_key("magic mime"):
-      mime = dt["magic mime"].toString()
-    else:
-      mime = "N/A"
+    mime = node.dataType()
     if len(lattrs):
       lattrs.append(name)
       buff = fmt.format(h, node.childCount(), size, mime, *lattrs)
