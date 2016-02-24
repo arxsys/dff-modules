@@ -20,7 +20,7 @@ import datetime, sys, traceback
 from dff.api.module.script import Script 
 from dff.api.module.module import Module
 from dff.api.module.manager import ModuleProcessusHandler
-from dff.api.vfs.libvfs import AttributesHandler, VFS, mfso
+from dff.api.vfs.libvfs import AttributesHandler, VFS, mfso, Node
 from dff.api.types.libtypes import Argument, typeId, VMap, Variant
 
 from mscfb import CompoundDocumentHeader
@@ -29,6 +29,7 @@ from msdoc import WordDocument
 from msoshared import OfficeDocumentSectionCLSID
 from msppt import PPT
 
+from olevba import _extract_vba, VBA_Scanner, decompress_stream 
 
 def error():
    err_type, err_value, err_traceback = sys.exc_info()
@@ -36,6 +37,25 @@ def error():
      print n
    for n in traceback.format_tb(err_traceback):
      print n
+
+class FakeOle(object):
+  def __init__(self):
+    pass
+
+  def openstream(self, path):
+     node = VFS.Get().GetNode(str(path))
+     vfile = node.open()
+     return vfile 
+
+class VBANode(Node):
+  def __init__(self, name, size, parent, fsobj, attributes):
+     Node.__init__(self, name, size, parent, fsobj)
+     self.__disown__()
+     self.attr = attributes
+     self.setTag("suspicious")
+
+  def _attribute(self):
+    return sef.attr
 
 class CompoundDocumentParser(object):
   def __init__(self, node, largs, mfsobj = None):
@@ -47,11 +67,53 @@ class CompoundDocumentParser(object):
         self.cdh = CompoundDocumentHeader(node, mfsobj)
 	self.cdh.parseDocument(not 'no-extraction' in largs)
      except :
-	#error()
+	error()
 	raise Exception("Can't parse document")
      streams = self.cdh.streams()
      for stream in streams:
-	if stream.objectType == "StreamObject":
+        if stream.objectType =="StorageObject":
+          if stream.objectName == "VBA":
+           try:
+             hasSuspiscious = None
+              #CHECK FOR OTHER TYPE in .doc #add for zip too ?
+             #TRY CATCH AT EVERY STEP PLEASE & add options parse vba 
+             #gere le mode sans extraction mais avec les metadata 
+             children = stream.children()
+             for childStream in children:
+               if childStream.name() == "dir":
+                 dir_path = childStream
+             vba_root = stream.parent()
+             project_path = None
+             children = vba_root.children()
+             for childStream in children:
+                if childStream.name() == "PROJECT":
+                  project_path = childStream
+             result = _extract_vba(FakeOle(), vba_root.absolute() + "/", project_path.absolute(), dir_path.absolute())
+             for streamPath, fileName, vbaDecompressed, compressedOffset in result:
+               hasSuspiscious = True
+               scanner = VBA_Scanner(vbaDecompressed)
+               scanner.scan()
+               name = fileName[:-4]
+               children = stream.children()
+               for child in  streams:
+                  if child.name() == name:
+                    vbaStream = child
+               attributesMap = VMap() 
+               for (detectionType, keyword, desc,)  in  scanner.results:
+                 attributesMap[str(detectionType)] = Variant(str(keyword))
+               uncompressedSize = vbaStream.size() - compressedOffset
+               if uncompressedSize > 0:
+                 vbanode = VBANode(str(name) + ".vba", vbaStream.size() - compressedOffset, vbaStream, mfsobj, attributesMap)
+                 mfsobj.setVBACompressed(vbanode, compressedOffset)
+               #IF NOT CREATE VBA DECOMPRESS
+               #vbaStream.setExtraAttributes(("VBA", attributesMap))
+               #vbaStream.setTag("suspicious")
+             if hasSuspiscious:
+              self.node.setTag("suspicious")
+             #setnodesuspicous
+           except:
+             print "VBA analyzer error : \n", error()
+	elif stream.objectType == "StreamObject":
 	  try:
 	     if stream.objectName == "WordDocument":
 	       if not 'no-extraction' in largs:
@@ -65,6 +127,7 @@ class CompoundDocumentParser(object):
 	         ppt = PPT(stream)
 	         ppt.createPictureNodes()
 	     else:
+               #check if vba macro avec le header ? ou passe direc t et fait un for 
 	       propertySet = PropertySetStream(stream, OfficeDocumentSectionCLSID.keys())
 	       for clsid in OfficeDocumentSectionCLSID.iterkeys():
 	          section = propertySet.sectionCLSID(clsid)
@@ -90,11 +153,11 @@ class CompoundDocumentParser(object):
 		    stream.setExtraAttributes((sectionName, mattr,))
 		    if not 'no-root_metadata' in largs:	
   		      self.extraAttr.append((sectionName, stream.parent().name(), mattr,))
-	  #except RuntimeError, e:
-	  #pass	 
+	  #except RuntimeError, e: #not a PropertySetStream
+	    #pass	 
           except :
+            pass
 	    #error()
-	    pass
         if not 'no-extraction' in largs:
 	  del stream 
  
@@ -142,6 +205,10 @@ class MetaCompound(mfso):
    mfso.__init__(self, 'metacompound')
    self.__disown__()
    self.handler = MetaCompoundHandler()
+   self.vbaCompressed = {}
+
+  def setVBACompressed(self, node, offset):
+    self.vbaCompressed[node.uid()] = offset
 
   def start(self, args):
     try:
@@ -162,6 +229,29 @@ class MetaCompound(mfso):
     except (KeyError, Exception):
       self.stateinfo = "Error"
 
+  def vread(self, fd, buff, size):
+    try:
+      fdmanager = self._mfso__fdmanager
+      fi = fdmanager.get(fd)
+      try:
+        compressedOffset = self.vbaCompressed[fi.node.uid()]
+        vfile = fi.node.parent().open()
+        vfile.seek(compressedOffset)
+        try:
+          decomp = decompress_stream(vfile.read())
+          vfile.close()
+          #print decomp
+          return len(decomp) #fi offset ...
+        except Exception as e:
+          print 'decompress error\n', e
+          return 0
+      except :
+        return mfso.vread(self, fd, buff, size)
+    except Exception as e:
+      print 'fd manager error', e
+      return 0
+
+
 class compound(Module): 
   """This module extracts metadata and content of compound files (doc,xls,msi, ...)"""
   def __init__(self):
@@ -172,7 +262,7 @@ class compound(Module):
     self.conf.addConstant({"name": "mime-type", 
  	                   "type": typeId.String,
  	                   "description": "compatible extension",
- 	                   "values": ["windows/compound"]})
+ 	                   "values": ["windows/compound", "document/word", "document/excel", "document/powerpoint"]})
     self.conf.addArgument({"name": "no-extraction",	
 			   "description" : "Don't create nodes for files stored inside compound documents",
 			   "input": Argument.Empty})
