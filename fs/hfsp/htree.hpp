@@ -135,7 +135,6 @@ class HTree
 {
 private:
   header_node	__hnode;
-  VFile*	__vfile;
 protected:
   enum HTreeTypes
     {

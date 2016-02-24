@@ -64,6 +64,7 @@ void		ForkData::process(ExtentsList initial, uint64_t logicalSize, ForkData::Typ
 		  this->__totalBlocks += mit->second->blockCount();
 		}
 	    }
+	  extents.clear();
       	}
       else
       	std::cout << "[!] No Extents Overflow File set. Resulting data will be truncated" << std::endl;

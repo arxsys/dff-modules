@@ -48,17 +48,9 @@ KeyedRecords	CatalogTreeNode::records()
     {
       for (i = this->numberOfRecords(); i > 0; i--)
 	{
-	  try
-	    {
-	      record = this->__createCatalogKey(bswap16(this->_roffsets[i]), bswap16(this->_roffsets[i-1]));
-	      if (record != NULL)
-		records.push_back(record);
-	    }
-	  catch (std::string err)
-	    {
-	      //std::cout << "[ERROR] " << err << std::endl;	      
-	      //record->hexdump(1, 1);
-	    }
+	  record = this->__createCatalogKey(bswap16(this->_roffsets[i]), bswap16(this->_roffsets[i-1]));
+	  if (record != NULL)
+	    records.push_back(record);
 	}
     }
   else
@@ -84,10 +76,18 @@ KeyedRecord*	CatalogTreeNode::__createCatalogKey(uint16_t start, uint16_t end)
     record = new HfspCatalogEntry();
   if (record != NULL)
     {
-      record->setSizeofKeyLengthField(this->_klenfield);
-      // using the buffer version in order to not read the same buffer twice
-      record->process(this->_buffer+start, size);
-      record->setContext(this->_origin, offset, size);
+      try
+	{
+	  record->setSizeofKeyLengthField(this->_klenfield);
+	  // using the buffer version in order to not read the same buffer twice
+	  record->process(this->_buffer+start, size);
+	  record->setContext(this->_origin, offset, size);
+	}
+      catch (std::string err)
+	{
+	  delete record;
+	  record = NULL;
+	} 
     }
   return record;
 }
@@ -136,16 +136,16 @@ void			CatalogTree::process(Node* catalog, uint64_t offset) throw (std::string)
   for (idx = 0; idx < this->totalNodes(); idx++)
     {
       try
-	{
-	  cnode->process(catalog, idx, this->nodeSize());
-	  if (cnode->isLeafNode())
+  	{
+  	  cnode->process(catalog, idx, this->nodeSize());
+  	  if (cnode->isLeafNode())
 	    this->__makeNodes(catalog, cnode);
-	}
+  	}
       catch (std::string err)
-	{
-	  // catch exception and continue catalog parsing
-	  //std::cout << "Error while making node" << err << std::endl;
-	}
+  	{
+  	  // catch exception and continue catalog parsing
+  	  //std::cout << "Error while making node" << err << std::endl;
+  	}
       this->__progress(idx);
     }
   if (cnode != NULL)
@@ -154,11 +154,11 @@ void			CatalogTree::process(Node* catalog, uint64_t offset) throw (std::string)
   if ((mit = this->__nodes.find(1)) != this->__nodes.end())
     {
       for (it = mit->second.begin(); it != mit->second.end(); it++)
-	{
-	  this->__handler->mountPoint()->addChild(*it);
-	  if ((*it)->isDir())
-	    this->__linkNodes((*it), (*it)->fsId());
-	}
+  	{
+  	  this->__handler->mountPoint()->addChild(*it);
+  	  if ((*it)->isDir())
+  	    this->__linkNodes((*it), (*it)->fsId());
+  	}
       mit->second.clear();
     }
   for (mit = this->__nodes.begin(); mit != this->__nodes.end(); mit++)
@@ -216,24 +216,24 @@ void				CatalogTree::__makeNodes(Node* catalog, CatalogTreeNode* cnode)
       if (*rit != NULL)
 	{
 	  node = NULL;
-	  if ((ckey = dynamic_cast<CatalogEntry*>(*rit)) != NULL)
-	    {
+  	  if ((ckey = dynamic_cast<CatalogEntry*>(*rit)) != NULL)
+  	    {
 	      if (ckey->type() == CatalogEntry::FileRecord)
-	      	{
-	      	  this->__fileCount++;
-	      	  node = new HfsFile(ckey->name(), this->__handler, ckey->offset(), ckey->size());
+		{
+		  this->__fileCount++;
+		  node = new HfsFile(ckey->name(), this->__handler, ckey->offset(), ckey->size());
 		  try
 		    {
 		      node->setFile();
 		    }
 		  catch(char const *err)
-		    {
+  	   	    {
 		    }
-	      	}
+  	       	}
 	      else if (ckey->type() == CatalogEntry::FolderRecord)
-	      	{
-	      	  this->__folderCount++;
-	      	  node = new HfsFolder(ckey->name(), this->__handler, ckey->offset(), ckey->size());
+		{
+		  this->__folderCount++;
+		  node = new HfsFolder(ckey->name(), this->__handler, ckey->offset(), ckey->size());
 		  try
 		    {
 		      node->setDir();
@@ -241,11 +241,11 @@ void				CatalogTree::__makeNodes(Node* catalog, CatalogTreeNode* cnode)
 		  catch (char const *err)
 		    {
 		    }
-	      	}
+		}
 	      if (node != NULL)
-		this->__nodes[ckey->parentId()].push_back(node);
-	    }
-	  delete *rit;
+  	       	this->__nodes[ckey->parentId()].push_back(node);
+  	    }
+   	  delete *rit;
 	}
     }
   records.clear();
