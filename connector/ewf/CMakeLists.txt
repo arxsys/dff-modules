@@ -14,13 +14,14 @@
 
 if(WIN32)
   set(ewf_files ${EWF_DYN_LIBRARIES})
-  set(definitions -D_LIBEWF_TYPES_H_INTEGERS)
+  set(definitions -D_LIBEWF_TYPES_H_INTEGERS -DUNICODE -D_UNICODE -DLIBEWF_HAVE_WIDE_CHARACTER_TYPE)
+  add_definitions(-DUNICODE -D_UNICODE -DLIBEWF_HAVE_WIDE_CHARACTER_TYPE -D_LIBEWF_TYPES_H_INTEGERS)
 endif(WIN32)
 
 dff_cpp_module(EWF
   CPP_FILES ewf.cpp ewfnode.cpp
   SWIG_FILE ewf.i
-  DEFINITIONS ${definitions}
+  #DEFINITIONS ${definitions}
   LINK_LIBRARIES exceptions types vfs ${EWF_LIBRARY}
   INCLUDE_DIRS ${EWF_INCLUDE_DIR}
   EXTRA_FILES ${ewf_files}

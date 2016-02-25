@@ -62,34 +62,48 @@ void	ewf::__checkSignature(std::list< Variant_p > vl) throw (std::string)
   std::list<Variant_p >::iterator	vpath;
   std::string				err;
   char*					cerr;
-  
+
+#ifdef WIN32
+  this->files = (wchar_t**)malloc(sizeof(wchar_t*) * (vl.size() + 1));
+#else
   this->files = (char**)malloc(sizeof(char*) * (vl.size() + 1));
+#endif
   this->nfiles = 0;
   for (vpath = vl.begin(); vpath != vl.end(); vpath++)
-  {
-    std::string path = (*vpath)->value<Path* >()->path;
-    if (libewf_check_file_signature(path.c_str(), &this->__ewf_error) == 1)
     {
-      this->files[nfiles] = strdup((char*)path.c_str());
-      this->nfiles++;
-    }
-    else
-    {
-      if (this->__ewf_error != NULL)
-      {
-	cerr = new char[512];
-	libewf_error_backtrace_sprint(this->__ewf_error, cerr, 511);
-	err = std::string(cerr);
-      }
+      std::string path = (*vpath)->value<Path* >()->path;
+#ifdef WIN32
+      int length = MultiByteToWideChar(CP_UTF8, 0, path.data(), path.length(), NULL, 0);
+      std::wstring utf16path;
+      utf16path.resize(length);
+      MultiByteToWideChar(CP_UTF8, 0, path.data(), path.length(), &utf16path[0], utf16path.length());
+      if (libewf_check_file_signature_wide(utf16path.c_str(), &this->__ewf_error) == 1)
+	{
+	  this->files[nfiles] = wcsdup((wchar_t*)utf16path.c_str());
+#else
+      if (libewf_check_file_signature(path.c_str(), &this->__ewf_error) == 1)
+	{
+	  this->files[nfiles] = strdup((char*)path.c_str());
+#endif
+	  this->nfiles++;
+	}
       else
-      {
-	std::ostringstream error;
-	error << "file " << path << " is not a ewf file." << std::endl;
-	err = error.str();
-      }
-      throw (err);
+	{
+	  if (this->__ewf_error != NULL)
+	    {
+	      cerr = new char[512];
+	      libewf_error_backtrace_sprint(this->__ewf_error, cerr, 511);
+	      err = std::string(cerr);
+	    }
+	  else
+	    {
+	      std::ostringstream error;
+	      error << "file " << path << " is not a ewf file." << std::endl;
+	      err = error.str();
+	    }
+	  throw (err);
+	}
     }
-  }
   this->files[nfiles] = NULL;
   return ;
 }
@@ -120,7 +134,11 @@ void	ewf::__openHandle(libewf_handle_t* handle, libewf_error_t** error) throw (s
   std::string				err;
   char*					cerr;
 
+#ifdef WIN32
+  if (libewf_handle_open_wide(handle, this->files, this->nfiles, LIBEWF_OPEN_READ, error) != 1)
+#else
   if (libewf_handle_open(handle, this->files, this->nfiles, LIBEWF_OPEN_READ, error) != 1)
+#endif
   {
     if (error != NULL)
     {

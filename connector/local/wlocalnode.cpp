@@ -15,6 +15,7 @@
  */
 
 #include "wlocalnode.hpp"
+#include "datetime.hpp"
 #include <windows.h>
 
 WLocalNode::WLocalNode(std::string Name, uint64_t size, Node* parent, fso* fsobj, uint8_t type, std::string origPath): Node(Name, size, parent, fsobj)

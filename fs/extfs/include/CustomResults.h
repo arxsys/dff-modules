@@ -37,7 +37,7 @@ public:
 
     \param SB a pointer to the \c \b SuperBlock instance.
   */
-  void            set(Attributes * attr, Inode * inode);
+  void            set(DFF::Attributes * attr, Inode * inode);
 
   /*! \brief File system flags.
 

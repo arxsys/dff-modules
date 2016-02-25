@@ -17,9 +17,11 @@
 #ifndef __EWF_HH__
 #define __EWF_HH__
 
+#include <stdint.h>
+
 #if defined( _MSC_VER )
   #if defined( _WIN64 )
-     typedef __int6     ssize_t;
+     typedef __int64     ssize_t;
   #else
      typedef __int32    ssize_t;
   #endif
@@ -47,7 +49,11 @@ private:
   FdManager*		__fdm;
   size64_t		volumeSize;
   std::string		volumeName;
+#ifdef WIN32
+  wchar_t**		files;
+#else
   char**		files;
+#endif
   uint16_t		nfiles;
   libewf_error_t*	__ewf_error;
   void			__checkSignature(std::list< Variant_p > vl) throw (std::string);
