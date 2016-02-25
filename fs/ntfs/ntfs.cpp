@@ -99,6 +99,9 @@ NTFS::~NTFS()
     delete this->__bootSectorNode;
   if (this->__rootDirectoryNode)
     delete this->__rootDirectoryNode;
+//orphans
+//unallocatedNode
+//opt
 }
 
 void    NTFS::start(Attributes args)

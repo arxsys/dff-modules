@@ -80,7 +80,7 @@ protected:
   void			_createCatalog() throw (std::string);
 public:
   HfsFileSystemHandler();
-  virtual ~HfsFileSystemHandler() {}
+  virtual ~HfsFileSystemHandler();
   virtual void		process(Node* origin, uint64_t offset, fso* fsobj)  throw (std::string) = 0;
   virtual uint64_t	blockSize();
   void			setVolumeInformation(VolumeInformation* volume) throw (std::string);

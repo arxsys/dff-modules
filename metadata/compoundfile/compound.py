@@ -13,14 +13,14 @@
 # Author(s):
 #  Solal Jacob <sja@digital-forensic.org>
 
-__dff_module_prefetch_version__ = "1.0.0"
+__dff_module_compound_version__ = "1.0.0"
 
 import datetime, sys, traceback
 
 from dff.api.module.script import Script 
 from dff.api.module.module import Module
 from dff.api.module.manager import ModuleProcessusHandler
-from dff.api.vfs.libvfs import AttributesHandler, VFS, mfso
+from dff.api.vfs.libvfs import AttributesHandler, VFS, mfso, Node
 from dff.api.types.libtypes import Argument, typeId, VMap, Variant
 
 from mscfb import CompoundDocumentHeader
@@ -28,7 +28,7 @@ from msoleps import  PropertySetStream
 from msdoc import WordDocument
 from msoshared import OfficeDocumentSectionCLSID
 from msppt import PPT
-
+from vba import VBA, decompress_stream
 
 def error():
    err_type, err_value, err_traceback = sys.exc_info()
@@ -38,65 +38,72 @@ def error():
      print n
 
 class CompoundDocumentParser(object):
-  def __init__(self, node, largs, mfsobj = None):
+  def __init__(self, node, args, mfsobj = None):
      self.node = node
      self.attr = {} 
      self.extraAttr = []
      self.codePage = None
      try :   
         self.cdh = CompoundDocumentHeader(node, mfsobj)
-	self.cdh.parseDocument(not 'no-extraction' in largs)
+	self.cdh.parseDocument(not 'no-extraction' in args)
      except :
 	#error()
 	raise Exception("Can't parse document")
      streams = self.cdh.streams()
      for stream in streams:
-	if stream.objectType == "StreamObject":
+        if stream.objectType =="StorageObject":
+          if stream.objectName == "VBA": 
+            if not 'no-vba-detection' in args:
+              VBA(self, mfsobj, stream, args)
+	elif stream.objectType == "StreamObject":
 	  try:
 	     if stream.objectName == "WordDocument":
-	       if not 'no-extraction' in largs:
+	       if not 'no-extraction' in args:
 	         wd = WordDocument(stream)
-	         if not 'no-text' in largs:
+	         if not 'no-text' in args:
 	           wd.createTextNodes()
-	         if not 'no-pictures' in largs:
+	         if not 'no-pictures' in args:
 	           wd.createPictureNodes()
 	     elif stream.objectName == "Pictures":
-	       if not ('no-pictures' in largs or 'no-extraction' in largs):
+	       if not ('no-pictures' in args or 'no-extraction' in args):
 	         ppt = PPT(stream)
 	         ppt.createPictureNodes()
 	     else:
-	       propertySet = PropertySetStream(stream, OfficeDocumentSectionCLSID.keys())
-	       for clsid in OfficeDocumentSectionCLSID.iterkeys():
-	          section = propertySet.sectionCLSID(clsid)
-	          if section:
-		    (sectionName, sectionIDS) = OfficeDocumentSectionCLSID[clsid]
-		    mattr = VMap() 
-	            for k, v in sectionIDS.iteritems():
-		       Property = section.PropertyList.propertyID(k)
-		       if Property and Property.Variant.Value:
-		         p = section.PropertyList.propertyID(k).Variant.Value
-		         if p and isinstance(p, Variant): #Thumbnail is type node
-			   if v == 'Total editing time': #special case see msoshared.py
-			     p = Variant(str(datetime.timedelta(seconds=(p.value()/10000000))))
-                           elif v == 'Code page':
-                             codePage = p.value()
-                             if isinstance(codePage, long):
-                               self.codePage = 'cp' + str(codePage)
-                           elif self.codePage and (v == "Title" or v == "Subject" or v == "Author" or v == "Comments" or v == "Last Author"):
-                             p = Variant(p.value().decode(self.codePage).encode('UTF-8'))
-			   else:
-			     p = Variant(p)
-			   mattr[v] =  p
-		    stream.setExtraAttributes((sectionName, mattr,))
-		    if not 'no-root_metadata' in largs:	
-  		      self.extraAttr.append((sectionName, stream.parent().name(), mattr,))
-	  #except RuntimeError, e:
-	  #pass	 
+               self.setPropertySetStreamAttributes(stream, args)
+	  #except RuntimeError, e: #not a PropertySetStream
+	    #pass	 
           except :
+            pass
 	    #error()
-	    pass
-        if not 'no-extraction' in largs:
+        if not 'no-extraction' in args:
 	  del stream 
+
+  def setPropertySetStreamAttributes(self, stream, args):
+    propertySet = PropertySetStream(stream, OfficeDocumentSectionCLSID.keys())
+    for clsid in OfficeDocumentSectionCLSID.iterkeys():
+      section = propertySet.sectionCLSID(clsid)
+      if section:
+        (sectionName, sectionIDS) = OfficeDocumentSectionCLSID[clsid]
+        mattr = VMap() 
+        for k, v in sectionIDS.iteritems():
+          Property = section.PropertyList.propertyID(k)
+          if Property and Property.Variant.Value:
+            p = section.PropertyList.propertyID(k).Variant.Value
+            if p and isinstance(p, Variant): #Thumbnail is type node
+              if v == 'Total editing time': #special case see msoshared.py
+                p = Variant(str(datetime.timedelta(seconds=(p.value()/10000000))))
+              elif v == 'Code page':
+                codePage = p.value()
+                if isinstance(codePage, long):
+                  self.codePage = 'cp' + str(codePage)
+              elif self.codePage and (v == "Title" or v == "Subject" or v == "Author" or v == "Comments" or v == "Last Author"):
+                p = Variant(p.value().decode(self.codePage).encode('UTF-8'))
+              else:
+                p = Variant(p)
+              mattr[v] =  p
+        stream.setExtraAttributes((sectionName, mattr,))
+        if not 'no-root_metadata' in args:	
+          self.extraAttr.append((sectionName, stream.parent().name(), mattr,))
  
   def _attributes(self):
      vmap = VMap()
@@ -142,12 +149,16 @@ class MetaCompound(mfso):
    mfso.__init__(self, 'metacompound')
    self.__disown__()
    self.handler = MetaCompoundHandler()
+   self.vbaCompressed = {}
+
+  def setVBACompressed(self, node, offset):
+    self.vbaCompressed[node.uid()] = offset
 
   def start(self, args):
     try:
       largs = []
       node = args['file'].value()	
-      for arg in ['no-extraction', 'no-text', 'no-pictures', 'no-root_metadata']:
+      for arg in ['no-extraction', 'no-text', 'no-pictures', 'no-root_metadata', 'no-vba-detection', 'no-vba-decompression']:
 	try:
 	  value =  args[arg].value()
 	  if value:
@@ -162,6 +173,28 @@ class MetaCompound(mfso):
     except (KeyError, Exception):
       self.stateinfo = "Error"
 
+  def vread(self, fd, buff, size):
+      try:
+        fi = self._mfso__fdmanager.get(fd)
+        compressedOffset = self.vbaCompressed.get(fi.node.uid())
+        if compressedOffset is None:
+          return (mfso.vread(self, fd, buff, size),)
+        maxOffset = fi.node.size() 
+        endOffset = fi.offset + size
+        if endOffset > maxOffset:
+          endOffset  = maxOffset
+        if fi.offset == endOffset:
+          return (0, "") 
+        vfile = fi.node.parent().open()
+        vfile.seek(compressedOffset)
+        decomp = decompress_stream(vfile.read())[fi.offset:endOffset]
+        vfile.close()
+        sizeRead = endOffset - fi.offset
+        fi.offset = endOffset
+        return (sizeRead, decomp)
+      except Exception as e:
+        return (0, "")
+
 class compound(Module): 
   """This module extracts metadata and content of compound files (doc,xls,msi, ...)"""
   def __init__(self):
@@ -172,7 +205,7 @@ class compound(Module):
     self.conf.addConstant({"name": "mime-type", 
  	                   "type": typeId.String,
  	                   "description": "compatible extension",
- 	                   "values": ["windows/compound"]})
+ 	                   "values": ["windows/compound", "document/word", "document/excel", "document/powerpoint"]})
     self.conf.addArgument({"name": "no-extraction",	
 			   "description" : "Don't create nodes for files stored inside compound documents",
 			   "input": Argument.Empty})
@@ -185,6 +218,12 @@ class compound(Module):
     self.conf.addArgument({"name" : "no-root_metadata",
 			   "description" : "Don't apply metadata on the root document",
 			   "input": Argument.Empty})
+    self.conf.addArgument({"name" : "no-vba-detection",
+                           "description": "Don't try to detect malicious VBA macro",
+                           "input": Argument.Empty})
+    self.conf.addArgument({"name" : "no-vba-decompression",
+                           "description": "Don't decompress VBA macro",
+                           "input": Argument.Empty})
     #self.flags = ["single"]
     self.tags = "Metadata"
     self.icon = ":document.png"

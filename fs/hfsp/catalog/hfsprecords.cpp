@@ -25,8 +25,10 @@ HfspCatalogEntry::HfspCatalogEntry() : __key(NULL), __data(NULL)
 
 HfspCatalogEntry::~HfspCatalogEntry()
 {
-  delete this->__key;
-  delete this->__data;
+  if (this->__key != NULL)
+    delete this->__key;
+  if (this->__data != NULL)
+    delete this->__data;
 }
 
 
@@ -104,8 +106,12 @@ Attributes	HfspCatalogEntry::attributes()
 
 void		HfspCatalogEntry::__createContext() throw (std::string)
 {
-  if (this->__key == NULL)
-    this->__key = new HfspCatalogKey();
+  if (this->__key != NULL)
+    {
+      delete this->__key;
+      this->__key = NULL;
+    }
+  this->__key = new HfspCatalogKey();
   if (this->__data != NULL)
     {
       delete this->__data;

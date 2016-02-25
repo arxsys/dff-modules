@@ -42,7 +42,10 @@ uint16_t	VolumeHeader::type()
 void	VolumeHeader::process(Node* origin, uint64_t offset, fso* fsobj) throw (std::string)
 {
   VFile*	vf;
+  std::string	err;
 
+  vf = NULL;
+  err = std::string("");
   memset(&this->__vheader, 0, sizeof(volumeheader));
   if (origin == NULL)
     throw std::string("Provided node does not exist");
@@ -52,14 +55,20 @@ void	VolumeHeader::process(Node* origin, uint64_t offset, fso* fsobj) throw (std
       vf->seek(offset);
       if (vf->read(&this->__vheader, sizeof(volumeheader)) != sizeof(volumeheader))
 	{
-	  vf->close();
-	  delete vf;
-	  throw std::string("Error while reading HFS Volume Header");
+	  err = std::string("Error while reading HFS Volume Header");
 	}
     }
   catch (...)
     {
+      err = std::string("Error while reading HFS Volume Header");
     }
+  if (vf != NULL)
+    {
+      vf->close();
+      delete vf;
+    }
+  if (!err.empty())
+    throw err;
   this->sanitize();
 }
 

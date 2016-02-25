@@ -222,6 +222,4 @@ class KeyNode(Node):
      return attr
 
   def dataType(self):
-    dtype = VMap()
-    dtype["registry"] = Variant("key") 
-    return dtype
+    return "registry/key"

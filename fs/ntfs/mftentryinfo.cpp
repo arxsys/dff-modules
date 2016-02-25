@@ -56,6 +56,16 @@ MFTEntryInfo::MFTEntryInfo(MFTNode* entryNode) : id(0), node(NULL), __entryNode(
 MFTEntryInfo::~MFTEntryInfo()
 {
 //delete node & unlink
+  delete node;
+  node = NULL;
+  delete __entryNode;
+  __entryNode = NULL;
+  std::list<DataNode*>::iterator dataNode = this->nodes.begin();
+  for (; dataNode != this->nodes.end(); ++dataNode)
+  {
+    (*dataNode) = NULL;
+    delete (*dataNode);
+  }
 }
 
 MFTNode*           MFTEntryInfo::entryNode(void) const

@@ -156,6 +156,8 @@ HNode::HNode() : __descriptor(), _klenfield(2), _buffer(NULL), _roffsets(NULL), 
 
 HNode::~HNode()
 {
+  if (this->_buffer != NULL)
+    free(this->_buffer);
 }
 
 
@@ -356,32 +358,29 @@ uint64_t	HNode::offset()
  *
 */
 
-HTree::HTree() : __hnode(), __vfile(NULL), _origin(NULL)
+HTree::HTree() : __hnode(), _origin(NULL)
 {
 }
 
 
 HTree::~HTree()
 {
-  if (this->__vfile != NULL)
-    {
-      this->__vfile->close();
-      delete this->__vfile;
-    }
 }
 
 void	HTree::process(Node* node, uint64_t offset) throw (std::string)
 {
   std::string	err;
+  VFile*	vfile;
 
+  vfile = NULL;
   if (node == NULL)
     throw std::string("Cannot create Btree because provided node does not exist");
   memset(&this->__hnode, 0, sizeof(header_node));
   try
     {
-      this->__vfile = node->open();
-      this->__vfile->seek(offset);
-      if (this->__vfile->read(&this->__hnode, sizeof(header_node)) != sizeof(header_node))
+      vfile = node->open();
+      vfile->seek(offset);
+      if (vfile->read(&this->__hnode, sizeof(header_node)) != sizeof(header_node))
 	throw std::string("Cannot read header node");
       if (((this->nodeSize() % 2) != 0) || (this->nodeSize() < 512) || (this->nodeSize() > 32768))
 	throw std::string("Size of node is not correct. Must be a power of 2 from 512 through 32768");
@@ -390,6 +389,11 @@ void	HTree::process(Node* node, uint64_t offset) throw (std::string)
   catch (...)
     {
       throw std::string("");
+    }
+  if (vfile != NULL)
+    {
+      vfile->close();
+      delete vfile;
     }
 }
 

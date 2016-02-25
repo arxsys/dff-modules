@@ -130,10 +130,7 @@ class FILESCHART(Script, QWidget):
 
 
   def addEntry(self, node):
-    mtype = node.dataType()["magic"].value()
-    idx = mtype.find(", ")
-    if idx != -1:
-      mtype = mtype[:idx]
+    mtype = node.dataType()
     if mtype not in self.typestat:
       self.typestat[mtype] = 1
     else:

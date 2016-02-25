@@ -25,7 +25,7 @@
 #include "include/MfsoAttrib.h"
 #include "include/CustomResults.h"
 
-void	BlockPointerAttributes::__extents_block(Inode * inode, Attributes * attr)
+void	BlockPointerAttributes::__extents_block(Inode * inode, DFF::Attributes * attr)
 {
   Ext4Extents	extents(NULL);
   std::list<std::pair<uint16_t, uint64_t> >   ext_list;
@@ -50,7 +50,7 @@ void	BlockPointerAttributes::__extents_block(Inode * inode, Attributes * attr)
     (*attr)["Extent blocks"] = Variant_p(new Variant(blk_l));
 }
 
-void		BlockPointerAttributes::__block_pointers(Inode * inode, Attributes * attr)
+void		BlockPointerAttributes::__block_pointers(Inode * inode, DFF::Attributes * attr)
 {
   uint32_t	block_number;
   uint32_t	tmp = inode->SB()->block_size() / 4;
@@ -108,9 +108,10 @@ BlockPointerAttributes::BlockPointerAttributes(std::string name) : AttributesHan
 {
 }
 
-Attributes	BlockPointerAttributes::attributes(Node* node) 
+DFF::Attributes	BlockPointerAttributes::attributes(Node* node) 
 {
-   Attributes	attr;
+   DFF::Attributes	attr;
+
    ExtfsNode*  enode = dynamic_cast<ExtfsNode*>(node);
 
    if (enode)
@@ -217,9 +218,9 @@ void		ExtfsNode::push_block_pointers(Inode * inode,
     }
 }
 
-Attributes 	ExtfsNode::_attributes()
+DFF::Attributes 	ExtfsNode::_attributes()
 {
-  Attributes	attr;
+  DFF::Attributes	attr;
   Inode	*	inode = this->read_inode();
 
   if (!inode)

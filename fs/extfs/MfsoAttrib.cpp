@@ -33,7 +33,7 @@ MfsoAttrib::~MfsoAttrib()
 {
 }
 
-void	MfsoAttrib::setAttrs(Inode * inode, Attributes * attr, uint64_t i_nb,
+void	MfsoAttrib::setAttrs(Inode * inode, DFF::Attributes * attr, uint64_t i_nb,
 			     uint64_t i_addr)
 {
   if (inode->delete_time())
@@ -76,7 +76,7 @@ void	MfsoAttrib::setAttrs(Inode * inode, Attributes * attr, uint64_t i_nb,
     }
 }
 
-void	MfsoAttrib::__add_xtd_attr(Inode * inode, Attributes * attr)
+void	MfsoAttrib::__add_xtd_attr(Inode * inode, DFF::Attributes * attr)
 {
   ExtendedAttr *	xtd_attr;
 
@@ -100,7 +100,7 @@ void	MfsoAttrib::__add_xtd_attr(Inode * inode, Attributes * attr)
   delete xtd_attr;//
 }
 
-void	MfsoAttrib::__add_acl(Inode * inode, Attributes * attr)
+void	MfsoAttrib::__add_acl(Inode * inode, DFF::Attributes * attr)
 {
   (void)inode; // to avoid a warning
   (*attr)[std::string("Posix ACL")] = Variant_p(new Variant(std::string("Not handled yet. \
@@ -109,7 +109,7 @@ void	MfsoAttrib::__add_acl(Inode * inode, Attributes * attr)
 }
 
 
-void	MfsoAttrib::__symlink_path(Inode * inode, Attributes * attr)
+void	MfsoAttrib::__symlink_path(Inode * inode, DFF::Attributes * attr)
 {
   std::string	path("");
   uint16_t	size;

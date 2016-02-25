@@ -30,12 +30,12 @@ public :
   MfsoAttrib();
   ~MfsoAttrib();
 
-  void		setAttrs(Inode * inode, Attributes * attr, uint64_t i_nb,
+  void		setAttrs(Inode * inode, DFF::Attributes * attr, uint64_t i_nb,
 			 uint64_t i_addr);
 private :
-  void		__add_acl(Inode * inode, Attributes * attr);
-  void		__add_xtd_attr(Inode * inode, Attributes * attr);
-  void		__symlink_path(Inode * inode, Attributes * attr);
+  void		__add_acl(Inode * inode, DFF::Attributes * attr);
+  void		__add_xtd_attr(Inode * inode, DFF::Attributes * attr);
+  void		__symlink_path(Inode * inode, DFF::Attributes * attr);
 };
 
 #endif

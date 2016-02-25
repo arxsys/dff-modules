@@ -56,7 +56,7 @@ class WebView(QWebView):
   def encodeImage(self, node):
     if node:
       conv = '"data:'
-      conv += node.dataType()["magic mime"].toString().split(';')[0]
+      conv += node.dataType()
       conv += ";base64,"
       buff = ""
       vf = node.open()

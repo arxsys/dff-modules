@@ -107,7 +107,7 @@ private:
   hfs_extent_key	__ekey;
 public:
   HfsExtentKey(uint64_t bsize);
-  ~HfsExtentKey();
+  virtual ~HfsExtentKey();
   virtual void		process(Node* origin, uint64_t offset, uint16_t size) throw (std::string);
   virtual std::map<uint64_t, Extent*>	extents();
   virtual uint8_t	forkType();
@@ -122,7 +122,7 @@ private:
   hfsp_extent_key	__ekey;
 public:
   HfspExtentKey(uint64_t bsize);
-  ~HfspExtentKey();
+  virtual ~HfspExtentKey();
   virtual void		process(Node* origin, uint64_t offset, uint16_t size) throw (std::string);
   virtual std::map<uint64_t, Extent*>	extents();
   virtual uint8_t	forkType();
