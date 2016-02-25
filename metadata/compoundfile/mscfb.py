@@ -239,14 +239,6 @@ class CompoundDocumentHeader(Struct):
      except:
         pass
 
-import datetime, sys, traceback
-def error():
-   err_type, err_value, err_traceback = sys.exc_info()
-   for n in  traceback.format_exception_only(err_type, err_value):
-     print n
-   for n in traceback.format_tb(err_traceback):
-     print n
-
 class DirectoryEntries(object):
   def __init__(self, fat, minifat, sectorLocation, header, parent, mfsobj, register = True):
      data = fat.readSector(sectorLocation)
@@ -362,9 +354,11 @@ class DirectoryEntry(Node, Struct):
      self.fat = fat
      self.minifat = minifat
      invalidNameCounter = 1
-     if self.objectName[1] == "\x00": #Some compound file like MSI as invalid name this is an ugly way to test
+     try:
+     #if self.objectName[1] == "\x00": #Some compound file like MSI as invalid name this is an ugly way to test
        self.objectName = unicode(self.objectName[:self.nameLen - 2], 'UTF-16').encode('UTF-8')
-     else:
+     except:
+     #else:
        #global invalidNameCounter
        #invalidNameCounter += 1
        self.objectName = str("Unknown-" + str(invalidNameCounter)).encode('UTF-8')

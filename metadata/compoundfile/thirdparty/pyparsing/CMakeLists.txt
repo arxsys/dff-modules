@@ -14,15 +14,5 @@
 
 install_file(
   __init__.py
-  compound.py
-  mscfb.py 
-  msdoc.py 
-  msdocheader.py 
-  msodraw.py 
-  msoleps.py 
-  msoshared.py
-  msppt.py
-  vba.py
+  pyparsing.py
 )
-
-add_subdirectory(thirdparty)

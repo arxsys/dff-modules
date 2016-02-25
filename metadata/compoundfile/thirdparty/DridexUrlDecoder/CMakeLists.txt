@@ -14,15 +14,6 @@
 
 install_file(
   __init__.py
-  compound.py
-  mscfb.py 
-  msdoc.py 
-  msdocheader.py 
-  msodraw.py 
-  msoleps.py 
-  msoshared.py
-  msppt.py
-  vba.py
+  DridexUrlDecoder.py
+  __init__.py
 )
-
-add_subdirectory(thirdparty)
