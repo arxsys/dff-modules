@@ -121,13 +121,20 @@ void  local::createPath(std::string origPath)
   WIN32_FILE_ATTRIBUTE_DATA  info;
   s_ull            sizeConverter;
 
-  
-  if(!GetFileAttributesExA(origPath.c_str(), GetFileExInfoStandard, &info))
-  {
-    res["error"] = Variant_p(new Variant(std::string("error stating file: " + origPath)));
-    return ;
-  }
 
+  int length = MultiByteToWideChar(CP_UTF8, 0, origPath.data(), origPath.length(), NULL, 0);
+  std::wstring path;
+  path.resize(length);
+  MultiByteToWideChar(CP_UTF8, 0, origPath.data(), origPath.length(), &path[0], path.length());
+  if(!GetFileAttributesEx((LPCWSTR)path.c_str(), GetFileExInfoStandard, &info))
+    {
+      // DWORD dw = GetLastError();
+      // LPVOID	buffer = NULL;
+      // FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, dw, 0, (LPTSTR)&buffer, 0, NULL);
+      // wprintf(L"%s\n", (LPCTSTR)buffer);
+      res["error"] = Variant_p(new Variant(std::string("error stating file: " + origPath)));
+      return ;
+  }
   if (info.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
   {  
     WLocalNode* node = new WLocalNode(this->relativePath(origPath), 0, NULL, this, WLocalNode::DIR, origPath);  
@@ -151,8 +158,13 @@ int local::vopen(Node *wnode)
   if (node != NULL) 
   {
     std::string  filePath = node->originalPath;
-    return ((int)CreateFileA(filePath.c_str(), GENERIC_READ, FILE_SHARE_READ,
-           0, OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL, 0));
+    int length = MultiByteToWideChar(CP_UTF8, 0, filePath.data(), filePath.length(), NULL, 0);
+    std::wstring path;
+    path.resize(length);
+    MultiByteToWideChar(CP_UTF8, 0, filePath.data(), filePath.length(), &path[0], path.length());
+    return ((int)CreateFile((LPCWSTR)path.c_str(), GENERIC_READ, FILE_SHARE_READ,
+			    0, OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL, 0));
+
   }
   else
     return (-1);
