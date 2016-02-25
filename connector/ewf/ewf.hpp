@@ -17,9 +17,11 @@
 #ifndef __EWF_HH__
 #define __EWF_HH__
 
+#include <stdint.h>
+
 #if defined( _MSC_VER )
   #if defined( _WIN64 )
-     typedef __int6     ssize_t;
+     typedef __int64     ssize_t;
   #else
      typedef __int32    ssize_t;
   #endif

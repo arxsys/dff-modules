@@ -22,6 +22,9 @@
 #include <windows.h>
 #include <shlwapi.h>
 
+#include "vfs.hpp"
+#include "path.hpp"
+#include "exceptions.hpp"
 
 void        local::frec(const char *name, Node *rfv)
 {

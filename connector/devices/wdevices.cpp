@@ -16,6 +16,7 @@
 
 #include "devices.hpp"
 #include "typesconv.hpp"
+#include "path.hpp"
 #include <String>
 #include <windows.h>
 #include <shlwapi.h>

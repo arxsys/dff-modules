@@ -19,6 +19,7 @@ if (UNIX)
     ulocalnode.cpp
     )
 else (UNIX)
+  add_definitions(-DUNICODE -D_UNICODE)
   set(local_srcs
     wlocal.cpp
     wlocalnode.cpp
