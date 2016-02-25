@@ -51,11 +51,12 @@ class VBANode(Node):
   def __init__(self, name, size, parent, fsobj, attributes):
      Node.__init__(self, name, size, parent, fsobj)
      self.__disown__()
-     self.attr = attributes
+     self.attr  = VMap()
+     self.attr["VBA"] = attributes
      self.setTag("suspicious")
 
-  def _attribute(self):
-    return sef.attr
+  def _attributes(self):
+    return self.attr
 
 class CompoundDocumentParser(object):
   def __init__(self, node, largs, mfsobj = None):
@@ -238,18 +239,27 @@ class MetaCompound(mfso):
         vfile = fi.node.parent().open()
         vfile.seek(compressedOffset)
         try:
+          #check if size to read is neg or 0  
+          maxOffset = fi.node.size() - fi.offset
+          if maxOffset <= 0:
+            return (0, "")
+          endOffset = fi.offset + size
+          if endOffset > fi.node.size():
+            endOffset  = maxOffset
+          fi.node.size() 
           decomp = decompress_stream(vfile.read())
+          decomp = decomp[fi.offset:endOffset]
           vfile.close()
-          #print decomp
-          return len(decomp) #fi offset ...
+          sizeRead = endOffset - fi.offset
+          fi.offset += sizeRead 
+          return (sizeRead, decomp)
         except Exception as e:
           print 'decompress error\n', e
-          return 0
-      except :
-        return mfso.vread(self, fd, buff, size)
+          return (0, "")
+      except:
+        return (mfso.vread(self, fd, buff, size),)
     except Exception as e:
-      print 'fd manager error', e
-      return 0
+      return (0, "")
 
 
 class compound(Module): 

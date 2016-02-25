@@ -22,4 +22,5 @@ install_file(
   msoleps.py 
   msoshared.py
   msppt.py
+#  thirdparty/... to handle
 )
