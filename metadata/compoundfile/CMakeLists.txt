@@ -22,6 +22,7 @@ install_file(
   msoleps.py 
   msoshared.py
   msppt.py
+  olevba.py
   vba.py
 )
 
