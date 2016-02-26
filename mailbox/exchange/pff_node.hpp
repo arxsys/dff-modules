@@ -18,6 +18,8 @@
 #define __PFF_NODE_HH__
 
 #include "pff.hpp"
+#include "export.hpp"
+#include "fdmanager.hpp"
 
 using namespace DFF;
 
@@ -41,10 +43,10 @@ public:
   EXPORT 		        PffNodeData(std::string name, Node* parent, pff* fsobj);
   EXPORT 		        PffNodeData(std::string name, Node* parent, pff* fsobj, ItemInfo* itemInfo);
   EXPORT                        ~PffNodeData();
-  virtual fdinfo*       	vopen();
-  virtual int32_t 	        vread(fdinfo* fi, void *buff, unsigned int size);
-  virtual int32_t 	        vclose(fdinfo* fi);
-  virtual uint64_t      	vseek(fdinfo* fi, uint64_t offset, int whence);
+  EXPORT virtual fdinfo*       	vopen();
+  EXPORT virtual int32_t 	        vread(fdinfo* fi, void *buff, unsigned int size);
+  EXPORT virtual int32_t 	        vclose(fdinfo* fi);
+  EXPORT virtual uint64_t      	vseek(fdinfo* fi, uint64_t offset, int whence);
 };
 
 class PffNodeEMail : public PffNodeData
@@ -60,10 +62,10 @@ public:
   EXPORT 		        PffNodeEMail(std::string name, Node* parent, pff* fsobj, ItemInfo* itemInfo);
   EXPORT virtual Attributes     _attributes(void);
   Attributes			allAttributes(libpff_item_t* item);	
-  fdinfo*       		vopen(void);
-  int32_t 	       	 	vread(fdinfo* fi, void *buff, unsigned int size);
-  int32_t 	        	vclose(fdinfo* fi);
-  uint64_t		      	vseek(fdinfo* fi, uint64_t offset, int whence);
+  EXPORT fdinfo*       		vopen(void);
+  EXPORT int32_t 	       	 	vread(fdinfo* fi, void *buff, unsigned int size);
+  EXPORT int32_t 	        	vclose(fdinfo* fi);
+  EXPORT uint64_t		      	vseek(fdinfo* fi, uint64_t offset, int whence);
   virtual uint8_t *	        dataBuffer(void);
   std::string			icon(void);
 };
