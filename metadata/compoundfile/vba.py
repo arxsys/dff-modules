@@ -70,7 +70,7 @@ class VBA(object):
           break
      result = _extract_vba(FakeOle(stream), vba_root.name() + "/", project_path.name(), dir_path.name())
      for streamPath, fileName, vbaDecompressed, compressedOffset in result:
-       hasSuspiscious = True
+       hasSuspiscious = False 
        scanner = VBA_Scanner(vbaDecompressed)
        scanner.scan()
        name = streamPath[streamPath.rfind('/') + 1:].encode('UTF-8')
@@ -81,6 +81,7 @@ class VBA(object):
             break
        attributesMap = VMap() 
        for (detectionType, keyword, desc,)  in  scanner.results:
+         hasSuspiscious = True 
          attributesMap[str(detectionType)] = Variant(str(keyword))
        if addRootMetadata:
          parent.extraAttr.append(("VBA", vbaStream.name(), attributesMap, ))
@@ -102,5 +103,6 @@ class VBA(object):
        print n
      for n in traceback.format_tb(err_traceback):
        print n
-     print "VBA analyzer error : ", e 
+     print "VBA analyzer on node ", parent.node.absolute(),  " error :"
+     print  e 
      pass
