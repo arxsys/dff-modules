@@ -224,43 +224,49 @@ uint64_t MFTAttribute::VNCEnd(void) const
 
 bool    MFTAttribute::isCompressed(void) const
 {
+  if (!this->__nonResidentAttribute) //Resident can't be compressed event if flag is set
+    return (false);
   return ((this->__mftAttribute.flags & 0x0001) == 0x0001);
 }
 
 bool    MFTAttribute::isEncrypted(void) const
 {
+  if (!this->__nonResidentAttribute) //Resident can't be compressed event if flag is set
+    return (false);
   return ((this->__mftAttribute.flags & 0x4000) == 0x4000);
 }
 
 bool    MFTAttribute::isSparse(void) const
 {
+  if (!this->__nonResidentAttribute)
+    return (false);
   return ((this->__mftAttribute.flags & 0x8000) == 0x8000);
 }
 
 uint32_t MFTAttribute::compressionBlockSize(void) const
 {
   if (!this->__nonResidentAttribute)
-    throw std::string("MFTAttribute can't access non resident attribute");
+    throw std::string("MFTAttribute can't access non resident attribute :  compression block size");
   return (1 << this->__nonResidentAttribute->compressionBlockSize);
 }
 
 uint64_t MFTAttribute::contentAllocatedSize(void) const
 {
   if (!this->__nonResidentAttribute)
-    throw std::string("MFTAttribute can't access non resident attribute");
+    throw std::string("MFTAttribute can't access non resident attribute : content allocates size");
   return (this->__nonResidentAttribute->contentAllocatedSize);
 }
 
 uint64_t MFTAttribute::contentActualSize(void) const
 {
   if (!this->__nonResidentAttribute)
-    throw std::string("MFTAttribute can't access non resident attribute");
+    throw std::string("MFTAttribute can't access non resident attribute : content actual size");
   return (this->__nonResidentAttribute->contentActualSize);
 }
 
 uint64_t MFTAttribute::contentInitializedSize(void) const
 {
   if (!this->__nonResidentAttribute)
-    throw std::string("MFTAttribute can't access non resident attribute");
+    throw std::string("MFTAttribute can't access non resident attribute : content initialized size");
   return (this->__nonResidentAttribute->contentInitializedSize);
 }
