@@ -28,9 +28,22 @@ using namespace DFF;
 
 class PartInterface
 {
+protected:
+  Node*			_origin;
+  uint32_t		_sectsize;
+  uint64_t		_offset;
+  bool			_force;
 public:
+  PartInterface() : _origin(NULL), _sectsize(512), _offset(0), _force(false) {}
   virtual		~PartInterface(){}
-  virtual bool		process(Node* origin, uint64_t offset, uint32_t sectsize) throw (vfsError) = 0;
+  virtual bool		process(Node* origin, uint64_t offset, uint32_t sectsize, bool force) throw (vfsError)
+  {
+    _origin = origin;
+    _offset = offset;
+    _sectsize = sectsize;
+    _force = force;
+    return true;
+  }
   virtual void		makeNodes(Node* root, fso* fsobj) = 0;
   virtual Attributes	result() = 0;
   virtual Attributes	entryAttributes(uint64_t entry, uint8_t type) = 0;
