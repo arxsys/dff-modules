@@ -17,7 +17,8 @@
 #include "gpt.hpp"
 #include "gpttypes.hpp"
 
-GptPartition::GptPartition() : __hidden(0), __sectsize(512), __offset(0), __allocated(std::map<uint64_t, gpt_meta*>()), __unallocated(std::map<uint64_t, uint64_t>()), __vfile(NULL), __origin(NULL), __header(gpt_header())
+GptPartition::GptPartition() : PartInterface(), __hidden(0), __allocated(std::map<uint64_t, gpt_meta*>()),
+			       __unallocated(std::map<uint64_t, uint64_t>()), __vfile(NULL), __header(gpt_header())
 {
 }
 
@@ -25,12 +26,10 @@ GptPartition::~GptPartition()
 {
 }
 
-bool	GptPartition::process(Node* origin, uint64_t offset, uint32_t sectsize) throw (vfsError)
+bool	GptPartition::process(Node* origin, uint64_t offset, uint32_t sectsize, bool force) throw (vfsError)
 {
-  this->__origin = origin;
-  this->__offset = offset;
-  this->__sectsize = sectsize;
-  this->__vfile = this->__origin->open();
+  PartInterface::process(origin, offset, sectsize, force);
+  this->__vfile = this->_origin->open();
   this->__readHeader();
   return true;
 }
@@ -54,7 +53,7 @@ void		GptPartition::makeNodes(Node* root, fso* fsobj)
 	ostr << "NONAME " << ++count;
       else
 	ostr << alloc->second->entry->name();
-      pnode = new PartitionNode(ostr.str(), alloc->second->entry->size() * this->__sectsize, root, fsobj);
+      pnode = new PartitionNode(ostr.str(), alloc->second->entry->size() * this->_sectsize, root, fsobj);
       pnode->setCtx(this, alloc->first, PRIMARY);
       ostr.str("");
     }
@@ -63,7 +62,7 @@ void		GptPartition::makeNodes(Node* root, fso* fsobj)
       for (unalloc = this->__unallocated.begin(); unalloc != this->__unallocated.end(); ++unalloc)
 	{
 	  ostr << unalloc->first << "s--" << unalloc->second - 1 << "s";
-	  pnode = new PartitionNode(ostr.str(), (unalloc->second - unalloc->first) * this->__sectsize, root_unalloc, fsobj);
+	  pnode = new PartitionNode(ostr.str(), (unalloc->second - unalloc->first) * this->_sectsize, root_unalloc, fsobj);
 	  pnode->setCtx(this, unalloc->first, UNALLOCATED);
 	  ostr.str("");
 	}
@@ -155,30 +154,30 @@ void		GptPartition::mapping(FileMapping* fm, uint64_t entry, uint8_t type)
   process = false;
   if ((type == UNALLOCATED) && ((unalloc = this->__unallocated.find(entry)) != this->__unallocated.end()))
     {
-      offset = unalloc->first * this->__sectsize;
-      size = (unalloc->second - unalloc->first + 1) * this->__sectsize;
+      offset = unalloc->first * this->_sectsize;
+      size = (unalloc->second - unalloc->first + 1) * this->_sectsize;
       process = true;
     }
   else if ((type != UNALLOCATED) && ((alloc = this->__allocated.find(entry)) != this->__allocated.end()))
     {
-      offset = alloc->second->entry->firstLba() * this->__sectsize;
-      size = alloc->second->entry->size() * this->__sectsize;
+      offset = alloc->second->entry->firstLba() * this->_sectsize;
+      size = alloc->second->entry->size() * this->_sectsize;
       process = true;
     }
   if (process)
     {
       //XXX NEED CASE DUMP
-      if (offset > this->__origin->size())
+      if (offset > this->_origin->size())
 	fm->push(0, size);
       //XXX NEED CASE DUMP
-      else if (offset + size > this->__origin->size())
+      else if (offset + size > this->_origin->size())
 	{
-	  tsize = this->__origin->size() - offset;
-	  fm->push(0, tsize, this->__origin, offset);
+	  tsize = this->_origin->size() - offset;
+	  fm->push(0, tsize, this->_origin, offset);
 	  fm->push(tsize, tsize - size);
 	}
       else
-	fm->push(0, size, this->__origin, offset);
+	fm->push(0, size, this->_origin, offset);
     }
 }
 
@@ -215,7 +214,7 @@ void	GptPartition::__readHeader() throw (vfsError)
 {
   Attributes	hattrs;
 
-  this->__vfile->seek(this->__offset + this->__sectsize);
+  this->__vfile->seek(this->_offset + this->_sectsize);
   if (this->__vfile->read(&this->__header, sizeof(gpt_header)) == sizeof(gpt_header))
     {
       // XXX Todo
@@ -243,7 +242,7 @@ void	GptPartition::__readEntries() throw (vfsError)
   
   entries_count = this->__header.entriesCount();
   entry_size = this->__header.entrySize();
-  offset = this->__vfile->seek(this->__header.entriesLba()*this->__sectsize);
+  offset = this->__vfile->seek(this->__header.entriesLba()*this->_sectsize);
   if (entry_size > sizeof(gpt_entry))
     rsize = sizeof(gpt_entry);
   else
@@ -253,12 +252,15 @@ void	GptPartition::__readEntries() throw (vfsError)
       if ((this->__vfile->read(&entry, rsize) == rsize)
 	  && (entry.firstLba() > 0 && entry.firstLba() < entry.lastLba()))
 	{
-	  meta = new gpt_meta;
-	  meta->entry = new gpt_entry;
-	  meta->epos = ecount;
-	  meta->eoffset = offset;
-	  memcpy(meta->entry, &entry, rsize);
-	  this->__allocated[entry.firstLba()] = meta;
+	  if ((((entry.firstLba() * this->_sectsize) < this->_origin->size()) && ((entry.lastLba() * this->_sectsize) < this->_origin->size())) || this->_force)
+	    {
+	      meta = new gpt_meta;
+	      meta->entry = new gpt_entry;
+	      meta->epos = ecount;
+	      meta->eoffset = offset;
+	      memcpy(meta->entry, &entry, rsize);
+	      this->__allocated[entry.firstLba()] = meta;
+	    }
 	}
       offset += entry_size;
       this->__vfile->seek(offset);
@@ -278,8 +280,8 @@ void		GptPartition::__makeUnallocated()
 	this->__unallocated[first_lba] = mit->second->entry->firstLba() - 1;
       first_lba = mit->second->entry->lastLba() + 1;
     }
-  if ((this->__offset + (first_lba * this->__sectsize)) < this->__origin->size())
-    this->__unallocated[first_lba] = (this->__origin->size() / this->__sectsize) - 1;
+  if ((this->_offset + (first_lba * this->_sectsize)) < this->_origin->size())
+    this->__unallocated[first_lba] = (this->_origin->size() / this->_sectsize) - 1;
 }
 
 

@@ -27,8 +27,8 @@
  * ---------------------------------------------
 */
 
-DosPartition::DosPartition() : __logical(0), __primary(0), __extended(0), __hidden(0), __slot(1), __allocated(), __unallocated(), __origin(NULL),
-			       __vfile(NULL), __sectsize(0), __offset(0), __ebr_base(0), __protective(false)
+DosPartition::DosPartition() : PartInterface(), __logical(0), __primary(0), __extended(0), __hidden(0), __slot(1),
+			       __allocated(), __unallocated(), __vfile(NULL), __ebr_base(0), __protective(false)
 {
 }
 
@@ -54,20 +54,18 @@ bool    DosPartition::isProtective()
   return this->__protective;
 }
 
-bool	DosPartition::process(Node* origin, uint64_t offset, uint32_t sectsize) throw (vfsError)
+bool	DosPartition::process(Node* origin, uint64_t offset, uint32_t sectsize, bool force) throw (vfsError)
 {
   bool	ret;
 
+  PartInterface::process(origin, offset, sectsize, force);
   ret = true;
   this->__slot = 1;
   this->__primary = 1;
   this->__hidden = 0;
   this->__logical = 1;
   this->__extended = 1;
-  this->__origin = origin;
-  this->__offset = offset;
-  this->__sectsize = sectsize;
-  this->__vfile = this->__origin->open();
+  this->__vfile = this->_origin->open();
   try
     {
       this->__readMbr();
@@ -96,7 +94,7 @@ void	DosPartition::makeNodes(Node* root, fso* fsobj)
 	  if ((mit->second->type & EXTENDED) != EXTENDED)
 	    {
 	      ostr << "Partition " << mit->second->slot;
-	      size = (uint64_t)mit->second->pte->total_blocks * this->__sectsize;
+	      size = (uint64_t)mit->second->pte->total_blocks * this->_sectsize;
 	      pnode = new PartitionNode(ostr.str(), size, root, fsobj);
 	      pnode->setCtx(this, mit->first, mit->second->type);
 	      ostr.str("");
@@ -111,7 +109,7 @@ void	DosPartition::makeNodes(Node* root, fso* fsobj)
 	  for (mit = this->__unallocated.begin(); mit != this->__unallocated.end(); mit++)
 	    {
 	      ostr << mit->first << "s--" << mit->second->entry_offset - 1 << "s";
-	      size = (mit->second->entry_offset - mit->first) * this->__sectsize;
+	      size = (mit->second->entry_offset - mit->first) * this->_sectsize;
 	      pnode = new PartitionNode(ostr.str(), size, root_unalloc, fsobj);
 	      pnode->setCtx(this, mit->first, UNALLOCATED);
 	      ostr.str("");
@@ -131,7 +129,6 @@ Attributes		DosPartition::result()
   Attributes		res;
   Variant*		vptr;
 
-  
   for (mit = this->__allocated.begin(); mit != this->__allocated.end(); mit++)
     {
       if ((mit->second->type & EXTENDED) == EXTENDED)
@@ -202,30 +199,30 @@ void		DosPartition::mapping(FileMapping* fm, uint64_t entry, uint8_t type)
   process = false;
   if ((type == UNALLOCATED) && ((mit = this->__unallocated.find(entry)) != this->__unallocated.end()))
     {
-      offset = this->__offset + mit->first * this->__sectsize;
-      size = mit->second->entry_offset * this->__sectsize;
+      offset = this->_offset + mit->first * this->_sectsize;
+      size = mit->second->entry_offset * this->_sectsize;
       process = true;
     }
   else if ((type != UNALLOCATED) && ((mit = this->__allocated.find(entry)) != this->__allocated.end()))
     {
-      offset = this->__offset + mit->first * this->__sectsize;
-      size = (uint64_t)mit->second->pte->total_blocks * this->__sectsize;
+      offset = this->_offset + mit->first * this->_sectsize;
+      size = (uint64_t)mit->second->pte->total_blocks * this->_sectsize;
       process = true;
     }
   if (process)
     {
       //XXX NEED CASE DUMP
-      if (offset > this->__origin->size())
-	fm->push(0, size);
+      if (offset > this->_origin->size())
+      	fm->push(0, size);
       //XXX NEED CASE DUMP
-      else if (offset + size > this->__origin->size())
-	{
-	  tsize = this->__origin->size() - offset;
-	  fm->push(0, tsize, this->__origin, offset);
-	  fm->push(tsize, tsize - size);
-	}
+      else if (offset + size > this->_origin->size())
+      	{
+      	  tsize = this->_origin->size() - offset;
+      	  fm->push(0, tsize, this->_origin, offset);
+      	  fm->push(tsize, tsize - size);
+      	}
       else
-	fm->push(0, size, this->__origin, offset);
+	fm->push(0, size, this->_origin, offset);
     }
 }
 
@@ -259,7 +256,7 @@ uint64_t	DosPartition::lba(uint32_t which)
 	  mit++;
 	  count++;
 	}
-      return mit->first / this->__sectsize;
+      return mit->first / this->_sectsize;
     }
   else
     return (uint64_t)-1;
@@ -348,33 +345,36 @@ void	DosPartition::__makeUnallocated()
 
   sidx = 0;
   counter = 1;
-  for (mit = this->__allocated.begin(); mit != this->__allocated.end(); mit++)
+  if (this->__allocated.size() > 0)
     {
-      if ((mit->second->type & EXTENDED) != EXTENDED)
+      for (mit = this->__allocated.begin(); mit != this->__allocated.end(); mit++)
 	{
-	  if (mit->first > sidx)
+	  if ((mit->second->type & EXTENDED) != EXTENDED)
 	    {
-	      meta = new metadatum;
-	      meta->pte = NULL;
-	      meta->entry_offset = mit->first;
-	      meta->type = UNALLOCATED;
-	      meta->slot = (uint32_t)-1;
-	      meta->sslot = counter++;
-	      this->__unallocated[sidx] = meta;
+	      if (mit->first > sidx)
+		{
+		  meta = new metadatum;
+		  meta->pte = NULL;
+		  meta->entry_offset = mit->first;
+		  meta->type = UNALLOCATED;
+		  meta->slot = (uint32_t)-1;
+		  meta->sslot = counter++;
+		  this->__unallocated[sidx] = meta;
+		}
+	      sidx = mit->first + mit->second->pte->total_blocks;
 	    }
-	  sidx = mit->first + mit->second->pte->total_blocks;
+	}
+      if ((this->_offset + (sidx * this->_sectsize)) < this->_origin->size())
+	{
+	  meta = new metadatum;
+	  meta->pte = NULL;
+	  meta->entry_offset = ((this->_origin->size() - this->_offset) / this->_sectsize) - 1;
+	  meta->type = UNALLOCATED;
+	  meta->sslot = counter++;
+	  meta->slot = (uint32_t)-1;
+	  this->__unallocated[sidx] = meta;
 	}
     }
-  if ((this->__offset + (sidx * this->__sectsize)) < this->__origin->size())
-    {
-      meta = new metadatum;
-      meta->pte = NULL;
-      meta->entry_offset = ((this->__origin->size() - this->__offset) / this->__sectsize) - 1;
-      meta->type = UNALLOCATED;
-      meta->sslot = counter++;
-      meta->slot = (uint32_t)-1;
-      this->__unallocated[sidx] = meta;
-    }  
 }
 
 void		DosPartition::__readMbr() throw (vfsError)
@@ -386,7 +386,7 @@ void		DosPartition::__readMbr() throw (vfsError)
   Attributes		mbrattr;
   metadatum*		meta;
 
-  this->__vfile->seek(this->__offset);
+  this->__vfile->seek(this->_offset);
   if (this->__vfile->read(&record, sizeof(dos_partition_record)) == sizeof(dos_partition_record))
     {
       // XXX where is the best location to provide the following information ?
@@ -401,26 +401,33 @@ void		DosPartition::__readMbr() throw (vfsError)
 	{
 	  if ((pte = this->__toPte(record.partitions+(i*16))) != NULL)
 	    {
-	      meta = new metadatum;
-	      meta->pte = pte;
-	      meta->entry_offset = this->__offset + 446 + i * 16;
-	      if (pte->type == GPT_PROTECTIVE)
-		this->__protective = true;
-	      if (IS_EXTENDED(pte->type))
-	      	{
-		  meta->slot = (uint32_t)-1;
-		  meta->sslot = this->__extended++;
-		  meta->type = EXTENDED;
-	      	  this->__ebr_base = pte->lba;
-	      	  this->__readEbr(pte->lba);
-	      	}
-	      else
+	      uint64_t lba = pte->lba * this->_sectsize;
+	      uint64_t size = pte->total_blocks * this->_sectsize;
+	      if (((lba < this->_origin->size()) && ((lba + size) < this->_origin->size())) || this->_force)
 		{
-		  meta->slot = this->__slot++;
-		  meta->sslot = this->__primary++;
-		  meta->type = PRIMARY;
+		  meta = new metadatum;
+		  meta->pte = pte;
+		  meta->entry_offset = this->_offset + 446 + i * 16;
+		  if (pte->type == GPT_PROTECTIVE)
+		    this->__protective = true;
+		  if (IS_EXTENDED(pte->type))
+		    {
+		      meta->slot = (uint32_t)-1;
+		      meta->sslot = this->__extended++;
+		      meta->type = EXTENDED;
+		      this->__ebr_base = pte->lba;
+		      this->__readEbr(pte->lba);
+		    }
+		  else
+		    {
+		      meta->slot = this->__slot++;
+		      meta->sslot = this->__primary++;
+		      meta->type = PRIMARY;
+		    }
+		  this->__allocated[pte->lba] = meta;
 		}
-	      this->__allocated[pte->lba] = meta;
+	      else
+		delete pte;
 	    }
 	}
     }
@@ -434,7 +441,9 @@ void	DosPartition::__readEbr(uint64_t csector, uint64_t shift) throw (vfsError)
   uint64_t		offset;
   metadatum*		meta;
 
-  offset = this->__offset + csector*this->__sectsize;
+  offset = this->_offset + csector*this->_sectsize;
+  if ((offset > this->_origin->size()) && !this->_force)
+    return;
   this->__vfile->seek(offset);
   if (this->__vfile->read(&record, sizeof(dos_partition_record)) > 0)
     {
@@ -442,45 +451,51 @@ void	DosPartition::__readEbr(uint64_t csector, uint64_t shift) throw (vfsError)
 	{
 	  if ((pte = this->__toPte(record.partitions+(i*16))) != NULL)
 	    {
-	      if (IS_EXTENDED(pte->type))
+	      uint64_t lba = pte->lba * this->_sectsize;
+	      uint64_t size = pte->total_blocks * this->_sectsize;
+	      if (((lba < this->_origin->size()) && ((lba + size) < this->_origin->size())) || this->_force)
 		{
-		  if ((this->__ebr_base + pte->lba) != csector)
+		  if (IS_EXTENDED(pte->type))
+		    {
+		      if ((this->__ebr_base + pte->lba) != csector)
+			{
+			  meta = new metadatum;
+			  meta->pte = pte;
+			  meta->entry_offset = offset + 446 + i * 16;
+			  meta->slot = (uint32_t)-1;
+			  meta->sslot = this->__extended++;
+			  if (i > 2)
+			    {
+			      this->__hidden++;
+			      meta->type = EXTENDED|HIDDEN;
+			    }
+			  else
+			    meta->type = EXTENDED;
+			  this->__allocated[this->__ebr_base + pte->lba] = meta;
+			  this->__readEbr(this->__ebr_base + (uint64_t)(pte->lba), pte->lba);
+			}
+		      else
+			;
+		    }
+		  else
 		    {
 		      meta = new metadatum;
 		      meta->pte = pte;
 		      meta->entry_offset = offset + 446 + i * 16;
-		      meta->slot = (uint32_t)-1;
-		      meta->sslot = this->__extended++;
+		      meta->slot = this->__slot++;
+		      meta->sslot = this->__logical++;
 		      if (i > 2)
 			{
 			  this->__hidden++;
-			  meta->type = EXTENDED|HIDDEN;
+			  meta->type = LOGICAL|HIDDEN;
 			}
 		      else
-			meta->type = EXTENDED;
-		      this->__allocated[this->__ebr_base + pte->lba] = meta;
-		      this->__readEbr(this->__ebr_base + (uint64_t)(pte->lba), pte->lba);
+			meta->type = LOGICAL;
+		      this->__allocated[this->__ebr_base + shift + pte->lba] = meta;
 		    }
-		  else
-		    ;
 		}
 	      else
-		{
-		  meta = new metadatum;
-		  meta->pte = pte;
-		  meta->entry_offset = offset + 446 + i * 16;
-		  meta->slot = this->__slot++;
-		  meta->sslot = this->__logical++;
-		  if (i > 2)
-		    {
-		      this->__hidden++;
-		      meta->type = LOGICAL|HIDDEN;
-		    }
-		  else
-		    meta->type = LOGICAL;
-		  this->__allocated[this->__ebr_base + shift + pte->lba] = meta;
-		}
-	      delete pte;
+		delete pte;
 	    }
 	}
     }
