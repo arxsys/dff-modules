@@ -534,67 +534,73 @@ Node*  MFTEntryManager::mapLink(DataNode* node)// const
   if (!mftEntryNode)
     return (NULL);
 
-  MFTAttributes reparses = mftEntryNode->findMFTAttributes($REPARSE_POINT); //XXX ??? ici try catch pour dump c+ 1 qui throw ds reparsepoint
-  if (reparses.size())
+  try //find MFTAttributes could throw 
   {
-    MFTAttributes::iterator attribute = reparses.begin();
-    MFTAttributeContent* content = (*attribute)->content();
-
-    ReparsePoint* reparsePoint = dynamic_cast<ReparsePoint* >(content);
-    if (reparsePoint)
+    MFTAttributes reparses = mftEntryNode->findMFTAttributes($REPARSE_POINT);
+    if (reparses.size())
     {
-      std::string driveName = this->__ntfs->opt()->driveName();
-      std::string printName = reparsePoint->print();
+      MFTAttributes::iterator attribute = reparses.begin();
+      MFTAttributeContent* content = (*attribute)->content();
 
-      if (driveName == printName.substr(0, 2))
+      ReparsePoint* reparsePoint = dynamic_cast<ReparsePoint* >(content);
+      if (reparsePoint)
       {
-        std::string path = printName.substr(3); //chomp first '\'
-        Node* nodeToLink = this->__ntfs->rootDirectoryNode();
-        size_t pathPos = path.find("\\");
-        std::string childName = "root";
-        while (true)
+        std::string driveName = this->__ntfs->opt()->driveName();
+        std::string printName = reparsePoint->print();
+
+        if (driveName == printName.substr(0, 2))
         {
-          std::vector<Node* > children = nodeToLink->children();
-          std::vector<Node* >::iterator child = children.begin(); 
-          if (children.size() == 0)
-            break;
-          for (; child != children.end() ;++child) 
+          std::string path = printName.substr(3); //chomp first '\'
+          Node* nodeToLink = this->__ntfs->rootDirectoryNode();
+          size_t pathPos = path.find("\\");
+          std::string childName = "root";
+          while (true)
           {
-            if ((*child)->name() == childName)
-            {
-              nodeToLink = (*child);
-              if (childName == path)
-              {
-                VLink* vlink = new VLink(nodeToLink, node);
-                this->__vlinks.push_back(vlink);
-                delete reparsePoint;
-                for (; attribute != reparses.end(); ++attribute)
-                  delete (*attribute);
-                return (vlink); //XXX ret vlink
-              }
+            std::vector<Node* > children = nodeToLink->children();
+            std::vector<Node* >::iterator child = children.begin(); 
+            if (children.size() == 0)
               break;
+            for (; child != children.end() ;++child) 
+            {
+              if ((*child)->name() == childName)
+              {
+                nodeToLink = (*child);
+                if (childName == path)
+                {
+                  VLink* vlink = new VLink(nodeToLink, node);
+                  this->__vlinks.push_back(vlink);
+                  delete reparsePoint;
+                  for (; attribute != reparses.end(); ++attribute)
+                    delete (*attribute);
+                  return (vlink); //XXX ret vlink
+                }
+                break;
+              }
+            }
+            if (child == children.end())
+              break;
+            if (childName == path)
+               break; //avoid invfinite loop
+            pathPos = path.find("\\");
+            if (pathPos == std::string::npos) //end link to 
+              childName = path;
+            else
+            {
+              childName = path.substr(0 , pathPos);
+              path = path.substr(pathPos + 1);
             }
           }
-          if (child == children.end())
-            break;
-          if (childName == path)
-             break; //avoid invfinite loop
-          pathPos = path.find("\\");
-          if (pathPos == std::string::npos) //end link to 
-            childName = path;
-          else
-          {
-            childName = path.substr(0 , pathPos);
-            path = path.substr(pathPos + 1);
-          }
+          //std::string error("Can't create VLink for repars point : " + printName);
+          //std::cout << error << std::endl;
         }
-        //std::string error("Can't create VLink for repars point : " + printName);
-        //std::cout << error << std::endl;
+        delete reparsePoint;
       }
-      delete reparsePoint;
+      for (; attribute != reparses.end(); ++attribute)
+        delete (*attribute);
     }
-    for (; attribute != reparses.end(); ++attribute)
-      delete (*attribute);
+  }
+  catch (...)
+  {
   }
   return (NULL);
 }
