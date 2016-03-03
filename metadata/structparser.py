@@ -128,8 +128,6 @@ class StructDef(object):
      self.shift = sshift
      self.var = {}
     
-pointer_count = [] 
-
 class Struct(StructDef):
    def __init__(self, arch, file, structdef, data):
      self.arch = arch
@@ -151,21 +149,18 @@ class Struct(StructDef):
 
            struct_addr = pointer + var.shift
            struct_type = var.stype[1:]
-           struct_def = getattr(self.arch, struct_type) 
+           struct_def = getattr(self.arch, struct_type)
            if struct_addr > 0 and (struct_addr + struct_def.ssize) <= self.file.node().size(): 
              self.file.seek(struct_addr)
              data = self.file.read(struct_def.ssize)
              struct_def.stype = struct_type
              struct_def.offset = 0
              try :
-               if pointer in pointer_count:
-                 return pointer
-               pointer_count.append(pointer)
                rstruct = Struct(self.arch, self.file, struct_def, data[0: struct_def.ssize])
 	       rstruct.pointer = pointer	
              except :
                 error = sys.exc_info()
-		print error
+		#print error
 		#print "error pointer to struct"
                 return pointer
              return rstruct
