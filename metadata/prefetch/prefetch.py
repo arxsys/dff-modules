@@ -138,11 +138,12 @@ class PrefetchParser():
 
        self.vfile.close()
      except :
+        print 'prefetch error on node ', node.absolute()
 	err_type, err_value, err_traceback = sys.exc_info()
 	for n in  traceback.format_exception_only(err_type, err_value):
 	  print n
       	for n in traceback.format_tb(err_traceback):
-	 print n
+	  print n
 	self.vfile.close()
 	raise Exception("Init error")
 
