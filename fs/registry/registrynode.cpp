@@ -1,14 +1,37 @@
 #include "datetime.hpp"
 
-#include "registrynode.hpp"
+#include "registry.hpp"
+/*
+ * DFF -- An Open Source Digital Forensics Framework
+ * Copyright (C) 2009-2011 ArxSys
+ * This program is free software, distributed under the terms of
+ * the GNU General Public License Version 2. See the LICENSE file
+ * at the top of the source tree.
+ *  
+ * See http: *www.digital-forensic.org for more information about this
+ * project. Please do not directly contact any of the maintainers of
+ * DFF for assistance; the project provides a web site, mailing lists
+ * and IRC channels for your use.
+ * 
+ * Author(s):
+ *  Solal Jacob <sja@digital-forensic.org>
+ */
 
-RegfNode::RegfNode(DObject* regf, Node* parent, fso* fsobj) : Node("", 0, parent, fsobj)
+#include "registrynode.hpp"
+#include "filemapping.hpp"
+
+/**
+ *  RegfNode
+ */
+RegfNode::RegfNode(DObject* regf, Registry* fsobj) : Node("", 0, NULL, fsobj)
 {
-//  this->__name = regf->call("name").get<DUnicodeString>(); 
-  this->__name = "regf"; //XXX
+  this->__name = regf->getValue("name").get<DUnicodeString>(); 
 }
 
-KeyNode::KeyNode(DObject* key, Node* parent, fso* fsobj) : Node("", 0, parent, fsobj)
+/**
+ *  KeyNode
+ */
+KeyNode::KeyNode(DObject* key, Node* parent, Registry* fsobj) : Node("", 0, parent, fsobj)
 {
   this->__name = key->getValue("name").get<DUnicodeString>();
   this->__timeStamp = key->getValue("timestamp"); 
@@ -23,11 +46,28 @@ Attributes      KeyNode::_attributes(void)
  return (attr);
 }
 
+/**
+ *  ValueNode
+ */
 
-ValueNode::ValueNode(DObject* value, Node* parent, fso* fsobj) : Node("", 0, parent, fsobj)
+ValueNode::ValueNode(DObject* value, Node* parent, Registry* fsobj) : Node("", 0, parent, fsobj)
 {
   this->__name = value->getValue("name").get<DUnicodeString>();
   this->__dataType = value->getValue("dataType");
+  this->__size = value->getValue("realDataSize").get<DInt32>();
+
+  DObject* offsets = value->getValue("dataOffsets");
+  DUInt64  offsetCount = offsets->call("size");
+  for (DUInt64 index = 0; index < offsetCount; ++index)
+  {
+    DUInt32 offset = offsets->call("get", RealValue<DUInt64>(index));
+    this->__offsets.push_back(offset);
+  }
+}
+
+std::string  ValueNode::icon(void)
+{
+  return (":password.png");
 }
 
 Attributes      ValueNode::_attributes(void)
@@ -42,7 +82,20 @@ Attributes      ValueNode::_attributes(void)
   return (attr);
 }
 
-std::string  ValueNode::icon(void)
+void            ValueNode::fileMapping(FileMapping* fm)
 {
-  return (":password.png");
+  DUInt64 sizeReaded = 0;
+  DUInt64 sizeToRead = this->__size;
+  Node* rootNode = ((Registry*)this->__fsobj)->rootNode();
+
+  std::vector<uint64_t>::const_iterator offset = this->__offsets.begin();
+  for (; offset != this->__offsets.end(); ++offset)
+  {
+    if (this->__size - sizeReaded < 16344)
+      sizeToRead = this->__size - sizeReaded;
+    else
+      sizeToRead = 16344;
+    fm->push(sizeReaded, sizeToRead, rootNode, *offset);
+    sizeReaded += sizeToRead; 
+  }
 }

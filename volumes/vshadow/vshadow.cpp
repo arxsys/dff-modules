@@ -18,6 +18,7 @@
 #include <sstream>
 #include "vshadow.hpp"
 #include "fdmanager.hpp"
+#include <libvshadow.h>
 
 Vshadow::Vshadow() : mfso("vshadow")
 {

@@ -36,6 +36,11 @@ Registry::~Registry()
 {
 }
 
+Node*                   Registry::rootNode(void) const
+{
+  return (this->__rootNode);
+}
+
 Destruct::DObject*      Registry::open(void)
 {
   RealValue<DObject*> regf = DStructs::instance().generate("Regf");
@@ -77,16 +82,12 @@ void    Registry::createKeyNode(DObject* key, Node* parent)
   }
 }
 
-//void    Registry::createValue(DObject* value)
-//{
-//
-//}
-
 void    Registry::createNodeTree(DObject* regf)
 {
-  Node* regfNode  = new RegfNode(regf, this->__rootNode, this);
+  Node* regfNode  = new RegfNode(regf, this);
   DObject* key = regf->getValue("key");
   this->createKeyNode(key, regfNode);
+  this->registerTree(this->__rootNode, regfNode);
 }
 
 void    Registry::start(Attributes args)
@@ -96,21 +97,27 @@ void    Registry::start(Attributes args)
   else
     throw envError("Registry module need a file argument.");
 
-
   this->setStateInfo("Parsing registry");
 
   //must no do it everytime module is loaded
-  DObject* imp = DStructs::instance().generate("Import"); 
-  imp->call("file", RealValue<DUnicodeString>("dff/api/destruct/examples/modules/libregistry.so"));
-  DObject* regf = this->open();
+  try
+  {
+    DObject* regf = this->open();
 
-  this->setStateInfo("Creating registry nodes");
-  this->createNodeTree(regf);
-  //regf->destroy();
-//registerTree() 
+    this->setStateInfo("Creating registry nodes");
+    this->createNodeTree(regf);
+    std::cout << "regf regCount " << regf->refCount() << std::endl;
+    regf->destroy();
 
-  this->setStateInfo("Finished successfully");
-  this->res["Result"] = Variant_p(new DFF::Variant(std::string("Registry module applyied successfully.")));
+    this->setStateInfo("Finished successfully");
+    this->res["Result"] = Variant_p(new DFF::Variant(std::string("Registry module applyied successfully.")));
+ }
+ catch (Destruct::DException const& exception)
+ {
+   std::cout << "excetion " << exception.error() << std::endl;
+   this->res["Result"] = Variant_p(new DFF::Variant(std::string(exception.error())));
+   throw DFF::envError(exception.error());
+ }
 }
 
 void    Registry::setStateInfo(const std::string& info)

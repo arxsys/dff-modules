@@ -40,6 +40,7 @@ public:
   void                  createKeyNode(Destruct::DObject* regf, DFF::Node* parent);
   void                  setStateInfo(const std::string& info);
   Destruct::DObject*    open(void);
+  DFF::Node*            rootNode(void) const;
 private:
   DFF::Node*            __rootNode;
 };

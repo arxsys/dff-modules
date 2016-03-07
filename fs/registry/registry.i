@@ -28,6 +28,7 @@
 %import "../../../api/vfs/libvfs.i"
 
 %ignore Registry::open;
+%ignore Registry::rootNode;
 %ignore Registry::createNodeTree;
 %ignore Registry::createKeyNode;
 
@@ -37,7 +38,11 @@
 %{
 from dff.api.module.module import * 
 from dff.api.types.libtypes import * 
+from dff.api.destruct import DStructs
 
+imp = DStructs().find("Import").newObject() #XXX elswhere
+imp.file("dff/api/destruct/examples/modules/libdestruct_registry.so")
+ 
 class registry(Module):
   def __init__(self):
     Module.__init__(self, 'registry', Registry)
