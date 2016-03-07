@@ -17,29 +17,19 @@
 
 %module registry
  
-%include "std_string.i"
-%include "std_list.i"
-%include "std_set.i"
-%include "std_map.i"
-%include "std_vector.i"
 %include "windows.i"
-
-//%ignore NTFS::fsNode;
+%include "exception.i"
 
 %{
-#include "variant.hpp"
-#include "vtime.hpp"
-#include "node.hpp"
-#include "vlink.hpp"
-#include "vfile.hpp"
-#include "mfso.hpp"
+#include "exceptions.hpp"
 #include "registry.hpp"
-#include "rootnode.hpp"
-#include "../../../api/destruct/python/py_dvalue.hpp"
 %}
 
 %import "../../../api/vfs/libvfs.i"
-%import "../../../api/include/dswrapper.i"
+
+%ignore Registry::open;
+%ignore Registry::createNodeTree;
+%ignore Registry::createKeyNode;
 
 %include "registry.hpp"
 
@@ -51,16 +41,16 @@ from dff.api.types.libtypes import *
 class registry(Module):
   def __init__(self):
     Module.__init__(self, 'registry', Registry)
-    Registry.declare()
     self.conf.addArgument({"name": "file",
                            "description": "Path to a file containing windows registry",
                            "input": Argument.Required|Argument.Single|typeId.Node})
-    #self.conf.addConstant({"name": "mime-type",
-                           #"description": "mime type value",
-                           #"type" : typeId.String,
-                           #"values" : ["registry file"]})
+    self.conf.addConstant({"name": "mime-type", 
+                           "type": typeId.String,
+                           "description": "managed mime type",
+                           "values": ["windows/registry"]})
     self.conf.description = "Expand windows registry tree."
     self.tags = "File systems"
     self.flags = ["noscan"]
+    self.scanFilter = 'path in [$*Users*$, $*Documents and Settings*$] and name matches "NTUSER.DAT" or path matches $*system32/config*$'
     self.icon = ":password.png"
 %}

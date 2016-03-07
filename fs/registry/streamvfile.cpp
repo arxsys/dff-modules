@@ -1,46 +1,61 @@
+#include "vfile.hpp"
+#include "node.hpp"
+#include "drealvalue.hpp"
+
 #include "streamvfile.hpp"
 
 using namespace Destruct;
 
-StreamVFile::StreamVFile(VFile* vfile, DStruct* dstruct): DStream(dstruct), __vfile(vfile)
+StreamVFile::StreamVFile(DStruct* dstruct, DFF::VFile* vfile) : DCppObject<StreamVFile>(dstruct, RealValue<DObject*>(DNone)), __vfile(vfile)
 {
   this->init();
 }
 
-StreamVFile::StreamVFile(DStruct* dstruct, DValue const& args): DStream(dstruct), __vfile(NULL)
+StreamVFile::StreamVFile(const StreamVFile& copy) : DCppObject<StreamVFile>(copy)
 {
   this->init();
 }
 
-StreamVFile::StreamVFile(const StreamVFile& copy) : DStream(copy), __vfile(copy.__vfile)
-{
-  this->init();
-}
-
+/**
+ *  Take care if not destroyed it will not be flushed !
+ */
 StreamVFile::~StreamVFile()
 {
-  this->__vfile->close();
-  delete this->__vfile;
+  //this->__stream.close();
+  //this->__vfile.close();
+ //delete this->__vfile;
 }
 
-DStream& StreamVFile::read(char*  buff, uint32_t size)
+DBuffer StreamVFile::read(DValue const& args)
 {
-  this->__vfile->read(buff, size);
-  return (*this);
+  DInt64 size = args.get<DInt64>();
+  if (size == 0)
+    return DBuffer(NULL, 0);
+
+ 
+  DBuffer buffer((int32_t)size);
+  this->__vfile->read(buffer.data(), size);
+
+  return (buffer);
 }
 
-DStream& StreamVFile::write(const char* buff, uint32_t size) 
+void    StreamVFile::seek(DValue const& args)
 {
-  throw DException("Can't write on StreamVFile");
-}
-
-DStream& StreamVFile::seek(int64_t pos) //declare en virtuel ds dstream
-{
+  DUInt64 pos = args.get<DUInt64>();
   this->__vfile->seek(pos);
-  return (*this);
-} 
+}
 
-int64_t  StreamVFile::tell(void)
+DUInt64 StreamVFile::size(void)
+{
+  return (this->__vfile->node()->size());
+}
+
+DUInt64 StreamVFile::tell(void)
 {
   return (this->__vfile->tell());
 }
+
+//DStream& StreamVFile::write(const char* buff, uint32_t size) 
+//{
+//throw DException("Can't write on StreamVFile");
+//}

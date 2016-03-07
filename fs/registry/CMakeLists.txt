@@ -16,13 +16,8 @@
 include_directories(${ICU_INCLUDE_DIRS})
 
 dff_cpp_module(registry
-  CPP_FILES registry.cpp
-  registryopt.cpp
-  regf.cpp
-  streamvfile.cpp
-  key.cpp
-  value.cpp
+  CPP_FILES registry.cpp streamvfile.cpp registrynode.cpp
   SWIG_FILE registry.i
   INCLUDE_DIRS ${ICU_INCLUDE_DIRS}
-  LINK_LIBRARIES ${ICU_LIBRARIES} exceptions types vfs
+  LINK_LIBRARIES ${ICU_LIBRARIES} exceptions types vfs 
 )
