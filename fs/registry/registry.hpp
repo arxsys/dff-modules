@@ -41,8 +41,12 @@ public:
   void                  setStateInfo(const std::string& info);
   Destruct::DObject*    open(void);
   DFF::Node*            rootNode(void) const;
+  uint32_t              versionMinor(void) const;
+  uint32_t              versionMajor(void) const;
 private:
   DFF::Node*            __rootNode;
+  uint32_t              __major;
+  uint32_t              __minor;
 };
 
 

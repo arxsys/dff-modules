@@ -27,13 +27,23 @@
 using namespace Destruct;
 using namespace DFF;
 
-Registry::Registry() : mfso("Registry"), __rootNode(NULL)
+Registry::Registry() : mfso("Registry"), __rootNode(NULL), __major(1), __minor(5)
 {
   
 }
 
 Registry::~Registry()
 {
+}
+
+uint32_t                Registry::versionMajor(void) const
+{
+  return (this->__major);
+}
+
+uint32_t                Registry::versionMinor(void) const
+{
+  return (this->__minor);
 }
 
 Node*                   Registry::rootNode(void) const
@@ -53,6 +63,8 @@ Destruct::DObject*      Registry::open(void)
 
   ((DObject*)streamVFile)->destroy();
   ((DObject*)deserializer)->call("DObject", regf);
+  this->__major = ((DObject*)regf)->getValue("major");
+  this->__minor = ((DObject*)regf)->getValue("minor");
 
   return (regf);
 }
@@ -106,7 +118,6 @@ void    Registry::start(Attributes args)
 
     this->setStateInfo("Creating registry nodes");
     this->createNodeTree(regf);
-    std::cout << "regf regCount " << regf->refCount() << std::endl;
     regf->destroy();
 
     this->setStateInfo("Finished successfully");
@@ -114,7 +125,6 @@ void    Registry::start(Attributes args)
  }
  catch (Destruct::DException const& exception)
  {
-   std::cout << "excetion " << exception.error() << std::endl;
    this->res["Result"] = Variant_p(new DFF::Variant(std::string(exception.error())));
    throw DFF::envError(exception.error());
  }

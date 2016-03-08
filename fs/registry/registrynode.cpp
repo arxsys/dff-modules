@@ -85,8 +85,14 @@ Attributes      ValueNode::_attributes(void)
 void            ValueNode::fileMapping(FileMapping* fm)
 {
   DUInt64 sizeReaded = 0;
-  DUInt64 sizeToRead = this->__size;
+  DUInt64 sizeToRead = 0;
   Node* rootNode = ((Registry*)this->__fsobj)->rootNode();
+
+  if (((Registry*)this->__fsobj)->versionMinor() == 3 || this->__size < 16344)
+  {
+     fm->push(0, this->__size, rootNode, this->__offsets[0]);
+     return ;
+  }
 
   std::vector<uint64_t>::const_iterator offset = this->__offsets.begin();
   for (; offset != this->__offsets.end(); ++offset)
@@ -95,6 +101,8 @@ void            ValueNode::fileMapping(FileMapping* fm)
       sizeToRead = this->__size - sizeReaded;
     else
       sizeToRead = 16344;
+    if (this->__size > 16344)
+      std::cout << sizeReaded << ' ' << sizeToRead << ' ' << *offset <<  std::endl; 
     fm->push(sizeReaded, sizeToRead, rootNode, *offset);
     sizeReaded += sizeToRead; 
   }
