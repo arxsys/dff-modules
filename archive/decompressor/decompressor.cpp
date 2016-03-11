@@ -76,7 +76,6 @@ void    Decompressor::createNodeTree(archive* archiv)
 
   struct archive_entry *entry;
 
-  //std::cout << "creating entry for " << this->rootNode()->absolute() << std::endl;
   Node* decompressorNode = new Node("Uncompressed", 0, NULL, this);
   while (archive_read_next_header(archiv, &entry) == ARCHIVE_OK) 
   {
@@ -196,7 +195,6 @@ archive*        Decompressor::openNodeArchive(Node* node)
   if (decompressorNode->archive())
     return (decompressorNode->archive()); //let node be scanner directly in the main loop to avoid rereading 
 
-  std::cout << "Recreating archive for node " << node->absolute() << std::endl;
   archive* archiv = this->newArchive();
   //check error or throw 
   std::string absolute = node->absolute();
