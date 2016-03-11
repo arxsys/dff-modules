@@ -94,7 +94,7 @@ void    Decompressor::createNodeTree(archive* archiv)
 
        if (consumedPath == "" && size)
        {
-         DecompressorNode* decompressed = new DecompressorNode(pathChunk, size, parentChunk, this);
+         DecompressorNode* decompressed = new DecompressorNode(pathChunk, size, parentChunk, this, entry);
          decompressed->archive(archiv);
          decompressed->dataType();
          decompressed->archive(NULL);
