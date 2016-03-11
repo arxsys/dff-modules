@@ -82,7 +82,6 @@ void    Decompressor::createNodeTree(archive* archiv)
   {
     uint64_t    size = archive_entry_size(entry);
     std::string fullPath = archive_entry_pathname(entry);
-    //std::cout << "  " << fullPath << std::endl;
     std::string consumedPath = fullPath;
     Node* parentChunk = decompressorNode;
     while (consumedPath != "")
@@ -96,7 +95,11 @@ void    Decompressor::createNodeTree(archive* archiv)
 
        if (consumedPath == "" && size)
        {
-         new DecompressorNode(pathChunk, size, parentChunk, this);
+         DecompressorNode* decompressed = new DecompressorNode(pathChunk, size, parentChunk, this);
+         decompressed->archive(archiv);
+         decompressed->dataType();
+         decompressed->archive(NULL);
+         archive_read_data_skip(archiv);
          break;
        }
 
@@ -111,10 +114,12 @@ void    Decompressor::createNodeTree(archive* archiv)
           }
        }
        if (child == children.end())
+       {
          parentChunk = new Node(pathChunk, 0, parentChunk, this);
+       }
     }
-    archive_read_data_skip(archiv);
   }
+//XXX archive_read_close ?
   res = archive_read_free(archiv);
   if (res != ARCHIVE_OK)
     throw envError("Can't free archive");
@@ -134,7 +139,6 @@ void    Decompressor::start(Attributes args)
   /** 
    *   Crate Archive structure & setcallback
    */
-
   archive* archiv = this->newArchive();
   this->createNodeTree(archiv);
 
@@ -155,7 +159,6 @@ void            Decompressor::setStateInfo(const std::string& str)
 /**
  *  Archive callback to read on DFF VFile
  */
-
 int             Decompressor::archiveOpen(struct archive *, void *data)
 {
 
@@ -189,6 +192,10 @@ int             Decompressor::archiveClose(struct archive *, void *data)
 
 archive*        Decompressor::openNodeArchive(Node* node)
 {
+  DecompressorNode* decompressorNode = static_cast<DecompressorNode* >(node);
+  if (decompressorNode->archive())
+    return (decompressorNode->archive()); //let node be scanner directly in the main loop to avoid rereading 
+
   std::cout << "Recreating archive for node " << node->absolute() << std::endl;
   archive* archiv = this->newArchive();
   //check error or throw 
@@ -234,12 +241,7 @@ int32_t         Decompressor::vread(int32_t fd, void *rbuff, uint32_t size)
 {
   try
   {
-    /*USE large buffering at least 1MO to avoid little backward seek 
-     check if seek is after so no need to recreate openNodearchive 
-     if seek is in our buffer (get some room before and after so it's morre efficent in our buffer
-     if need to read preempt data if seek look at our buffer et c... read is not so long reopening very long (it must be avoid at most cost )
-     and seek is long on large files 
-    */
+    /*use larg buffering in DecompressorFdInfo to speed-up backward seek ? */
     DecompressorFdinfo* fi = (DecompressorFdinfo*)this->__fdManager->get(fd);
     if (fi->offset >= fi->node->size())
       return 0;
@@ -271,11 +273,8 @@ int32_t         Decompressor::vread(int32_t fd, void *rbuff, uint32_t size)
   }
   catch (...) 
   {
-   std::cout << "vread catch error " << std::endl;
     return (0);
   }
-  //get archive & entry data
-  //call decompression lib on this node and return res 
   return (0);
 }
 
@@ -336,7 +335,10 @@ int32_t         Decompressor::vclose(int32_t fd)
 {
   DecompressorFdinfo* fi = (DecompressorFdinfo*)(this->__fdManager->get(fd));
 
-  archive_read_free(fi->arch);
+  DecompressorNode* decomp = static_cast<DecompressorNode*>(fi->node);
+
+  if (decomp->archive() == NULL)
+    archive_read_free(fi->arch);
   //delete[] fi->buffer;
 
   this->__fdManager->remove(fd);

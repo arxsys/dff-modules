@@ -27,6 +27,11 @@ class DecompressorNode : public DFF::Node
 public:
   DecompressorNode(std::string name, uint64_t size, Node* parent, Decompressor* decompressor);
   ~DecompressorNode();
+  struct archive* archive(void) const;
+  void     archive(struct archive* archiv);
+private:
+  struct archive* __archive;
+
 //archive_entry_sourcepath
 //archive_entry_size
 //archive_entry_size_is_set

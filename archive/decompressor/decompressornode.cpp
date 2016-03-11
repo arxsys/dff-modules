@@ -22,10 +22,20 @@
 
 using namespace DFF;
 
-DecompressorNode::DecompressorNode(std::string name, uint64_t size, Node* parent, Decompressor* decompressor) : Node(name, size, parent, decompressor)
+DecompressorNode::DecompressorNode(std::string name, uint64_t size, Node* parent, Decompressor* decompressor) : Node(name, size, parent, decompressor), __archive(NULL)
 {
 }
 
 DecompressorNode::~DecompressorNode()
 {
+}
+
+archive*        DecompressorNode::archive(void) const
+{
+ return (this->__archive);
+}
+
+void            DecompressorNode::archive(struct archive* archiv)
+{
+  this->__archive = archiv;
 }
