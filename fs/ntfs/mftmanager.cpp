@@ -533,15 +533,13 @@ Node*  MFTEntryManager::mapLink(DataNode* node)// const
   MFTNode* mftEntryNode = node->mftEntryNode();
   if (!mftEntryNode)
     return (NULL);
-
-  try //find MFTAttributes could throw 
+  try
   {
     MFTAttributes reparses = mftEntryNode->findMFTAttributes($REPARSE_POINT);
     if (reparses.size())
     {
       MFTAttributes::iterator attribute = reparses.begin();
       MFTAttributeContent* content = (*attribute)->content();
-
       ReparsePoint* reparsePoint = dynamic_cast<ReparsePoint* >(content);
       if (reparsePoint)
       {

@@ -57,7 +57,11 @@ class PARTITION(Module):
     self.conf.addArgument({"name": "offset",
                            "description": "offset where the volume containing the partition is located",
                            "input": Argument.Optional|Argument.Single|typeId.UInt64})
-    
+
+    self.conf.addArgument({"name": "force",
+                           "description": "force the module to process partition entries even if provided file is smaller than resulting partitions",
+                           "input": Argument.Empty})
+
     self.conf.addConstant({"name": "mime-type", 
                            "type": typeId.String,
                            "description": "managed mime type",

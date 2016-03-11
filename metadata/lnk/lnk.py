@@ -349,7 +349,7 @@ class lnk(Module):
     self.conf.addConstant({"name": "mime-type", 
  	                   "type": typeId.String,
  	                   "description": "compatible extension",
- 	                   "values": ["windows/shorcut"]})
+ 	                   "values": ["windows/shortcut"]})
     self.flags = ["single"] 
     self.tags = "Metadata"
     self.icon = ":lnk"

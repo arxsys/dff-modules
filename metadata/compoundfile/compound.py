@@ -178,7 +178,7 @@ class MetaCompound(mfso):
         fi = self._mfso__fdmanager.get(fd)
         compressedOffset = self.vbaCompressed.get(fi.node.uid())
         if compressedOffset is None:
-          return (mfso.vread(self, fd, buff, size),)
+          return mfso.vread(self, fd, buff, size)
         maxOffset = fi.node.size() 
         endOffset = fi.offset + size
         if endOffset > maxOffset:

@@ -100,10 +100,7 @@ private:
   uint32_t				__slot;
   std::map<uint64_t, metadatum*>	__allocated;
   std::map<uint64_t, metadatum*>	__unallocated;
-  Node*					__origin;
   VFile*				__vfile;
-  uint32_t				__sectsize;
-  uint64_t				__offset;
   uint64_t				__ebr_base;
   bool					__protective;
   dos_pte*				__toPte(uint8_t* buff);
@@ -116,7 +113,7 @@ public:
   DosPartition();
   virtual ~DosPartition();
   virtual bool				isProtective();
-  virtual bool				process(Node* origin, uint64_t offset, uint32_t sectsize) throw (vfsError);
+  virtual bool				process(Node* origin, uint64_t offset, uint32_t sectsize, bool force) throw (vfsError);
   virtual void				makeNodes(Node* root, fso* fsobj);
   virtual Attributes			result();
   virtual Attributes			entryAttributes(uint64_t entry, uint8_t type);

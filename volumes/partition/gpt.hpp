@@ -157,12 +157,9 @@ class GptPartition : public PartInterface
 {
 private:
   uint32_t				__hidden;
-  uint32_t				__sectsize;
-  uint64_t				__offset;  
   std::map<uint64_t, gpt_meta*>		__allocated;
   std::map<uint64_t, uint64_t>		__unallocated;
   VFile*				__vfile;
-  Node*					__origin;
   gpt_header				__header;
   void					__readHeader() throw (vfsError);
   void					__readEntries() throw (vfsError);
@@ -171,7 +168,7 @@ private:
 public:
   GptPartition();
   virtual ~GptPartition();
-  virtual bool				process(Node* origin, uint64_t offset, uint32_t sectsize) throw (vfsError);
+  virtual bool				process(Node* origin, uint64_t offset, uint32_t sectsize, bool force) throw (vfsError);
   virtual void				makeNodes(Node* root, fso* fsobj);
   virtual Attributes			entryAttributes(uint64_t entry, uint8_t type);
   virtual void				mapping(FileMapping* fm, uint64_t entry, uint8_t type);
