@@ -26,7 +26,6 @@ using namespace DFF;
 
 DecompressorNode::DecompressorNode(std::string name, uint64_t size, Node* parent, Decompressor* decompressor, archive_entry* entry) : Node(name, size, parent, decompressor), __archive(NULL)
 {
- //get time attributes;
   uint64_t time = 0;
   if (archive_entry_atime_is_set(entry) && (time = archive_entry_atime(entry)))
       this->__timeAttributes["accessed"] = time;
