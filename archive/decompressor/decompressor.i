@@ -51,5 +51,6 @@ class decompressor(Module):
                            "type" : typeId.String,
                            "values" : ["archive/zip", "archive/rar", "archive/tar", "archive/cab", "archive/7zip", "archive/bzip2", "archive/gzip", "archive/lzma", "archive/cpio", "archive/xz", "archive/lzip", "archive/zlib"]})
     self.conf.description = "Unarchive & decompress zip, rar, cab, 7zip, iso9660, tar, ..."
+    self.icon = ":zip"
     self.tags = "Archive"
 %}

@@ -17,15 +17,50 @@
 #include <archive.h>
 #include <archive_entry.h>
 
+#include "datetime.hpp"
+
 #include "decompressor.hpp"
 #include "decompressornode.hpp"
 
 using namespace DFF;
 
-DecompressorNode::DecompressorNode(std::string name, uint64_t size, Node* parent, Decompressor* decompressor) : Node(name, size, parent, decompressor)
+DecompressorNode::DecompressorNode(std::string name, uint64_t size, Node* parent, Decompressor* decompressor, archive_entry* entry) : Node(name, size, parent, decompressor), __archive(NULL)
 {
+  uint64_t time = 0;
+  if (archive_entry_atime_is_set(entry) && (time = archive_entry_atime(entry)))
+      this->__timeAttributes["accessed"] = time;
+ 
+  if (archive_entry_birthtime_is_set(entry) && (time = archive_entry_birthtime(entry)))
+    this->__timeAttributes["birthtime"] = time;
+  
+  if (archive_entry_ctime_is_set(entry) && (time = archive_entry_ctime(entry)))
+    this->__timeAttributes["created"] = time;
+
+  if (archive_entry_mtime_is_set(entry) && (time = archive_entry_mtime(entry)))
+    this->__timeAttributes["modified"] = time;
 }
 
 DecompressorNode::~DecompressorNode()
 {
+}
+
+archive*        DecompressorNode::archive(void) const
+{
+ return (this->__archive);
+}
+
+void            DecompressorNode::archive(struct archive* archiv)
+{
+  this->__archive = archiv;
+}
+
+Attributes       DecompressorNode::_attributes()
+{
+  Attributes attributes;
+
+  std::map<std::string, uint64_t>::const_iterator timeAttribute = this->__timeAttributes.begin();
+  for (; timeAttribute != this->__timeAttributes.end(); ++timeAttribute)
+     attributes[timeAttribute->first] = Variant_p(new Variant(new DateTime(timeAttribute->second)));
+
+  return (attributes);
 }

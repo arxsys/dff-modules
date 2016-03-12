@@ -27,7 +27,7 @@
 
 using namespace DFF;
 
-DecompressorFdinfo::DecompressorFdinfo() : arch(NULL), archiveReadOffset(0), buffer(NULL), bufferSize(0), bufferOffset(0)
+DecompressorFdinfo::DecompressorFdinfo() : arch(NULL), archiveReadOffset(0) 
 {
 
 }
@@ -36,7 +36,7 @@ ArchiveData::ArchiveData(Node* parent) : node(parent), vfile(NULL), buffer(mallo
 {
 }
 
-ArchiveData::~ArchiveData() //called ?
+ArchiveData::~ArchiveData()
 {
   free(buffer);
 }
@@ -49,6 +49,22 @@ Decompressor::~Decompressor()
 {
   if (this->__fdManager)
    delete this->__fdManager;
+}
+
+archive*   Decompressor::newArchiveRaw(void)
+{
+  struct archive *archiv = archive_read_new();
+  archive_read_support_format_raw(archiv);
+  archive_read_support_filter_all(archiv);
+
+  ArchiveData* data = new ArchiveData(this->__rootNode);
+  archive_read_set_open_callback(archiv, &this->archiveOpen);
+  archive_read_set_read_callback(archiv, &this->archiveRead);
+  archive_read_set_seek_callback(archiv, &this->archiveSeek);
+  archive_read_set_close_callback(archiv,  &this->archiveClose);
+  archive_read_set_callback_data(archiv, (void*)data);
+  
+  return (archiv);
 }
 
 archive*   Decompressor::newArchive(void)
@@ -69,20 +85,17 @@ archive*   Decompressor::newArchive(void)
 
 void    Decompressor::createNodeTree(archive* archiv)
 {
-  // Create Tree if archive or subnode if only compressed
-  int res = archive_read_open1(archiv); 
-  if (res != ARCHIVE_OK)
-    throw envError("Can't open archive");
-
   struct archive_entry *entry;
 
-  //std::cout << "creating entry for " << this->rootNode()->absolute() << std::endl;
+  if (archive_read_open1(archiv) != ARCHIVE_OK)
+    throw envError("Can't open archive");
+
+
   Node* decompressorNode = new Node("Uncompressed", 0, NULL, this);
   while (archive_read_next_header(archiv, &entry) == ARCHIVE_OK) 
   {
     uint64_t    size = archive_entry_size(entry);
     std::string fullPath = archive_entry_pathname(entry);
-    //std::cout << "  " << fullPath << std::endl;
     std::string consumedPath = fullPath;
     Node* parentChunk = decompressorNode;
     while (consumedPath != "")
@@ -96,7 +109,11 @@ void    Decompressor::createNodeTree(archive* archiv)
 
        if (consumedPath == "" && size)
        {
-         new DecompressorNode(pathChunk, size, parentChunk, this);
+         DecompressorNode* decompressed = new DecompressorNode(pathChunk, size, parentChunk, this, entry);
+         decompressed->archive(archiv);
+         decompressed->dataType();
+         decompressed->archive(NULL);
+         archive_read_data_skip(archiv);
          break;
        }
 
@@ -111,16 +128,49 @@ void    Decompressor::createNodeTree(archive* archiv)
           }
        }
        if (child == children.end())
+       {
          parentChunk = new Node(pathChunk, 0, parentChunk, this);
+       }
     }
-    archive_read_data_skip(archiv);
   }
-  res = archive_read_free(archiv);
-  if (res != ARCHIVE_OK)
+  archive_read_close(archiv);
+  if (archive_read_free(archiv) != ARCHIVE_OK)
     throw envError("Can't free archive");
 
-  //if at least one entry was created (module can fail)
-  this->registerTree(this->__rootNode, decompressorNode);
+  if (decompressorNode->hasChildren())
+   this->registerTree(this->__rootNode, decompressorNode);
+  else
+  {
+    archiv = newArchiveRaw();
+    if (archive_read_open1(archiv) != ARCHIVE_OK)
+      throw envError("Can't open archive");
+
+    if (archive_read_next_header(archiv, &entry) != ARCHIVE_OK)
+    {
+        //delete archive & archivedata
+      archive_read_close(archiv);
+      archive_read_free(archiv);
+      delete decompressorNode;
+      throw envError("Can't open archive");
+    }
+
+    char buff[1024];
+    int64_t size = 0;
+    uint64_t res = 0;
+    while (true) 
+    {
+      if ((res = archive_read_data(archiv, &buff, 1024)) <= 0)
+        break; 
+      size += res;    
+    }
+    std::cout << "size of raw data" << size << std::endl;
+    //set decompressed node size
+    //new DecompressorRawNode of size //use dynamicast to choose which function to use or flag in mfso ?
+
+    archive_read_close(archiv);
+    archive_read_free(archiv);
+    delete decompressorNode;
+  }
 
 }
 
@@ -134,7 +184,6 @@ void    Decompressor::start(Attributes args)
   /** 
    *   Crate Archive structure & setcallback
    */
-
   archive* archiv = this->newArchive();
   this->createNodeTree(archiv);
 
@@ -155,7 +204,6 @@ void            Decompressor::setStateInfo(const std::string& str)
 /**
  *  Archive callback to read on DFF VFile
  */
-
 int             Decompressor::archiveOpen(struct archive *, void *data)
 {
 
@@ -171,7 +219,7 @@ ssize_t         Decompressor::archiveRead(struct archive *, void *data, const vo
 {
   ArchiveData* archiveData = (ArchiveData*)data;
 
-  int64_t res = archiveData->vfile->read(archiveData->buffer, ArchiveDataBufferSize); //return less if block size < 4096 ?
+  int64_t res = archiveData->vfile->read(archiveData->buffer, ArchiveDataBufferSize);
   *buffer = archiveData->buffer;
   return (res);
 }
@@ -183,15 +231,20 @@ int64_t         Decompressor::archiveSeek(struct archive *, void *data, int64_t 
 
 int             Decompressor::archiveClose(struct archive *, void *data)
 {
-  ((ArchiveData*)data)->vfile->close();
+  ArchiveData* archiveData = static_cast<ArchiveData*>(data);
+  archiveData->vfile->close();
+  delete archiveData;
   return (0);
 }
 
 archive*        Decompressor::openNodeArchive(Node* node)
 {
-  std::cout << "Recreating archive for node " << node->absolute() << std::endl;
+  DecompressorNode* decompressorNode = static_cast<DecompressorNode* >(node);
+  if (decompressorNode->archive())
+    return (decompressorNode->archive()); //let node called dataType directly in the main loop to avoid reopening archive when scanned 
+
   archive* archiv = this->newArchive();
-  //check error or throw 
+ 
   std::string absolute = node->absolute();
   std::string archivPath = absolute.substr(absolute.rfind("Uncompressed/") + 13);
 
@@ -199,7 +252,6 @@ archive*        Decompressor::openNodeArchive(Node* node)
   if (res != ARCHIVE_OK)
     throw envError("Can't open archive");
 
-  //chcek error or throw 
   struct archive_entry *entry;
   int flag = 0;
   while (archive_read_next_header(archiv, &entry) == ARCHIVE_OK) 
@@ -224,7 +276,6 @@ int32_t         Decompressor::vopen(Node* node)
   DecompressorFdinfo* fi = new DecompressorFdinfo();
   fi->node = node;
   fi->offset = 0;
-  //fi->buffer = new uint8_t[DecompressorFdinfoBufferSize]; //if too big will read a lot for nothing on some file (like when we scan for exemple 8192)
   fi->arch = this->openNodeArchive(fi->node);
 
   return (this->__fdManager->push(fi));
@@ -234,12 +285,6 @@ int32_t         Decompressor::vread(int32_t fd, void *rbuff, uint32_t size)
 {
   try
   {
-    /*USE large buffering at least 1MO to avoid little backward seek 
-     check if seek is after so no need to recreate openNodearchive 
-     if seek is in our buffer (get some room before and after so it's morre efficent in our buffer
-     if need to read preempt data if seek look at our buffer et c... read is not so long reopening very long (it must be avoid at most cost )
-     and seek is long on large files 
-    */
     DecompressorFdinfo* fi = (DecompressorFdinfo*)this->__fdManager->get(fd);
     if (fi->offset >= fi->node->size())
       return 0;
@@ -259,7 +304,7 @@ int32_t         Decompressor::vread(int32_t fd, void *rbuff, uint32_t size)
         currentSize = 1024*1024;
       else
         currentSize = fi->offset - fi->archiveReadOffset;
-      int32_t res = archive_read_data(fi->arch, skipBuff, currentSize); //use zero copy skip will be great here
+      int32_t res = archive_read_data(fi->arch, skipBuff, currentSize);
       fi->archiveReadOffset += res;
     }
 
@@ -271,11 +316,8 @@ int32_t         Decompressor::vread(int32_t fd, void *rbuff, uint32_t size)
   }
   catch (...) 
   {
-   std::cout << "vread catch error " << std::endl;
     return (0);
   }
-  //get archive & entry data
-  //call decompression lib on this node and return res 
   return (0);
 }
 
@@ -336,8 +378,10 @@ int32_t         Decompressor::vclose(int32_t fd)
 {
   DecompressorFdinfo* fi = (DecompressorFdinfo*)(this->__fdManager->get(fd));
 
-  archive_read_free(fi->arch);
-  //delete[] fi->buffer;
+  DecompressorNode* decomp = static_cast<DecompressorNode*>(fi->node);
+
+  if (decomp->archive() == NULL)
+    archive_read_free(fi->arch);
 
   this->__fdManager->remove(fd);
   return (0);

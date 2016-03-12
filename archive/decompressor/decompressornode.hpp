@@ -18,33 +18,25 @@
 #define __DECOMPRESSOR_NODE_HH__
 
 #include "node.hpp"
+#include "variant.hpp"
 
 class Decompressor;
 struct archive;
+struct archive_entry;
+
+using namespace DFF;
 
 class DecompressorNode : public DFF::Node
 {
 public:
-  DecompressorNode(std::string name, uint64_t size, Node* parent, Decompressor* decompressor);
+  DecompressorNode(std::string name, uint64_t size, Node* parent, Decompressor* decompressor, archive_entry* entry);
   ~DecompressorNode();
-//archive_entry_sourcepath
-//archive_entry_size
-//archive_entry_size_is_set
-//archive_entry_atime_nsec
-//archive_entry_atime
-//archive_entry_atime_is_set
-//archive_entry_birthtime
-//archive_entry_birthtime_is_set
-//archive_entry_ctime_nsec
-//archive_entry_ctime_is_set
-//archive_entry_mtime
-//archive_entry_mtime_nsec
-//archive_entry_mtime_is_set
-//archive_entry_is_data_encrypted
-//archive_entry_is_metadata_encrypted
-//archive_entry_is_encrypted
-//archive_entry_mac_metadata
-//archive_entry_gname
+  struct archive*       archive(void) const;
+  void                  archive(struct archive* archiv);
+  Attributes            _attributes();
+private:
+  struct archive*                 __archive;
+  std::map<std::string, uint64_t> __timeAttributes;
 };
 
 #endif

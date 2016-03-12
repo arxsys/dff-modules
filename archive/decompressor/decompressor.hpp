@@ -29,7 +29,6 @@ class VFile;
 class FdManager;
 }
 
-#define DecompressorFdinfoBufferSize    1024*1024
 #define ArchiveDataBufferSize           16384
 
 class DecompressorFdinfo : public DFF::fdinfo
@@ -38,9 +37,6 @@ public:
   DecompressorFdinfo();
   archive*      arch;
   uint64_t      archiveReadOffset;
-  uint8_t*      buffer;
-  uint64_t      bufferSize;
-  uint64_t      bufferOffset;
 };
 
 class ArchiveData 
@@ -61,6 +57,7 @@ public:
   ~Decompressor();
   void                  start(DFF::Attributes args);
   archive*              newArchive(void);
+  archive*              newArchiveRaw(void);
   void                  createNodeTree(archive* archiv);
   archive*              openNodeArchive(DFF::Node* node);
 
