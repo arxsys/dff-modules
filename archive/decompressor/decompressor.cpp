@@ -54,6 +54,7 @@ Decompressor::~Decompressor()
 archive*   Decompressor::newArchiveRaw(void)
 {
   struct archive *archiv = archive_read_new();
+
   archive_read_support_format_raw(archiv);
   archive_read_support_filter_all(archiv);
 
@@ -70,14 +71,27 @@ archive*   Decompressor::newArchiveRaw(void)
 archive*   Decompressor::newArchive(void)
 {
   struct archive *archiv = archive_read_new();
-  archive_read_support_format_all(archiv);
+
+  //archive_read_support_format_all(archiv);
+  archive_read_support_format_7zip(archiv);
+  //archive_read_support_format_ar(archiv);
+  archive_read_support_format_cab(archiv);
+  archive_read_support_format_cpio(archiv);
+  archive_read_support_format_iso9660(archiv);
+  archive_read_support_format_lha(archiv);
+  //archive_read_support_format_mtree(archiv);
+  archive_read_support_format_rar(archiv);
+  archive_read_support_format_tar(archiv);
+  archive_read_support_format_xar(archiv);
+  archive_read_support_format_zip(archiv);
+
   archive_read_support_filter_all(archiv);
 
   ArchiveData* data = new ArchiveData(this->__rootNode);
   archive_read_set_open_callback(archiv, &this->archiveOpen);
   archive_read_set_read_callback(archiv, &this->archiveRead);
   archive_read_set_seek_callback(archiv, &this->archiveSeek);
-  archive_read_set_close_callback(archiv,  &this->archiveClose);
+  archive_read_set_close_callback(archiv, &this->archiveClose);
   archive_read_set_callback_data(archiv, (void*)data);
   
   return (archiv);
@@ -86,7 +100,9 @@ archive*   Decompressor::newArchive(void)
 void    Decompressor::createNodeTree(archive* archiv)
 {
   struct archive_entry *entry;
-
+// if (this->__formatCode); //open will be faster as it don't do biding (could use magic result also)
+// code =  archhive_read_support_format_by_code()
+// archive_format(code);
   if (archive_read_open1(archiv) != ARCHIVE_OK)
     throw envError("Can't open archive");
 
