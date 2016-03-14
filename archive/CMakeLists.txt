@@ -16,4 +16,6 @@ install_file(
   __init__.py
 )
 
+if (UNIX)
 add_subdirectory(decompressor)
+endif (UNIX)

@@ -57,7 +57,6 @@ public:
   ~Decompressor();
   void                  start(DFF::Attributes args);
   archive*              newArchive(void);
-  archive*              newArchiveRaw(void);
   void                  createNodeTree(archive* archiv);
   archive*              openNodeArchive(DFF::Node* node);
 
