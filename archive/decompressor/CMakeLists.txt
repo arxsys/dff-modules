@@ -15,9 +15,19 @@
 
 include_directories(${ICU_INCLUDE_DIRS})
 
-dff_cpp_module(decompressor
-  CPP_FILES decompressor.cpp decompressornode.cpp 
-  SWIG_FILE decompressor.i
-  INCLUDE_DIRS ${ICU_INCLUDE_DIRS}
-  LINK_LIBRARIES ${ICU_LIBRARIES} exceptions types vfs archive 
-)
+find_library(LIBARCHIVE archive)
+find_path(LIBARCHIVE_INCLUDE_DIR archive.h)
+
+if (LIBARCHIVE AND LIBARCHIVE_INCLUDE_DIR)
+  message(STATUS "Archive library found")
+  if (UNIX)
+    dff_cpp_module(decompressor
+      CPP_FILES decompressor.cpp decompressornode.cpp
+      SWIG_FILE decompressor.i
+      INCLUDE_DIRS ${ICU_INCLUDE_DIRS} ${LIBARCHIVE_INCLUDE_DIR}
+      LINK_LIBRARIES ${ICU_LIBRARIES} exceptions types vfs ${LIBARCHIVE}
+      )
+  endif (UNIX)
+else (LIBARCHIVE AND LIBARCHIVE_INCLUDE_DIR)
+  message(STATUS "Archive library not found")
+endif (LIBARCHIVE AND LIBARCHIVE_INCLUDE_DIR)
