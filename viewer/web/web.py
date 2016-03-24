@@ -241,6 +241,10 @@ class web(Module):
  	                   "type": typeId.String,
  	                   "description": "managed mime type",
  	                   "values": ["HTML"]})
+    self.conf.addConstant({"name": "extension-type", 
+ 	                   "type": typeId.String,
+ 	                   "description": "compatible extension",
+ 	                   "values": ["html", "htm"]})
     self.tags = "Viewers"
     self.flags = ["gui"]
     self.icon = ":text"	
