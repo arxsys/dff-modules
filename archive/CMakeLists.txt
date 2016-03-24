@@ -14,6 +14,6 @@
 
 install_file(
   __init__.py
-)
+  )
 
 add_subdirectory(decompressor)

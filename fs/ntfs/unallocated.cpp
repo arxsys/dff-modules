@@ -22,6 +22,7 @@
 #include "datanode.hpp"
 #include "mftentrynode.hpp"
 #include "attributes/mftattributecontenttype.hpp"
+#include "ntfsopt.hpp"
 
 /**
  *  Unallocated Node
@@ -47,13 +48,16 @@ std::vector<Range> Unallocated::ranges(void)
   const MFTEntryManager& mftManager = this->__ntfs->mftManager();
   DataNode* bitmapNode = mftManager.node(6); //$BITMAP_FILE_ID
   if (!bitmapNode)
+  {
+    ranges.push_back(Range(0, this->__ntfs->opt()->fsNode()->size() / this->__ntfs->bootSectorNode()->clusterSize()));
     return (ranges);
+  }
 
   std::vector<MFTAttribute*> attributes = bitmapNode->mftEntryNode()->findMFTAttributes($DATA);
   std::vector<MFTAttribute*>::iterator  attribute = attributes.begin();
 
   if (attributes.size() == 0)
-    return (ranges);
+    return (ranges); //return all disk as if no bitmap or we're sure disk is full ?
 
   MFTAttributeContent* content = (*attribute)->content();
   if (content) 

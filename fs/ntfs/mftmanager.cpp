@@ -464,7 +464,7 @@ void    MFTEntryManager::searchUnallocated(Unallocated* unallocated)
       parsed++;
       fsFile->seek(offset);
       fsFile->read(&signature, 4);
-        
+     
       if (signature == MFT_SIGNATURE_FILE)
         this->__unallocatedOffsets.push_back(offset);
     }

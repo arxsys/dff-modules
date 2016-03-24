@@ -49,8 +49,7 @@ class decompressor(Module):
     self.conf.addConstant({"name": "mime-type",
                            "description": "managed mime type",
                            "type" : typeId.String,
-                           "values" : ["archive/zip", "archive/rar", "archive/tar", "archive/cab", "archive/7zip", "archive/bzip2", "archive/gzip", "archive/lzma", "archive/cpio", "archive/xz", "archive/lzip", "archive/zlib"]})
+                           "values" : ["archive/zip", "archive/rar", "archive/tar", "archive/cab", "archive/7zip", "archive/bzip2", "archive/gzip", "archive/lzma", "archive/cpio", "archive/xz", "archive/lzip", "archive/zlib", "filesystem/iso9660"]}) #filetype .iso because is not detect by magic as buffer is too small 0x2000 and need more than 0x8000 for iso 
     self.conf.description = "Unarchive & decompress zip, rar, cab, 7zip, iso9660, tar, ..."
-    self.icon = ":zip"
     self.tags = "Archive"
 %}
