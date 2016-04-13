@@ -107,7 +107,9 @@ class MetaEXIF(Script):
         self.stateinfo = "Registering node: " + str(node.name())
         self.handler.setAttributes(node)
         node.registerAttributes(self.handler)
-    except KeyError:
+    except Exception as e:
+      print "Metaexif error on node ", str(node.absolute()) , " :"
+      print str(e)
       pass
 
 class metaexif(Module): 
