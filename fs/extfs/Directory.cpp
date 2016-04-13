@@ -167,8 +167,6 @@ uint8_t		Directory::searchDirEntries(uint64_t content_addr,
           if (dir_e->entry_length() == 0) //avoid infinite loop XXX doesn't check end of buff
              break;
 	  content_addr += dir_e->entry_length();
-           
-          std::cout << "content_addr " << content_addr << std::endl;
 	}
     }
   delete inter;
