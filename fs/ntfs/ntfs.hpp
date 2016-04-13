@@ -97,7 +97,7 @@ public:
   void                  start(DFF::Attributes args);
   bool                  load(DValue value);
   DValue                save(void) const;
-  DValue                saveTree(Node* node) const;
+  DObject*              saveTree(Node* node) const;
   Node*                 loadTree(DValue const& args); 
 
   void                  setStateInfo(const std::string&);

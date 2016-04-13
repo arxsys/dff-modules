@@ -91,10 +91,15 @@ DValue  Unallocated::save(void) const
   DObject* dranges = Destruct::DStructs::instance().generate("DVectorObject");
   std::vector<Range>::const_iterator range = this->__ranges.begin();
   for (; range != this->__ranges.end(); ++range)
+  {
+    DObject* rangeSave = (*range).save();
     dranges->call("push", (*range).save());
+    rangeSave->destroy();
+  }
   
   unallocated->setValue("size", RealValue<DUInt64>(this->size()));
   unallocated->setValue("ranges", RealValue<DObject*>(dranges));
+  dranges->destroy();
 
   return (RealValue<DObject*>(unallocated)); 
 }

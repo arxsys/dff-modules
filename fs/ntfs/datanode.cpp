@@ -157,20 +157,29 @@ Attributes	DataNode::_attributes(void)
 
 DValue      DataNode::save(void) const
 {
-  Destruct::DStructs& destruct(Destruct::DStructs::instance());
-  DObject* dataNode(destruct.generate("DataNode"));
+  Destruct::DStructs& destruct = Destruct::DStructs::instance();
+  DObject* dataNode = destruct.generate("DataNode");
 
   dataNode->setValue("name", RealValue<DUnicodeString>(this->name())); 
   if (this->__mftEntryNode)
-    dataNode->setValue("mftEntryNode", RealValue<DObject* >(this->__mftEntryNode->save()));
+  {
+    DObject* mftEntryNode = this->__mftEntryNode->save();
+    dataNode->setValue("mftEntryNode", RealValue<DObject*>(mftEntryNode));
+    mftEntryNode->destroy();
+  }
   dataNode->setValue("size", RealValue<DUInt64>(this->__size));
   dataNode->setValue("isCompressed", RealValue<DUInt8>(this->__isCompressed));
 
-  DObject* dmappingAttributes(destruct.generate("DVectorObject"));
+  DObject* dmappingAttributes = destruct.generate("DVectorObject");
   std::list<MappingAttributes>::const_iterator ma = this->mappingAttributesOffset.begin();
   for (; ma != this->mappingAttributesOffset.end(); ++ma)
-    dmappingAttributes->call("push", RealValue<DObject*>(ma->save()));
+  {
+    DObject* mappingSave  = ma->save();
+    dmappingAttributes->call("push", RealValue<DObject*>(mappingSave));
+    mappingSave->destroy();
+  }
   dataNode->setValue("mappingAttributes", RealValue<DObject*>(dmappingAttributes));
+  dmappingAttributes->destroy();
 
   // a desesrialize des MFTNode // check doublon et pas cree 2 fois ? 
   // donc du coup les truc qui sont ds MFTEntryInfo->nodes(push) ca sert a ququchose ou c les meme ????
@@ -188,13 +197,13 @@ DataNode*        DataNode::load(NTFS* ntfs, DValue const& args)
   {
     MFTNode* mftEntryNode(NULL);
     DUnicodeString name(dnode->getValue("name").get<DUnicodeString>());
-    DObject* mftEntryNodeObject(dnode->getValue("mftEntryNode").get<DObject*>());
+    DObject* mftEntryNodeObject = dnode->getValue("mftEntryNode").get<DObject*>();
     if (mftEntryNodeObject->instanceOf()->name() == "MFTNode")
       mftEntryNode = MFTNode::load(ntfs, RealValue<DObject*>(mftEntryNodeObject));
     else //MFTNode
       mftEntryNode = MFTEntryNode::load(ntfs, RealValue<DObject*>(mftEntryNodeObject));
     DataNode* dataNode(new DataNode(ntfs, name, mftEntryNode));
-    mftEntryNodeObject->destroy();
+    //mftEntryNodeObject->destroy();
 
     MappingAttributesInfo mappingAttributesInfo;
     mappingAttributesInfo.size = dnode->getValue("size").get<DUInt64>();
@@ -208,13 +217,13 @@ DataNode*        DataNode::load(NTFS* ntfs, DValue const& args)
       DValue ma(dmappingAttributes->call("get", RealValue<DUInt64>(index)));
       mappingAttributesInfo.mappingAttributes.push_back(MappingAttributes::load(ntfs, ma));
     }   
-    dmappingAttributes->destroy();
+    //dmappingAttributes->destroy();
     dataNode->setMappingAttributes(mappingAttributesInfo);     
-    dnode->destroy();
+    //dnode->destroy();
     return (dataNode);
   }
 
-  dnode->destroy();
+  //dnode->destroy();
   return (NULL);
 }
 
@@ -230,10 +239,12 @@ bool    MappingAttributes::operator==(MappingAttributes const& other)
 
 DValue  MappingAttributes::save(void) const
 {
-  DObject* ma(Destruct::DStructs::instance().generate("MappingAttributes"));
+  DObject* ma =  Destruct::DStructs::instance().generate("MappingAttributes");
 
   ma->setValue("offset", RealValue<DUInt16>(offset));
-  ma->setValue("mftEntryNode", entryNode->save());
+  DObject* mftEntryNode = entryNode->save();
+  ma->setValue("mftEntryNode", RealValue<DObject*>(mftEntryNode));
+  mftEntryNode->destroy();
 
   return (RealValue<DObject*>(ma));
 }
@@ -243,7 +254,7 @@ MappingAttributes     MappingAttributes::load(NTFS* ntfs, DValue const& args)
   DObject* dma(args.get<DObject* >());
 
   uint16_t offset(dma->getValue("offset").get<DUInt16>());
-  DObject* mftEntryNodeObject(dma->getValue("mftEntryNode").get<DObject*>());
+  DObject* mftEntryNodeObject = dma->getValue("mftEntryNode");
   MFTNode* mftEntryNode(NULL);
 
   if (mftEntryNodeObject->instanceOf()->name() == "MFTNode")
@@ -251,7 +262,7 @@ MappingAttributes     MappingAttributes::load(NTFS* ntfs, DValue const& args)
   else
     mftEntryNode = MFTEntryNode::load(ntfs, RealValue<DObject*>(mftEntryNodeObject));
 
-  mftEntryNodeObject->destroy(); 
-  dma->destroy();
+  //mftEntryNodeObject->destroy(); 
+  //dma->destroy();
   return (MappingAttributes(offset, mftEntryNode));;
 }

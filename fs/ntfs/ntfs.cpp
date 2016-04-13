@@ -248,26 +248,6 @@ bool                    NTFS::load(DValue value)
   for (DUInt64 index = 0; index < size; ++index)
     VLink::load(vlinks->call("get", RealValue<DUInt64>(index)));
 
-
-  //std::cout << "status at end      dntfs : " << dntfs->refCount() << std::endl
-  //<< "                   dntfs->opt " << ((DObject*)dntfs->opt)->refCount() << std::endl
-  //<< "                   dntfs->entries " << (((DObject*)dntfs->entries)->refCount()) << std::endl
-  //<< "                   dntfs->reparsePoints " << ((DObject*)dntfs->reparsePoints)->refCount() << std::endl;
-
-  //((DObject*)dntfs->entries)->destroy(); //pu utiliser
-  //((DObject*)dntfs->reparsePoints)->destroy(); //pu utiliser
-  ////dntfs->entries->opt(); //utiliser
-  //((DObject*)dntfs->opt)->destroy();
-  //dntfs->destroy();
-  //dntfs->destroy();
-  //dntfs->destroy();
-  //dntfs->destroy(); //faire une copy est destroy i lest a 5 ref lui c spe
-  //std::cout << "status at end      dntfs : " << dntfs->refCount() << std::endl
-  //<< "                   dntfs->opt " << ((DObject*)dntfs->opt)->refCount() << std::endl
-  //<< "                   dntfs->entries " << (((DObject*)dntfs->entries)->refCount()) << std::endl
-  //<< "                   dntfs->reparsePoints " << ((DObject*)dntfs->reparsePoints)->refCount() << std::endl;
-  //
-
   this->setStateInfo("Finished successfully");
   this->res["Result"] = Variant_p(new Variant(std::string("NTFS parsed successfully.")));
 
@@ -300,22 +280,19 @@ Node*         NTFS::loadTree(DValue const& value)
   else
     node = VoidNode::load(this, value); //must pass fso or will not be marked as ntfs anymore
 
-  DObject* dchildren(dnode->getValue("children").get<DObject*>());
+  DObject* dchildren = dnode->getValue("children").get<DObject*>();
   if (dchildren != DNone)
   {
     DUInt64 size(dchildren->call("size").get<DUInt64>());
     for (DUInt64 current = 0; current < size; ++current)
     {
-      DObject* dchild(dchildren->call("get", RealValue<DUInt64>(current)).get<DObject*>());
+      DObject* dchild = dchildren->call("get", RealValue<DUInt64>(current)).get<DObject*>();
       Node* child(this->loadTree(RealValue<DObject*>(dchild)));
       if (child)
         node->addChild(child);
-      dchild->destroy();
     }
   }
 
-  dchildren->destroy();
-  dnode->destroy();
   return (node);
 }
 
@@ -333,44 +310,50 @@ DValue        NTFS::save(void) const
   DObject* reparsePoints = dntfs->reparsePoints;
   const std::vector<VLink*>& vlinks = this->__mftManager.vlinks();
   std::vector<VLink*>::const_iterator vlink = vlinks.begin();
-  for (; vlink != vlinks.end(); ++vlink)
-     reparsePoints->call("push", (*vlink)->save());
+  for (; vlink != vlinks.end(); ++vlink) //test refcount
+  {
+     DObject* vlinkSave = (*vlink)->save();
+     reparsePoints->call("push", RealValue<DObject*>(vlinkSave));
+     //vlinkSave->destroy();
+  }
 
-  //std::cout << "save ntfs " << this->rootDirectoryNode()->absolute() << std::endl;
   return (RealValue<DObject*>(dntfs));
 }
 
-DValue        NTFS::saveTree(Node* node) const
+DObject*        NTFS::saveTree(Node* node) const
 {
   if (!node || node->fsobj() != this || node == this->__bootSectorNode)
-    return RealValue<DObject*>(DNone);
+    return DNone;
 
   if (dynamic_cast<VLink*>(node)) //don't save vlink yet (& don't follow it, we will use the reparse point func later) or use it now but don't use reparse point func ... XXX
-    return RealValue<DObject*>(DNone);
+    return DNone;
 
-  DValue nodeValue = node->save();
-  DObject* dnode = nodeValue.get<DObject*>();
+  DObject* dnode = node->save();
 
   try
   {
-    DObject* dchildren(dnode->getValue("children").get<DObject*>());
+    DObject* dchildren = dnode->getValue("children");
     if (dchildren == DNone) // ?
     {
       dchildren = Destruct::DStructs::instance().generate("DVectorObject");
       dnode->setValue("children", RealValue<DObject*>(dchildren));
     }
-    std::vector<Node*> children(node->children());
+    std::vector<Node*> children = node->children();
     std::vector<Node*>::const_iterator child = children.begin();
     for (; child != children.end(); ++child)
-      dchildren->call("push", this->saveTree(*child));
+    {
+      DObject* cnode = this->saveTree(*child);
+      dchildren->call("push", RealValue<DObject*>(cnode));
+      cnode->destroy();
+    }
+    dchildren->destroy();
   }
   catch (DException const& exception) //NTFS generate DVLink who didn't have children attribute
   { 
     std::cout << "Can't save children of node " << node->absolute() << std::endl; //XXX Error with reparse point
   }
-
-  dnode->destroy();
-  return (nodeValue);
+  //dnode->destroy();
+  return (dnode);
 }
 
 /**

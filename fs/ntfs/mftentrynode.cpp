@@ -488,7 +488,7 @@ std::vector<IndexEntry> MFTNode::indexes(void)// const
 
 Destruct::DValue        MFTNode::save(void) const
 {
-  Destruct::DObject* mftNode(Destruct::DStructs::instance().generate("MFTNode"));
+  Destruct::DObject* mftNode = Destruct::DStructs::instance().generate("MFTNode");
   mftNode->setValue("offset", RealValue<DUInt64>(this->offset()));
   
   return (Destruct::RealValue<Destruct::DObject*>(mftNode)); 
@@ -496,11 +496,11 @@ Destruct::DValue        MFTNode::save(void) const
 
 MFTNode*        MFTNode::load(NTFS* ntfs, DValue const& value)
 {
-  DObject* mftNodeObject(value.get<DObject*>());
+  DObject* mftNodeObject = value.get<DObject*>();
   DUInt64 offset = mftNodeObject->getValue("offset").get<DUInt64>();
 
   MFTNode* mftNode = new MFTNode(ntfs, ntfs->fsNode(), offset, "MFT", NULL);
-  mftNodeObject->destroy();
+  //mftNodeObject->destroy();
 
   return (mftNode);
 }
@@ -525,12 +525,12 @@ Destruct::DValue MFTEntryNode::save(void) const
 
 MFTEntryNode*   MFTEntryNode::load(NTFS* ntfs, DValue const& value)
 {
-  DObject* mftEntryNodeObject(value.get<DObject*>());
+  DObject* mftEntryNodeObject = value;
 
   DUInt64 offset(mftEntryNodeObject->getValue("offset").get<DUInt64>());
   //DUInt64 mftOffset(mftEntryNodeObject->getValue("mftNodeOffset").get<DUInt64>()); //XXX use me ... or create DataNode
   MFTEntryNode* mftEntryNode(new MFTEntryNode(ntfs, ntfs->mftManager().masterMFTNode(), offset, "MFTEntry", NULL));
-  mftEntryNodeObject->destroy();
+  //mftEntryNodeObject->destroy();
 
   return (mftEntryNode);
 }
