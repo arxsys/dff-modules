@@ -122,6 +122,8 @@ uint8_t		Directory::searchDirEntries(uint64_t content_addr,
 		    valid = _recovery->deletedFileNames(tab,  content_addr + dir_e->next(),
 							parent, this, dir_e);
 		}
+              if (dir_e->entry_length() == 0) //avoid infinite loop XXX doesn't check end of buff
+                break;
 	      content_addr += dir_e->entry_length();
 	      continue ;
 	    }
@@ -148,6 +150,8 @@ uint8_t		Directory::searchDirEntries(uint64_t content_addr,
 		valid = _recovery->deletedFileNames(tab,  content_addr + dir_e->next(),
 						    parent, this, dir_e);
 	    }
+          if (dir_e->entry_length() == 0) //avoid infinite loop XXX doesn't check end of buff
+             break;
 	  content_addr += dir_e->entry_length();
 	}
       else
@@ -155,6 +159,8 @@ uint8_t		Directory::searchDirEntries(uint64_t content_addr,
 	  if ((dir_e->entry_length() != dir_e->next()))
 	    valid = _recovery->deletedFileNames(tab,  content_addr + dir_e->next(),
 						parent, this, dir_e);
+          if (dir_e->entry_length() == 0) //avoid infinite loop XXX doesn't check end of buff
+             break;
 	  content_addr += dir_e->entry_length();
 	}
     }
