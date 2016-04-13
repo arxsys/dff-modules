@@ -88,10 +88,16 @@ class EXIFHandler(AttributesHandler, ModuleProcessusHandler):
         if isinstance(values, tuple):
 	  vl = VList()
 	  for value in values:
-	     vl.push_back(Variant(value))
+             if type(values) == unicode:
+	       vl.push_back(Variant(value.encode('ascii', 'replace')))
+             else:
+	       vl.push_back(Variant(value))
           attr[decoded] = vl
         else:
-          attr[decoded] = Variant(values)
+          if type(values) == unicode:
+            attr[decoded] = Variant(values.encode('ascii', 'replace'))
+          else:
+            attr[decoded] = Variant(values)
     return attr
 
 class MetaEXIF(Script):
