@@ -222,7 +222,7 @@ int32_t  NTFS::vread(int fd, void *buff, unsigned int size)
  **/
 bool                    NTFS::load(DValue value)
 {
-  DObject* ntfsObject = value.get<DObject*>();
+  DObject* ntfsObject = value;
   if (ntfsObject == DNone)
     return (false);
 
@@ -236,11 +236,12 @@ bool                    NTFS::load(DValue value)
     this->__bootSectorNode->validate();
 
   this->__mftManager.init(this);  //reload mster mft node ? 
+  ((DObject*)dntfs->entries)->addRef();  //XXX / ?
   Node* rootNode = this->loadTree(dntfs->entries);
   this->__rootDirectoryNode = rootNode;
 
   DObject* vlinks = dntfs->reparsePoints;
-  DUInt64 size = vlinks->call("size").get<DUInt64>();
+  DUInt64 size = vlinks->call("size");
 
   this->registerTree(this->opt()->fsNode(), rootNode);
   this->registerTree(rootNode, this->bootSectorNode()); //register before else can't find vlink  by getnode 
@@ -257,7 +258,7 @@ bool                    NTFS::load(DValue value)
 Node*         NTFS::loadTree(DValue const& value)
 {
   Node*  node = NULL;
-  DObject* dnode(value.get<DObject*>());
+  DObject* dnode = value;
 
   if (dnode == DNone)
     return (NULL);
@@ -280,13 +281,13 @@ Node*         NTFS::loadTree(DValue const& value)
   else
     node = VoidNode::load(this, value); //must pass fso or will not be marked as ntfs anymore
 
-  DObject* dchildren = dnode->getValue("children").get<DObject*>();
+  DObject* dchildren = dnode->getValue("children");
   if (dchildren != DNone)
   {
-    DUInt64 size(dchildren->call("size").get<DUInt64>());
+    DUInt64 size = dchildren->call("size");
     for (DUInt64 current = 0; current < size; ++current)
     {
-      DObject* dchild = dchildren->call("get", RealValue<DUInt64>(current)).get<DObject*>();
+      DObject* dchild = dchildren->call("get", RealValue<DUInt64>(current));
       Node* child(this->loadTree(RealValue<DObject*>(dchild)));
       if (child)
         node->addChild(child);
@@ -299,12 +300,14 @@ Node*         NTFS::loadTree(DValue const& value)
 DValue        NTFS::save(void) const
 {
   DNTFS* dntfs(static_cast<DNTFS*>(makeNewDCpp<DNTFS>("DNTFS")->newObject()));
-  dntfs->opt = this->__opt;
+  dntfs->opt = this->__opt; //XXX .clone() we want a copy of this obj that we will delete later !
+  //dntfs->opt ->destroy we clone so we del ref or not ? it's = so ref +1
 
   if (this->__bootSectorNode == NULL)
     return (RealValue<DObject*>(DNone));
 
   dntfs->entries = saveTree(this->rootDirectoryNode());
+  ((DObject*)dntfs->entries)->destroy();
 
   dntfs->reparsePoints = Destruct::DStructs::instance().generate("DVectorObject");
   DObject* reparsePoints = dntfs->reparsePoints;
@@ -316,6 +319,7 @@ DValue        NTFS::save(void) const
      reparsePoints->call("push", RealValue<DObject*>(vlinkSave));
      //vlinkSave->destroy();
   }
+  reparsePoints->destroy();
 
   return (RealValue<DObject*>(dntfs));
 }
@@ -352,7 +356,6 @@ DObject*        NTFS::saveTree(Node* node) const
   { 
     std::cout << "Can't save children of node " << node->absolute() << std::endl; //XXX Error with reparse point
   }
-  //dnode->destroy();
   return (dnode);
 }
 

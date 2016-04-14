@@ -93,7 +93,7 @@ DValue  Unallocated::save(void) const
   for (; range != this->__ranges.end(); ++range)
   {
     DObject* rangeSave = (*range).save();
-    dranges->call("push", (*range).save());
+    dranges->call("push", RealValue<DObject*>(rangeSave));
     rangeSave->destroy();
   }
   
@@ -106,16 +106,16 @@ DValue  Unallocated::save(void) const
 
 Unallocated*    Unallocated::load(NTFS* ntfs, DValue const& args)
 {
-  DObject* unallocated = args.get<DObject*>();
-  DUInt64  unallocatedSize = unallocated->getValue("size").get<DUInt64>();
-  DObject* dranges = unallocated->getValue("ranges").get<DObject*>();
-  DUInt64 size = dranges->call("size").get<DUInt64>();
+  DObject* unallocated = args;
+  DUInt64  unallocatedSize = unallocated->getValue("size");
+  DObject* dranges = unallocated->getValue("ranges");
+  DUInt64 size = dranges->call("size");
   std::vector<Range> ranges;
 
   for (DUInt64 index = 0; index < size; ++index)
     ranges.push_back(Range::load(dranges->call("get", RealValue<DUInt64>(index))));
 
-  dranges->destroy();
-  unallocated->destroy();
+  //dranges->destroy();
+  //unallocated->destroy();
   return (new Unallocated(ntfs, ranges, unallocatedSize));
 }

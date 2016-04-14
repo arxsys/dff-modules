@@ -38,8 +38,7 @@ uint64_t Range::end(void) const
 
 Range   Range::load(Destruct::DValue const& args)
 {
-  Destruct::DObject* drange = args.get<Destruct::DObject*>();
-  drange->destroy();
+  Destruct::DObject* drange = args;
   return (Range(drange->getValue("start").get<DUInt64>(), drange->getValue("end").get<DUInt64>()));
 }
 

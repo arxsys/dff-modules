@@ -192,12 +192,12 @@ DataNode*        DataNode::load(NTFS* ntfs, DValue const& args)
 {
   //ici map <offset, mftentrynode> //comme ca on gardes les pointeur pour pas les recree deux fois ? 
   // bien reflechir si ca arrive pourquoi $MFT marche pas et d autre truc ds le genre ...
-  DObject* dnode = args.get<DObject*>();
+  DObject* dnode = args;
   if (dnode != DNone)
   {
     MFTNode* mftEntryNode(NULL);
-    DUnicodeString name(dnode->getValue("name").get<DUnicodeString>());
-    DObject* mftEntryNodeObject = dnode->getValue("mftEntryNode").get<DObject*>();
+    DUnicodeString name = dnode->getValue("name");
+    DObject* mftEntryNodeObject = dnode->getValue("mftEntryNode");
     if (mftEntryNodeObject->instanceOf()->name() == "MFTNode")
       mftEntryNode = MFTNode::load(ntfs, RealValue<DObject*>(mftEntryNodeObject));
     else //MFTNode
@@ -209,8 +209,8 @@ DataNode*        DataNode::load(NTFS* ntfs, DValue const& args)
     mappingAttributesInfo.size = dnode->getValue("size").get<DUInt64>();
     mappingAttributesInfo.compressed = dnode->getValue("isCompressed").get<DUInt8>();
    
-    DObject* dmappingAttributes(dnode->getValue("mappingAttributes").get<DObject*>());
-    DUInt64 size(dmappingAttributes->call("size").get<DUInt64>());
+    DObject* dmappingAttributes = dnode->getValue("mappingAttributes");
+    DUInt64 size = dmappingAttributes->call("size");
 
     for (DUInt64 index = 0; index < size; ++index)
     {
@@ -251,9 +251,9 @@ DValue  MappingAttributes::save(void) const
 
 MappingAttributes     MappingAttributes::load(NTFS* ntfs, DValue const& args)
 {
-  DObject* dma(args.get<DObject* >());
+  DObject* dma = args;
 
-  uint16_t offset(dma->getValue("offset").get<DUInt16>());
+  uint16_t offset = dma->getValue("offset").get<DUInt16>();
   DObject* mftEntryNodeObject = dma->getValue("mftEntryNode");
   MFTNode* mftEntryNode(NULL);
 

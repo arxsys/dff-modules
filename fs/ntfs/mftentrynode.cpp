@@ -496,8 +496,8 @@ Destruct::DValue        MFTNode::save(void) const
 
 MFTNode*        MFTNode::load(NTFS* ntfs, DValue const& value)
 {
-  DObject* mftNodeObject = value.get<DObject*>();
-  DUInt64 offset = mftNodeObject->getValue("offset").get<DUInt64>();
+  DObject* mftNodeObject = value;
+  DUInt64 offset = mftNodeObject->getValue("offset");
 
   MFTNode* mftNode = new MFTNode(ntfs, ntfs->fsNode(), offset, "MFT", NULL);
   //mftNodeObject->destroy();
@@ -527,7 +527,7 @@ MFTEntryNode*   MFTEntryNode::load(NTFS* ntfs, DValue const& value)
 {
   DObject* mftEntryNodeObject = value;
 
-  DUInt64 offset(mftEntryNodeObject->getValue("offset").get<DUInt64>());
+  DUInt64 offset = mftEntryNodeObject->getValue("offset");
   //DUInt64 mftOffset(mftEntryNodeObject->getValue("mftNodeOffset").get<DUInt64>()); //XXX use me ... or create DataNode
   MFTEntryNode* mftEntryNode(new MFTEntryNode(ntfs, ntfs->mftManager().masterMFTNode(), offset, "MFTEntry", NULL));
   //mftEntryNodeObject->destroy();
