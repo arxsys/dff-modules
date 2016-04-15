@@ -181,10 +181,6 @@ DValue      DataNode::save(void) const
   dataNode->setValue("mappingAttributes", RealValue<DObject*>(dmappingAttributes));
   dmappingAttributes->destroy();
 
-  // a desesrialize des MFTNode // check doublon et pas cree 2 fois ? 
-  // donc du coup les truc qui sont ds MFTEntryInfo->nodes(push) ca sert a ququchose ou c les meme ????
-  // ou c juste pour les passer en param ??
-
   return (RealValue<DObject*>(dataNode));
 }
 
@@ -203,7 +199,6 @@ DataNode*        DataNode::load(NTFS* ntfs, DValue const& args)
     else //MFTNode
       mftEntryNode = MFTEntryNode::load(ntfs, RealValue<DObject*>(mftEntryNodeObject));
     DataNode* dataNode(new DataNode(ntfs, name, mftEntryNode));
-    //mftEntryNodeObject->destroy();
 
     MappingAttributesInfo mappingAttributesInfo;
     mappingAttributesInfo.size = dnode->getValue("size").get<DUInt64>();
@@ -217,13 +212,9 @@ DataNode*        DataNode::load(NTFS* ntfs, DValue const& args)
       DValue ma(dmappingAttributes->call("get", RealValue<DUInt64>(index)));
       mappingAttributesInfo.mappingAttributes.push_back(MappingAttributes::load(ntfs, ma));
     }   
-    //dmappingAttributes->destroy();
     dataNode->setMappingAttributes(mappingAttributesInfo);     
-    //dnode->destroy();
     return (dataNode);
   }
-
-  //dnode->destroy();
   return (NULL);
 }
 
@@ -262,7 +253,5 @@ MappingAttributes     MappingAttributes::load(NTFS* ntfs, DValue const& args)
   else
     mftEntryNode = MFTEntryNode::load(ntfs, RealValue<DObject*>(mftEntryNodeObject));
 
-  //mftEntryNodeObject->destroy(); 
-  //dma->destroy();
   return (MappingAttributes(offset, mftEntryNode));;
 }

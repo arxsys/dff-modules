@@ -115,7 +115,5 @@ Unallocated*    Unallocated::load(NTFS* ntfs, DValue const& args)
   for (DUInt64 index = 0; index < size; ++index)
     ranges.push_back(Range::load(dranges->call("get", RealValue<DUInt64>(index))));
 
-  //dranges->destroy();
-  //unallocated->destroy();
   return (new Unallocated(ntfs, ranges, unallocatedSize));
 }

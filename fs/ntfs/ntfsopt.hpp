@@ -30,6 +30,7 @@ class NTFSOpt : public Destruct::DCppObject<NTFSOpt>
 public:
                 NTFSOpt(DFF::Attributes args, Destruct::DStruct* dstruct);
                 NTFSOpt(Destruct::DStruct* dstruct, Destruct::DValue const& args);
+                NTFSOpt(const NTFSOpt& copy);
                 ~NTFSOpt();
   DFF::Node*    fsNode(void) const;
   bool          recovery(void) const;

@@ -300,8 +300,7 @@ Node*         NTFS::loadTree(DValue const& value)
 DValue        NTFS::save(void) const
 {
   DNTFS* dntfs(static_cast<DNTFS*>(makeNewDCpp<DNTFS>("DNTFS")->newObject()));
-  dntfs->opt = this->__opt; //XXX .clone() we want a copy of this obj that we will delete later !
-  //dntfs->opt ->destroy we clone so we del ref or not ? it's = so ref +1
+  dntfs->opt = this->__opt->clone(); 
 
   if (this->__bootSectorNode == NULL)
     return (RealValue<DObject*>(DNone));
