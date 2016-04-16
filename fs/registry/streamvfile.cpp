@@ -11,9 +11,9 @@ StreamVFile::StreamVFile(DStruct* dstruct, DFF::VFile* vfile) : DCppObject<Strea
   this->init();
 }
 
-StreamVFile::StreamVFile(const StreamVFile& copy) : DCppObject<StreamVFile>(copy)
+StreamVFile::StreamVFile(const StreamVFile& rhs) : DCppObject<StreamVFile>(rhs)
 {
-  this->init();
+  this->copy(this, rhs);
 }
 
 /**
