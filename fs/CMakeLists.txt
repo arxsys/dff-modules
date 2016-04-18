@@ -18,7 +18,7 @@ add_subdirectory (extfs)
 add_subdirectory (fat)
 add_subdirectory (ntfs)
 add_subdirectory (hfsp)
-add_subdirectory (registry)
+#add_subdirectory (registry)
 
 install_file(
   __init__.py

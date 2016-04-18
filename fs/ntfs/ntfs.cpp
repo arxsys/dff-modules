@@ -230,7 +230,9 @@ bool                    NTFS::load(DValue value)
   if (dntfs->getValue("version").get<DUInt8>() != NTFS_VERSION)
     return (false); //throw wrong version ? & reload  
 
-  this->__opt = static_cast<NTFSOpt*>(static_cast<DObject*>(dntfs->opt));
+  DObject* dopt = dntfs->opt;
+  this->__opt = static_cast<NTFSOpt*>(static_cast<DObject*>(dntfs->opt)->clone());
+
   this->__bootSectorNode = new BootSectorNode(this);
   if (this->__opt->validateBootSector())
     this->__bootSectorNode->validate();

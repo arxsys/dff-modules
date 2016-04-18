@@ -52,7 +52,7 @@ NTFSOpt::NTFSOpt(Destruct::DStruct* dstruct, Destruct::DValue const& dargs) : DC
 
 NTFSOpt::NTFSOpt(NTFSOpt const& rhs) : DCppObject<NTFSOpt>(rhs)
 {
-  this->copy(this, rhs);//Working but used only here
+  this->copy(this, rhs);
 }
 
 NTFSOpt::~NTFSOpt(void)
