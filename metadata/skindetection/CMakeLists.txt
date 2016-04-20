@@ -10,15 +10,9 @@
 # and IRC channels for your use.
 # 
 # Author(s):
-#  Frederic Baguelin <fba@digital-forensic.org>
+#  jeremy MOUNIER <jmo@digital-forensic.org>
 
 install_file(
   __init__.py
-  structparser.py
+  skindetection.py
 )
-
-add_subdirectory (metaexif)
-add_subdirectory (prefetch)
-add_subdirectory (lnk)
-add_subdirectory (compoundfile)
-add_subdirectory (skindetection)
