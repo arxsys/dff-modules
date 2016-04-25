@@ -372,6 +372,7 @@ class HASH(Script):
          dhsets.push(dhset) 
        dhsave.hsets = dhsets
        dhsave.hlists = self.attributeHash.save()
+       dhsave.addRef() #act as cpp and a ref when returning a new object
        return dhsave 
 
     def start(self, args):
