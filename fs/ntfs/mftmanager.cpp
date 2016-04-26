@@ -461,6 +461,7 @@ void    MFTEntryManager::searchUnallocated(Unallocated* unallocated)
 
     for(uint64_t offset = (*range).start() * clusterSize; offset < ((*range).end() + 1) * clusterSize; offset += mftRecordSize)
     {
+      //add percent of advancement here for large chunk
       parsed++;
       fsFile->seek(offset);
       fsFile->read(&signature, 4);
@@ -487,14 +488,17 @@ uint64_t MFTEntryManager::linkUnallocated(Unallocated* unallocated)
     try
     {
       MFTEntryInfo* entryInfo = this->createFromOffset(*unallocatedOffset);
-      std::list<DataNode* >::const_iterator dataNode = entryInfo->nodes.begin();
-      for ( ; dataNode != entryInfo->nodes.end(); ++dataNode)
+      if (entryInfo)
       {
-        if ((*dataNode))
-         unallocated->addChild((*dataNode)); 
+        std::list<DataNode* >::const_iterator dataNode = entryInfo->nodes.begin();
+        for ( ; dataNode != entryInfo->nodes.end(); ++dataNode)
+        {
+          if ((*dataNode))
+           unallocated->addChild((*dataNode)); //try to relink with id inside unallocated ? 
+        }
+        recovered++;
+        delete entryInfo;
       }
-      recovered++;
-      delete entryInfo;
     }
     catch (...)
     {
