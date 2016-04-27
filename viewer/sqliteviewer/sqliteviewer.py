@@ -59,7 +59,7 @@ class sqliteviewer(Module):
     self.conf.addConstant({"name": "mime-type", 
  	                   "type": typeId.String,
  	                   "description": "managed mime type",
- 	                   "values": ["SQLite"]})
+ 	                   "values": ["database/sqlite"]})
     self.conf.addArgument({"name": "preview",
 			   "description": "Preview mode",
 			   "input": Argument.Empty})

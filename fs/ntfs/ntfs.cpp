@@ -57,8 +57,8 @@ void    NTFS::start(Attributes args)
   this->__mftManager->initMasterMFT();
   this->__mftManager->initEntries();
   this->__mftManager->linkEntries(); 
-  this->registerTree(this->opt()->fsNode(), this->rootDirectoryNode());
   this->__mftManager->linkOrphanEntries();
+  this->registerTree(this->opt()->fsNode(), this->rootDirectoryNode());
   this->registerTree(this->rootDirectoryNode(), this->orphansNode());
   this->__mftManager->linkUnallocated();
   this->registerTree(this->rootDirectoryNode(), this->unallocatedNode());

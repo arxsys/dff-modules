@@ -88,10 +88,16 @@ class EXIFHandler(AttributesHandler, ModuleProcessusHandler):
         if isinstance(values, tuple):
 	  vl = VList()
 	  for value in values:
-	     vl.push_back(Variant(value))
+             if type(values) == unicode:
+	       vl.push_back(Variant(value.encode('ascii', 'replace')))
+             else:
+	       vl.push_back(Variant(value))
           attr[decoded] = vl
         else:
-          attr[decoded] = Variant(values)
+          if type(values) == unicode:
+            attr[decoded] = Variant(values.encode('ascii', 'replace'))
+          else:
+            attr[decoded] = Variant(values)
     return attr
 
 class MetaEXIF(Script):
@@ -107,7 +113,9 @@ class MetaEXIF(Script):
         self.stateinfo = "Registering node: " + str(node.name())
         self.handler.setAttributes(node)
         node.registerAttributes(self.handler)
-    except KeyError:
+    except Exception as e:
+      print "Metaexif error on node ", str(node.absolute()) , " :"
+      print str(e)
       pass
 
 class metaexif(Module): 

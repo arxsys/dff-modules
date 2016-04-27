@@ -483,7 +483,7 @@ void    MFTEntryManager::linkUnallocated(void)
       parsed++;
       fsFile->seek(offset);
       fsFile->read(&signature, 4);
-        
+     
       if (signature == MFT_SIGNATURE_FILE)
       {
         try

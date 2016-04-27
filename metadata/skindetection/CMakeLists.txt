@@ -10,10 +10,9 @@
 # and IRC channels for your use.
 # 
 # Author(s):
-#  Solal Jacob <sja@digital-forensic.org>
+#  jeremy MOUNIER <jmo@digital-forensic.org>
 
 install_file(
   __init__.py
-  )
-
-add_subdirectory(decompressor)
+  skindetection.py
+)
