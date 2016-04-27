@@ -29,6 +29,7 @@
 #include "exceptions.hpp"
 #include "carver.hpp"
 #include "rootnode.hpp"
+#include "tags.hpp"
 #include "../../../api/search/pattern.hpp"
 %}
 
