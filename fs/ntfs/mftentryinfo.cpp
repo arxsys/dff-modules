@@ -55,8 +55,8 @@ MFTEntryInfo::MFTEntryInfo(MFTNode* entryNode) : id(0), node(NULL), __entryNode(
 
 MFTEntryInfo::~MFTEntryInfo()
 {
-  delete __entryNode;
-  __entryNode = NULL;
+  //delete __entryNode;
+  //__entryNode = NULL;
   //delete node & unlink
   //delete node; //node is always inserted dataNode and used as child for unallocated 
 
