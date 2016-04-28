@@ -32,7 +32,7 @@ private:
   MFTEntryManager*      __mftManager;
   DFF::Node*            __rootDirectoryNode;
   DFF::Node*            __orphansNode;
-  DFF::Node*            __unallocatedNode;
+  //DFF::Node*            __unallocatedNode;
 public:
                         NTFS();
                         ~NTFS();
@@ -43,7 +43,7 @@ public:
   DFF::Node*            rootDirectoryNode(void) const;
   BootSectorNode*       bootSectorNode(void) const;
   DFF::Node*            orphansNode(void) const;
-  DFF::Node*            unallocatedNode(void) const;
+  //DFF::Node*            unallocatedNode(void) const;
   MFTEntryManager*      mftManager(void) const;
   int32_t 	        vread(int fd, void *buff, unsigned int size);
 };

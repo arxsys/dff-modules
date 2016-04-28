@@ -27,7 +27,7 @@
 /**
  *  NTFS 
  */
-NTFS::NTFS() : mfso("ntfs"), __opt(NULL), __bootSectorNode(NULL), __mftManager(NULL), __rootDirectoryNode(new Node("NTFS", 0, NULL, this)), __orphansNode(new Node("orphans")), __unallocatedNode(new Node("unallocated", 0, NULL, this))
+NTFS::NTFS() : mfso("ntfs"), __opt(NULL), __bootSectorNode(NULL), __mftManager(NULL), __rootDirectoryNode(new Node("NTFS", 0, NULL, this)), __orphansNode(new Node("orphans"))
 {
   
 }
@@ -61,8 +61,7 @@ void    NTFS::start(Attributes args)
   this->registerTree(this->opt()->fsNode(), this->rootDirectoryNode());
   this->registerTree(this->rootDirectoryNode(), this->orphansNode());
   this->__mftManager->linkUnallocated();
-  this->registerTree(this->rootDirectoryNode(), this->unallocatedNode());
- 
+  //this->registerTree(this->rootDirectoryNode(), this->unallocatedNode());
   this->__mftManager->linkReparsePoint();
   //delete this->__mftManager; //Unallocated node use it 
 
@@ -105,10 +104,10 @@ BootSectorNode*	NTFS::bootSectorNode(void) const
   return (this->__bootSectorNode);
 }
 
-Node*           NTFS::unallocatedNode(void) const
-{
-  return (this->__unallocatedNode);
-}
+//Node*           NTFS::unallocatedNode(void) const
+//{
+  //return (this->__unallocatedNode);
+//}
 
 /**
  *  Redefine read to use both file mapping
