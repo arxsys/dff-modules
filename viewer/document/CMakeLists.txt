@@ -11,11 +11,12 @@
 # and IRC channels for your use.
 #
 # Author(s):
-#  Jeremy Mounier <jmo@digital-forensic.org>
+#  Solal Jacob <sja@digital-forensic.org>
 
 install_file(
   __init__.py
-  pdf.py
-  pdfWidget.py
+  documentconverter.py 
+  documentviewer.py 
+  pdfwidget.py 
+  unoimporter.py
 )
-

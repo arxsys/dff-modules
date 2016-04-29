@@ -23,5 +23,4 @@ add_subdirectory(timeline)
 add_subdirectory(web)
 add_subdirectory(media)
 add_subdirectory(sqliteviewer)
-add_subdirectory(pdf)
-
+add_subdirectory(document)

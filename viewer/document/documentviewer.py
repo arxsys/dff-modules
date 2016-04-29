@@ -10,64 +10,66 @@
 # and IRC channels for your use.
 # 
 # Author(s):
-#  Jeremy MOUNIER <jmo@digital-forensic.org>
+#  Solal Jacob <sja@digital-forensic.org>
 # 
 
-__dff_module_regedit_version__ = "1.0.0"
+__dff_module_documentviewer_version__ = "1.0.0"
 
-from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import Qt, SIGNAL, QByteArray
-from PyQt4.QtGui import QWidget, QVBoxLayout, QDialog
-
-from dff.api.vfs.vfs import vfs
 from dff.api.module.module import Module
 from dff.api.module.script import Script
-from dff.api.types.libtypes import Variant, VList, VMap, Argument, Parameter, typeId
-from dff.modules.viewer.pdf.pdfWidget import PDFViewer
+from dff.api.types.libtypes import Argument, typeId
 
-import popplerqt4
+from documentconverter import DocumentConverter
+from pdfwidget import PDFWidget
 
-class PDF(QWidget, Script):
+class DocumentViewer(PDFWidget, Script):
   def __init__(self):
-    Script.__init__(self, "PDF viewer")
-    self.name = "PDF viewer"
-    self.vfs = vfs()
-    self.icon = None
-  
+    Script.__init__(self, "Document viewer")
+    self.name = "Document viewer"
+    self.thread = None
+
   def start(self, args):
-#    self.args = args
     self.node = args["file"].value()
     try:
       self.preview = args["preview"].value()
     except IndexError:
       self.preview = False
-      print "Preview error"
-      return
+
+  def __del__(self):
+     if self.thread:
+       print 'deleting  my self waiting for thread en', str(self.node.absolute())
+       self.thread.wait()
+       print 'thread wait finish'
+       #PDFWidget.close(self) 
 
   def g_display(self):
-    QWidget.__init__(self, None)
-    vlayout = QVBoxLayout()
-    self.pdfviewer = PDFViewer(self, self.node)
-    vlayout.addWidget(self.pdfviewer)
-    self.setLayout(vlayout)
+    PDFWidget.__init__(self)
+    if self.node.dataType() == "document/pdf":
+      vfile = self.node.open()
+      pdfDocument = vfile.read()
+      vfile.close()
+    else:
+      self.converter = DocumentConverter() 
+      pdfDocument = self.converter.convert(self.node)
+    self.setDocument(pdfDocument)
 
   def updateWidget(self):
 	pass
 
-class pdf(Module):
-  """PDF file format viewer"""
+class documentviewer(Module):
+  """Document viewer"""
   def __init__(self):
-    Module.__init__(self, "PDF viewer", PDF)
+    Module.__init__(self, "Document viewer", DocumentViewer)
     self.conf.addArgument({"input": Argument.Required|Argument.Single|typeId.Node,
                            "name": "file",
-                           "description": "File to display as PDF"})
+                           "description": "File to display"})
     self.conf.addArgument({"name": "preview",
 			   "description": "Preview mode",
 			   "input": Argument.Empty})
     self.conf.addConstant({"name": "mime-type", 
  	                   "type": typeId.String,
- 	                   "description": "managed mime type",
- 	                   "values": ["document/pdf"]})
+ 	                   "description": "type of file compatible with this module",
+ 	                   "values": ["document", "windows/compound"]})
     self.tags = "Viewers"
     self.flags = ["gui"]
-    self.icon = ":pdf"
+    self.icon = ":pdf" #change XXX
