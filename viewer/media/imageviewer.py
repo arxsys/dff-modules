@@ -17,8 +17,8 @@ __dff_module_viewerimage_version__ = "1.0.0"
 import re
 
 from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import Qt, QSize, QString, SIGNAL, QThread
-from PyQt4.QtGui import QPixmap, QImage, QPushButton, QLabel, QWidget, QHBoxLayout, QVBoxLayout, QScrollArea, QIcon, QMatrix, QToolBar, QAction, QSizePolicy, QTabWidget, QTableWidget, QTableWidgetItem, QAbstractItemView, QLineEdit
+from PyQt4.QtCore import Qt, QSize, QString, SIGNAL, QRect, QSize
+from PyQt4.QtGui import QPixmap, QImage, QPushButton, QLabel, QWidget, QHBoxLayout, QVBoxLayout, QScrollArea, QIcon, QMatrix, QToolBar, QAction, QSizePolicy, QTabWidget, QTableWidget, QTableWidgetItem, QAbstractItemView, QLineEdit, QRubberBand, QMenu, QCursor, QApplication
 
 from dff.api.vfs import vfs 
 from dff.api.module.module import Module 
@@ -27,16 +27,33 @@ from dff.api.types.libtypes import Argument, typeId
 
 from dff.modules.metaexif import EXIF
 
+class CopyMenu(QMenu):
+  def __init__(self, parent):
+     QMenu.__init__(self, parent)
+     action = self.addAction(self.tr("copy"))
+     self.connect(action, SIGNAL("triggered()"), parent.copyPixmapToClipboard)
+
+class CopySelectionMenu(QMenu):
+  def __init__(self, parent):
+     QMenu.__init__(self, parent)
+     action = self.addAction(self.tr("copy selection"))
+     self.connect(action, SIGNAL("triggered()"), parent.copySelectionToClipboard)
+     action = self.addAction(self.tr("copy entire image"))
+     self.connect(action, SIGNAL("triggered()"), parent.copyPixmapToClipboard)
+
 class LoadedImage(QLabel):
   def __init__(self, parent):
     QLabel.__init__(self)
     self.parent = parent
+    self.copyMenu = CopyMenu(self)
+    self.copySelectionMenu = CopySelectionMenu(self)
     self.baseImage = QImage()
     self.matrix = QMatrix()
     self.zoomer = 1
     self.maxsize = 1024*10*10*10*25
     self.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored);
     self.setAlignment(Qt.AlignCenter)
+    self.rubberBand = None
 
   def setParent(self, parent):
     self.parent = parent
@@ -111,12 +128,37 @@ class LoadedImage(QLabel):
     self.zoomer = 1
     self.adjust()
 
-
   def normal(self):
     self.curWidth = self.baseImage.width()
     self.curHeight = self.baseImage.height()
     self.updateTransforms()
 
+  def mousePressEvent(self, event):
+    self.dragPosition = event.pos()
+    if not self.rubberBand:
+      self.rubberBand = QRubberBand(QRubberBand.Rectangle, self)
+    self.rubberBand.setGeometry(QRect(self.dragPosition, QSize()))
+    self.rubberBand.show()
+
+  def mouseMoveEvent(self, event):
+    self.rubberBand.setGeometry(QRect(self.dragPosition, event.pos()).normalized())
+
+  def mouseReleaseEvent(self, event):
+     if not self.rubberBand.size().isEmpty():
+       rect = QRect(self.rubberBand.pos(), self.rubberBand.size())
+       rect.moveLeft(rect.left() - (self.width() - self.pixmap().width()) / 2.0)
+       rect.moveTop(rect.top() - (self.height() - self.pixmap().height()) / 2.0)
+       self.currentSelection = rect
+       self.copySelectionMenu.popup(QCursor.pos())
+     else:
+       self.copyMenu.popup(QCursor.pos())
+     self.rubberBand.hide()
+
+  def copySelectionToClipboard(self):
+     QApplication.clipboard().setPixmap(self.pixmap().copy(self.currentSelection))
+     
+  def copyPixmapToClipboard(self):
+     QApplication.clipboard().setPixmap(self.pixmap())
 
 class Metadata(QWidget):
   def __init__(self):

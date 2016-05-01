@@ -16,8 +16,8 @@
 __dff_module_viewerimage_version__ = "1.0.0"
 
 from PyQt4 import QtCore, QtGui
-from PyQt4.QtCore import Qt, QSize, QString, SIGNAL, QThread
-from PyQt4.QtGui import QPixmap, QImage, QPushButton, QLabel, QWidget, QHBoxLayout, QVBoxLayout, QScrollArea, QIcon, QMatrix, QToolBar, QAction, QSizePolicy, QTabWidget, QTableWidget, QTableWidgetItem, QAbstractItemView, QLineEdit, QIntValidator, QFormLayout, QApplication, QCursor, QMenu
+from PyQt4.QtCore import Qt, QSize, QString, SIGNAL, QThread, QSize, QRect
+from PyQt4.QtGui import QPixmap, QImage, QPushButton, QLabel, QWidget, QHBoxLayout, QVBoxLayout, QScrollArea, QIcon, QMatrix, QToolBar, QAction, QSizePolicy, QTabWidget, QTableWidget, QTableWidgetItem, QAbstractItemView, QLineEdit, QIntValidator, QFormLayout, QApplication, QCursor, QMenu, QRubberBand
 
 from dff.api.vfs import vfs 
 from dff.api.module.module import Module 
@@ -30,7 +30,15 @@ class CopyMenu(QMenu):
   def __init__(self, parent):
      QMenu.__init__(self, parent)
      action = self.addAction(self.tr("copy"))
-     self.connect(action, SIGNAL("triggered()"), parent.copyToClipboard)
+     self.connect(action, SIGNAL("triggered()"), parent.copyPixmapToClipboard)
+
+class CopySelectionMenu(QMenu):
+  def __init__(self, parent):
+     QMenu.__init__(self, parent)
+     action = self.addAction(self.tr("copy selection"))
+     self.connect(action, SIGNAL("triggered()"), parent.copySelectionToClipboard)
+     action = self.addAction(self.tr("copy entire image"))
+     self.connect(action, SIGNAL("triggered()"), parent.copyPixmapToClipboard)
 
 class ThumbnailVideoView(QWidget, Script):
   IconSize = 256
@@ -53,6 +61,8 @@ class ThumbnailVideoView(QWidget, Script):
   def g_display(self):
     QWidget.__init__(self)
     self.copyMenu = CopyMenu(self)
+    self.copySelectionMenu = CopySelectionMenu(self)
+    self.rubberBand = None
     self.hlayout = QVBoxLayout()
     self.setLayout(self.hlayout)
 
@@ -85,14 +95,33 @@ class ThumbnailVideoView(QWidget, Script):
     self.generateThumbnail()
 
   def mousePressEvent(self, event):
-     if event.button() == Qt.RightButton:
+    self.dragPosition = event.pos()
+    if not self.rubberBand:
+      self.rubberBand = QRubberBand(QRubberBand.Rectangle, self)
+    self.rubberBand.setGeometry(QRect(self.dragPosition, QSize()))
+    self.rubberBand.show()
+
+  def mouseMoveEvent(self, event):
+    self.rubberBand.setGeometry(QRect(self.dragPosition, event.pos()).normalized())
+
+  def mouseReleaseEvent(self, event):
+     if not self.rubberBand.size().isEmpty():
+       rect = QRect(self.rubberBand.pos(), self.rubberBand.size())
+       rect.moveLeft(rect.left() - (self.width() - self.thumbLabel.pixmap().width()) / 2.0)
+       rect.moveTop(rect.top() - (self.height() - self.thumbLabel.pixmap().height()) / 2.0)
+       self.currentSelection = rect
+       self.copySelectionMenu.popup(QCursor.pos())
+     else:
        self.copyMenu.popup(QCursor.pos())
-     QWidget.mousePressEvent(self, event)
+     self.rubberBand.hide()
 
-  def copyToClipboard(self):
-     clipBoard = QApplication.clipboard()
-     clipBoard.setPixmap(self.thumbLabel.pixmap())
+  def copySelectionToClipboard(self):
+     QApplication.clipboard().setPixmap(self.thumbLabel.pixmap().copy(self.currentSelection))
+     
+  def copyPixmapToClipboard(self):
+     QApplication.clipboard().setPixmap(self.thumbLabel.pixmap())
 
+  
   def setIconSize(self, size):
      ThumbnailVideoView.IconSize = int(size)
 
