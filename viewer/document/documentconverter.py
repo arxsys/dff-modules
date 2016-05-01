@@ -46,11 +46,14 @@ class OutputStream(unohelper.Base, XOutputStream):
          pass
 
 class DocumentConverter(object):
-  TypeFilter = { "document" : "writer_pdf_Export",
-               "web" : "writer_web_pdf_Export",
-               "spreedsheet": "calc_pdf_Export",
-               "graphics": "draw_pdf_Export",
-               "presentation": "impress_pdf_Export", 
+  TypeFilter = { 
+               #"document" : "writer_pdf_Export",
+               #"web" : "writer_web_pdf_Export",
+               #"spreedsheet": "calc_pdf_Export",
+               #"graphics": "draw_pdf_Export",
+               #"presentation": "impress_pdf_Export", 
+
+               "document/rtf" : "writer_pdf_Export",
 
                "document/word" : "writer_pdf_Export", 
                "document/powerpoint" : "impress_pdf_Export",
@@ -58,11 +61,16 @@ class DocumentConverter(object):
             
                "document/ooffice-document" : "writer_pdf_Export",
                "document/ooffice-presentation": "impress_pdf_Export",
+               "document/ooffice-impress": "impress_pdf_Export",
                "document/ooffice-spreadsheet": "calc_pdf_Export",
+               "document/ooffice-calc": "calc_pdf_Export",
+               "document/ooffice-draw": "draw_pdf_Export",
 
                "document/opendocument-text" : "writer_pdf_Export",
                "document/opendocument-presentation": "impress_pdf_Export",
                "document/opendocument-spreadsheet" : "calc_pdf_Export",
+               "document/opendocument-text-web" : "writer_web_pdf_Export",
+               "document/opendocument-graphics" : "draw_web_pdf_Export",
 
                "doc" : "writer_pdf_Export",
                "ppt" : "impress_pdf_Export",

@@ -15,6 +15,8 @@
 
 __dff_module_documentviewer_version__ = "1.0.0"
 
+from PyQt4.QtCore import SIGNAL, QThread, QObject, SLOT
+
 from dff.api.module.module import Module
 from dff.api.module.script import Script
 from dff.api.types.libtypes import Argument, typeId
@@ -22,11 +24,25 @@ from dff.api.types.libtypes import Argument, typeId
 from documentconverter import DocumentConverter
 from pdfwidget import PDFWidget
 
+class QConverter(QObject):
+  def __init__(self):
+    QObject.__init__(self)
+    
+  def convert(self):
+    try:
+      self.converter = DocumentConverter()
+      pdfDocument = self.converter.convert(self.node)
+      self.viewer.emit(SIGNAL("converterFinish"), pdfDocument)
+    except Exception as e:
+      self.viewer.emit(SIGNAL("converterError"), e)
+  
 class DocumentViewer(PDFWidget, Script):
   def __init__(self):
     Script.__init__(self, "Document viewer")
     self.name = "Document viewer"
     self.thread = None
+    self.converter = None
+    self.askToClose = False
 
   def start(self, args):
     self.node = args["file"].value()
@@ -34,13 +50,26 @@ class DocumentViewer(PDFWidget, Script):
       self.preview = args["preview"].value()
     except IndexError:
       self.preview = False
+ 
+  def converterError(self, error):
+     print 'Error while converting document ', str(error)
+     self.thread.quit()
+     if self.askToClose:
+       self.close() 
+ 
+  def converterFinish(self, pdfDocument):
+     self.thread.quit()
+     if self.askToClose:
+       self.close()
+     else:
+       self.setDocument(pdfDocument)
 
-  def __del__(self):
-     if self.thread:
-       print 'deleting  my self waiting for thread en', str(self.node.absolute())
-       self.thread.wait()
-       print 'thread wait finish'
-       #PDFWidget.close(self) 
+  def closeEvent(self, event):
+    self.askToClose = True 
+    if self.thread and self.thread.isRunning():
+      event.ignore()
+    else:
+      event.accept()
 
   def g_display(self):
     PDFWidget.__init__(self)
@@ -48,10 +77,17 @@ class DocumentViewer(PDFWidget, Script):
       vfile = self.node.open()
       pdfDocument = vfile.read()
       vfile.close()
+      self.setDocument(pdfDocument)
     else:
-      self.converter = DocumentConverter() 
-      pdfDocument = self.converter.convert(self.node)
-    self.setDocument(pdfDocument)
+      self.converter = QConverter()
+      self.thread = QThread()
+      self.converter.moveToThread(self.thread)
+      self.converter.node = self.node
+      self.converter.viewer = self
+      self.connect(self.thread, SIGNAL("started()"), self.converter.convert)
+      self.connect(self, SIGNAL("converterFinish"), self.converterFinish)
+      self.connect(self, SIGNAL("converterError"), self.converterError)
+      self.thread.start()
 
   def updateWidget(self):
 	pass
