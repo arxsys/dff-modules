@@ -15,7 +15,9 @@
 from popplerqt4 import Poppler
 
 from PyQt4.QtCore import Qt, QPoint, QRectF, QRect, SIGNAL, QSize, QPointF, QString
-from PyQt4.QtGui import  QWidget, QRubberBand, QMatrix, QPixmap, QPainter, QLabel, QScrollArea, QHBoxLayout, QVBoxLayout, QSpacerItem, QSizePolicy, QLineEdit, QComboBox, QPushButton, QSpinBox, QColor, QApplication, QClipboard
+from PyQt4.QtGui import  QWidget, QRubberBand, QMatrix, QPixmap, QPainter, QLabel, QScrollArea, QHBoxLayout, QVBoxLayout, QSpacerItem, QSizePolicy, QLineEdit, QComboBox, QPushButton, QSpinBox, QColor, QApplication, QClipboard, QMenu, QCursor
+
+
 
 class PDFWidget(QWidget):
   scaleFactors =  [ 0.25,   0.5,  0.75,    1.0,   1.25,    1.5,    2.0]
@@ -32,7 +34,6 @@ class PDFWidget(QWidget):
     self.connect(self.pdfLabel, SIGNAL("pageChanged"), self.scrollToTop)
 
     self.connect(self.scaleComboBox, SIGNAL("currentIndexChanged(int)"), self.scaleDocument)
-    self.connect(self.pdfLabel, SIGNAL("textSelected"), self.copyTextToClipboard)
 
     self.connect(self.searchLineEdit, SIGNAL("returnPressed()"), self.searchDocument)
     self.connect(self.findButton, SIGNAL("clicked()"), self.searchDocument)
@@ -114,9 +115,21 @@ class PDFWidget(QWidget):
     target = self.pdfLabel.matrix().mapRect(location).center().toPoint();
     self.scrollArea.ensureVisible(target.x(), target.y())
 
-  def copyTextToClipboard(self, text):
-     QApplication.clipboard().setText(text, QClipboard.Clipboard) 
-     QApplication.clipboard().setText(text, QClipboard.Selection) 
+class CopyMenu(QMenu):
+  def __init__(self, parent):
+     QMenu.__init__(self, parent)
+     action = self.addAction(self.tr("copy entire page as image"))
+     self.connect(action, SIGNAL("triggered()"), parent.copyPixmapToClipboard)
+
+class CopySelectionMenu(QMenu):
+  def __init__(self, parent):
+     QMenu.__init__(self, parent)
+     action = self.addAction(self.tr("copy selection as text"))
+     self.connect(action, SIGNAL("triggered()"), parent.copyTextToClipboard)
+     action = self.addAction(self.tr("copy selection as image"))
+     self.connect(action, SIGNAL("triggered()"), parent.copySelectionToClipboard)
+     action = self.addAction(self.tr("copy entire page as image"))
+     self.connect(action, SIGNAL("triggered()"), parent.copyPixmapToClipboard)
 
 class PDFLabel(QLabel):
   def __init__(self, parent = None):
@@ -128,6 +141,8 @@ class PDFLabel(QLabel):
     self.setAlignment(Qt.AlignCenter) 
     self.dragPosition = QPoint()
     self.searchLocation = QRectF() 
+    self.copyMenu = CopyMenu(self)
+    self.copySelectionMenu = CopySelectionMenu(self)
 
   def document(self):
     return self.doc
@@ -158,7 +173,11 @@ class PDFLabel(QLabel):
        rect = QRect(self.rubberBand.pos(), self.rubberBand.size())
        rect.moveLeft(rect.left() - (self.width() - self.pixmap().width()) / 2.0)
        rect.moveTop(rect.top() - (self.height() - self.pixmap().height()) / 2.0)
-       self.selectedText(rect)
+       self.currentSelection = rect
+       self.copySelectionMenu.popup(QCursor.pos())
+       #self.selectedText(rect)
+     else:
+       self.copyMenu.popup(QCursor.pos())
      self.rubberBand.hide()
 
   def scale(self):
@@ -258,8 +277,8 @@ class PDFLabel(QLabel):
         page += 1
     return QRectF()
 
-  def selectedText(self, rect):
-    selectedRect = self.matrix().inverted()[0].mapRect(rect)
+  def copyTextToClipboard(self):
+    selectedRect = self.matrix().inverted()[0].mapRect(self.currentSelection)
     r = (selectedRect.x(), selectedRect.y(), selectedRect.width(), selectedRect.height(),)
     text = self.doc.page(self.currentPage).text(QRectF(*r))
     #Remove space
@@ -279,7 +298,15 @@ class PDFLabel(QLabel):
         #center = box.boundingBox().center();
     
     if not text.isEmpty():
-      self.emit(SIGNAL("textSelected"), text)
+      QApplication.clipboard().setText(text, QClipboard.Clipboard) 
+      QApplication.clipboard().setText(text, QClipboard.Selection) 
+
+  def copySelectionToClipboard(self):
+     #pixmap =      self.currentSelection
+     QApplication.clipboard().setPixmap(self.pixmap().copy(self.currentSelection))
+     
+  def copyPixmapToClipboard(self):
+     QApplication.clipboard().setPixmap(self.pixmap())
 
   def setDocument(self, data):
     self.doc = Poppler.Document.loadFromData(data)
