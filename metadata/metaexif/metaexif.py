@@ -18,7 +18,7 @@ __dff_module_metaexif_version__ = "1.0.0"
 
 from time import strptime
 from PIL import Image
-from PIL.ExifTags import TAGS
+from PIL.ExifTags import TAGS, GPSTAGS
 
 from dff.api.module.script import Script 
 from dff.api.module.module import Module
@@ -61,6 +61,18 @@ class EXIFHandler(AttributesHandler, ModuleProcessusHandler):
       return True
     return False
 
+  def toDegree(self, value):
+    d0 = value[0][0]
+    d1 = value[0][1]
+    d = float(d0) / float(d1)
+    m0 = value[1][0]
+    m1 = value[1][1]
+    m = float(m0) / float(m1)
+    s0 = value[2][0]
+    s1 = value[2][1]
+    s = float(s0) / float(s1)
+    return d + (m / 60.0) + (s / 3600.0)
+
   def attributes(self, node):
     attr = VMap()
     vfile = node.open()
@@ -85,7 +97,46 @@ class EXIFHandler(AttributesHandler, ModuleProcessusHandler):
 	attr[decoded] = Variant(str(values))
       else:	
         decoded = str(TAGS.get(tag, tag))
-        if isinstance(values, tuple):
+        if decoded == "GPSInfo":
+          try:
+            gpsMap = VMap()
+            for subvalue in values:
+              subDecoded = GPSTAGS.get(subvalue, subvalue)
+              v = values[subvalue]
+              if str(subDecoded) == "GPSLatitude":
+                degree = self.toDegree(v)
+                try:
+                  ref = gpsMap["GPSLatitudeRef"]
+                except:
+                  ref = ""
+                if str(ref) != "N":
+                  degree = 0 - degree
+                gpsMap["GPSLatitudeRef"] = Variant(str(degree))
+              elif str(subDecoded) == "GPSLongitude":
+                 degree = self.toDegree(v)
+                 try:
+                   ref = gpsMap["GPSLongitudeRef"]
+                 except:
+                   ref = ""
+                 if str(ref) != "E":
+                   degree = 0 - degree
+                 gpsMap["GPSLongitudeRef"] = Variant(str(degree)) #Variant don't handle float..
+              elif type(v) == str:
+                gpsMap[str(subDecoded)] = Variant(str(v))
+              elif type(v) == unicode:
+                gpsMap[str(subDecoded)] = Variant(str(v.encode('ascii', 'replace')))
+              elif type(v) == tuple:
+                vl = VList()
+                for vv in v:
+                  vl.push_back(Variant(vv))
+                gpsMap[str(subDecoded)]  = vl
+              #XXX handle gps datetime  
+              else:
+                gpsMap[str(subDecoded)] = Variant()
+            attr[decoded] = gpsMap
+          except Exception as e:
+            pass
+        elif isinstance(values, tuple):
 	  vl = VList()
 	  for value in values:
              if type(values) == unicode:

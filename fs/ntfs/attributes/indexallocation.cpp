@@ -138,11 +138,10 @@ void		IndexAllocation::fileMapping(FileMapping* fm)
   uint64_t indexSize = mftAttribute->ntfs()->bootSectorNode()->indexRecordSize();
   Node*	fsNode = mftAttribute->ntfs()->fsNode();
   std::vector<RunList> runList = this->runList();
-  std::vector<RunList>::iterator run = runList.begin();
-
   if (runList.size() == 0)
     return ;
 
+  std::vector<RunList>::iterator run = runList.begin();
   uint64_t startOffset = (*run).offset * clusterSize; 
   uint64_t currentFixup = 0; //totalSector
   uint32_t currentIndexRecord = 0;

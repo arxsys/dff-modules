@@ -233,11 +233,26 @@ class FindBar(QWidget):
         self.emit(SIGNAL("queryChanged"), self.query.text())
 
 
+class TextHorizontalScrollBar(QScrollBar):
+    def __init__(self, parent=None):
+        super(TextHorizontalScrollBar, self).__init__(parent)
+
+
+    def hideEvent(self, event):
+        super(TextHorizontalScrollBar, self).hideEvent(event)
+        self.emit(SIGNAL("hide(void)"))
+        
+
+    def showEvent(self, event):
+        super(TextHorizontalScrollBar, self).showEvent(event)
+        self.emit(SIGNAL("show(void)"))
+        
+        
 class CAT(QSplitter, Script):
     def __init__(self):
-        Script.__init__(self, "cat")
+        Script.__init__(self, "Textviewer")
         self.vfs = vfs.vfs()
-        self.type = "cat"
+        self.type = "Textviewer"
         self.icon = None
         self.currentCodec = "UTF-8"
         self._finder = None
@@ -399,9 +414,14 @@ class CAT(QSplitter, Script):
         self.text.setReadOnly(1)
         self.text.setWordWrapMode(QTextOption.NoWrap)
         self.text.setCenterOnScroll(True)
+        horizontalScrollBar = TextHorizontalScrollBar(self.text)
+        self.connect(horizontalScrollBar, SIGNAL("hide(void)"), self.__updateFindBarPosition)
+        self.connect(horizontalScrollBar, SIGNAL("show(void)"), self.__updateFindBarPosition)
+        self.text.setHorizontalScrollBar(horizontalScrollBar)
         
         self.findBar = FindBar(self.text)
         shortcut = QShortcut(QKeySequence(self.tr("Ctrl+f", "Search")), self)
+        shortcut.setContext(Qt.WidgetWithChildrenShortcut)
         self.findBar.setGeometry(0, 0, 0, 0)
         self.connect(shortcut, SIGNAL("activated()"), self.toggleSearch)
         self.connect(self.findBar, SIGNAL("queryChanged"), self.search)
@@ -447,15 +467,19 @@ class CAT(QSplitter, Script):
 
 
     def toggleSearch(self):
-        # XXX Adjust size depending on the visibility of scrollbar
-        #     -9, -30 and +18 seems to be correct but is it working
-        #     on all platform?
-        if self.findBar.geometry().height() == 0:
+        if self.findBar.height() == 0:
             self.showAnimation = QPropertyAnimation(self.findBar, "geometry")
             self.showAnimation.setDuration(200)
-            parentGeometry = self.text.geometry()
-            startGeometry = QRect(-9, parentGeometry.bottomLeft().y(), parentGeometry.width(), 40)
-            endGeometry = QRect(-9, parentGeometry.bottomLeft().y()-30, parentGeometry.width(), 40)
+            geometry = self.text.geometry()
+            if self.text.horizontalScrollBar().isVisible():
+                bottomLeft = geometry.bottomLeft()
+                bottomLeft.setY(bottomLeft.y() - self.text.horizontalScrollBar().height())
+                geometry.setBottomLeft(bottomLeft)
+            if not self.text.verticalScrollBar().isVisible():
+                geometry.setWidth(geometry.width()+16)
+            # XXX -9, -30 seems to be correct but is it working on all platform?
+            startGeometry = QRect(-9, geometry.bottomLeft().y(), geometry.width(), 40)
+            endGeometry = QRect(-9, geometry.bottomLeft().y()-30, geometry.width(), 40)
             self.showAnimation.setStartValue(startGeometry)
             self.showAnimation.setEndValue(endGeometry)
             self.showAnimation.start()
@@ -464,9 +488,20 @@ class CAT(QSplitter, Script):
     
     def resizeEvent(self, event):
         super(CAT, self).resizeEvent(event)
-        if self.findBar.geometry().height() != 0:
-            self.findBar.setGeometry(-9, self.text.geometry().bottomLeft().y()-30, self.text.geometry().width(), 40)
-    
+        self.__updateFindBarPosition()
+
+
+    def __updateFindBarPosition(self):
+        if self.findBar.height() != 0:
+            geometry = self.text.geometry()
+            if self.text.horizontalScrollBar().isVisible():
+                bottomLeft = geometry.bottomLeft()
+                bottomLeft.setY(bottomLeft.y() - self.text.horizontalScrollBar().height())
+                geometry.setBottomLeft(bottomLeft)
+            if not self.text.verticalScrollBar().isVisible():
+                geometry.setWidth(geometry.width()+16)
+            self.findBar.setGeometry(-9, geometry.bottomLeft().y()-30, geometry.width(), 40)
+
 
     def render(self):
         try:
