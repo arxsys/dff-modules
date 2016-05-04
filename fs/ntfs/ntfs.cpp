@@ -88,7 +88,7 @@ void    NTFS::declare(void)
 /**
  *  NTFS 
  */
-NTFS::NTFS() : mfso("NTFS"), __opt(NULL), __bootSectorNode(NULL), __rootDirectoryNode(new Node("NTFS", 0, NULL, this)), __orphansNode(new Node("orphans", 0, NULL, this)), __unallocatedNode(NULL)
+NTFS::NTFS() : mfso("NTFS"), __opt(NULL), __bootSectorNode(NULL), __rootDirectoryNode(new Node("NTFS", 0, NULL, this)), __orphansNode(new Node("orphans", 0, NULL, this)), __unallocatedNode(NULL) 
 {
   
 }
@@ -230,7 +230,7 @@ bool                    NTFS::load(DValue value)
   if (dntfs->getValue("version").get<DUInt8>() != NTFS_VERSION)
     return (false); //throw wrong version ? & reload  
 
-  DObject* dopt = dntfs->opt;
+  //DObject* dopt = dntfs->opt;
   this->__opt = static_cast<NTFSOpt*>(static_cast<DObject*>(dntfs->opt)->clone());
 
   this->__bootSectorNode = new BootSectorNode(this);
