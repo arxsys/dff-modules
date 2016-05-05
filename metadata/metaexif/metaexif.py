@@ -165,8 +165,8 @@ class MetaEXIF(Script):
         self.handler.setAttributes(node)
         node.registerAttributes(self.handler)
     except Exception as e:
-      print "Metaexif error on node ", str(node.absolute()) , " :"
-      print str(e)
+      #print "Metaexif error on node ", str(node.absolute()) , " :"
+      #print str(e)
       pass
 
 class metaexif(Module): 
