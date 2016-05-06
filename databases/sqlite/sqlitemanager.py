@@ -35,7 +35,7 @@ class SqliteManager(ModuleProcessusHandler):
 
   def executeFrom(self, src, cmd):
     for base, node in self.databases.iteritems():
-      if node == src:
+      if node.uid() == src.uid():
         return base.execute(cmd)
 
   def execute(self, basename, cmd, root):
