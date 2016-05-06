@@ -22,10 +22,10 @@ from dff.api.taskmanager.taskmanager import TaskManager
 from dff.api.module.module import Module 
 from dff.api.module.script import Script
 
-from dff.modules.viewer.sqliteviewer.manager import Manager
+from dff.modules.viewer.sqliteviewer.manager import SqliteDatabaseWidget
 from dff.modules.databases.sqlite.sqlitedb import SqliteDB
 
-class SQLITEMANAGER(Manager, Script):
+class SQLITEMANAGER(SqliteDatabaseWidget, Script):
   def __init__(self):
     Script.__init__(self, "sqliteviewer")
 
@@ -36,14 +36,19 @@ class SQLITEMANAGER(Manager, Script):
     except Exception as e:
       self.node = None
 
+
   def g_display(self):
-    Manager.__init__(self)
+    if self.node is not None:
+      SqliteDatabaseWidget.__init__(self, self.node)
+    
 
   def updateWidget(self):
     pass
 
+
   def c_display(self):
     print "Not supported"
+
 
 class sqliteviewer(Module):
   """SQLite databases viewer"""
