@@ -276,7 +276,12 @@ class CAT(QSplitter, Script):
     def g_display(self):
         QSplitter.__init__(self)
         process = False
-        self.initShape()
+
+        try:
+          codecType = self.node.dataType().split("/")[1]
+        except: 
+          codecType = "UTF-8"
+        self.initShape(codecType)
         if self.node.size() > 30*(1024**2):
             if self.preview:
                 self.renderButton.show()
@@ -390,12 +395,16 @@ class CAT(QSplitter, Script):
             pass#self.setUnformatedDocument()
 
 
-    def initShape(self):
+    def initShape(self, codecType = 'UTF-8'):
         self.listWidget = QListWidget()
         self.listWidget.setSortingEnabled(True)
         for codec in QTextCodec.availableCodecs():
             self.listWidget.addItem(str(codec))
-        item = self.listWidget.findItems('UTF-8', Qt.MatchExactly)[0]
+        try:
+          item = self.listWidget.findItems(codecType, Qt.MatchFixedString)[0]
+        except:
+          item = self.listWidget.findItems('UTF-8', Qt.MatchExactly)[0]
+        self.currentCodec = item.text()
         self.listWidget.setCurrentItem(item)
         self.listWidget.scrollToItem(item)
         self.connect(self.listWidget, SIGNAL("itemSelectionChanged()"), self.codecChanged)
