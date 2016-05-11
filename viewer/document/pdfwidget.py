@@ -15,9 +15,90 @@
 from popplerqt4 import Poppler
 
 from PyQt4.QtCore import Qt, QPoint, QRectF, QRect, SIGNAL, QSize, QPointF, QString
-from PyQt4.QtGui import  QWidget, QRubberBand, QMatrix, QPixmap, QPainter, QLabel, QScrollArea, QHBoxLayout, QVBoxLayout, QSpacerItem, QSizePolicy, QLineEdit, QComboBox, QPushButton, QSpinBox, QColor, QApplication, QClipboard, QMenu, QCursor
+from PyQt4.QtGui import  QWidget, QRubberBand, QMatrix, QPixmap, QPainter, QLabel, QScrollArea, QHBoxLayout, QVBoxLayout, QSpacerItem, QSizePolicy, QLineEdit, QComboBox, QPushButton, QSpinBox, QColor, QApplication, QClipboard, QMenu, QCursor, QIntValidator, QIcon
 
+class PageLineEdit(QHBoxLayout):
+  def __init__(self):
+    QHBoxLayout.__init__(self)
+    self.maximumPageNumber = 0
+    self.currentPageNumber = 0
 
+    pageLayout = QHBoxLayout()
+    self.addLayout(pageLayout)
+    pageLayout.setMargin(0)
+    pageLayout.setSpacing(0)
+    self.pageLabel = QLabel(self.tr("Page: "))
+    self.pageLabel.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+    pageLayout.addWidget(self.pageLabel)
+    self.currentNumberLineEdit = QLineEdit()
+    self.pageLabel.setBuddy(self.currentNumberLineEdit)
+    pageLayout.addWidget(self.currentNumberLineEdit)
+    self.currentNumberLineEdit.setMaximumWidth(35)
+    self.currentNumberLineEdit.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+    self.currentNumberLineEdit.setStyleSheet(
+                                             "border-left-width: 2px;"
+                                             "border-right-width: 0px;"
+                                             "border-top-width: 2px;"
+                                             "border-bottom-width: 2px;"
+                                             "border-style: solid;"
+                                             "border-color: gray;")
+    self.maximumNumberLineEdit = QLineEdit()
+    pageLayout.addWidget(self.maximumNumberLineEdit)
+    self.maximumNumberLineEdit.setMaximumWidth(40)
+    self.maximumNumberLineEdit.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+    self.maximumNumberLineEdit.setStyleSheet(
+                                             "border-left-width: 0px;"
+                                             "border-right-width: 2px;"
+                                             "border-top-width: 2px;"
+                                             "border-bottom-width: 2px;"
+                                             "border-style: solid;"
+                                             "border-color: gray;")
+    self.maximumNumberLineEdit.setReadOnly(True)
+    self.updateText()
+
+    buttonLayout = QHBoxLayout()
+    buttonLayout.setMargin(0)
+    buttonLayout.setSpacing(0)
+    self.connect(self.currentNumberLineEdit, SIGNAL("editingFinished()"), self.validateText)
+    self.previousPageButton = QPushButton(QIcon(":top.png"),"")
+    self.connect(self.previousPageButton, SIGNAL("clicked()"), self.previousPageButtonPressed)
+    buttonLayout.addWidget(self.previousPageButton)
+    self.nextPageButton = QPushButton(QIcon(":down.png"),"")
+    self.connect(self.nextPageButton, SIGNAL("clicked()"), self.nextPageButtonPressed)
+    buttonLayout.addWidget(self.nextPageButton)
+    self.addLayout(buttonLayout)
+
+  def nextPageButtonPressed(self):
+    if self.currentPageNumber + 1 <= self.maximumPageNumber:
+      self.currentPageNumber += 1
+      self.emit(SIGNAL("valueChanged(int)"), self.currentPageNumber)
+      self.updateText()
+
+  def previousPageButtonPressed(self):
+    if self.currentPageNumber - 1 > 0:
+      self.currentPageNumber -= 1
+      self.emit(SIGNAL("valueChanged(int)"), self.currentPageNumber)
+      self.updateText()
+
+  def setMaximumPageNumber(self, value):
+     self.maximumPageNumber = value
+     self.currentNumberLineEdit.setValidator(QIntValidator(1, value))
+     self.updateText()
+
+  def validateText(self):
+    text = self.currentNumberLineEdit.text()
+    if self.currentNumberLineEdit.hasAcceptableInput():
+      self.currentPageNumber = int(text)
+      self.emit(SIGNAL("valueChanged(int)"), self.currentPageNumber)
+    self.updateText()
+
+  def setPageNumberValue(self, value):
+     self.currentPageNumber = value
+     self.updateText()
+
+  def updateText(self):
+     self.currentNumberLineEdit.setText(str(self.currentPageNumber))
+     self.maximumNumberLineEdit.setText("/ " + str(self.maximumPageNumber))
 
 class PDFWidget(QWidget):
   scaleFactors =  [ 0.25,   0.5,  0.75,    1.0,   1.25,    1.5,    2.0]
@@ -29,8 +110,8 @@ class PDFWidget(QWidget):
     self.setMenu()
     self.setPDFLabelScrollArea()
 
-    self.connect(self.pageSpinBox, SIGNAL("valueChanged(int)"), self.pdfLabel.setPage)
-    self.connect(self.pdfLabel, SIGNAL("pageChanged"), self.pageSpinBox.setValue)
+    self.connect(self.pageLineEdit, SIGNAL("valueChanged(int)"), self.pdfLabel.setPage)
+    self.connect(self.pdfLabel, SIGNAL("pageChanged"), self.pageLineEdit.setPageNumberValue)
     self.connect(self.pdfLabel, SIGNAL("pageChanged"), self.scrollToTop)
 
     self.connect(self.scaleComboBox, SIGNAL("currentIndexChanged(int)"), self.scaleDocument)
@@ -44,13 +125,9 @@ class PDFWidget(QWidget):
   def setMenu(self):
     self.menuLayout = QHBoxLayout()
     self.hboxLayout.addLayout(self.menuLayout)
-
-    self.pageLabel = QLabel(self.tr("Page:"))
-    self.menuLayout.addWidget(self.pageLabel)
-    self.pageSpinBox = QSpinBox()
-    self.pageSpinBox.setEnabled(True)
-    self.pageLabel.setBuddy(self.pageSpinBox)
-    self.menuLayout.addWidget(self.pageSpinBox)
+    self.pageLineEdit = PageLineEdit()
+    self.pageLineEdit.setEnabled(False)
+    self.menuLayout.addLayout(self.pageLineEdit)
 
     spacer = QSpacerItem(20, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
     self.menuLayout.addItem(spacer)
@@ -61,14 +138,18 @@ class PDFWidget(QWidget):
     self.searchLabel.setTextFormat(Qt.AutoText)
     self.searchLayout.addWidget(self.searchLabel)    
     self.searchLineEdit = QLineEdit()
+    self.searchLineEdit.setEnabled(False)
     self.searchLabel.setBuddy(self.searchLineEdit)
     self.searchLayout.addWidget(self.searchLineEdit)
     self.searchComboBox = QComboBox()
+    self.searchComboBox.setEnabled(False)
     self.searchComboBox.insertItems(0, ["Forwards", "Backwards"])
     self.searchLayout.addWidget(self.searchComboBox)
     self.findButton = QPushButton("Find")
+    self.findButton.setEnabled(False)
     self.searchLayout.addWidget(self.findButton)
     self.clearButton = QPushButton("Clear")
+    self.clearButton.setEnabled(False)
     self.searchLayout.addWidget(self.clearButton)
 
     spacer = QSpacerItem(20, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
@@ -77,6 +158,7 @@ class PDFWidget(QWidget):
     self.scaleLabel = QLabel("Scale:")
     self.menuLayout.addWidget(self.scaleLabel)
     self.scaleComboBox = QComboBox()
+    self.scaleComboBox.setEnabled(False)
     self.scaleComboBox.insertItems(0, self.scalePercents) 
     self.scaleComboBox.setCurrentIndex(3)
     self.scaleLabel.setBuddy(self.scaleComboBox)
@@ -94,10 +176,21 @@ class PDFWidget(QWidget):
     self.scrollArea.verticalScrollBar().setValue(0)
 
   def setDocument(self, data):
-    self.pdfLabel.setDocument(data)
-    self.pageSpinBox.setMinimum(1)
-    self.pageSpinBox.setMaximum(self.pdfLabel.document().numPages())
-    self.pageSpinBox.setValue(1)
+    if self.pdfLabel.setDocument(data):
+      self.searchLineEdit.setEnabled(True)
+      self.searchComboBox.setEnabled(True)
+      self.findButton.setEnabled(True)
+      self.clearButton.setEnabled(True)
+      self.scaleComboBox.setEnabled(True)
+      self.pageLineEdit.setEnabled(True)
+      self.pageLineEdit.setPageNumberValue(1)
+      self.pageLineEdit.setMaximumPageNumber(self.pdfLabel.document().numPages())
+
+  def setError(self, errorMessage):
+    self.pdfLabel.setError(errorMessage)
+
+  def setMessage(self, message):
+    self.pdfLabel.setText(message)
 
   def checkSearchText(self, text):
      if text == "":
@@ -311,6 +404,7 @@ class PDFLabel(QLabel):
   def setDocument(self, data):
     self.doc = Poppler.Document.loadFromData(data)
     if self.doc:
+      #self.setVisible #change default behavior not visible if no document is set 
       self.doc.setRenderHint(Poppler.Document.Antialiasing)
       self.doc.setRenderHint(Poppler.Document.TextAntialiasing)
       self.searchLocation = QRectF()
@@ -318,6 +412,9 @@ class PDFLabel(QLabel):
       self.setPage(1)
       return True
     return False
+
+  def setError(self, errorMessage):
+    self.setText(errorMessage)
 
   def setPage(self, page = -1):
     if page != self.currentPage + 1:

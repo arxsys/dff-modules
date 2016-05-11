@@ -70,11 +70,15 @@ class DocumentConverter(object):
                "document/opendocument-presentation": "impress_pdf_Export",
                "document/opendocument-spreadsheet" : "calc_pdf_Export",
                "document/opendocument-text-web" : "writer_web_pdf_Export",
-               "document/opendocument-graphics" : "draw_web_pdf_Export",
+               "document/opendocument-graphics" : "draw_pdf_Export",
 
                "doc" : "writer_pdf_Export",
                "ppt" : "impress_pdf_Export",
                "xls" : "calc_pdf_Export",
+
+               "odt" : "writer_pdf_Export",
+               "odp" : "impress_pdf_Export",
+               "stc" : "calc_pdf_Export",
              }
   def __init__(self):
      self.connection = "socket,host=127.0.0.1,port=2002,tcpNoDelay=1;urp;StarOffice.ComponentContext" 
