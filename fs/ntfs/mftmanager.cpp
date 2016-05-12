@@ -453,11 +453,11 @@ void    MFTEntryManager::linkOrphanEntries(void)
  */
 void    MFTEntryManager::linkUnallocated(void)
 {
-  Unallocated* unallocated = new Unallocated(this->__ntfs);
-  this->__ntfs->rootDirectoryNode()->addChild(unallocated);
-
   if (this->__ntfs->opt()->recovery() == false)
     return ;
+
+  Unallocated* unallocated = new Unallocated(this->__ntfs);
+  this->__ntfs->rootDirectoryNode()->addChild(unallocated);
 
   uint64_t mftRecordSize = this->__ntfs->bootSectorNode()->MFTRecordSize(); 
   uint64_t clusterSize = this->__ntfs->bootSectorNode()->clusterSize(); 
