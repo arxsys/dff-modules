@@ -52,10 +52,11 @@ class DocumentViewer(PDFWidget, Script):
       self.preview = False
  
   def converterError(self, error):
-     print 'Error while converting document ', str(error)
      self.thread.quit()
      if self.askToClose:
-       self.close() 
+       self.close()
+     else:
+       self.setError("Error while converting document: " + self.node.name() + "\n" + str(error))
  
   def converterFinish(self, pdfDocument):
      self.thread.quit()
@@ -79,6 +80,7 @@ class DocumentViewer(PDFWidget, Script):
       vfile.close()
       self.setDocument(pdfDocument)
     else:
+      self.setMessage("Loading : " + self.node.name())
       self.converter = QConverter()
       self.thread = QThread()
       self.converter.moveToThread(self.thread)
