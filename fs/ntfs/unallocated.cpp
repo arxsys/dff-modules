@@ -45,9 +45,9 @@ std::vector<Range> Unallocated::ranges(void)
     throw std::string("MFT Manager is null");
 
   MFTNode* bitmapNode = mftManager->node(6); //$BITMAP_FILE_ID
-  if (!bitmapNode) //if no bitmap we carve all the disk !
+  if (!bitmapNode) //if no bitmap we carve all the disk ! (except boot sector to avoid infinite loop)
   {
-    ranges.push_back(Range(0, this->__ntfs->opt()->fsNode()->size() / this->__ntfs->bootSectorNode()->clusterSize()));
+    ranges.push_back(Range(1, this->__ntfs->opt()->fsNode()->size() / this->__ntfs->bootSectorNode()->clusterSize()));
     return (ranges);
   }
 
@@ -78,6 +78,8 @@ void    Unallocated::fileMapping(FileMapping* fm)
 
   for (; range != this->__ranges.end(); ++range)
   {
+    std::cout << "Unallocated offset " << offset << "real offset " << (*range).start() * clusterSize <<  std::endl;
+    std::cout << "Cluster size " << clusterSize << std::endl;
     fm->push(offset , (1 + (*range).end() - (*range).start()) * clusterSize, this->__ntfs->fsNode(), (*range).start() * clusterSize);
     offset += (1 + (*range).end() - (*range).start()) * clusterSize;
   }
