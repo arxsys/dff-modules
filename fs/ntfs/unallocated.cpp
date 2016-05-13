@@ -78,8 +78,6 @@ void    Unallocated::fileMapping(FileMapping* fm)
 
   for (; range != this->__ranges.end(); ++range)
   {
-    std::cout << "Unallocated offset " << offset << "real offset " << (*range).start() * clusterSize <<  std::endl;
-    std::cout << "Cluster size " << clusterSize << std::endl;
     fm->push(offset , (1 + (*range).end() - (*range).start()) * clusterSize, this->__ntfs->fsNode(), (*range).start() * clusterSize);
     offset += (1 + (*range).end() - (*range).start()) * clusterSize;
   }
