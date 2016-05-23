@@ -24,9 +24,6 @@ install_file(
   msppt.py
   olevba.py
   vba.py
-  thirdparty/DridexUrlDecoder/DridexUrlDecoder.py
-  thirdparty/DridexUrlDecoder/__init__.py
-  thirdparty/pyparsing/pyparsing.py
-  thirdparty/pyparsing/__init__.py
-  thirdparty/__init__.py
-)
+  )
+
+add_subdirectory(thirdparty)
