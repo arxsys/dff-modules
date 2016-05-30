@@ -47,7 +47,8 @@ std::vector<Range> Unallocated::ranges(void)
   MFTNode* bitmapNode = mftManager->node(6); //$BITMAP_FILE_ID
   if (!bitmapNode) //if no bitmap we carve all the disk ! (except boot sector to avoid infinite loop)
   {
-    ranges.push_back(Range(1, this->__ntfs->opt()->fsNode()->size() / this->__ntfs->bootSectorNode()->clusterSize()));
+    if (this->__ntfs->bootSectorNode()->clusterSize() != 0)
+      ranges.push_back(Range(1, this->__ntfs->opt()->fsNode()->size() / this->__ntfs->bootSectorNode()->clusterSize()));
     return (ranges);
   }
 
