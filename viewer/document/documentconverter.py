@@ -15,10 +15,16 @@
 
 import sys, glob, os, subprocess,time 
 from distutils.version import LooseVersion
-from unoimporter import UnoImporter
 
+#save python import as uno overwrite it with it's own
+import __builtin__
+pythonImporter = __builtin__.__dict__["__import__"]
+
+from unoimporter import UnoImporter
 office = UnoImporter().importUno()
+
 import uno, unohelper
+
 from com.sun.star.beans import PropertyValue
 from com.sun.star.connection import NoConnectException
 from com.sun.star.document.UpdateDocMode import QUIET_UPDATE
@@ -27,6 +33,9 @@ from com.sun.star.io import IOException, XOutputStream
 from com.sun.star.script import CannotConvertException
 from com.sun.star.uno import Exception as UnoException
 from com.sun.star.uno import RuntimeException
+
+#restore python import
+__builtin__.__dict__["__import__"] = pythonImporter 
 
 class OutputStream(unohelper.Base, XOutputStream):
    def __init__( self ):

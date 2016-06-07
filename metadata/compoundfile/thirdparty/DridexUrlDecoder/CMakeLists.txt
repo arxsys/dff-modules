@@ -10,11 +10,10 @@
 # and IRC channels for your use.
 # 
 # Author(s):
-#  Jeremy MOUNIER <fba@digital-forensic.org>
+#  Solal Jacob <sja@digital-forensic.org>
 
 install_file(
-  #player.py
-  videothumbnailviewer.py
-  imageviewer.py  
-  textviewer.py
+  __init__.py
+  DridexUrlDecoder.py
 )
+
