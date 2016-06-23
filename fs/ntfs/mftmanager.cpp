@@ -375,7 +375,7 @@ void    MFTEntryManager::initEntries(void)
     }
     catch (std::string& error)
     {
-      std::cout << "Can't create MFTNode" << id << " error: " << error << std::endl;
+    //  std::cout << "Can't create MFTNode" << id << " error: " << error << std::endl;
     }
   }
 }
@@ -411,10 +411,7 @@ void    MFTEntryManager::linkOrphanEntries(void)
   {
     MFTEntryInfo* entryInfo = this->__entries[id];
     if (entryInfo == NULL)
-    {
-      std::cout << "entry info error" << std::endl;
       continue;
-    }
     std::list<MFTNode*>::const_iterator mftNode = entryInfo->nodes.begin();
     for (; mftNode != entryInfo->nodes.end(); ++mftNode)
     {
