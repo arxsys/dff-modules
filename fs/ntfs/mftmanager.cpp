@@ -410,6 +410,11 @@ void    MFTEntryManager::linkOrphanEntries(void)
   for (uint64_t id = 0; id < this->__numberOfEntry; ++id)
   {
     MFTEntryInfo* entryInfo = this->__entries[id];
+    if (entryInfo == NULL)
+    {
+      std::cout << "entry info error" << std::endl;
+      continue;
+    }
     std::list<MFTNode*>::const_iterator mftNode = entryInfo->nodes.begin();
     for (; mftNode != entryInfo->nodes.end(); ++mftNode)
     {
@@ -605,6 +610,8 @@ void   MFTEntryManager::linkReparsePoint(void) const
   std::map<uint64_t, MFTEntryInfo*>::const_iterator entry = this->__entries.begin();
   for (; entry != this->__entries.end(); ++entry)
   {
+    if (entry->second == NULL)
+      continue;
     MFTNode* mftNode = entry->second->node;
     if (mftNode)
       this->mapLink(mftNode);
