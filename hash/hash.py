@@ -24,10 +24,8 @@ from dff.api.types.libtypes import Variant, VMap, VList, Parameter, Argument, ty
 from dff.api.vfs.libvfs import AttributesHandler, VLink
 
 class HashSets(object):
-
   KNOWN_GOOD = True
   KNOWN_BAD = False
-
   def __init__(self):
      self.hsets = []
 
@@ -88,6 +86,7 @@ class HashSet(object):
 	f.close()
 	raise RuntimeError("Hash set " + self.path + " type not found")
      self.len = (self.size - self.headerSize) / self.lineSize
+     print 'self len ', self.len
      f.close()
 
   def getLine(self, file, line):
@@ -297,7 +296,7 @@ class HASH(Script):
         for algo in algos:
           algo = algo.value()
           algorithms.append(algo)
-      else:
+      elif len(currentHashSets) == 0:
         algorithms = ["sha1"]
       if len(currentHashSets):
         for hsetId in currentHashSets:
@@ -308,13 +307,11 @@ class HASH(Script):
       self.__run(node, set(algorithms), currentHashSets)
       self.__setResults()
 
-
     def getHashSetFromId(self, setId):
       self.__lock.acquire()
       hset = self.__hashSets.get(setId)
       self.__lock.release()
       return hset
-
 
     def calc(self, node, algorithms):
       buffsize = 10*1024*1024
