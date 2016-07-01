@@ -86,7 +86,6 @@ class HashSet(object):
 	f.close()
 	raise RuntimeError("Hash set " + self.path + " type not found")
      self.len = (self.size - self.headerSize) / self.lineSize
-     print 'self len ', self.len
      f.close()
 
   def getLine(self, file, line):
