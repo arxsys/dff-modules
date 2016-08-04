@@ -238,7 +238,7 @@ bool                    NTFS::load(DValue value)
     this->__bootSectorNode->validate();
 
   this->__mftManager.init(this);  //reload mster mft node ? 
-  ((DObject*)dntfs->entries)->addRef();  //XXX / ?
+  //((DObject*)dntfs->entries)->addRef();  //XXX / ?
   Node* rootNode = this->loadTree(dntfs->entries);
   this->__rootDirectoryNode = rootNode;
 

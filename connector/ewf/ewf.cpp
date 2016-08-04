@@ -251,8 +251,6 @@ int ewf::vread(int fd, void *buff, unsigned int size)
   res = libewf_handle_read_random(this->ewf_ghandle, buff, size, fi->offset, &error);
   if (res > 0)
     fi->offset += res;
-  else 
-    std::cout << "read -1 " << std::endl;
   mutex_unlock(&this->__io_mutex);
 
   if (res < 0)

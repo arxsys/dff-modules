@@ -405,7 +405,7 @@ class HASH(Script):
         for algo in algos:
           algo = algo.value()
           algorithms.append(algo)
-      else:
+      elif len(currentHashSets) == 0:
         algorithms = ["sha1"]
       if len(currentHashSets):
         for hsetId in currentHashSets:

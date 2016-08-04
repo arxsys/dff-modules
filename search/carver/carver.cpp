@@ -88,9 +88,9 @@ void		Carver::start(std::map<std::string, Variant_p > args)
   this->mapper();
   e1 = new event;
   e1->type = Carver::EndOfProcessing;
-  e1->value = NULL;
+  e1->value = new Variant(0);
   this->notify(e1);
-  delete e1;
+  //delete e1;
 }
 
 int		Carver::Read(char *buffer, unsigned int size)
@@ -256,8 +256,8 @@ void		Carver::mapper()
 		    }
 		}
 	    }
-	  e1->value = new Variant(total_headers);
-	  this->notify(e1);
+          e1->value = new Variant(total_headers);
+          this->notify(e1);
 	}
       e->value = new Variant(this->tell());
       this->notify(e);
@@ -265,8 +265,8 @@ void		Carver::mapper()
 	this->ifile->seek(this->tell() - this->maxNeedle, 0);
     }
   free(buffer);
-  delete e;
-  delete e1;
+  ///delete e;
+  //delete e1;
   this->createTree();
 }
 
