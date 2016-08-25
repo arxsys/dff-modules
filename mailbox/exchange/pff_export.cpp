@@ -423,7 +423,7 @@ int pff::export_attachments(ItemInfo* itemInfo, Node* parent)
           check_error(pff_error)
         continue;
      }
-     if ((attachment_type == LIBPFF_ATTACHMENT_TYPE_REFERENCE))
+     if (attachment_type == LIBPFF_ATTACHMENT_TYPE_REFERENCE)
      {
        if (libpff_item_free(&attachment, &(pff_error)) != 1)
           check_error(pff_error)
