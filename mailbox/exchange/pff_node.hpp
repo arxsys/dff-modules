@@ -19,6 +19,8 @@
 
 #include "pff.hpp"
 
+#include "node.hpp"
+
 using namespace DFF;
 
 class pff;
