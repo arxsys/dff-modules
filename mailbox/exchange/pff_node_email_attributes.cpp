@@ -241,7 +241,7 @@ int PffNodeEMail::attributesRecipients(Attributes* attr, libpff_item_t* item)
            }
            else
              check_error(pff_error)
-	   if ((maximum_entry_value_string_size == 0))
+	   if (maximum_entry_value_string_size == 0)
 		continue ;
 
 	   Attributes	attrRecipient;
