@@ -13,21 +13,26 @@
 # Author(s):
 #  Solal Jacob <sja@digital-forensic.org>
 
-include_directories(${ICU_INCLUDE_DIRS})
-
-find_library(LIBARCHIVE archive)
-find_path(LIBARCHIVE_INCLUDE_DIR archive.h)
+if(WIN32)
+  #find_library(LIBARCHIVE archive PATHS LIBARCHIVE_PATH)
+  message("${LIBARCHIVE_PATH}")
+  set(archive_files ${LIBARCHIVE_PATH}/libarchive-13.dll;${LIBARCHIVE_PATH}/zlib.dll)
+  set(LIBARCHIVE ${LIBARCHIVE_PATH}/libarchive.lib)
+  message("${archive_files}")
+else (WIN32)
+  find_library(LIBARCHIVE archive)
+  find_path(LIBARCHIVE_INCLUDE_DIR archive.h)
+endif(WIN32)
 
 if (LIBARCHIVE AND LIBARCHIVE_INCLUDE_DIR)
   message(STATUS "Archive library found")
-  if (UNIX)
-    dff_cpp_module(decompressor
-      CPP_FILES decompressor.cpp decompressornode.cpp
-      SWIG_FILE decompressor.i
-      INCLUDE_DIRS ${ICU_INCLUDE_DIRS} ${LIBARCHIVE_INCLUDE_DIR}
-      LINK_LIBRARIES ${ICU_LIBRARIES} exceptions types vfs ${LIBARCHIVE}
-      )
-  endif (UNIX)
+  dff_cpp_module(decompressor
+    CPP_FILES decompressor.cpp decompressornode.cpp
+    SWIG_FILE decompressor.i
+    INCLUDE_DIRS ${ICU_INCLUDE_DIRS} ${LIBARCHIVE_PATH}
+    LINK_LIBRARIES ${ICU_LIBRARIES} exceptions types vfs ${LIBARCHIVE}
+    EXTRA_FILES ${archive_files}
+    )
 else (LIBARCHIVE AND LIBARCHIVE_INCLUDE_DIR)
   message(STATUS "Archive library not found")
 endif (LIBARCHIVE AND LIBARCHIVE_INCLUDE_DIR)

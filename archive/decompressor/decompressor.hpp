@@ -17,10 +17,20 @@
 #ifndef __DECOMPRESSOR_HH__
 #define __DECOMPRESSOR_HH__
 
-#include "fdmanager.hpp"
-#include "fso.hpp"
+typedef __int64 ssize_t;
 
-struct archive;
+#include <archive.h>
+#include <archive_entry.h>
+
+#include "fso.hpp"
+#include "exceptions.hpp"
+#include "fdmanager.hpp"
+#include "node.hpp"
+#include "vfile.hpp"
+
+
+
+//struct archive;
 
 namespace DFF
 {

@@ -14,14 +14,6 @@
  *  Solal Jacob <sja@digital-forensic.org>
  */
 
-#include <archive.h>
-#include <archive_entry.h>
-
-#include "exceptions.hpp"
-#include "fdmanager.hpp"
-#include "node.hpp"
-#include "vfile.hpp"
-
 #include "decompressor.hpp"
 #include "decompressornode.hpp"
 
