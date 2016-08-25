@@ -38,8 +38,8 @@ Extfs::Extfs()
 {
   __SB = NULL;
   __orphans_i = NULL;
-  __fsck = NULL;
-  __slack = NULL;
+  __fsck = false;
+  __slack = false;
 
   //XXX if "extfs" shadow a parameters
   attributeHandler = new BlockPointerAttributes("extfs-extended");
