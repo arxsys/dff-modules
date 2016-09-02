@@ -17,7 +17,9 @@
 #ifndef __DECOMPRESSOR_HH__
 #define __DECOMPRESSOR_HH__
 
+#ifdef WIN32
 typedef __int64 ssize_t;
+#endif
 
 #include <archive.h>
 #include <archive_entry.h>
