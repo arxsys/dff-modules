@@ -26,6 +26,16 @@ from dff.api.module.manager import ModuleProcessusHandler
 from dff.api.types.libtypes import Variant, VMap, VList, Argument, typeId, DateTime 
 from dff.api.vfs.libvfs import AttributesHandler, VFS
 
+import datetime, sys, traceback
+def error():
+   err_type, err_value, err_traceback = sys.exc_info()
+   for n in  traceback.format_exception_only(err_type, err_value):
+     print n
+   for n in traceback.format_tb(err_traceback):
+     print n
+
+
+
 class EXIFHandler(AttributesHandler, ModuleProcessusHandler):
   dateTimeTags = [0x0132, 0x9003, 0x9004]
   def __init__(self):
@@ -128,25 +138,31 @@ class EXIFHandler(AttributesHandler, ModuleProcessusHandler):
               elif type(v) == tuple:
                 vl = VList()
                 for vv in v:
-                  vl.push_back(Variant(vv))
+                  if type(vv) == tuple:
+                    vl.push_back(Variant(str(vv)))
                 gpsMap[str(subDecoded)]  = vl
               #XXX handle gps datetime  
               else:
-                gpsMap[str(subDecoded)] = Variant()
+                gpsMap[str(subDecoded)] = Variant(str(v))
             attr[decoded] = gpsMap
           except Exception as e:
             pass
+            #print "Metaexif error encoding: ", e
         elif isinstance(values, tuple):
 	  vl = VList()
 	  for value in values:
              if type(values) == unicode:
 	       vl.push_back(Variant(value.encode('ascii', 'replace')))
+             elif type(values) == tuple:
+               vl.push_back(Variant(str(value)))
              else:
 	       vl.push_back(Variant(value))
           attr[decoded] = vl
         else:
           if type(values) == unicode:
             attr[decoded] = Variant(values.encode('ascii', 'replace'))
+          elif type(values) == tuple:
+            attr[decoded] = Variant(str(values))
           else:
             attr[decoded] = Variant(values)
     return attr
@@ -165,8 +181,8 @@ class MetaEXIF(Script):
         self.handler.setAttributes(node)
         node.registerAttributes(self.handler)
     except Exception as e:
-      #print "Metaexif error on node ", str(node.absolute()) , " :"
-      #print str(e)
+      print "Metaexif error on node ", str(node.absolute()) , " :"
+      print str(e)
       pass
 
 class metaexif(Module): 
