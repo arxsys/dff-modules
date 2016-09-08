@@ -12,8 +12,8 @@
 # Author(s):
 #  Solal Jacob <sja@digital-forensic.org>
 
-if(PFF_FOUND AND BFIO_FOUND)
+if(LIBPFF_FOUND AND LIBBFIO_FOUND)
   add_subdirectory (exchange)
-else(PFF_FOUND AND BFIO_FOUND)
+else(LIBPFF_FOUND AND LIBBFIO_FOUND)
   message(STATUS "PFF or BFIO library not found. Exchange module will not be built.")
-endif(PFF_FOUND AND BFIO_FOUND)
+endif(LIBPFF_FOUND AND LIBBFIO_FOUND)

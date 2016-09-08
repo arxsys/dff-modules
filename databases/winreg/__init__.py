@@ -14,3 +14,8 @@
 #  Jeremy Mounier <jmo@digital-forensic.org>
 
 __all__ = ["winreg", "registrymanager", "decoders"]
+
+import os
+
+if os.name == "nt":
+    os.environ['PATH'] = os.path.dirname(__file__) + ";" + os.environ['PATH']

@@ -19,9 +19,11 @@ install_file(
 add_subdirectory(devices)
 
 add_subdirectory (local)
-IF (EWF_FOUND)
-   add_subdirectory (ewf)
-ENDIF (EWF_FOUND)
+IF (LIBEWF_FOUND)
+  add_subdirectory (ewf)
+ELSE (LIBEWF_FOUND)
+  message(STATUS "EWF library not found. Ewf module will not be built.")
+ENDIF (LIBEWF_FOUND)
 
 if (AFF_FOUND)
    add_subdirectory(aff)

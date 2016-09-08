@@ -15,11 +15,11 @@
 add_subdirectory(partition)
 add_subdirectory(vmware)
 
-if(VSHADOW_FOUND AND BFIO_FOUND)
-add_subdirectory (vshadow)
-else(VSHADOW_FOUND AND BFIO_FOUND)
+if(LIBVSHADOW_FOUND AND LIBBFIO_FOUND)
+  add_subdirectory (vshadow)
+else(LIBVSHADOW_FOUND AND LIBBFIO_FOUND)
   message(STATUS "VSHADOW or BFIO library not found. Vshadow module will not be built.")
-endif(VSHADOW_FOUND AND BFIO_FOUND)
+endif(LIBVSHADOW_FOUND AND LIBBFIO_FOUND)
 
 
 install_file(
