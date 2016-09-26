@@ -76,7 +76,9 @@ class SqliteTablesWidget(QtGui.QTableWidget):
                 counter = sqlitedriver.executeFrom(database, query)
                 count = 0
                 if counter:
-                    count = counter.next()[0]
+                    data = counter.fetchone()
+                    if data is not None and len(data) > 0:
+                        count = data[0]
                 nameItem = QtGui.QTableWidgetItem()
                 nameItem.setText(QtCore.QString.fromUtf8(table[0]))
                 countItem = SqliteTablesCountItem(count)
@@ -270,14 +272,14 @@ class SqliteRowItemWidget(QtGui.QTableWidgetItem):
 
     DefaultDecoder = 0
     DefaultDateDecoder = DefaultDecoder + 1
-    FirefoxDateDecoder = DefaultDecoder + 2
-    ChromeDateDecoder = DefaultDecoder + 3
-    SolmailDateDecoder = DefaultDecoder + 4
+    MicrosecondsSinceEpoch = DefaultDecoder + 2
+    MicrosecondsSinceGregorian = DefaultDecoder + 3
+    MillisecondsSinceEpoch = DefaultDecoder + 4
 
-    Decoders = {"Firefox date": FirefoxDateDecoder,
-                "Chrome date": ChromeDateDecoder,
-                "Solmail date": SolmailDateDecoder,
-                "Default sqlite date": DefaultDateDecoder}
+    Decoders = {"Microseconds since 01/01/1970": MicrosecondsSinceEpoch,
+                "Microseconds since 01/01/1601": MicrosecondsSinceGregorian,
+                "Milliseconds since 01/01/1970": MillisecondsSinceEpoch,
+                "Seconds since 01/01/1970": DefaultDateDecoder}
     
     def __init__(self, data, datatype, datetype=False):
         super(SqliteRowItemWidget, self).__init__()
@@ -291,21 +293,21 @@ class SqliteRowItemWidget(QtGui.QTableWidgetItem):
     def decode(self, decoder=0):
         if decoder == SqliteRowItemWidget.DefaultDateDecoder:
             return self.decodeDefaultDate()
-        if decoder == SqliteRowItemWidget.FirefoxDateDecoder:
-            return self.decodeFirefoxDate()
-        if decoder == SqliteRowItemWidget.ChromeDateDecoder:
-            return self.decodeChromeDate()
-        if decoder == SqliteRowItemWidget.SolmailDateDecoder:
-            return self.decodeSolmailDate()
+        if decoder == SqliteRowItemWidget.MicrosecondsSinceEpoch:
+            return self.decodeMicrosecondsSinceEpoch()
+        if decoder == SqliteRowItemWidget.MicrosecondsSinceGregorian:
+            return self.decodeMicrosecondsSinceGregorian()
+        if decoder == SqliteRowItemWidget.MillisecondsSinceEpoch:
+            return self.decodeMillisecondsSinceEpoch()
         return self.decodeDefault()
-    
+
         
     def decodeDefaultDate(self):
         self.setBackgroundColor(QtGui.QColor(204, 255, 204))
         if type(self.__data) in [types.IntType, types.LongType]:
             try:
-                timestamp = datetime.fromtimestamp(self.__data)
-                self.setText(self.__data)
+                timestamp = datetime.datetime.fromtimestamp(self.__data)
+                self.setText(str(timestamp))
                 return True
             except:
                 self.setText(QtCore.QString.number(long(self.__data)))
@@ -315,9 +317,10 @@ class SqliteRowItemWidget(QtGui.QTableWidgetItem):
             return True
         self.decodeDefault()
         return False
-        
 
-    def decodeFirefoxDate(self):
+
+    # Firefox
+    def decodeMicrosecondsSinceEpoch(self):
         self.setBackgroundColor(QtGui.QColor(204, 255, 204))
         if type(self.__data) in [types.IntType, types.LongType]:
             epoch = datetime.datetime(1970, 1, 1)
@@ -333,8 +336,8 @@ class SqliteRowItemWidget(QtGui.QTableWidgetItem):
         return False
 
 
-
-    def decodeSolmailDate(self):
+    # Solmail
+    def decodeMillisecondsSinceEpoch(self):
         self.setBackgroundColor(QtGui.QColor(204, 255, 204))
         if type(self.__data) in [types.IntType, types.LongType]:
             epoch = datetime.datetime(1970, 1, 1)
@@ -349,8 +352,9 @@ class SqliteRowItemWidget(QtGui.QTableWidgetItem):
         self.decodeDefault()
         return False
         
-    
-    def decodeChromeDate(self):
+
+    # Chrome
+    def decodeMicrosecondsSinceGregorian(self):
         self.setBackgroundColor(QtGui.QColor(204, 255, 204))
         if type(self.__data) in [types.IntType, types.LongType]:
             epoch = datetime.datetime(1601, 1, 1)
@@ -524,13 +528,17 @@ class SqliteCustomQuery(QtGui.QTextEdit):
             cursor.setPosition(startIdx, QtGui.QTextCursor.KeepAnchor)
             cursor.removeSelectedText()
         self.insertPlainText(query)
-        
+
+import traceback
 
 class SqliteDatabaseWidget(QtGui.QSplitter):
     def __init__(self, database, parent=None):
         super(SqliteDatabaseWidget, self).__init__(parent)
         self.__database = database
-        self.__tables = SqliteTablesWidget(database)
+        try:
+            self.__tables = SqliteTablesWidget(database)
+        except:
+            traceback.print_exc()
         self.__rows = SqliteRowsWidget()
         self.__tables.itemClicked.connect(self.__displayTable)
         self.__customQuery = SqliteCustomQuery()
