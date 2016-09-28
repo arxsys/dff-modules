@@ -412,8 +412,12 @@ void    MFTEntryManager::linkOrphanEntries(void)
         DataNode* parent = this->node(parentId);
         if (parent)
         {
-          if (fileName->parentSequence() != parent->mftEntryNode()->sequence()) 
-            this->__ntfs->orphansNode()->addChild(*dataNode);
+           if (fileName->parentSequence() != parent->mftEntryNode()->sequence())  //XXX link and set as deleted ? or an orphan tag ?
+           {
+             (*dataNode)->setDeleted();
+             parent->addChild(*dataNode);
+              //this->__ntfs->orphansNode()->addChild(*dataNode);
+           }
           else 
             parent->addChild(*dataNode);
         }
