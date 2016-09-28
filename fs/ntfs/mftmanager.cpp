@@ -431,7 +431,11 @@ void    MFTEntryManager::linkOrphanEntries(void)
         if (parent)
         {
           if (fileName->parentSequence() != parent->mftEntryNode()->sequence())
-            this->__ntfs->orphansNode()->addChild(*mftNode);
+          {
+             //this->__ntfs->orphansNode()->addChild(*mftNode);
+             (*mftNode)->setDeleted();
+             parent->addChild(*mftNode);
+          }
           else 
             parent->addChild(*mftNode);
         }
