@@ -41,6 +41,9 @@ MFTEntryNode::MFTEntryNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::stri
   }
   delete vfile;
 
+  if (this->usedSize() == 0xffffffff)
+    throw std::string("Unused MFT Entry");
+
   //this->validate(); for exemple when carving if wrong value avoid infinite loop etc... 
   //this->readAttributes();
   //for test only : read all attributes of the node 
@@ -115,16 +118,13 @@ MFTAttributes	MFTEntryNode::mftAttributes(void)
 
   try 
   {
-    //XXX this->useSize() != add all mft attributelist size 
     while (offset < this->usedSize()) 
     {   
        MFTAttribute* mftAttr = this->__MFTAttribute(offset);
-       mftAttributes.push_back(mftAttr); 
-       if (mftAttr->length() == 0) //check for other anormal size ? very big?
-	 break;
        uint64_t attributeLength = mftAttr->length();
        if (attributeLength == 0)
          break;
+       mftAttributes.push_back(mftAttr); 
        offset += attributeLength;
     }
   }
