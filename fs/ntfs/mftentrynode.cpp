@@ -41,7 +41,8 @@ MFTNode::MFTNode(NTFS* ntfs, Node* mftNode, uint64_t offset, std::string name, N
     throw std::string("Can't read MFT Entry structure");
   }
   delete vfile;
-
+  if (this->usedSize() == 0xffffffff)
+    throw std::string("Unused MFT Entry");
   //this->validate(); for exemple when carving if wrong value avoid infinite loop etc... 
   //this->readAttributes();
   //for test only : read all attributes of the node 
