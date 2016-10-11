@@ -357,19 +357,19 @@ int pff::export_email(ItemInfo* itemInfo, Node *parent)
     
   if (has_text_body == 1)
   {
-    new PffNodeEmailMessageText("Message", nodeFolder, this, itemInfo);
+    new PffNodeEmailMessageText("Message.txt", nodeFolder, this, itemInfo);
   }
   else
     check_error(pff_error)
   if (has_html_body == 1)
   {
-    new PffNodeEmailMessageHTML("Message HTML", nodeFolder, this, itemInfo);
+    new PffNodeEmailMessageHTML("Message.html", nodeFolder, this, itemInfo);
   }
   else
     check_error(pff_error)
   if (has_rtf_body == 1)
   {
-    new PffNodeEmailMessageRTF("Message RTF", nodeFolder, this, itemInfo);
+    new PffNodeEmailMessageRTF("Message.rtf", nodeFolder, this, itemInfo);
   }
   else
     check_error(pff_error)
