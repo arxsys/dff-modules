@@ -403,7 +403,7 @@ class PDFLabel(QLabel):
 
   def setDocument(self, data):
     self.doc = Poppler.Document.loadFromData(data)
-    if self.doc:
+    if self.doc and self.doc.isLocked() == False:
       #self.setVisible #change default behavior not visible if no document is set 
       self.doc.setRenderHint(Poppler.Document.Antialiasing)
       self.doc.setRenderHint(Poppler.Document.TextAntialiasing)

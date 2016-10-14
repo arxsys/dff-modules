@@ -21,7 +21,12 @@ from dff.api.module.module import Module
 from dff.api.module.script import Script
 from dff.api.types.libtypes import Argument, typeId
 
-from documentconverter import DocumentConverter
+try:
+  from documentconverter import DocumentConverter
+  UNOConverter = True 
+except : 
+  UNOConverter = False
+
 from pdfwidget import PDFWidget
 
 class QConverter(QObject):
@@ -79,7 +84,7 @@ class DocumentViewer(PDFWidget, Script):
       pdfDocument = vfile.read()
       vfile.close()
       self.setDocument(pdfDocument)
-    else:
+    elif UNOConverter:
       self.setMessage("Loading : " + self.node.name())
       self.converter = QConverter()
       self.thread = QThread()
