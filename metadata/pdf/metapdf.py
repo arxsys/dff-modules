@@ -27,6 +27,8 @@ from popplerqt4 import Poppler
 
 import datetime, sys, traceback
 
+from threading import Lock
+
 def error():
    err_type, err_value, err_traceback = sys.exc_info()
    for n in  traceback.format_exception_only(err_type, err_value):
@@ -34,48 +36,67 @@ def error():
    for n in traceback.format_tb(err_traceback):
      print n
 
-class PDFHandler(AttributesHandler, ModuleProcessusHandler):
+class PDFHandler(AttributesHandler):
   def __init__(self):
     AttributesHandler.__init__(self, "metapdf")
-    ModuleProcessusHandler.__init__(self, "metapdf")
-    self.pdfnodes = []
+    self.pdfnodes = {}  
     self.vfs = VFS.Get()
+    self.lock = Lock()
     self.__disown__()
  
   def update(self, processus):
      pass
  
-  def nodes(self, root):
-     lnodes = []
-     rootAbsolute = root.absolute()
-     for node in self.pdfnodes:
-        node = self.vfs.getNodeById(node)
-	if node.absolute().find(rootAbsolute) == 0:
-	  lnodes.append(node)
-     return lnodes
-
   def setAttributes(self, node):
-     self.pdfnodes.append(node.uid()) 
-
-  def haveMeta(self, node):
-    vfile = node.open()
-    doc = Poppler.Document.loadFromData(vfile.read())
-    vfile.close()
-    info = doc.infoKeys()  
-    vfile.close()
-    if info == None:
-      return False
-    if len(info):
-      return True
-    return False
+     #self.pdfnodes.append(node.uid()) 
+    try:
+      self.pdfnodes[node.uid()] = self.getAttributes(node)
+    except:
+      pass
 
   def attributes(self, node):
-    attr = VMap()
-    vfile = node.open()
-    doc = Poppler.Document.loadFromData(vfile.read())
-    vfile.close()
+    vmap = VMap()
+    try:
+      attributes = self.pdfnodes[node.uid()]
+      for k, v in attributes.iteritems():
+        if type(v) == DateTime:
+          dt = DateTime(v)
+          dt.thisown = False
+          vmap[k] = Variant(dt)
+        else:
+          vmap[k] = Variant(v)
+      return vmap
+    except:
+      return vmap
+
+  def getAttributes(self, node):
+    attr = {} 
+    self.lock.acquire()
+    try:
+      vfile = node.open()
+      doc = Poppler.Document.loadFromData(vfile.read())
+      vfile.close()
+    except Exception as e:
+      #print "metapdf can't read document ", e, " on ", node.absolute()
+      self.lock.release()
+      return attr
+    if doc is None:
+      self.lock.release()
+      return attr
+    try:
+      isLocked = doc.isLocked()
+      attr["isLocked"] = isLocked
+      if not isLocked:
+        attr["hasEmbeddedFiles"] = doc.hasEmbeddedFiles()
+        attr["hasJavaScripts"] = (len(doc.scripts()) != 0)
+      attr["pages"] = doc.numPages()
+      major, minor = doc.getPdfVersion()
+      attr["version"] = str(major) + "." + str(minor)
+      attr["isEncrypted"] = doc.isEncrypted()
+    except Exception as e:
+      pass
+      #print "metapdf error getting info ", e, " on ", node.absolute()
     infoKeys = doc.infoKeys()  
-    vfile.close()
     for key in infoKeys:
       try:
         value = doc.info(key)
@@ -87,10 +108,11 @@ class PDFHandler(AttributesHandler, ModuleProcessusHandler):
           vt = DateTime(dt.tm_year, dt.tm_mon, dt.tm_mday, dt.tm_hour, dt.tm_min, dt.tm_sec)
           vt.thisown = False
           uvalue = vt 
-        print type(ukey), type(uvalue)
-        attr[ukey] = Variant(uvalue)
+        attr[ukey] = uvalue
       except Exception as e:
-        print "metapdf error getting metadata ", e
+        pass
+        #print "metapdf error getting metadata ", e, " on ", node.absolute()
+    self.lock.release()
     return attr
 
 class MetaPDF(Script):
@@ -101,11 +123,11 @@ class MetaPDF(Script):
   def start(self, args):
     try:
       node = args['file'].value()
-      attr = self.handler.haveMeta(node)
-      if attr == True:
-        self.stateinfo = "Registering node: " + str(node.name())
-        self.handler.setAttributes(node)
-        node.registerAttributes(self.handler)
+      #attr = self.handler.haveMeta(node)
+      #if attr == True:
+      self.stateinfo = "Registering node: " + str(node.name())
+      self.handler.setAttributes(node)
+      node.registerAttributes(self.handler)
     except Exception as e:
       print "metapdf error on node ", str(node.absolute()) , " :"
       print str(e)
