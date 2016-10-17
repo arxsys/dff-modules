@@ -195,6 +195,21 @@ class MetaCompound(mfso):
       except Exception as e:
         return (0, "")
 
+  def vseek(self, fd, offset, whence):
+    fi = self._mfso__fdmanager.get(fd)
+    compressedOffset = self.vbaCompressed.get(fi.node.uid())
+    if compressedOffset is None:
+      return mfso.vseek(self, fd, offset, whence)
+    if whence == 0:
+      if offset <= fi.node.size():
+        fi.offset = offset
+    if whence == 1:
+      if fi.offset + offset > fi.node.size():
+        fi.offset += offset
+    if whence == 2:
+      fi.offset = fi.node.size()
+    return fi.offset
+
 class compound(Module): 
   """This module extracts metadata and content of compound files (doc,xls,msi, ...)"""
   def __init__(self):

@@ -16,18 +16,16 @@
 
 __dff_module_metapdf_version__ = "1.0.0"
 
+import datetime, sys, traceback
 from time import strptime
+from threading import Lock
+from popplerqt4 import Poppler
 
 from dff.api.module.script import Script 
 from dff.api.module.module import Module
 from dff.api.module.manager import ModuleProcessusHandler
 from dff.api.types.libtypes import Variant, VMap, VList, Argument, typeId, DateTime 
-from dff.api.vfs.libvfs import AttributesHandler, VFS
-from popplerqt4 import Poppler
-
-import datetime, sys, traceback
-
-from threading import Lock
+from dff.api.vfs.libvfs import AttributesHandler, VFS, mfso, fso, Node, FdManager, fdinfo
 
 def error():
    err_type, err_value, err_traceback = sys.exc_info()
@@ -35,6 +33,20 @@ def error():
      print n
    for n in traceback.format_tb(err_traceback):
      print n
+
+class JSNode(Node):
+  def __init__(self, name, size, parent, fsobj):
+    vfile = parent.open()
+    doc = Poppler.Document.loadFromData(vfile.read())
+    vfile.close()
+    buff = ""
+    for script in doc.scripts():
+      buff += bytearray(script.toUtf8())
+    Node.__init__(self, name, len(buff), None, fsobj)
+    self.__disown__()
+
+  def _attributes(self):
+    return VMap()
 
 class PDFHandler(AttributesHandler):
   def __init__(self):
@@ -47,10 +59,10 @@ class PDFHandler(AttributesHandler):
   def update(self, processus):
      pass
  
-  def setAttributes(self, node):
+  def setAttributes(self, node, mfsobj, extractJS = True):
      #self.pdfnodes.append(node.uid()) 
     try:
-      self.pdfnodes[node.uid()] = self.getAttributes(node)
+      self.pdfnodes[node.uid()] = self.getAttributes(node, mfsobj, extractJS)
     except:
       pass
 
@@ -69,7 +81,7 @@ class PDFHandler(AttributesHandler):
     except:
       return vmap
 
-  def getAttributes(self, node):
+  def getAttributes(self, node, mfsobj, extractJS = True):
     attr = {} 
     self.lock.acquire()
     try:
@@ -88,14 +100,18 @@ class PDFHandler(AttributesHandler):
       attr["isLocked"] = isLocked
       if not isLocked:
         attr["hasEmbeddedFiles"] = doc.hasEmbeddedFiles()
-        attr["hasJavaScripts"] = (len(doc.scripts()) != 0)
+      scripts  = doc.scripts()
+      if len(scripts) and extractJS:
+         jsnode = JSNode("javascript", 0, node, mfsobj)
+         mfsobj.registerTree(node, jsnode)
+      attr["hasJavaScripts"] = (len(scripts) != 0)
       attr["pages"] = doc.numPages()
       major, minor = doc.getPdfVersion()
       attr["version"] = str(major) + "." + str(minor)
       attr["isEncrypted"] = doc.isEncrypted()
     except Exception as e:
-      pass
-      #print "metapdf error getting info ", e, " on ", node.absolute()
+      #pass
+      print "metapdf error getting info ", e, " on ", node.absolute()
     infoKeys = doc.infoKeys()  
     for key in infoKeys:
       try:
@@ -115,23 +131,72 @@ class PDFHandler(AttributesHandler):
     self.lock.release()
     return attr
 
-class MetaPDF(Script):
+class MetaPDF(fso):
   def __init__(self):
-   Script.__init__(self, "metapdf")
+   fso.__init__(self, "metapdf")
+   self.__disown__()
    self.handler = PDFHandler() 
+   self.fdm = FdManager()
 
   def start(self, args):
     try:
       node = args['file'].value()
+      try:
+        extractJs = args['extractJS'].value()
+      except IndexError:
+        extractJs = False
       #attr = self.handler.haveMeta(node)
       #if attr == True:
       self.stateinfo = "Registering node: " + str(node.name())
-      self.handler.setAttributes(node)
+      self.handler.setAttributes(node, self, extractJs)
       node.registerAttributes(self.handler)
     except Exception as e:
       print "metapdf error on node ", str(node.absolute()) , " :"
       print str(e)
       pass
+
+  def vopen(self, node):
+    if not node.size():
+      return 0
+    fi = fdinfo()
+    fi.thisown = False
+    fi.node = node
+    fi.offset = 0
+    fd = self.fdm.push(fi)
+    return fd
+
+  def vread(self, fd, buff, size):
+   try:
+     fi = self.fdm.get(fd)
+     vfile = fi.node.parent().open()
+     doc = Poppler.Document.loadFromData(vfile.read())
+     vfile.close()
+     buff = "" 
+     for script in doc.scripts():
+       buff += bytearray(script.toUtf8())
+     res = str(buff[fi.offset:fi.offset + size])
+     fi.offset += len(res)
+     return (len(res), res)
+   except Exception as e:
+     return (0, "")
+
+  def vseek(self, fd, offset, whence):
+    fi = self.fdm.get(fd)
+    if whence == 0:
+      if offset <= fi.node.size():
+        fi.offset = offset
+    if whence == 1:
+      if fi.offset + offset > fi.node.size():
+        fi.offset += offset
+    if whence == 2:
+      fi.offset = fi.node.size()
+    return fi.offset
+
+  def vclose(self, fd):
+    return 0
+
+  def vtell(self, fd):
+    fi = self.fdm.get(fd)
 
 class metapdf(Module): 
   """This module parses and sets as node's attributes pdf metadata"""
@@ -140,6 +205,9 @@ class metapdf(Module):
     self.conf.addArgument({"name": "file",
                            "description": "Parses metadata of this file",
                            "input": Argument.Required|Argument.Single|typeId.Node})
+    self.conf.addArgument({"name": "extractJS",
+                           "description": "Extract javascript as node",
+                           "input":Argument.Empty})
     self.conf.addConstant({"name": "mime-type", 
  	                   "type": typeId.String,
  	                   "description": "managed mime type",
